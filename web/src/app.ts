@@ -1,4 +1,3 @@
-// --- Helpers to normalize GUIDs from Playnite/LiteDB ------------------------
 type Guidish =
   | string
   | { $guid?: string }
@@ -21,7 +20,6 @@ const asGuid = (v: Guidish): string | null => {
 const asGuidArray = (arr: Guidish[] | undefined): string[] =>
   Array.isArray(arr) ? (arr.map(asGuid).filter(Boolean) as string[]) : [];
 
-// --- Minimal shapes from dumps ---------------------------------------------
 type Link = { Name?: string; Url?: string };
 type GameDoc = {
   _id?: Guidish;
@@ -37,7 +35,6 @@ type GameDoc = {
 };
 type NamedDoc = { _id?: Guidish; Id?: Guidish; Name?: string };
 
-// --- Source URL templates (fallback if no Link present) ---------------------
 const sourceUrlTemplates: Record<string, (g: GameDoc) => string | null> = {
   steam: (g) => {
     const id = String((g as any).GameId ?? "").trim();
@@ -60,7 +57,6 @@ const sourceUrlTemplates: Record<string, (g: GameDoc) => string | null> = {
   "microsoft store": () => null,
 };
 
-// --- fetch utils ------------------------------------------------------------
 async function getJson<T = any>(path: string): Promise<T> {
   const r = await fetch(path);
   if (!r.ok) throw new Error(`${path} -> ${r.status}`);
@@ -78,7 +74,6 @@ function escapeHtml(s: string) {
   return div.innerHTML;
 }
 
-// --- icon helpers -----------------------------------------------------------
 const FALLBACK_ICON =
   "data:image/svg+xml;utf8," +
   encodeURIComponent(
@@ -112,7 +107,6 @@ function buildIconUrl(iconRel: string | null, iconId: string | null): string {
   return FALLBACK_ICON;
 }
 
-// --- Data loading & shaping --------------------------------------------------
 type Row = {
   id: string;
   title: string;        // display name
@@ -216,7 +210,6 @@ async function loadLibrary(base = "/data") {
   return { rows, allSources, allTags };
 }
 
-// --- UI with click-to-sort ---------------------------------------------------
 type SortKey = "title" | "source" | "tags";
 type SortDir = "asc" | "desc";
 

@@ -1,0 +1,7 @@
+{
+  "name": "playnite-viewer",
+  "private": true,
+  "scripts": {
+    "up": "docker compose -f docker-compose.yml up --build -d"
+  }
+}

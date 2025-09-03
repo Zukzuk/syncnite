@@ -1,5 +1,5 @@
 {
-  "name": "playnite-viewer",
+  "name": "playnite-client",
   "private": true,
   "scripts": {
     "build": "esbuild src/app.ts --bundle --outfile=dist/assets/app.js --platform=browser --format=esm && cp -r public/* dist/"
