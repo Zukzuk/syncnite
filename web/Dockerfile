@@ -1,15 +1,16 @@
-# Build the tiny TS client
+# web/Dockerfile (monorepo-root context)
 FROM node:20-alpine AS build
 WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
-COPY tsconfig.json ./
-COPY public ./public
-COPY src ./src
-RUN npm run build
 
-# Serve with nginx; mount /data from the worker via compose
+COPY package.json package-lock.json ./
+COPY web/package.json web/tsconfig.json web/index.html web/
+COPY web/vite.config.mts web/vite.config.mts
+COPY web/src web/src
+
+RUN npm ci --include-workspace-root=false --workspace web
+RUN npm run -w web build
+
 FROM nginx:alpine
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=build /app/dist/ /usr/share/nginx/html/
-# /usr/share/nginx/html/data will be provided by the volume
+COPY web/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/web/dist/ /usr/share/nginx/html/
+

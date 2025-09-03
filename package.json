@@ -1,7 +1,12 @@
 {
   "name": "playnite-viewer",
   "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "web/**",
+    "worker/**"
+  ],
   "scripts": {
-    "up": "docker compose -f docker-compose.yml up --build -d"
+    "up": "docker compose --progress=plain -f docker-compose.yml up --build -d"
   }
 }
