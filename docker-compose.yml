@@ -1,0 +1,21 @@
+services:
+  worker:
+    build: ./worker
+    environment:
+      BACKUP_ZIP: /input/PlayniteBackup.zip
+    volumes:
+      - ./backups:/input:ro
+      - ./data:/data
+    command: ["/input/PlayniteBackup.zip", "/data"]
+
+  web:
+    build: ./web
+    ports:
+      - "8080:80"
+    volumes:
+      - ./data:/usr/share/nginx/html/data:ro   # <-- serve same host folder
+    depends_on:
+      - worker
+
+volumes:
+  data:

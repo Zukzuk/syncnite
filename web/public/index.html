@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Playnite Library Viewer</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 0;
+      padding: 1rem;
+    }
+
+    header {
+      display: flex;
+      gap: .75rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    input,
+    select {
+      padding: .5rem;
+      font-size: 1rem;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 1rem;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid #ddd;
+      padding: .5rem;
+      text-align: left;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: .15rem .5rem;
+      border-radius: 999px;
+      background: #eee;
+      margin-right: .25rem;
+    }
+
+    .hidden-row {
+      background: #f3f3f3;
+      color: #555;
+      opacity: 0.2;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1 style="margin:0;">Playnite Web</h1>
+    <input id="q" placeholder="Search titles/tags/source..." />
+    <select id="source">
+      <option value="">All sources</option>
+    </select>
+    <select id="tag">
+      <option value="">All tags</option>
+    </select>
+    <span id="count"></span>
+  </header>
+  <table id="grid">
+    <thead>
+      <tr>
+        <th>Icon</th>
+        <th>Title</th>
+        <th>Source</th>
+        <th>Tags</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <script type="module" src="/assets/app.js"></script>
+</body>
+
+</html>
