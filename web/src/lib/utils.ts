@@ -1,4 +1,40 @@
 import type { Guidish, Link, GameDoc } from "./types";
+import ICO from "icojs";
+
+export function isIcoPath(url: string): boolean {
+  try {
+    const u = new URL(url, window.location.origin);
+    return /\.ico(\?|#|$)/i.test(u.pathname);
+  } catch {
+    return /\.ico(\?|#|$)/i.test(url);
+  }
+}
+
+export function bucketLetter(title: string, sortingName: string) {
+  const s = (sortingName || title || "").trim();
+  const ch = s.charAt(0).toUpperCase();
+  return /[A-Z]/.test(ch) ? ch : "@";
+}
+
+export async function icoToPngDataUrl(icoUrl: string): Promise<string | null> {
+  try {
+    const res = await fetch(icoUrl, { cache: "force-cache" });
+    if (!res.ok) return null;
+    const buf = await res.arrayBuffer();
+    const images = await ICO.parse(buf, "image/png"); // returns PNG blobs
+    if (!images?.length) return null;
+    // choose largest by width
+    const best = images.slice().sort((a, b) => (b.width ?? 0) - (a.width ?? 0))[0];
+    const blob = new Blob([best.buffer], { type: "image/png" });
+    return await new Promise<string>((resolve) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(String(fr.result));
+      fr.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
 
 export const asGuid = (v: Guidish): string | null => {
   if (!v) return null;
@@ -86,4 +122,22 @@ export function firstStoreishLink(links: Link[] | undefined, sourceName: string)
     );
   });
   return byDomain?.Url ?? null;
+}
+
+export function hasEmulatorTag(tags: string[]): boolean {
+  return tags.some(t => /\bemulator(s)?\b/i.test(t));
+}
+
+export function myAbandonwareLink(title: string): string {
+  return `https://www.myabandonware.com/search/q/${encodeURIComponent(title)}`;
+}
+
+export function effectiveLink(
+  r: { url: string | null; source: string; title: string; tags: string[] }
+): string | null {
+  if (r.url) return r.url;
+  if (!r.source && !hasEmulatorTag(r.tags)) {
+    return myAbandonwareLink(r.title);
+  }
+  return null;
 }

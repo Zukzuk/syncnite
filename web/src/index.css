@@ -1,74 +1,22 @@
-:root {
-    --muted: #eee;
-}
+/* Keep CSS tiny so we don't override Mantine's table/scroll/sticky styles */
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; overflow: hidden; }
 
-* {
-    box-sizing: border-box;
-}
-
-body {
-    font-family: system-ui, sans-serif;
-    margin: 0;
-    color: #111;
-}
-
-.view {
-    padding: 1rem;
-}
-
-header.controls {
-    display: flex;
-    gap: .75rem;
-    align-items: center;
-    flex-wrap: wrap;
-    margin-bottom: .5rem;
-}
-
-input,
-select {
-    padding: .5rem;
-    font-size: 1rem;
-}
-
-table {
-    border-collapse: collapse;
-    width: 100%;
-}
-
-th,
-td {
-    border-bottom: 1px solid #ddd;
-    padding: .5rem;
-    text-align: left;
-    vertical-align: top;
-}
-
-th.sortable {
-    cursor: pointer;
-    user-select: none;
-}
-
-.pill {
-    display: inline-block;
-    padding: .15rem .5rem;
-    border-radius: 999px;
-    background: #eee;
-    margin-right: .25rem;
-}
-
-.muted {
-    color: #666;
-}
-
-.hidden-row {
-    opacity: .55;
-    background-color: #eee;
-}
-
+/* Optional: tweak icon visuals without affecting layout */
 img.icon {
-    width: 40px;
-    height: 40px;
-    object-fit: contain;
-    border-radius: 6px;
-    background: #f3f3f3;
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: var(--mantine-color-default);
+}
+
+/* Remove the native bottom border from sticky header cells */
+.sticky-head th {
+  border-bottom: none !important;
+}
+
+/* Ensure the first body row doesn't draw a border under the sticky head shadow */
+table tbody tr:first-child td {
+  border-top: none; /* Mantine typically sets bottom borders; this is a safe guard */
 }
