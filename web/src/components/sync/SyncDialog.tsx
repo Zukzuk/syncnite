@@ -1,23 +1,19 @@
 import React from "react";
 import { Modal, Stack, Group, Select, Button, FileButton, TextInput, Textarea, Progress, Text } from "@mantine/core";
-import { listZips, uploadZip } from "../../lib/api";
-import { processZipStream } from "../../lib/api";
-import { type ProgressEvent } from "../../lib/types";
+import { listZips, uploadZip, processZipStream } from "../../lib/api";
+import { type StreamProgress } from "../../lib/types";
 
 type ZipInfo = { name: string; size: number; mtime: number };
 
 export function SyncDialog({
-    opened,
-    onClose,
-    onSuccess,
+    opened, onClose, onSuccess,
 }: { opened: boolean; onClose: () => void; onSuccess?: () => void }) {
     const [zips, setZips] = React.useState<ZipInfo[]>([]);
     const [selected, setSelected] = React.useState<string | null>(null);
     const [password, setPassword] = React.useState("");
-    const [logs, setLogs] = React.useState("");        // static lines (non-progress)
+    const [logs, setLogs] = React.useState("");
     const [busy, setBusy] = React.useState(false);
 
-    // live progress bars (overwrite in place)
     const [unzipPct, setUnzipPct] = React.useState<number | null>(null);
     const [copyPct, setCopyPct] = React.useState<number | null>(null);
     const [copyStats, setCopyStats] = React.useState<{ copiedMB: string; totalMB: string; deltaMB: string } | null>(null);
@@ -40,26 +36,17 @@ export function SyncDialog({
     function appendLog(line: string) {
         setLogs((prev) => (prev ? prev + "\n" + line : line));
     }
+    const fmtMB = (n?: number) => (n || n === 0 ? (n / (1024 * 1024)).toFixed(1) : "");
 
-    function formatMB(n?: number) {
-        if (!n && n !== 0) return "";
-        return (n / (1024 * 1024)).toFixed(1);
-    }
-
-    function handleProgress(p: ProgressEvent) {
-        if (p.phase === "unzip") {
-            setUnzipPct(Math.max(0, Math.min(100, Math.round(p.percent))));
-        } else if (p.phase === "copy") {
+    function handleProgress(p: StreamProgress) {
+        if (p.phase === "unzip") setUnzipPct(Math.max(0, Math.min(100, Math.round(p.percent))));
+        if (p.phase === "copy") {
             setCopyPct(Math.max(0, Math.min(100, Math.round(p.percent))));
-            setCopyStats({
-                copiedMB: formatMB(p.copiedBytes),
-                totalMB: formatMB(p.totalBytes),
-                deltaMB: formatMB(p.deltaBytes),
-            });
+            setCopyStats({ copiedMB: fmtMB(p.copiedBytes), totalMB: fmtMB(p.totalBytes), deltaMB: fmtMB(p.deltaBytes) });
         }
     }
 
-    async function onRun() {
+    function onRun() {
         if (!selected) return;
         setBusy(true);
         setLogs("");
@@ -74,10 +61,10 @@ export function SyncDialog({
             onProgress: handleProgress,
             onDone: () => {
                 appendLog("DONE");
+                setBusy(false);
                 setUnzipPct(null);
                 setCopyPct(null);
                 setCopyStats(null);
-                setBusy(false);
                 onSuccess?.();
             },
             onError: (msg) => {
@@ -91,23 +78,13 @@ export function SyncDialog({
         <Modal opened={opened} onClose={onClose} title="Sync backup" size="xl">
             <Stack gap="sm">
                 <Group align="end" gap="sm" wrap="wrap">
-                    <Select
-                        label="Available backups"
-                        placeholder="Select a ZIP"
-                        value={selected}
-                        onChange={setSelected}
-                        data={zips.map((z) => ({ value: z.name, label: z.name }))}
-                        w={360}
-                    />
+                    <Select label="Available backups" placeholder="Select a ZIP"
+                        value={selected} onChange={setSelected} data={zips.map(z => ({ value: z.name, label: z.name }))} w={360} />
                     <FileButton onChange={onUpload} accept=".zip">
                         {(props) => <Button {...props} variant="light">Upload ZIP…</Button>}
                     </FileButton>
-                    <TextInput
-                        label="Database password (optional)"
-                        value={password}
-                        onChange={(e) => setPassword(e.currentTarget.value)}
-                        w={280}
-                    />
+                    <TextInput label="Database password (optional)" value={password}
+                        onChange={(e) => setPassword(e.currentTarget.value)} w={280} />
                     <Button onClick={onRun} loading={busy}>Run export</Button>
                     <Button variant="outline" component="a" href="/data/" target="_blank">Open /data</Button>
                 </Group>
@@ -128,13 +105,8 @@ export function SyncDialog({
                     </Stack>
                 )}
 
-                <Textarea
-                    label="Logs"
-                    value={logs}
-                    minRows={12}
-                    autosize
-                    styles={{ input: { fontFamily: "ui-monospace, Menlo, Consolas, monospace" } }}
-                />
+                <Textarea label="Logs" value={logs} minRows={12} autosize
+                    styles={{ input: { fontFamily: "ui-monospace, Menlo, Consolas, monospace" } }} />
             </Stack>
         </Modal>
     );

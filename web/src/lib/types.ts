@@ -33,16 +33,16 @@ export type Row = {
   hidden: boolean;
   url: string | null;
   iconUrl: string;
-  year?: number | null; 
+  year?: number | null;
   raw: GameDoc;
 };
 
-export type ProgressEvent = {
-    phase: "unzip" | "copy";
-    percent: number;             // 0..100
-    copiedBytes?: number;
-    totalBytes?: number;
-    deltaBytes?: number;
+export type StreamProgress = {
+  phase: "unzip" | "copy";
+  percent: number;             // 0..100
+  copiedBytes?: number;
+  totalBytes?: number;
+  deltaBytes?: number;
 };
 
 export type SortKey = "title" | "source" | "tags" | "year";

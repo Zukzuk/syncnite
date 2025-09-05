@@ -2,26 +2,32 @@ import type { GameDoc, NamedDoc, Row } from "./types";
 import { asGuid, asGuidArray, buildIconUrl, firstStoreishLink, normalizePath, sourceUrlTemplates, extractYear } from "./utils";
 
 async function getJson<T>(path: string): Promise<T> {
-  const r = await fetch(path);
+  const sep = path.includes("?") ? "&" : "?";
+  const url = `${path}${sep}v=${Date.now()}`;   // cache-bust
+  const r = await fetch(url, { cache: "no-store" });
   if (!r.ok) throw new Error(`${path} -> ${r.status}`);
   return r.json();
 }
 
 async function tryLoadMany<T>(candidates: string[], fallback: T): Promise<T> {
   for (const c of candidates) {
-    try { return await getJson<T>(c); } catch { }
+    try { return await getJson<T>(c); } catch { /* try next */ }
   }
   return fallback;
 }
 
 const BASE = "/data";
 const FILES = {
-  games: [`${BASE}/games.Game.json`],
-  tags: [`${BASE}/tags.Tag.json`],
+  games: [
+    `${BASE}/games.Game.json`,
+  ],
+  tags: [
+    `${BASE}/tags.Tag.json`,
+  ],
   sources: [
     `${BASE}/sources.GameSource.json`,
-    `${BASE}/sources.Source.json`
-  ]
+    `${BASE}/sources.Source.json`,
+  ],
 };
 
 export type Loaded = {
@@ -40,12 +46,8 @@ export async function loadLibrary(): Promise<Loaded> {
     name: x.Name ?? ""
   });
 
-  const tagById = new Map(
-    tags.map(normNamed).filter(t => t.id).map(t => [t.id as string, t.name])
-  );
-  const sourceById = new Map(
-    sources.map(normNamed).filter(s => s.id).map(s => [s.id as string, s.name])
-  );
+  const tagById = new Map(tags.map(normNamed).filter(t => t.id).map(t => [t.id as string, t.name]));
+  const sourceById = new Map(sources.map(normNamed).filter(s => s.id).map(s => [s.id as string, s.name]));
 
   const rows: Row[] = games.map(g => {
     const id = asGuid(g.Id) ?? asGuid(g._id) ?? "";
