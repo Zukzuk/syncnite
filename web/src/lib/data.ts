@@ -69,6 +69,7 @@ export async function loadLibrary(): Promise<Loaded> {
     const iconRel = normalizePath((g as any).Icon);
     const iconId = asGuid((g as any).IconId);
     const iconUrl = buildIconUrl(iconRel, iconId);
+    const installed = (g as any).IsInstalled === true;
 
     return {
       id,
@@ -80,6 +81,7 @@ export async function loadLibrary(): Promise<Loaded> {
       url: url ?? null,
       iconUrl,
       year,
+      installed,
       raw: g
     };
   });

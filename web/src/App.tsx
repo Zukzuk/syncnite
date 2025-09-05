@@ -1,11 +1,12 @@
 import React from "react";
-import { MantineProvider, ColorSchemeScript, AppShell, Burger, Group, Title, Menu, ActionIcon } from "@mantine/core";
+import { MantineProvider, ColorSchemeScript, AppShell, Burger, Group, Title, Menu, ActionIcon, Text, NumberFormatter } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { LibraryView } from "./components/library/LibraryView";
 import { loadLibrary } from "./lib/data";
 import { SyncDialog } from "./components/sync/SyncDialog";
+
 import "@mantine/core/styles.css";
-import "./index.css";
+import "./index.scss";
 
 export default function App() {
   const [opened, { toggle }] = useDisclosure(false);
@@ -16,6 +17,8 @@ export default function App() {
     | { ok: false; error: string }
     | null
   >(null);
+
+  const [counts, setCounts] = React.useState<{ filtered: number; total: number }>({ filtered: 0, total: 0 });
 
   const reload = React.useCallback(() => {
     loadLibrary()
@@ -36,15 +39,21 @@ export default function App() {
           styles={{ main: { height: "100%", display: "flex", flexDirection: "column", minHeight: 0 } }}>
           <AppShell.Header>
             <Group h="100%" px="md" justify="space-between">
-              <Group>
+              <Group gap="sm">
                 <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
                 <Title order={4}>Library</Title>
+                {/* Counter moved into header, right of the title */}
+                <Text c="dimmed" size="sm">
+                  <NumberFormatter value={counts.filtered} thousandSeparator /> /
+                  <NumberFormatter value={counts.total} thousandSeparator />
+                </Text>
               </Group>
+
               <Menu withinPortal position="bottom-end" withArrow>
                 <Menu.Target>
                   <ActionIcon variant="subtle" aria-label="Menu">
                     <span style={{ display: "inline-block", width: 18 }}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                         <rect x="3" y="6" width="18" height="2" rx="1" fill="currentColor" />
                         <rect x="3" y="11" width="18" height="2" rx="1" fill="currentColor" />
                         <rect x="3" y="16" width="18" height="2" rx="1" fill="currentColor" />
@@ -68,12 +77,15 @@ export default function App() {
             ) : !state.ok ? (
               <div className="view" style={{ padding: 16 }}>Failed to load library: {state.error}</div>
             ) : (
-              <LibraryView data={state.data} />
+              <LibraryView
+                data={state.data}
+                onCountsChange={(filtered, total) => setCounts({ filtered, total })}
+              />
             )}
           </AppShell.Main>
         </AppShell>
 
-        {/* Important: trigger a reload when the stream completes */}
+        {/* Trigger a reload when the stream completes */}
         <SyncDialog opened={syncOpen} onClose={() => setSyncOpen(false)} onSuccess={reload} />
       </MantineProvider>
     </>

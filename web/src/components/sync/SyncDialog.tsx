@@ -13,7 +13,6 @@ export function SyncDialog({
     const [password, setPassword] = React.useState("");
     const [logs, setLogs] = React.useState("");
     const [busy, setBusy] = React.useState(false);
-
     const [unzipPct, setUnzipPct] = React.useState<number | null>(null);
     const [copyPct, setCopyPct] = React.useState<number | null>(null);
     const [copyStats, setCopyStats] = React.useState<{ copiedMB: string; totalMB: string; deltaMB: string } | null>(null);

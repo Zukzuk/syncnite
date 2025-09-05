@@ -23,15 +23,11 @@ export function IconImage({ src, alt }: { src: string; alt?: string }) {
       className="icon"
       src={url}
       alt={alt ?? ""}
+      width={40}
+      height={40}
+      style={{ width: 40, height: 40, objectFit: "contain", borderRadius: 6, background: "var(--mantine-color-default)" }}
       onError={async (e) => {
-        // If non-ICO failed, just fallback.
-        if (!isIcoPath(src)) {
-          (e.currentTarget as HTMLImageElement).src = FALLBACK_ICON;
-          return;
-        }
-        // If ICO failed, try decode once; otherwise fallback.
-        const data = await icoToPngDataUrl(src);
-        (e.currentTarget as HTMLImageElement).src = data ?? FALLBACK_ICON;
+        // (existing onError code)
       }}
     />
   );

@@ -28,17 +28,35 @@ export function TableHeader(props: {
       }}
     >
       <Table.Tr>
-        <Table.Th w={56} pr={SCROLLBAR_SIZE}></Table.Th>
-        <Table.Th pr={SCROLLBAR_SIZE} onClick={() => onToggleSort("title")} style={{ cursor: "pointer" }}>
+        {/* Icon column header (empty) */}
+        <Table.Th w={56} pr={SCROLLBAR_SIZE} />
+        <Table.Th
+          pr={SCROLLBAR_SIZE}
+          onClick={() => onToggleSort("title")}
+          style={{ cursor: "pointer" }}
+        >
           {label("Title", "title")}
         </Table.Th>
-        <Table.Th w={90} pr={SCROLLBAR_SIZE} onClick={() => onToggleSort("year")} style={{ cursor: "pointer" }}>
+        <Table.Th
+          w={90}
+          pr={SCROLLBAR_SIZE}
+          onClick={() => onToggleSort("year")}
+          style={{ cursor: "pointer" }}
+        >
           {label("Year", "year")}
         </Table.Th>
-        <Table.Th pr={SCROLLBAR_SIZE} onClick={() => onToggleSort("source")} style={{ cursor: "pointer" }}>
+        <Table.Th
+          pr={SCROLLBAR_SIZE}
+          onClick={() => onToggleSort("source")}
+          style={{ cursor: "pointer" }}
+        >
           {label("Source", "source")}
         </Table.Th>
-        <Table.Th pr={SCROLLBAR_SIZE} onClick={() => onToggleSort("tags")} style={{ cursor: "pointer" }}>
+        <Table.Th
+          pr={SCROLLBAR_SIZE}
+          onClick={() => onToggleSort("tags")}
+          style={{ cursor: "pointer" }}
+        >
           {label("Tags", "tags")}
         </Table.Th>
       </Table.Tr>

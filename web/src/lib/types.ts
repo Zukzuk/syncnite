@@ -20,6 +20,7 @@ export type GameDoc = {
   Links?: Link[];
   Icon?: string;
   IconId?: Guidish;
+  IsInstalled?: boolean;
 };
 
 export type NamedDoc = { _id?: Guidish; Id?: Guidish; Name?: string };
@@ -35,6 +36,7 @@ export type Row = {
   iconUrl: string;
   year?: number | null;
   raw: GameDoc;
+  installed: boolean;
 };
 
 export type StreamProgress = {

@@ -1,0 +1,58 @@
+html, body, #root { height: 100%; margin: 0; overflow: hidden; }
+* { box-sizing: border-box; }
+#root { min-height: 0; }
+
+.view {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Mantine sticky header clean-up */
+.sticky-head {
+  th { border-bottom: none !important; }
+}
+
+/* Library table theming */
+.library-table {
+  tbody {
+    tr:first-child td { border-top: none; }
+
+    tr.game-row {
+      &.is-installed > td {
+          background-color: color-mix(in srgb, var(--mantine-primary-color-filled) 12%, transparent);
+      }
+
+      /* Hidden rows: suppress hover background & play overlay */
+      &.is-dim:hover > td { background-color: inherit !important; }
+      &.is-dim:hover .icon-wrap .play-overlay { opacity: 0; transform: none; }
+      &.is-dim:hover .icon-wrap img.icon { opacity: 1; transform: none; }
+    }
+  }
+
+  /* Icon + play overlay */
+  .icon-wrap {
+    position: relative;
+    width: 40px; height: 40px; display: inline-block;
+
+    > img.icon {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: contain; display: block;
+      border-radius: 6px; background: var(--mantine-color-default);
+      transition: opacity 120ms ease, transform 120ms ease;
+    }
+
+    .play-overlay {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 6px; opacity: 0; transform: scale(0.98);
+      transition: opacity 120ms ease, transform 120ms ease;
+      text-decoration: none; cursor: pointer;
+    }
+  }
+
+  /* Hover affordance (except for hidden rows via .is-dim) */
+  tbody tr.game-row:hover .icon-wrap > img.icon { opacity: .15; transform: scale(1.02); }
+  tbody tr.game-row:hover .icon-wrap .play-overlay { opacity: 1; transform: scale(1); }
+}

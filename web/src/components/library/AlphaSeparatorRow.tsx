@@ -10,7 +10,7 @@ export function AlphaSeparatorRow({ bucket, top }: { bucket: string; top: number
         style={{
           position: "sticky",
           top,
-          zIndex: 1, // below header (z=2) but above body
+          zIndex: 1,
           background: "var(--mantine-color-body)",
           fontWeight: 700,
           borderTop: "1px solid var(--mantine-color-default-border)",

@@ -7,11 +7,20 @@ import { Controls } from "./Controls";
 import { TableHeader } from "./TableHeader";
 import { AlphaSeparatorRow } from "./AlphaSeparatorRow";
 import { GameRow } from "./GameRow";
-import { SCROLLBAR_SIZE } from "./constants";
 
-export function LibraryView({ data }: { data: Loaded }) {
+export function LibraryView({
+  data,
+  onCountsChange,
+}: {
+  data: Loaded;
+  onCountsChange?: (filtered: number, total: number) => void;
+}) {
   const { ui, derived } = useLibraryState(data);
   const { ref: theadRef, height: theadH } = useElementSize();
+
+  React.useEffect(() => {
+    onCountsChange?.(derived.filteredCount, derived.totalCount);
+  }, [derived.filteredCount, derived.totalCount, onCountsChange]);
 
   return (
     <Flex direction="column" h="100%" style={{ minHeight: 0 }}>
@@ -21,18 +30,24 @@ export function LibraryView({ data }: { data: Loaded }) {
           source={ui.source} setSource={ui.setSource} sources={data.allSources}
           tag={ui.tag} setTag={ui.setTag} tags={data.allTags}
           showHidden={ui.showHidden} setShowHidden={ui.setShowHidden}
-          filteredCount={derived.filteredCount} totalCount={derived.totalCount}
+          installedOnly={ui.installedOnly} setInstalledOnly={ui.setInstalledOnly}
         />
       </Box>
       <Box
         style={{
-          flex: 1,            // fill the remaining column space
-          minHeight: 0,       // allow shrinking so overflow engages
-          overflowY: "auto",  // <-- the only scrollbar we want
+          flex: 1,
+          minHeight: 0,
+          overflowY: "auto",
           overflowX: "hidden",
         }}
       >
-        <Table verticalSpacing="xs" highlightOnHover stickyHeader stickyHeaderOffset={0}>
+        <Table
+          className="library-table"
+          verticalSpacing="xs"
+          highlightOnHover
+          stickyHeader
+          stickyHeaderOffset={0}
+        >
           <TableHeader
             theadRef={theadRef}
             headerHeight={theadH}
@@ -62,6 +77,7 @@ export function LibraryView({ data }: { data: Loaded }) {
                       id={row.id}
                       hidden={row.hidden}
                       showHidden={ui.showHidden}
+                      installed={row.installed}
                       iconUrl={row.iconUrl}
                       title={row.title}
                       source={row.source}
@@ -80,6 +96,7 @@ export function LibraryView({ data }: { data: Loaded }) {
                   id={row.id}
                   hidden={row.hidden}
                   showHidden={ui.showHidden}
+                  installed={row.installed}
                   iconUrl={row.iconUrl}
                   title={row.title}
                   source={row.source}
