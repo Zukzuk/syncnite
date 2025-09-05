@@ -18,6 +18,7 @@ export function TableHeader(props: {
   return (
     <Table.Thead
       ref={theadRef}
+      className="sticky-head"
       style={{
         position: "sticky",
         top: 0,

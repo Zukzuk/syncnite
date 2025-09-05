@@ -10,5 +10,3 @@ RUN apt-get update && apt-get install -y --no-install-recommends nodejs p7zip-fu
   && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=build /out/ /app/dumper/
-COPY worker/tools/extract-and-dump.mjs /app/extract-and-dump.mjs
-ENTRYPOINT ["node", "/app/extract-and-dump.mjs"]

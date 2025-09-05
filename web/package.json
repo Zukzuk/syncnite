@@ -1,5 +1,5 @@
 {
-  "name": "playnite-client",
+  "name": "playnite-web",
   "private": true,
   "scripts": {
     "dev": "vite",

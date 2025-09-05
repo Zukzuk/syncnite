@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Flex, ScrollArea, Table } from "@mantine/core";
+import { Box, Flex, Table } from "@mantine/core";
 import { useElementSize } from "@mantine/hooks";
 import type { Loaded } from "../../lib/data";
 import { useLibraryState } from "./useLibraryState";
@@ -14,7 +14,7 @@ export function LibraryView({ data }: { data: Loaded }) {
   const { ref: theadRef, height: theadH } = useElementSize();
 
   return (
-    <Flex direction="column" h="100%">
+    <Flex direction="column" h="100%" style={{ minHeight: 0 }}>
       <Box p="md">
         <Controls
           q={ui.q} setQ={ui.setQ}
@@ -24,8 +24,14 @@ export function LibraryView({ data }: { data: Loaded }) {
           filteredCount={derived.filteredCount} totalCount={derived.totalCount}
         />
       </Box>
-
-      <ScrollArea flex={1} type="auto" scrollbars="y" offsetScrollbars scrollbarSize={SCROLLBAR_SIZE}>
+      <Box
+        style={{
+          flex: 1,            // fill the remaining column space
+          minHeight: 0,       // allow shrinking so overflow engages
+          overflowY: "auto",  // <-- the only scrollbar we want
+          overflowX: "hidden",
+        }}
+      >
         <Table verticalSpacing="xs" highlightOnHover stickyHeader stickyHeaderOffset={0}>
           <TableHeader
             theadRef={theadRef}
@@ -85,7 +91,7 @@ export function LibraryView({ data }: { data: Loaded }) {
             )}
           </Table.Tbody>
         </Table>
-      </ScrollArea>
+      </Box>
     </Flex>
   );
 }

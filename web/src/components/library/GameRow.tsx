@@ -1,6 +1,6 @@
 import React from "react";
 import { Badge, Group, Table, Text } from "@mantine/core";
-import { IconImage } from "../IconImage";
+import { IconImage } from "./IconImage";
 import { effectiveLink } from "../../lib/utils";
 
 export function GameRow(props: {

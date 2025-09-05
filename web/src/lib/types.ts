@@ -37,5 +37,13 @@ export type Row = {
   raw: GameDoc;
 };
 
+export type ProgressEvent = {
+    phase: "unzip" | "copy";
+    percent: number;             // 0..100
+    copiedBytes?: number;
+    totalBytes?: number;
+    deltaBytes?: number;
+};
+
 export type SortKey = "title" | "source" | "tags" | "year";
 export type SortDir = "asc" | "desc";

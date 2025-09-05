@@ -16,11 +16,11 @@ async function tryLoadMany<T>(candidates: string[], fallback: T): Promise<T> {
 
 const BASE = "/data";
 const FILES = {
-  games: [`${BASE}/library.games.Game.json`],
-  tags: [`${BASE}/library.tags.Tag.json`],
+  games: [`${BASE}/games.Game.json`],
+  tags: [`${BASE}/tags.Tag.json`],
   sources: [
-    `${BASE}/library.sources.GameSource.json`,
-    `${BASE}/library.sources.Source.json`
+    `${BASE}/sources.GameSource.json`,
+    `${BASE}/sources.Source.json`
   ]
 };
 

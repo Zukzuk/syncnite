@@ -36,10 +36,6 @@ if (!dbFiles.Any())
 }
 
 Console.WriteLine($"Found {dbFiles.Count} .db files:");
-foreach (var f in dbFiles)
-{
-    Console.WriteLine($"  - {Path.GetRelativePath(rootDir, f)}");
-}
 
 int dumped = 0, skipped = 0;
 

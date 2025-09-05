@@ -1,0 +1,7 @@
+{
+    "name": "playnite-worker",
+    "private": true,
+    "scripts": {
+        "build": "echo \"worker: nothing to build\""
+    }
+}

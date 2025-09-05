@@ -12,7 +12,6 @@ export function Controls(props: {
 
   return (
     <Group justify="space-between" align="center" mb="xs" wrap="wrap">
-      <Title order={2} fw={700}>Library</Title>
       <Group gap="sm" wrap="wrap">
         <TextInput
           placeholder="Search titles / tags / source…"
