@@ -6,7 +6,7 @@ export function AlphaSeparatorRow({ bucket, top }: { bucket: string; top: number
   return (
     <Table.Tr>
       <Table.Td
-        colSpan={4}
+        colSpan={5}
         style={{
           position: "sticky",
           top,

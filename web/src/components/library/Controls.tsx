@@ -42,7 +42,6 @@ export function Controls(props: {
         <Text c="dimmed">
           <NumberFormatter value={filteredCount} thousandSeparator /> /
           <NumberFormatter value={totalCount} thousandSeparator />
-          {!showHidden ? " (hidden excluded)" : ""}
         </Text>
       </Group>
     </Group>

@@ -1,12 +1,7 @@
 import * as React from "react";
 import type { SortKey, SortDir } from "../../lib/types";
 import type { Loaded } from "../../lib/data";
-
-function bucketLetter(title: string, sortingName: string) {
-  const s = (sortingName || title || "").trim();
-  const ch = s.charAt(0).toUpperCase();
-  return /[A-Z]/.test(ch) ? ch : "@";
-}
+import { bucketLetter } from "../../lib/utils";
 
 export type LibraryUiState = {
   q: string;
@@ -27,17 +22,13 @@ export function useLibraryState(data: Loaded) {
   const [q, setQ] = React.useState("");
   const [source, setSource] = React.useState<string | null>("");
   const [tag, setTag] = React.useState<string | null>("");
-  const [showHidden, setShowHidden] = React.useState(false); // default OFF
+  const [showHidden, setShowHidden] = React.useState(false);
   const [sortKey, setSortKey] = React.useState<SortKey>("title");
   const [sortDir, setSortDir] = React.useState<SortDir>("asc");
 
   const toggleSort = (key: SortKey) => {
-    if (sortKey === key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
-      setSortKey(key);
-      setSortDir("asc");
-    }
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setSortKey(key); setSortDir("asc"); }
   };
 
   const filteredSorted = React.useMemo(() => {
@@ -49,26 +40,39 @@ export function useLibraryState(data: Loaded) {
       (!qv ||
         r.title.toLowerCase().includes(qv) ||
         r.source.toLowerCase().includes(qv) ||
-        r.tags.some((t) => t.toLowerCase().includes(qv)))
+        (r.year != null && String(r.year).includes(qv)) ||
+        r.tags.some((t) => t.toLowerCase().includes(qv))
+      )
     );
 
     const sortVal = (r: typeof data.rows[number]) => {
       switch (sortKey) {
         case "title": return (r.sortingName || r.title).toLowerCase();
         case "source": return (r.source || "").toLowerCase();
-        case "tags":   return r.tags.join(", ").toLowerCase();
+        case "tags": return r.tags.join(", ").toLowerCase();
+        case "year": return String(r.year ?? ""); // string compare but fine; or use a two-step numeric sort below
       }
     };
     pass.sort((a, b) => {
+      if (sortKey === "year") {
+        const av = a.year ?? -Infinity;
+        const bv = b.year ?? -Infinity;
+        if (av < bv) return sortDir === "asc" ? -1 : 1;
+        if (av > bv) return sortDir === "asc" ? 1 : -1;
+        // tie-breaker by title
+        const at = (a.sortingName || a.title).toLowerCase();
+        const bt = (b.sortingName || b.title).toLowerCase();
+        return at.localeCompare(bt);
+      }
       const av = sortVal(a), bv = sortVal(b);
       if (av < bv) return sortDir === "asc" ? -1 : 1;
       if (av > bv) return sortDir === "asc" ? 1 : -1;
       return 0;
     });
+
     return pass;
   }, [q, source, tag, showHidden, sortKey, sortDir, data.rows]);
 
-  // Build buckets for alpha separators
   const withBuckets = React.useMemo(() => {
     return filteredSorted.map((row) => ({
       row,
@@ -81,6 +85,7 @@ export function useLibraryState(data: Loaded) {
     derived: {
       filteredCount: filteredSorted.length,
       totalCount: data.rows.length,
+      rowsSorted: filteredSorted,
       withBuckets,
     },
   };

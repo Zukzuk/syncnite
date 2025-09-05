@@ -11,9 +11,10 @@ export function GameRow(props: {
   title: string;
   source: string;
   tags: string[];
+  year?: number | null;
   url: string | null; // pre-resolved (but effectiveLink will still fallback)
 }) {
-  const { id, hidden, showHidden, iconUrl, title, source, tags, url } = props;
+  const { id, hidden, showHidden, iconUrl, title, source, tags, year, url } = props;
   const href = url ?? effectiveLink({ url, source, title, tags });
   const dim = hidden && showHidden;
 
@@ -32,6 +33,9 @@ export function GameRow(props: {
         ) : (
           <Text fw={500} c={dim ? "dimmed" : undefined}>{title}</Text>
         )}
+      </Table.Td>
+      <Table.Td w={90}>
+        <Text c={dim ? "dimmed" : undefined}>{year ?? ""}</Text>
       </Table.Td>
       <Table.Td>{source ? <Text c={dim ? "dimmed" : undefined}>{source}</Text> : <Text c="dimmed">—</Text>}</Table.Td>
       <Table.Td>

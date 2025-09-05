@@ -141,3 +141,50 @@ export function effectiveLink(
   }
   return null;
 }
+
+function parseYearFromString(s: string): number | null {
+  // Accept "2021", "2021-05-03", "2021/05/03", "2021-05", "May 5, 2021", etc.
+  const m = s.match(/(\d{4})/);
+  if (!m) return null;
+  const y = Number(m[1]);
+  if (y >= 1970 && y <= 2100) return y;
+  return null;
+}
+
+function parseYearFromNumber(n: number): number | null {
+  // Heuristic: treat 10 or 13 digits as epoch seconds/millis
+  if (n > 10_000_000_000) {
+    const y = new Date(n).getUTCFullYear();
+    return y >= 1970 && y <= 2100 ? y : null;
+  }
+  if (n > 1_000_000_000) {
+    const y = new Date(n * 1000).getUTCFullYear();
+    return y >= 1970 && y <= 2100 ? y : null;
+  }
+  // maybe already a year
+  if (n >= 1970 && n <= 2100) return n;
+  return null;
+}
+
+export function extractYear(val: unknown): number | null {
+  if (val == null) return null;
+  if (typeof val === "number") return parseYearFromNumber(val);
+  if (typeof val === "string") return parseYearFromString(val);
+  if (typeof val === "object") {
+    const o = val as Record<string, unknown>;
+    // LiteDB / BSON-style
+    if (typeof o["$date"] === "string") return parseYearFromString(o["$date"]);
+    if (typeof o["Date"] === "string") return parseYearFromString(o["Date"]);
+    if (typeof o["Ticks"] === "number") {
+      // Ticks since 0001; convert to ms
+      const ticks = o["Ticks"];
+      const ms = (ticks - 621355968000000000) / 10000;
+      return parseYearFromNumber(ms);
+    }
+    // Generic Year or Value fields:
+    if (typeof o["Year"] === "number") return parseYearFromNumber(o["Year"]);
+    if (typeof o["Value"] === "string") return parseYearFromString(o["Value"]);
+    if (typeof o["Value"] === "number") return parseYearFromNumber(o["Value"]);
+  }
+  return null;
+}

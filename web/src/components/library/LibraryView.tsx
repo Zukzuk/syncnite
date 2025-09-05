@@ -13,7 +13,6 @@ export function LibraryView({ data }: { data: Loaded }) {
   const { ui, derived } = useLibraryState(data);
   const { ref: theadRef, height: theadH } = useElementSize();
 
-  // lock page scroll elsewhere (index.css: html,body,#root { height:100%; overflow:hidden })
   return (
     <Flex direction="column" h="100%">
       <Box p="md">
@@ -26,13 +25,7 @@ export function LibraryView({ data }: { data: Loaded }) {
         />
       </Box>
 
-      <ScrollArea
-        flex={1}
-        type="auto"
-        scrollbars="y"
-        offsetScrollbars
-        scrollbarSize={SCROLLBAR_SIZE}
-      >
+      <ScrollArea flex={1} type="auto" scrollbars="y" offsetScrollbars scrollbarSize={SCROLLBAR_SIZE}>
         <Table verticalSpacing="xs" highlightOnHover stickyHeader stickyHeaderOffset={0}>
           <TableHeader
             theadRef={theadRef}
@@ -42,30 +35,54 @@ export function LibraryView({ data }: { data: Loaded }) {
             onToggleSort={ui.toggleSort}
           />
           <Table.Tbody>
-            {(() => {
-              const out: React.ReactNode[] = [];
-              let prevBucket: string | null = null;
-              for (const { row, bucket } of derived.withBuckets) {
-                if (bucket !== prevBucket) {
-                  prevBucket = bucket;
-                  out.push(<AlphaSeparatorRow key={`sep-${bucket}-${out.length}`} bucket={bucket} top={theadH || 0} />);
+            {ui.sortKey === "title" ? (
+              (() => {
+                const out: React.ReactNode[] = [];
+                let prevBucket: string | null = null;
+                for (const { row, bucket } of derived.withBuckets) {
+                  if (bucket !== prevBucket) {
+                    prevBucket = bucket;
+                    out.push(
+                      <AlphaSeparatorRow
+                        key={`sep-${bucket}-${out.length}`}
+                        bucket={bucket}
+                        top={theadH || 0}
+                      />
+                    );
+                  }
+                  out.push(
+                    <GameRow
+                      key={row.id}
+                      id={row.id}
+                      hidden={row.hidden}
+                      showHidden={ui.showHidden}
+                      iconUrl={row.iconUrl}
+                      title={row.title}
+                      source={row.source}
+                      tags={row.tags}
+                      year={row.year}
+                      url={row.url}
+                    />
+                  );
                 }
-                out.push(
-                  <GameRow
-                    key={row.id}
-                    id={row.id}
-                    hidden={row.hidden}
-                    showHidden={ui.showHidden}
-                    iconUrl={row.iconUrl}
-                    title={row.title}
-                    source={row.source}
-                    tags={row.tags}
-                    url={row.url}
-                  />
-                );
-              }
-              return out;
-            })()}
+                return out;
+              })()
+            ) : (
+              derived.rowsSorted.map((row) => (
+                <GameRow
+                  key={row.id}
+                  id={row.id}
+                  hidden={row.hidden}
+                  showHidden={ui.showHidden}
+                  iconUrl={row.iconUrl}
+                  title={row.title}
+                  source={row.source}
+                  tags={row.tags}
+                  year={row.year}
+                  url={row.url}
+                />
+              ))
+            )}
           </Table.Tbody>
         </Table>
       </ScrollArea>

@@ -33,8 +33,9 @@ export type Row = {
   hidden: boolean;
   url: string | null;
   iconUrl: string;
+  year?: number | null; 
   raw: GameDoc;
 };
 
-export type SortKey = "title" | "source" | "tags";
+export type SortKey = "title" | "source" | "tags" | "year";
 export type SortDir = "asc" | "desc";

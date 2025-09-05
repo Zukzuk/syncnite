@@ -1,5 +1,5 @@
 import type { GameDoc, NamedDoc, Row } from "./types";
-import { asGuid, asGuidArray, buildIconUrl, firstStoreishLink, normalizePath, sourceUrlTemplates } from "./utils";
+import { asGuid, asGuidArray, buildIconUrl, firstStoreishLink, normalizePath, sourceUrlTemplates, extractYear } from "./utils";
 
 async function getJson<T>(path: string): Promise<T> {
   const r = await fetch(path);
@@ -9,16 +9,15 @@ async function getJson<T>(path: string): Promise<T> {
 
 async function tryLoadMany<T>(candidates: string[], fallback: T): Promise<T> {
   for (const c of candidates) {
-    try { return await getJson<T>(c); } catch {}
+    try { return await getJson<T>(c); } catch { }
   }
   return fallback;
 }
 
-// NOTE: filenames mirror your working app.ts exactly
 const BASE = "/data";
 const FILES = {
   games: [`${BASE}/library.games.Game.json`],
-  tags:  [`${BASE}/library.tags.Tag.json`],
+  tags: [`${BASE}/library.tags.Tag.json`],
   sources: [
     `${BASE}/library.sources.GameSource.json`,
     `${BASE}/library.sources.Source.json`
@@ -53,6 +52,11 @@ export async function loadLibrary(): Promise<Loaded> {
     const tagIds = asGuidArray(g.TagIds);
     const sourceId = asGuid(g.SourceId);
     const sourceName = sourceId ? (sourceById.get(sourceId) ?? "") : "";
+    const year =
+      extractYear((g as any).ReleaseYear) ??
+      extractYear((g as any).ReleaseDate) ??
+      extractYear((g as any).Release) ??
+      null;
 
     let url = firstStoreishLink(g.Links, sourceName);
     if (!url && sourceName) {
@@ -73,6 +77,7 @@ export async function loadLibrary(): Promise<Loaded> {
       hidden: !!g.Hidden,
       url: url ?? null,
       iconUrl,
+      year,
       raw: g
     };
   });
