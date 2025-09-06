@@ -1,9 +1,9 @@
 import React from "react";
-import { Badge, Group, Table, Text } from "@mantine/core";
+import { Badge, Group, Text } from "@mantine/core";
 import { IconImage } from "./IconImage";
 import { effectiveLink } from "../../lib/utils";
 
-export function GameRow(props: {
+export type GameRowProps = {
   id: string;
   hidden: boolean;
   showHidden: boolean;
@@ -14,7 +14,9 @@ export function GameRow(props: {
   tags: string[];
   year?: number | null;
   url: string | null;
-}) {
+};
+
+export function GameRow(props: GameRowProps) {
   const { id, hidden, showHidden, installed, iconUrl, title, source, tags, year, url } = props;
 
   const href = url ?? effectiveLink({ url, source, title, tags });
@@ -26,13 +28,22 @@ export function GameRow(props: {
     : `playnite://InstallGame/${encodeURIComponent(id)}`;
 
   return (
-    <Table.Tr
-      key={id}
+    <div
+      data-row-id={id}
       className={`game-row${dim ? " is-dim" : ""}${installed ? " is-installed" : ""}`}
-      style={{ height: 56, opacity: dim ? 0.55 : 1 }}
+      style={{
+        display: "grid",
+        gridTemplateColumns: "56px 1fr 90px 160px auto",
+        alignItems: "center",
+        gap: 12,
+        height: 56,
+        padding: "0 12px",
+        borderBottom: "1px solid var(--mantine-color-default-border)",
+        opacity: dim ? 0.55 : 1,
+      }}
     >
-      <Table.Td w={56}>
-        <div className="icon-wrap" style={{ opacity: dim ? 0.8 : 1 }}>
+      <div style={{ width: 56 }}>
+        <div className="icon-wrap" style={{ opacity: dim ? 0.8 : 1, position: "relative", width: 40, height: 40 }}>
           <IconImage src={iconUrl} />
           {!dim && (
             <a
@@ -53,9 +64,9 @@ export function GameRow(props: {
             </a>
           )}
         </div>
-      </Table.Td>
+      </div>
 
-      <Table.Td>
+      <div>
         {href ? (
           <Text component="a" href={href} target="_blank" rel="noopener" fw={500} c={dim ? "dimmed" : undefined}>
             {title}
@@ -63,16 +74,23 @@ export function GameRow(props: {
         ) : (
           <Text fw={500} c={dim ? "dimmed" : undefined}>{title}</Text>
         )}
-      </Table.Td>
+      </div>
 
-      <Table.Td w={90}><Text c={dim ? "dimmed" : undefined}>{year ?? ""}</Text></Table.Td>
-      <Table.Td>{source ? <Text c={dim ? "dimmed" : undefined}>{source}</Text> : <Text c="dimmed">—</Text>}</Table.Td>
+      <div style={{ width: 90 }}>
+        <Text c={dim ? "dimmed" : undefined}>{year ?? ""}</Text>
+      </div>
 
-      <Table.Td>
+      <div style={{ width: 160 }}>
+        {source ? <Text c={dim ? "dimmed" : undefined}>{source}</Text> : <Text c="dimmed">—</Text>}
+      </div>
+
+      <div>
         <Group gap={6} style={{ opacity: dim ? 0.8 : 1 }}>
-          {tags.map((t) => (<Badge key={t} variant="light">{t}</Badge>))}
+          {tags.map((t) => (
+            <Badge key={t} variant="light">{t}</Badge>
+          ))}
         </Group>
-      </Table.Td>
-    </Table.Tr>
+      </div>
+    </div>
   );
 }

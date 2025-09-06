@@ -33,7 +33,7 @@ export function SyncDialog({
     }
 
     function appendLog(line: string) {
-        setLogs((prev) => (prev ? prev + "\n" + line : line));
+        setLogs((prev) => (prev ? line + "\n" + prev: line));
     }
     const fmtMB = (n?: number) => (n || n === 0 ? (n / (1024 * 1024)).toFixed(1) : "");
 
@@ -74,18 +74,17 @@ export function SyncDialog({
     }
 
     return (
-        <Modal opened={opened} onClose={onClose} title="Sync backup" size="xl">
+        <Modal opened={opened} onClose={onClose} title="Sync Playnite backup" size="xl">
             <Stack gap="sm">
                 <Group align="end" gap="sm" wrap="wrap">
-                    <Select label="Available backups" placeholder="Select a ZIP"
-                        value={selected} onChange={setSelected} data={zips.map(z => ({ value: z.name, label: z.name }))} w={360} />
+                    <Select label="Select Backup" placeholder="Select a ZIP"
+                        value={selected} onChange={setSelected} data={zips.map(z => ({ value: z.name, label: z.name }))} w={280} />
                     <FileButton onChange={onUpload} accept=".zip">
                         {(props) => <Button {...props} variant="light">Upload ZIP…</Button>}
                     </FileButton>
-                    <TextInput label="Database password (optional)" value={password}
+                    <TextInput label="DB Password (optional)" value={password}
                         onChange={(e) => setPassword(e.currentTarget.value)} w={280} />
                     <Button onClick={onRun} loading={busy}>Run export</Button>
-                    <Button variant="outline" component="a" href="/data/" target="_blank">Open /data</Button>
                 </Group>
 
                 {unzipPct !== null && (
@@ -104,7 +103,7 @@ export function SyncDialog({
                     </Stack>
                 )}
 
-                <Textarea label="Logs" value={logs} minRows={12} autosize
+                <Textarea label="Logs" value={logs} maxRows={10} autosize
                     styles={{ input: { fontFamily: "ui-monospace, Menlo, Consolas, monospace" } }} />
             </Stack>
         </Modal>

@@ -55,17 +55,16 @@ export function normalizePath(p?: string): string | null {
   return p.replace(/\\/g, "/").replace(/^\.?\//, "");
 }
 
-export const FALLBACK_ICON =
-  "data:image/svg+xml;utf8," +
-  encodeURIComponent(
-    `<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'>
+export function buildIconUrl(iconRel: string | null, iconId: string | null): string {
+  const FALLBACK_ICON =
+    "data:image/svg+xml;utf8," +
+    encodeURIComponent(
+      `<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'>
       <rect width='100%' height='100%' fill='#ddd'/>
       <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle'
             font-family='sans-serif' font-size='10' fill='#777'>no icon</text>
     </svg>`
-  );
-
-export function buildIconUrl(iconRel: string | null, iconId: string | null): string {
+    );
   if (iconRel && /^https?:\/\//i.test(iconRel)) return iconRel;
   if (iconRel) {
     const rel = iconRel.replace(/\\/g, "/").replace(/^\.?\//, "");

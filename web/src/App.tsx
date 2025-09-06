@@ -61,11 +61,10 @@ export default function App() {
                     </span>
                   </ActionIcon>
                 </Menu.Target>
+
                 <Menu.Dropdown>
-                  <Menu.Label>Actions</Menu.Label>
                   <Menu.Item onClick={() => setSyncOpen(true)}>Sync backup…</Menu.Item>
-                  <Menu.Divider />
-                  <Menu.Item component="a" href="/data/" target="_blank">Open /data</Menu.Item>
+                  <Menu.Item component="a" href="/data/" target="_blank">Open folder</Menu.Item>
                 </Menu.Dropdown>
               </Menu>
             </Group>
@@ -73,9 +72,9 @@ export default function App() {
 
           <AppShell.Main style={{ height: "100%", display: "flex", flexDirection: "column", minHeight: 0 }}>
             {!state ? (
-              <div className="view" style={{ padding: 16 }}>Loading…</div>
+              <div className="view" style={{ paddingTop: 16 }}>Loading…</div>
             ) : !state.ok ? (
-              <div className="view" style={{ padding: 16 }}>Failed to load library: {state.error}</div>
+              <div className="view" style={{ paddingTop: 16 }}>Failed to load library: {state.error}</div>
             ) : (
               <LibraryView
                 data={state.data}
@@ -85,7 +84,6 @@ export default function App() {
           </AppShell.Main>
         </AppShell>
 
-        {/* Trigger a reload when the stream completes */}
         <SyncDialog opened={syncOpen} onClose={() => setSyncOpen(false)} onSuccess={reload} />
       </MantineProvider>
     </>

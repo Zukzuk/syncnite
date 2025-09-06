@@ -1,6 +1,3 @@
-# api/Dockerfile
-
-# ---------- Stage 1: build API (TypeScript -> dist) ----------
 FROM node:20-alpine AS api-build
 WORKDIR /app
 
@@ -9,8 +6,6 @@ RUN apk add --no-cache p7zip icu-libs
 
 # Root lockfile (workspaces) + root package.json
 COPY package.json package-lock.json ./
-
-# Only bring API workspace sources
 COPY api/package.json ./api/package.json
 COPY api/tsconfig.json ./api/tsconfig.json
 COPY api/src ./api/src
@@ -21,7 +16,6 @@ RUN npm ci --workspaces --include-workspace-root=false --workspace api
 # Build TS -> dist (outputs to /app/api/dist)
 RUN npm run --workspace api build
 
-# ---------- Stage 2: build PlayniteDump as a single file for Alpine (musl) ----------
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0 AS dump-build
 WORKDIR /src
 COPY worker/PlayniteDump/ PlayniteDump/
@@ -37,7 +31,6 @@ RUN set -eux; \
     /p:PublishSingleFile=true \
     /p:IncludeNativeLibrariesForSelfExtract=true
 
-# ---------- Stage 3: runtime image ----------
 FROM node:20-alpine
 WORKDIR /app
 

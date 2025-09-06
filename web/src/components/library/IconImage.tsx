@@ -1,5 +1,5 @@
 import React from "react";
-import { FALLBACK_ICON, isIcoPath, icoToPngDataUrl } from "../../lib/utils";
+import { isIcoPath, icoToPngDataUrl } from "../../lib/utils";
 
 export function IconImage({ src, alt }: { src: string; alt?: string }) {
   const [url, setUrl] = React.useState(src);
