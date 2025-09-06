@@ -3,31 +3,89 @@ import type { SortKey, SortDir } from "../../lib/types";
 import type { Loaded } from "../../lib/data";
 import { bucketLetter } from "../../lib/utils";
 
-export type LibraryUiState = {
+// --- Cookie helpers ---
+const COOKIE_NAME = "pn_library_ui_v1";
+type Persisted = {
   q: string;
-  setQ: (v: string) => void;
   source: string | null;
-  setSource: (v: string | null) => void;
   tag: string | null;
-  setTag: (v: string | null) => void;
   showHidden: boolean;
-  setShowHidden: (v: boolean) => void;
+  installedOnly: boolean;
   sortKey: SortKey;
   sortDir: SortDir;
-  setSortKey: (k: SortKey) => void;
-  toggleSort: (k: SortKey) => void;
-  installedOnly: boolean;
-  setInstalledOnly: (v: boolean) => void;
+  _v: number; // schema version
+};
+const DEFAULTS: Persisted = {
+  q: "",
+  source: null,
+  tag: null,
+  showHidden: false,
+  installedOnly: false,
+  sortKey: "title",
+  sortDir: "asc",
+  _v: 1,
+};
+
+function readCookie(name: string): string | null {
+  if (typeof document === "undefined") return null;
+  const m = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+  return m ? decodeURIComponent(m[1]) : null;
+}
+function writeCookie(name: string, value: string, maxAgeSeconds = 60 * 60 * 24 * 180) {
+  if (typeof document === "undefined") return;
+  document.cookie = `${name}=${encodeURIComponent(value)}; Max-Age=${maxAgeSeconds}; Path=/; SameSite=Lax`;
+}
+function loadStateFromCookie(): Persisted {
+  try {
+    const raw = readCookie(COOKIE_NAME);
+    if (!raw) return DEFAULTS;
+    const parsed = JSON.parse(raw) as Partial<Persisted>;
+    // basic validation + defaults
+    return {
+      ...DEFAULTS,
+      ...parsed,
+      // coerce empty strings to null for selects
+      source: parsed?.source ?? null,
+      tag: parsed?.tag ?? null,
+      _v: 1,
+    };
+  } catch {
+    return DEFAULTS;
+  }
+}
+function saveStateToCookie(s: Persisted) {
+  writeCookie(COOKIE_NAME, JSON.stringify(s));
+}
+// --- end cookie helpers ---
+
+export type LibraryUiState = {
+  q: string; setQ: (v: string) => void;
+  source: string | null; setSource: (v: string | null) => void;
+  tag: string | null; setTag: (v: string | null) => void;
+  showHidden: boolean; setShowHidden: (v: boolean) => void;
+  sortKey: SortKey; sortDir: SortDir; setSortKey: (k: SortKey) => void; toggleSort: (k: SortKey) => void;
+  installedOnly: boolean; setInstalledOnly: (v: boolean) => void;
 };
 
 export function useLibraryState(data: Loaded) {
-  const [q, setQ] = React.useState("");
-  const [source, setSource] = React.useState<string | null>("");
-  const [tag, setTag] = React.useState<string | null>("");
-  const [showHidden, setShowHidden] = React.useState(false);
-  const [sortKey, setSortKey] = React.useState<SortKey>("title");
-  const [sortDir, setSortDir] = React.useState<SortDir>("asc");
-  const [installedOnly, setInstalledOnly] = React.useState(false);
+  // init from cookie once
+  const persisted = React.useMemo(loadStateFromCookie, []);
+
+  const [q, setQ] = React.useState<string>(persisted.q);
+  const [source, setSource] = React.useState<string | null>(persisted.source);
+  const [tag, setTag] = React.useState<string | null>(persisted.tag);
+  const [showHidden, setShowHidden] = React.useState<boolean>(persisted.showHidden);
+  const [sortKey, setSortKey] = React.useState<SortKey>(persisted.sortKey);
+  const [sortDir, setSortDir] = React.useState<SortDir>(persisted.sortDir);
+  const [installedOnly, setInstalledOnly] = React.useState<boolean>(persisted.installedOnly);
+
+  // persist on any change
+  React.useEffect(() => {
+    const toSave: Persisted = {
+      q, source, tag, showHidden, installedOnly, sortKey, sortDir, _v: 1,
+    };
+    saveStateToCookie(toSave);
+  }, [q, source, tag, showHidden, installedOnly, sortKey, sortDir]);
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -54,7 +112,7 @@ export function useLibraryState(data: Loaded) {
         case "title": return (r.sortingName || r.title).toLowerCase();
         case "source": return (r.source || "").toLowerCase();
         case "tags": return r.tags.join(", ").toLowerCase();
-        case "year": return String(r.year ?? "");
+        case "year": return String(r.year ?? ""); 
       }
     };
 
@@ -64,16 +122,13 @@ export function useLibraryState(data: Loaded) {
         const bv = b.year ?? -Infinity;
         if (av < bv) return sortDir === "asc" ? -1 : 1;
         if (av > bv) return sortDir === "asc" ? 1 : -1;
-        // tie-breaker by title
         const at = (a.sortingName || a.title).toLowerCase();
         const bt = (b.sortingName || b.title).toLowerCase();
         return at.localeCompare(bt);
       }
-
       const av = sortVal(a), bv = sortVal(b);
       if (av < bv) return sortDir === "asc" ? -1 : 1;
       if (av > bv) return sortDir === "asc" ? 1 : -1;
-
       return 0;
     });
 

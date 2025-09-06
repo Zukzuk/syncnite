@@ -10,6 +10,10 @@ const patterns = [
   '**/node_modules',
   '**/dist',
   '**/package-lock.json',
+  '**/.temp',
+  '**/bin',
+  '**/obj',
+  '**/*.pext',
 ];
 
 // Gather unique matches

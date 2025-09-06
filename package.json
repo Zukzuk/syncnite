@@ -4,18 +4,18 @@
   "version": "1.0.0",
   "workspaces": [
     "web",
-    "worker",
     "api",
     "scripts"
   ],
   "scripts": {
     "install:all": "npm i --workspaces --include-workspace-root",
-    "build": "npm -ws --if-present run build",
+    "build": "npm -ws --if-present run build && npm run concat && npm run build:ext",
     "lint": "npm -ws --if-present run lint",
     "test": "npm -ws --if-present run test",
     "up": "docker compose -f docker-compose.yml up --build -d",
     "clean": "node scripts/clean.js",
-    "concat": "node scripts/concat-code.js"
+    "concat": "node scripts/concat-code.js",
+    "build:ext": "node scripts/build-ext.js"
   },
   "devDependencies": {
     "@types/node": "^20.19.13"

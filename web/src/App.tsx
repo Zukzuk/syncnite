@@ -42,7 +42,7 @@ export default function App() {
               <Group gap="sm">
                 <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
                 <Title order={4}>Library</Title>
-                {/* Counter moved into header, right of the title */}
+                
                 <Text c="dimmed" size="sm">
                   <NumberFormatter value={counts.filtered} thousandSeparator /> /
                   <NumberFormatter value={counts.total} thousandSeparator />

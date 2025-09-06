@@ -7,3 +7,7 @@ PlayniteBackup*.zip
 *.tgz
 .git
 node_modules
+**/.temp
+**/bin
+**/obj
+.DS_Store

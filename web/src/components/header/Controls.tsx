@@ -1,5 +1,5 @@
 import React from "react";
-import { Group, Select, Switch, Text, TextInput, Stack, ActionIcon } from "@mantine/core";
+import { Flex, Group, Select, Switch, Text, TextInput, Stack, ActionIcon } from "@mantine/core";
 
 export function Controls(props: {
   q: string; setQ: (v: string) => void;
@@ -24,13 +24,12 @@ export function Controls(props: {
 
   const clearIcon = (
     <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
+      <path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor" />
     </svg>
   );
 
   return (
     <Group justify="space-between" align="end" gap="sm" wrap="wrap">
-      {/* Left: search + dropdowns */}
       <Group gap="sm" wrap="wrap" align="end">
         <TextInput
           placeholder="Search titles, tags, sources…"
@@ -54,53 +53,58 @@ export function Controls(props: {
             ) : null
           }
         />
-        <Select
-          placeholder="All sources"
-          value={source}
-          onChange={setSource}
-          data={sources.map((s) => ({ value: s, label: s }))}
-          clearable
-          w={200}
-          size="sm"
-          radius="xl"
-          variant="filled"
-          comboboxProps={{ withinPortal: true }}
-        />
-        <Select
-          placeholder="All tags"
-          value={tag}
-          onChange={setTag}
-          data={tags.map((t) => ({ value: t, label: t }))}
-          clearable
-          w={240}
-          size="sm"
-          radius="xl"
-          variant="filled"
-          comboboxProps={{ withinPortal: true }}
-        />
+        <Group>
+          <Select
+            placeholder="All sources"
+            value={source}
+            onChange={setSource}
+            data={sources.map((s) => ({ value: s, label: s }))}
+            clearable
+            w={200}
+            size="sm"
+            radius="xl"
+            variant="filled"
+            comboboxProps={{ withinPortal: true }}
+          />
+          <Select
+            placeholder="All tags"
+            value={tag}
+            onChange={setTag}
+            data={tags.map((t) => ({ value: t, label: t }))}
+            clearable
+            w={240}
+            size="sm"
+            radius="xl"
+            variant="filled"
+            comboboxProps={{ withinPortal: true }}
+          />
+        </Group>
       </Group>
 
-      {/* Right: compact toggles with tiny labels under each */}
-      <Group gap="lg" align="end">
-        <Stack gap={2} align="center">
-          <Switch
-            aria-label="Installed only"
-            checked={installedOnly}
-            onChange={(e) => setInstalledOnly(e.currentTarget.checked)}
-            size="sm"
-          />
-          <Text size="xs" c="dimmed">Installed</Text>
-        </Stack>
-        <Stack gap={2} align="center">
-          <Switch
-            aria-label="Show hidden"
-            checked={showHidden}
-            onChange={(e) => setShowHidden(e.currentTarget.checked)}
-            size="sm"
-          />
-          <Text size="xs" c="dimmed">Hidden</Text>
-        </Stack>
-      </Group>
+      <Flex
+        align="center"
+      >
+        <Group gap="lg" align="end">
+          <Stack gap={2} align="center">
+            <Switch
+              aria-label="Installed only"
+              checked={installedOnly}
+              onChange={(e) => setInstalledOnly(e.currentTarget.checked)}
+              size="sm"
+            />
+            <Text size="xs" c="dimmed">Installed</Text>
+          </Stack>
+          <Stack gap={2} align="center">
+            <Switch
+              aria-label="Show hidden"
+              checked={showHidden}
+              onChange={(e) => setShowHidden(e.currentTarget.checked)}
+              size="sm"
+            />
+            <Text size="xs" c="dimmed">Hidden</Text>
+          </Stack>
+        </Group>
+      </Flex>
     </Group>
   );
 }

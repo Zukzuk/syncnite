@@ -6,12 +6,20 @@ import {
     INPUT_DIR, WORK_DIR, DATA_DIR,
     run, cleanDir, normalizeBackslashPaths, findLibraryDir,
     copyLibraryFilesWithProgress,
-} from "./helpers";
+} from "../helpers";
 
-const router = express.Router();
+const playniteDumpRouter = express.Router();
 
-// zips list
-router.get("/zips", async (_req, res) => {
+/**
+ * @openapi
+ * /api/playnitedump/zips:
+ *   get:
+ *     summary: List uploaded ZIP files.
+ *     responses:
+ *       200:
+ *         description: A list of ZIP files with metadata.
+ */
+playniteDumpRouter.get("/zips", async (_req, res) => {
     const files = await fs.readdir(INPUT_DIR, { withFileTypes: true });
     const zips: Array<{ name: string; size: number; mtime: number }> = [];
     for (const f of files) {
@@ -24,17 +32,33 @@ router.get("/zips", async (_req, res) => {
     res.json(zips);
 });
 
-// upload
+/**
+ * @openapi
+ * /api/playnitedump/upload:
+ *   post:
+ *     summary: Upload a ZIP file containing a Playnite library.
+ *     responses:
+ *       200:
+ *         description: Upload result
+ */
 const upload = multer({ dest: INPUT_DIR });
-router.post("/upload", upload.single("file"), async (req, res) => {
+playniteDumpRouter.post("/upload", upload.single("file"), async (req, res) => {
     if (!req.file) return res.status(400).json({ ok: false, error: "no file" });
     const safe = req.file.originalname.replace(/[^A-Za-z0-9._ -]/g, "_");
     await fs.rename(req.file.path, join(INPUT_DIR, safe));
     res.json({ ok: true, file: safe });
 });
 
-// streaming process via SSE
-router.get("/process-stream", async (req, res) => {
+/**
+ * @openapi
+ * /api/playnitedump/process-stream:
+ *   get:
+ *     summary: Stream the processing of a ZIP file containing a Playnite library.
+ *     responses:
+ *       200:
+ *         description: Streaming result
+ */
+playniteDumpRouter.get("/process-stream", async (req, res) => {
     const filename = String(req.query.filename ?? "");
     const password = String(req.query.password ?? "");
 
@@ -116,5 +140,4 @@ router.get("/process-stream", async (req, res) => {
     }
 });
 
-// (non-streaming /process kept if you still need it)
-export default router;
+export default playniteDumpRouter;

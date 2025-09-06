@@ -1,4 +1,3 @@
-/* Row hover */
 .game-row {
   position: relative;
   transition: background-color 120ms ease-in-out;
@@ -30,15 +29,21 @@
       text-decoration: none;
 
       /* make SVGs crisp & aligned */
-      svg { display: block; }
+      svg {
+        display: block;
+      }
     }
 
-    /* reveal the overlay on row or icon hover (both feel good) */
-    &:hover .play-overlay,
-    .game-row:hover & .play-overlay {
+    &:hover .play-overlay {
       opacity: 1;
     }
   }
+
+
+}
+
+.game-title:hover {
+  color: var(--mantine-color-primary-filled) !important;
 }
 
 /* Ensure icons look clean even on dark themes */

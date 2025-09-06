@@ -40,7 +40,15 @@ export function GameRow(props: GameRowProps) {
       }}
     >
       <div style={{ width: 56 }}>
-        <div className="icon-wrap" style={{ opacity: dim ? 0.8 : 1, position: "relative", width: 40, height: 40 }}>
+        <div
+          className="icon-wrap"
+          style={{
+            opacity: dim ? 0.6 : 1,
+            position: "relative",
+            width: 40,
+            height: 40
+          }}
+        >
           <IconImage src={iconUrl} />
           {!dim && (
             <a
@@ -65,11 +73,22 @@ export function GameRow(props: GameRowProps) {
 
       <div>
         {href ? (
-          <Text component="a" href={href} target="_blank" rel="noopener" fw={500} c={dim ? "dimmed" : undefined}>
+          <Text
+            component="a"
+            href={href}
+            target="_blank"
+            rel="noopener"
+            fw={500}
+            c={dim ? "dimmed" : undefined}
+            className="game-title"
+            style={{ textDecoration: "none" }}
+          >
             {title}
           </Text>
         ) : (
-          <Text fw={500} c={dim ? "dimmed" : undefined}>{title}</Text>
+          <Text fw={500} c={dim ? "dimmed" : undefined}>
+            {title}
+          </Text>
         )}
       </div>
 
@@ -78,23 +97,27 @@ export function GameRow(props: GameRowProps) {
       </div>
 
       <div>
-        {source ? <Text c={dim ? "dimmed" : undefined}>{source}</Text> : <Text c="dimmed">—</Text>}
+        {source ? (
+          <Text c={dim ? "dimmed" : undefined}>{source}</Text>
+        ) : (
+          <Text c="dimmed">—</Text>
+        )}
       </div>
 
       <div
         style={{
           display: "flex",
-          alignItems: "center",   // vertical center
-          height: "100%",         // match row height
-          overflow: "hidden",     // clip overflow
+          alignItems: "center", // vertical center
+          height: "100%",
+          overflow: "hidden",
         }}
       >
         <Group
           gap={6}
-          wrap="wrap"             // allow multiple lines
+          wrap="wrap" // allow multiple lines
           style={{
             overflow: "hidden",
-            maxHeight: "100%",    // prevent growing past row height
+            maxHeight: "100%", // prevent growing past row height
           }}
         >
           {(tags ?? []).map((t) => (

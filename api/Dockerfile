@@ -18,7 +18,7 @@ RUN npm run --workspace api build
 
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0 AS dump-build
 WORKDIR /src
-COPY worker/PlayniteDump/ PlayniteDump/
+COPY extensions/PlayniteDump/ PlayniteDump/
 # Publish self-contained, single-file for the current arch (x64/arm64)
 ARG TARGETARCH
 RUN set -eux; \
