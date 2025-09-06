@@ -40,7 +40,7 @@ export function useLibraryState(data: Loaded) {
       (!source || r.source === source) &&
       (!tag || r.tags.includes(tag)) &&
       (showHidden || !r.hidden) &&
-      (!installedOnly || r.installed) &&            // ← NEW
+      (!installedOnly || r.installed) &&
       (!qv ||
         r.title.toLowerCase().includes(qv) ||
         r.source.toLowerCase().includes(qv) ||
@@ -54,7 +54,7 @@ export function useLibraryState(data: Loaded) {
         case "title": return (r.sortingName || r.title).toLowerCase();
         case "source": return (r.source || "").toLowerCase();
         case "tags": return r.tags.join(", ").toLowerCase();
-        case "year": return String(r.year ?? ""); // string compare but fine; or use a two-step numeric sort below
+        case "year": return String(r.year ?? "");
       }
     };
 

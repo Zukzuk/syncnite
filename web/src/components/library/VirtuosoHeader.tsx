@@ -22,7 +22,7 @@ export function VirtuosoHeader(props: {
         className="library-header"
         style={{
           display: "grid",
-          gridTemplateColumns: "56px 1fr 90px 160px auto",
+          gridTemplateColumns: "56px minmax(0, 50%) 70px 70px minmax(200px, 1fr)",
           alignItems: "center",
           gap: 12,
           height: 40,
@@ -32,8 +32,8 @@ export function VirtuosoHeader(props: {
       >
         <div />
         <div style={{ cursor: "pointer" }} onClick={() => onToggleSort("title")}>{label("Title", "title")}</div>
-        <div style={{ cursor: "pointer", width: 90 }} onClick={() => onToggleSort("year")}>{label("Year", "year")}</div>
-        <div style={{ cursor: "pointer", width: 160 }} onClick={() => onToggleSort("source")}>{label("Source", "source")}</div>
+        <div style={{ cursor: "pointer" }} onClick={() => onToggleSort("year")}>{label("Year", "year")}</div>
+        <div style={{ cursor: "pointer" }} onClick={() => onToggleSort("source")}>{label("Source", "source")}</div>
         <div style={{ cursor: "pointer" }} onClick={() => onToggleSort("tags")}>{label("Tags", "tags")}</div>
       </div>
     </div>

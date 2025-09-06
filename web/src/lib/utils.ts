@@ -123,8 +123,8 @@ export function firstStoreishLink(links: Link[] | undefined, sourceName: string)
   return byDomain?.Url ?? null;
 }
 
-export function hasEmulatorTag(tags: string[]): boolean {
-  return tags.some(t => /\bemulator(s)?\b/i.test(t));
+export function hasEmulatorTag(tags?: string[]): boolean {
+  return Array.isArray(tags) && tags.some(t => /\bemulator(s)?\b/i.test(t));
 }
 
 export function myAbandonwareLink(title: string): string {

@@ -39,11 +39,17 @@ export function LibraryView({
   }, [ui.sortKey, derived.withBuckets, derived.rowsSorted]);
 
   const overscan = { top: 600, bottom: 800 } as const;
-  const stickyOffset = controlsH; // header should stick just under the controls
+  const stickyOffset = controlsH;
+
+  // Build a small signature that changes whenever the visible dataset semantics change
+  const dataSig = `${derived.filteredCount}|${ui.q}|${ui.source ?? ""}|${ui.tag ?? ""}|${ui.showHidden}|${ui.installedOnly}`;
+
+  // Force remount on mode switch (grouped vs flat) and dataset changes
+  const groupedKey = `grp:${dataSig}|${ui.sortKey}|${ui.sortDir}`;
+  const flatKey = `flt:${dataSig}|${ui.sortKey}|${ui.sortDir}`;
 
   return (
     <Flex direction="column" h="100%" style={{ minHeight: 0 }}>
-      {/* Sticky controls */}
       <Box
         ref={controlsRef}
         p="md"
@@ -58,7 +64,6 @@ export function LibraryView({
         />
       </Box>
 
-      {/* Sticky header (replaces fixedHeaderContent) */}
       <div style={{ position: "sticky", top: stickyOffset, zIndex: 15 }}>
         <VirtuosoHeader
           headerRef={headerRef as unknown as (el: HTMLElement | null) => void}
@@ -68,17 +73,16 @@ export function LibraryView({
         />
       </div>
 
-      {/* List */}
       <Box style={{ flex: 1, minHeight: 0, position: "relative", overflow: "hidden" }}>
         {ui.sortKey === "title" && groups ? (
           <GroupedVirtuoso
+            key={groupedKey}                   // ← force remount when needed
             style={{ height: "100%" }}
             groupCounts={groups.map((g) => g.rows.length)}
             increaseViewportBy={overscan}
             groupContent={(index) => (
               <AlphaSeparatorRow
                 bucket={groups[index].title}
-                // offset separators by BOTH sticky bars (controls + header)
                 top={(controlsH + headerH) || 0}
               />
             )}
@@ -110,23 +114,28 @@ export function LibraryView({
           />
         ) : (
           <Virtuoso
+            key={flatKey}                      // ← force remount when needed
             style={{ height: "100%" }}
             data={derived.rowsSorted}
             increaseViewportBy={overscan}
-            itemContent={(_index, r) => (
-              <GameRow
-                id={r.id}
-                hidden={r.hidden}
-                showHidden={ui.showHidden}
-                installed={r.installed}
-                iconUrl={r.iconUrl}
-                title={r.title}
-                source={r.source}
-                tags={r.tags}
-                year={r.year}
-                url={r.url}
-              />
-            )}
+            computeItemKey={(index, r) => r.id}
+            itemContent={(index /*, _item */) => {
+              const r = derived.rowsSorted[index];
+              return (
+                <GameRow
+                  id={r.id}
+                  hidden={r.hidden}
+                  showHidden={ui.showHidden}
+                  installed={r.installed}
+                  iconUrl={r.iconUrl}
+                  title={r.title}
+                  source={r.source}
+                  tags={r.tags}
+                  year={r.year}
+                  url={r.url}
+                />
+              );
+            }}
           />
         )}
       </Box>

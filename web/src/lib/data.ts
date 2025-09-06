@@ -76,7 +76,7 @@ export async function loadLibrary(): Promise<Loaded> {
       title: g.Name ?? "(Untitled)",
       sortingName: (g as any).SortingName ?? g.Name ?? "",
       source: sourceName,
-      tags: tagIds.map(tid => tagById.get(tid)).filter(Boolean) as string[],
+      tags: (tagIds.map(tid => tagById.get(tid)).filter(Boolean) as string[]) ?? [],
       hidden: !!g.Hidden,
       url: url ?? null,
       iconUrl,

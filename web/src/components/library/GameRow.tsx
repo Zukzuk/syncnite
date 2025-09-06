@@ -18,14 +18,9 @@ export type GameRowProps = {
 
 export function GameRow(props: GameRowProps) {
   const { id, hidden, showHidden, installed, iconUrl, title, source, tags, year, url } = props;
-
   const href = url ?? effectiveLink({ url, source, title, tags });
   const dim = hidden && showHidden;
-
-  // Playnite schemes:
-  const actionHref = installed
-    ? `playnite://play/${encodeURIComponent(id)}`
-    : `playnite://InstallGame/${encodeURIComponent(id)}`;
+  const actionHref = `playnite://playnite/start/${encodeURIComponent(id)}`;
 
   return (
     <div
@@ -33,13 +28,15 @@ export function GameRow(props: GameRowProps) {
       className={`game-row${dim ? " is-dim" : ""}${installed ? " is-installed" : ""}`}
       style={{
         display: "grid",
-        gridTemplateColumns: "56px 1fr 90px 160px auto",
+        gridTemplateColumns: "56px minmax(0, 50%) 70px 70px minmax(200px, 1fr)",
         alignItems: "center",
         gap: 12,
         height: 56,
         padding: "0 12px",
         borderBottom: "1px solid var(--mantine-color-default-border)",
         opacity: dim ? 0.55 : 1,
+        minWidth:  // ensure grid can overflow horizontally when it needs to
+          "calc(56px + 50% + 70px + 70px + 200px + 24px)", // 24px = gaps approx; not critical but helps
       }}
     >
       <div style={{ width: 56 }}>
@@ -76,18 +73,34 @@ export function GameRow(props: GameRowProps) {
         )}
       </div>
 
-      <div style={{ width: 90 }}>
+      <div>
         <Text c={dim ? "dimmed" : undefined}>{year ?? ""}</Text>
       </div>
 
-      <div style={{ width: 160 }}>
+      <div>
         {source ? <Text c={dim ? "dimmed" : undefined}>{source}</Text> : <Text c="dimmed">—</Text>}
       </div>
 
-      <div>
-        <Group gap={6} style={{ opacity: dim ? 0.8 : 1 }}>
-          {tags.map((t) => (
-            <Badge key={t} variant="light">{t}</Badge>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",   // vertical center
+          height: "100%",         // match row height
+          overflow: "hidden",     // clip overflow
+        }}
+      >
+        <Group
+          gap={6}
+          wrap="wrap"             // allow multiple lines
+          style={{
+            overflow: "hidden",
+            maxHeight: "100%",    // prevent growing past row height
+          }}
+        >
+          {(tags ?? []).map((t) => (
+            <Badge key={t} variant="light" size="sm">
+              {t}
+            </Badge>
           ))}
         </Group>
       </div>

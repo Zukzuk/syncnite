@@ -27,7 +27,11 @@ export function IconImage({ src, alt }: { src: string; alt?: string }) {
       height={40}
       style={{ width: 40, height: 40, objectFit: "contain", borderRadius: 6, background: "var(--mantine-color-default)" }}
       onError={async (e) => {
-        // (existing onError code)
+        // fallback if the src fails to load
+        if (isIcoPath(src)) {
+          const data = await icoToPngDataUrl(src);
+          if (data) (e.target as HTMLImageElement).src = data;
+        }
       }}
     />
   );
