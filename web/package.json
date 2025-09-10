@@ -7,10 +7,11 @@
     "preview": "vite preview --port 5173"
   },
   "dependencies": {
-    "icojs": "^0.16.1",
     "@mantine/core": "^8.2.8",
     "@mantine/form": "^8.2.8",
     "@mantine/hooks": "^8.2.8",
+    "axios": "^1.11.0",
+    "icojs": "^0.16.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-virtuoso": "^4.7.12"

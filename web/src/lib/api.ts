@@ -1,3 +1,4 @@
+import axios from "axios";
 import type { StreamProgress } from "./types";
 
 export type ZipInfo = { name: string; size: number; mtime: number };
@@ -8,13 +9,19 @@ export async function listZips(): Promise<ZipInfo[]> {
   return r.json();
 }
 
-export async function uploadZip(file: File): Promise<{ ok: boolean; file?: string; error?: string }> {
-  const fd = new FormData();
-  fd.append("file", file);
-  const r = await fetch("/api/playnitedump/upload", { method: "POST", body: fd });
-  const j = await r.json();
-  if (!r.ok || !j.ok) throw new Error(j.error || r.statusText);
-  return j;
+export async function uploadZip(file: File, onProgress?: (p: number) => void) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  await axios.post("/api/playnitedump/upload", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+    onUploadProgress: (e) => {
+      if (e.total) {
+        const percent = Math.round((e.loaded * 100) / e.total);
+        onProgress?.(percent);
+      }
+    },
+  });
 }
 
 export function processZipStream(params: {
