@@ -1,49 +1,90 @@
+// web/src/lib/api.ts
 import axios from "axios";
-import type { StreamProgress } from "./types";
-
-export type ZipInfo = { name: string; size: number; mtime: number };
+import { LibraryItem, StreamProgress, ZipInfo } from "./types";
 
 export async function listZips(): Promise<ZipInfo[]> {
-  const r = await fetch("/api/playnitedump/zips");
-  if (!r.ok) throw new Error(await r.text());
+  const r = await fetch("/api/playnitedump/zips"); // server endpoint
   return r.json();
 }
 
-export async function uploadZip(file: File, onProgress?: (p: number) => void) {
-  const formData = new FormData();
-  formData.append("file", file);
-
-  await axios.post("/api/playnitedump/upload", formData, {
+export async function uploadZip(
+  file: File,
+  onProgress?: (pcent: number) => void
+): Promise<{ ok: boolean; file?: string; error?: string }> {
+  const form = new FormData();
+  form.append("file", file);
+  const r = await axios.post("/api/playnitedump/upload", form, {
     headers: { "Content-Type": "multipart/form-data" },
     onUploadProgress: (e) => {
-      if (e.total) {
-        const percent = Math.round((e.loaded * 100) / e.total);
-        onProgress?.(percent);
-      }
+      if (e.total) onProgress?.(Math.round((e.loaded * 100) / e.total));
     },
+    maxContentLength: Infinity,
+    maxBodyLength: Infinity,
   });
+  return r.data;
 }
 
-export function processZipStream(params: {
+export function processZipStream({
+  filename,
+  password,
+  onLog,
+  onProgress,
+  onDone,
+  onError,
+}: {
   filename: string;
   password?: string;
-  onLog: (line: string) => void;
-  onProgress: (p: StreamProgress) => void;
-  onDone: () => void;
-  onError: (msg: string) => void;
+  onLog?: (msg: string) => void;
+  onProgress?: (p: StreamProgress) => void;
+  onDone?: () => void;
+  onError?: (msg: string) => void;
 }) {
-  const { filename, password, onLog, onProgress, onDone, onError } = params;
-  const q = new URLSearchParams({ filename, ...(password ? { password } : {}) });
-  const es = new EventSource(`/api/playnitedump/process-stream?${q.toString()}`);
-  const close = () => es.close();
+  const url = new URL("/api/playnitedump/process-stream", window.location.origin);
+  url.searchParams.set("filename", filename);
+  if (password) url.searchParams.set("password", password);
 
-  es.addEventListener("log", (ev: MessageEvent) => onLog((ev.data || "").replace(/\\n/g, "\n")));
-  es.addEventListener("progress", (ev: MessageEvent) => {
-    try { onProgress(JSON.parse(ev.data) as StreamProgress); } catch { /* ignore */ }
+  const es = new EventSource(url.toString());
+
+  let finished = false;
+  const finishOnce = (cb?: () => void) => {
+    if (finished) return;
+    finished = true;
+    try { es.close(); } catch { }
+    cb?.();
+  };
+
+  // server emits named events: "log", "progress", "done", "error"
+  es.addEventListener("log", (ev: MessageEvent) => {
+    onLog?.(String(ev.data));
   });
-  es.addEventListener("done", () => { onDone(); close(); });
-  es.addEventListener("error", (ev: MessageEvent) => { onError((ev as any).data || "stream error"); close(); });
-  es.onerror = () => { onError("connection lost"); close(); };
 
-  return { close };
+  es.addEventListener("progress", (ev: MessageEvent) => {
+    try {
+      const data = JSON.parse(String(ev.data)) as StreamProgress;
+      onProgress?.(data);
+    } catch {
+      /* ignore malformed progress lines */
+    }
+  });
+
+  es.addEventListener("done", () => {
+    finishOnce(onDone);
+  });
+
+  // The server also emits a named "error" event with a human message.
+  es.addEventListener("error", (ev: MessageEvent) => {
+    // If the server sent data, prefer that. Otherwise fall back below.
+    const msg = String(ev.data || "Export failed");
+    finishOnce(() => onError?.(msg));
+  });
+
+  // Fallback: transport-level errors (disconnects, etc.)
+  es.onerror = () => finishOnce(() => onError?.("Stream closed unexpectedly"));
+
+  return () => finishOnce();
+}
+
+export async function listLibrary(): Promise<LibraryItem[]> {
+  const r = await fetch("/api/library");
+  return r.json();
 }

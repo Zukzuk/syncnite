@@ -39,12 +39,23 @@ export type Row = {
   installed: boolean;
 };
 
+export type ZipInfo = { name: string; size: number; mtime: number };
+
+export type LibraryItem = {
+  id: string | number;
+  title: string;
+  platform?: string;
+  addedAt?: string;
+  playtimeMinutes?: number;
+};
+
 export type StreamProgress = {
-  phase: "unzip" | "copy";
-  percent: number;             // 0..100
+  phase?: "unzip" | "copy";
+  percent?: number;
   copiedBytes?: number;
   totalBytes?: number;
   deltaBytes?: number;
+  log?: string;
 };
 
 export type SortKey = "title" | "source" | "tags" | "year";

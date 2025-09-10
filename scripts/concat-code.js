@@ -13,6 +13,9 @@ const ignoreDirs = new Set([
   "scripts",
   "data",
   "backups",
+  ".temp",
+  "bin",
+  "obj",
 ]);
 
 // Bestanden negeren (exacte bestandsnamen)
@@ -25,6 +28,7 @@ const includeExts = new Set([
   ".ts",
   ".tsx",
   ".css",
+  ".scss",
   ".sh",
   ".yml",
   ".yaml",
