@@ -13,7 +13,7 @@ export function LibraryListHeader(props: {
     <div
       ref={headerRef}
       style={{
-        background: "var(--mantine-color-dark-6)",
+        background: "var(--mantine-color-body)",
         borderTop: "1px solid var(--mantine-color-default-border)",
         borderBottom: "1px solid var(--mantine-color-default-border)",
       }}

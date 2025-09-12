@@ -1,27 +1,19 @@
 import * as React from "react";
 import type { VirtuosoHandle } from "react-virtuoso";
 import { letterBucket } from "../../lib/utils";
-import type { Letter, AlphaGroup, AlphabeticalRailCounts, Row } from "../../lib/types";
+import type { Letter, AlphaGroup, AlphabeticalRailCounts, Row, Range } from "../../lib/types";
 import { LETTERS } from "../../lib/types";
 
 export function useAlphabetRail(
-    params: {
-        isGrouped: boolean;
-        groups: AlphaGroup[] | null;
-        flatItems: Row[];
-    },
+    params: { isGrouped: boolean; groups: AlphaGroup[] | null; flatItems: Row[] },
     virtuosoRef: React.RefObject<VirtuosoHandle>
 ) {
     const { isGrouped, groups, flatItems } = params;
 
     // flat
     const { flatFirstIndex, flatCounts } = React.useMemo(() => {
-        const firstIndex: Record<Letter, number> = Object.fromEntries(
-            LETTERS.map((L) => [L, -1])
-        ) as Record<Letter, number>;
-        const counts: AlphabeticalRailCounts = Object.fromEntries(
-            LETTERS.map((L) => [L, 0])
-        ) as AlphabeticalRailCounts;
+        const firstIndex = Object.fromEntries(LETTERS.map((L) => [L, -1])) as Record<Letter, number>;
+        const counts = Object.fromEntries(LETTERS.map((L) => [L, 0])) as AlphabeticalRailCounts;
 
         flatItems.forEach((r, idx) => {
             const L = letterBucket(r?.title);
@@ -32,12 +24,13 @@ export function useAlphabetRail(
         return { flatFirstIndex: firstIndex, flatCounts: counts };
     }, [flatItems]);
 
-    // grouped
-    const { groupFirstItemIndex, groupCounts } = React.useMemo(() => {
+    // group
+    const { groupFirstItemIndex, groupCounts, totalItems } = React.useMemo(() => {
         if (!groups) {
             return {
                 groupFirstItemIndex: {} as Record<Letter, number>,
                 groupCounts: Object.fromEntries(LETTERS.map((L) => [L, 0])) as AlphabeticalRailCounts,
+                totalItems: 0,
             };
         }
 
@@ -51,32 +44,89 @@ export function useAlphabetRail(
             counts[L] = (counts[L] ?? 0) + g.rows.length;
             running += g.rows.length;
         }
-        return { groupFirstItemIndex: firstIndex, groupCounts: counts };
+        return { groupFirstItemIndex: firstIndex, groupCounts: counts, totalItems: running };
     }, [groups]);
 
     const [activeLetter, setActiveLetter] = React.useState<string | null>(null);
+    const lastRangeRef = React.useRef<Range | null>(null);
 
+    // 1) If the letter's first item can be placed at the top, go there.
+    // 2) Otherwise, go straight to the *end* of the list.
     const handleJump = React.useCallback(
         (L: string) => {
-            if (isGrouped) {
-                const idx = groupFirstItemIndex[L as Letter];
-                if (idx !== undefined && idx >= 0) {
-                    virtuosoRef.current?.scrollToIndex({ index: idx, align: "start", behavior: "smooth" });
-                    setActiveLetter(L);
-                }
+            const targetIdx = isGrouped
+                ? groupFirstItemIndex[L as Letter]
+                : flatFirstIndex[L as Letter];
+            if (targetIdx == null || targetIdx < 0) return;
+
+            const total = isGrouped ? totalItems : flatItems.length;
+            const lastRange = lastRangeRef.current;
+
+            // If we don't yet know viewport size, try aligning to the target "start".
+            // If it ends up clamped by Virtuoso, next rangeChanged will give us viewport,
+            // and subsequent clicks will follow rule (2).
+            if (!lastRange) {
+                virtuosoRef.current?.scrollToIndex({ index: targetIdx, align: "start", behavior: "auto" });
                 return;
             }
-            const idx = flatFirstIndex[L as Letter];
-            if (idx !== undefined && idx >= 0) {
-                virtuosoRef.current?.scrollToIndex({ index: idx, align: "start", behavior: "smooth" });
-                setActiveLetter(L);
+
+            const visibleCount = Math.max(1, lastRange.endIndex - lastRange.startIndex + 1);
+            const highStart = Math.max(0, total - visibleCount); // last possible start index
+            const canPlaceAtTop = targetIdx <= highStart;
+
+            if (canPlaceAtTop) {
+                // Already at desired start? no-op
+                if (lastRange.startIndex !== targetIdx) {
+                    virtuosoRef.current?.scrollToIndex({ index: targetIdx, align: "start", behavior: "auto" });
+                }
+            } else {
+                // Can't place at top -> scroll to end of list
+                const endIndex = total > 0 ? total - 1 : 0;
+                if (lastRange.endIndex !== endIndex) {
+                    virtuosoRef.current?.scrollToIndex({ index: endIndex, align: "end", behavior: "auto" });
+                }
             }
         },
-        [isGrouped, groupFirstItemIndex, flatFirstIndex, virtuosoRef]
+        [isGrouped, groupFirstItemIndex, flatFirstIndex, totalItems, flatItems.length, virtuosoRef]
     );
 
-    // what the rail needs (and nothing else)
+    // Determine the letter at a global item index
+    const currentLetterAtIndex = React.useCallback(
+        (idx: number): string | null => {
+            if (idx == null || idx < 0) return null;
+
+            if (isGrouped && groups && groups.length) {
+                let i = idx;
+                for (const g of groups) {
+                    if (i < g.rows.length) return letterBucket(g.title);
+                    i -= g.rows.length;
+                }
+                return null;
+            }
+
+            const r = flatItems[idx];
+            return r ? letterBucket(r.title) : null;
+        },
+        [isGrouped, groups, flatItems]
+    );
+
+    // Follow the scroll (top-of-view determines active)
+    const rangeChanged = React.useCallback(
+        (range: Range) => {
+            lastRangeRef.current = range;
+            const L = currentLetterAtIndex(range.startIndex);
+            if (L) setActiveLetter(L);
+        },
+        [currentLetterAtIndex]
+    );
+
+    // Reset when dataset semantics change
+    React.useEffect(() => {
+        setActiveLetter(null);
+        lastRangeRef.current = null;
+    }, [isGrouped, groups?.length, flatItems.length, totalItems]);
+
     const counts: AlphabeticalRailCounts = isGrouped ? groupCounts : flatCounts;
 
-    return { counts, activeLetter, handleJump };
+    return { counts, activeLetter, handleJump, rangeChanged };
 }

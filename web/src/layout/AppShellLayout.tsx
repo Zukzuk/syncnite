@@ -61,7 +61,7 @@ export default function AppShellLayout({ children }: { children: React.ReactNode
                         leftSection={<IconSettings size={18} />}
                         active={location.pathname.startsWith("/settings")}
                     />
-                    <Text c="is-dim" size="xs" pl={rem(12)} pt="md">v1.0</Text>
+                    <Text className="is-dim" size="xs" pl={rem(12)} pt="md">v1.0</Text>
                 </ScrollArea>
             </AppShell.Navbar>
 

@@ -8,14 +8,14 @@
   }
 
   .game-title:hover {
-    color: var(--mantine-primary-color-4) !important;
+    color: var(--mantine-color-text-hover) !important;
   }
 
   &.is-installed {
     background: var(--mantine-primary-color-light) !important;
 
     &:hover {
-      background: var(--mantine-primary-color-9) !important;
+      background: var(--mantine-primary-color-filled) !important;
     }
   }
 
@@ -60,7 +60,7 @@
 
 .alphabetical-rail {
   position: absolute;
-  right: 12px;
+  right: 16px;
   top: 50%;
   transform: translateY(-50%);
   width: 28px;
@@ -83,7 +83,8 @@
 
   .item:hover {
     opacity: 1;
-    text-decoration: underline;
+    font-weight: 700;
+    color: var(--mantine-primary-color-4) !important;
   }
 
   .disabled {

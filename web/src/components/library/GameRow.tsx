@@ -64,7 +64,7 @@ export function GameRow(props: GameRowProps) {
             rel="noopener"
             fw={500}
             className="game-title"
-            style={{ textDecoration: "none" }}
+            style={{ textDecoration: "underline" }}
           >
             {title}
           </Text>
@@ -87,7 +87,7 @@ export function GameRow(props: GameRowProps) {
         {source ? (
           <Text>{source}</Text>
         ) : (
-          <Text c="is-dim">—</Text>
+          <Text className="is-dim">—</Text>
         )}
       </div>
 
@@ -105,7 +105,7 @@ export function GameRow(props: GameRowProps) {
           style={{ maxHeight: "100%" }}
         >
           {(tags ?? []).map((t) => (
-            <Badge key={t} variant="light" size="sm" style={{ boxShadow: "0 2px 0 0 rgb(0 0 0 / 20%)" }}>
+            <Badge key={t} variant="dark" size="sm" style={{ boxShadow: "0 2px 0 0 rgb(0 0 0 / 30%)" }}>
               {t}
             </Badge>
           ))}

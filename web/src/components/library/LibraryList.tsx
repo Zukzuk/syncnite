@@ -1,4 +1,3 @@
-// src/ui/library/LibraryList.tsx
 import React from "react";
 import { Box, Flex } from "@mantine/core";
 import { useElementSize } from "@mantine/hooks";
@@ -44,7 +43,7 @@ export function LibraryList({
   );
 
   // Rail logic is fully encapsulated here
-  const { counts, activeLetter, handleJump } = useAlphabetRail(
+  const { counts, activeLetter, handleJump, rangeChanged } = useAlphabetRail(
     { isGrouped, groups, flatItems },
     virtuosoRef
   );
@@ -99,6 +98,7 @@ export function LibraryList({
             style={{ height: "100%" }}
             groupCounts={groups.map((g) => g.rows.length)}
             increaseViewportBy={overscan}
+            rangeChanged={rangeChanged}
             groupContent={(index) => (
               <AlphabeticalSeparatorRow bucket={groups[index].title} top={(controlsH + headerH) || 0} />
             )}
@@ -134,6 +134,7 @@ export function LibraryList({
             style={{ height: "100%" }}
             data={derived.rowsSorted}
             increaseViewportBy={overscan}
+            rangeChanged={rangeChanged}
             computeItemKey={(index, r) => r.id}
             itemContent={(index) => {
               const r = derived.rowsSorted[index];

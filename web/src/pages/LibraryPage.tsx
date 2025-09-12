@@ -25,7 +25,7 @@ export default function LibraryPage() {
                     />
                 </div>
             ) : (
-                <Group><Text c="is-dim">Loading…</Text></Group>
+                <Group><Text className="is-dim">Loading…</Text></Group>
             )}
         </Stack>
     );

@@ -88,13 +88,28 @@ export const sourceUrlTemplates: Record<string, (g: GameDoc) => string | null> =
     const id = String((g as any).GameId ?? "").trim();
     return id ? `https://www.gog.com/game/${encodeURIComponent(id)}` : null;
   },
-  "ubisoft connect": () => null,
+  "ubisoft connect": (g) => {
+    const id = String((g as any).Name ?? "").trim();
+    return id ? `https://www.ubisoft.com/en-us/search?gss-q=${encodeURIComponent(id)}` : null;
+  },
   "ea app": () => null,
   "battle.net": () => null,
-  xbox: () => null,
-  humble: () => null,
-  nintendo: () => null,
-  "microsoft store": () => null
+  xbox: (g) => {
+    const id = String((g as any).Name ?? "").trim();
+    return id ? `https://www.xbox.com/en-us/Search/Results?q=${encodeURIComponent(id)}` : null;
+  },
+  humble: (g) => {
+    const id = String((g as any).Name ?? "").trim();
+    return id ? `https://www.humblebundle.com/store/search?search=${encodeURIComponent(id)}` : null;
+  },
+  nintendo: (g) => {
+    const id = String((g as any).Name ?? "").trim();
+    return id ? `https://www.nintendo.com/us/search/?q=${encodeURIComponent(id)}` : null;
+  },
+  "microsoft store": (g) => {
+    const id = String((g as any).Name ?? "").trim();
+    return id ? `https://apps.microsoft.com/search?query=${encodeURIComponent(id)}` : null;
+  },
 };
 
 export function firstStoreishLink(links: Link[] | undefined, sourceName: string): string | null {
