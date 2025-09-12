@@ -7,7 +7,10 @@ export type Guidish =
   | null
   | undefined;
 
-export type Link = { Name?: string; Url?: string };
+export type Link = { 
+  Name?: string; 
+  Url?: string 
+};
 
 export type GameDoc = {
   _id?: Guidish;
@@ -23,7 +26,11 @@ export type GameDoc = {
   IsInstalled?: boolean;
 };
 
-export type NamedDoc = { _id?: Guidish; Id?: Guidish; Name?: string };
+export type NamedDoc = { 
+  _id?: Guidish; 
+  Id?: Guidish; 
+  Name?: string 
+};
 
 export type Row = {
   id: string;
@@ -39,7 +46,11 @@ export type Row = {
   installed: boolean;
 };
 
-export type ZipInfo = { name: string; size: number; mtime: number };
+export type ZipInfo = { 
+  name: string; 
+  size: number; 
+  mtime: number 
+};
 
 export type LibraryItem = {
   id: string | number;
@@ -56,6 +67,35 @@ export type StreamProgress = {
   totalBytes?: number;
   deltaBytes?: number;
   log?: string;
+};
+
+export type Persisted = {
+  q: string;
+  sources: string[];
+  tags: string[];
+  showHidden: boolean;
+  installedOnly: boolean;
+  sortKey: SortKey;
+  sortDir: SortDir;
+};
+
+export type GameRowProps = {
+  id: string;
+  hidden: boolean;
+  showHidden: boolean;
+  installed: boolean;
+  iconUrl: string;
+  title: string;
+  source: string;
+  tags: string[];
+  year?: number | null;
+  url: string | null;
+};
+
+export type Loaded = {
+  rows: Row[];
+  allSources: string[];
+  allTags: string[];
 };
 
 export type SortKey = "title" | "source" | "tags" | "year";

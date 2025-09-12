@@ -1,20 +1,26 @@
 import React from "react";
 import { Box, Flex } from "@mantine/core";
 import { useElementSize } from "@mantine/hooks";
-import type { Loaded } from "../../lib/data";
-import { Controls } from "../header/Controls";
-import { useLibraryState } from "../hooks/useLibraryState";
+import type { Loaded } from "../../lib/types";
+import { Controls } from "./Controls";
+import { useLibraryState } from "./useLibraryState";
 import { GameRow } from "./GameRow";
-import { AlphaSeparatorRow } from "./AlphaSeparatorRow";
-import { VirtuosoHeader } from "./VirtuosoHeader";
+import { AlphabeticalSeparatorRow } from "./AlphabeticalSeparatorRow";
+import { LibraryListHeader } from "./LibraryListHeader";
 import { Virtuoso, GroupedVirtuoso } from "react-virtuoso";
 
-export function LibraryView({
+import "./library.scss";
+
+export function LibraryList({
   data,
   onCountsChange,
+  filteredCount,
+  totalCount,
 }: {
   data: Loaded;
   onCountsChange?: (filtered: number, total: number) => void;
+  filteredCount: number;
+  totalCount: number;
 }) {
   const { ui, derived } = useLibraryState(data);
   const { ref: controlsRef, height: controlsH } = useElementSize();
@@ -40,10 +46,8 @@ export function LibraryView({
 
   const overscan = { top: 600, bottom: 800 } as const;
   const stickyOffset = controlsH;
-
   // Build a small signature that changes whenever the visible dataset semantics change
-  const dataSig = `${derived.filteredCount}|${ui.q}|${ui.source ?? ""}|${ui.tag ?? ""}|${ui.showHidden}|${ui.installedOnly}`;
-
+  const dataSig = `${derived.filteredCount}|${ui.q}|${ui.sources.join(",")}|${ui.tags.join(",")}|${ui.showHidden}|${ui.installedOnly}`;
   // Force remount on mode switch (grouped vs flat) and dataset changes
   const groupedKey = `grp:${dataSig}|${ui.sortKey}|${ui.sortDir}`;
   const flatKey = `flt:${dataSig}|${ui.sortKey}|${ui.sortDir}`;
@@ -53,19 +57,26 @@ export function LibraryView({
       <Box
         ref={controlsRef}
         p="md"
-        style={{ position: "sticky", top: 0, zIndex: 20, background: "var(--mantine-color-body)" }}
+        style={{ 
+          position: "sticky", 
+          top: 0, 
+          zIndex: 20, 
+          background: "var(--mantine-color-body)" 
+        }}
       >
         <Controls
           q={ui.q} setQ={ui.setQ}
-          source={ui.source} setSource={ui.setSource} sources={data.allSources}
-          tag={ui.tag} setTag={ui.setTag} tags={data.allTags}
+          sources={ui.sources} setSources={ui.setSources} allSources={data.allSources}
+          tags={ui.tags} setTags={ui.setTags} allTags={data.allTags}
           showHidden={ui.showHidden} setShowHidden={ui.setShowHidden}
           installedOnly={ui.installedOnly} setInstalledOnly={ui.setInstalledOnly}
+          filteredCount={filteredCount}
+          totalCount={totalCount}
         />
       </Box>
 
       <div style={{ position: "sticky", top: stickyOffset, zIndex: 15 }}>
-        <VirtuosoHeader
+        <LibraryListHeader
           headerRef={headerRef as unknown as (el: HTMLElement | null) => void}
           sortKey={ui.sortKey}
           sortDir={ui.sortDir}
@@ -76,18 +87,17 @@ export function LibraryView({
       <Box style={{ flex: 1, minHeight: 0, position: "relative", overflow: "hidden" }}>
         {ui.sortKey === "title" && groups ? (
           <GroupedVirtuoso
-            key={groupedKey}                   // ← force remount when needed
+            key={groupedKey}
             style={{ height: "100%" }}
             groupCounts={groups.map((g) => g.rows.length)}
             increaseViewportBy={overscan}
             groupContent={(index) => (
-              <AlphaSeparatorRow
+              <AlphabeticalSeparatorRow
                 bucket={groups[index].title}
                 top={(controlsH + headerH) || 0}
               />
             )}
             itemContent={(index) => {
-              // flatten across groups
               let i = index;
               for (const g of groups) {
                 if (i < g.rows.length) {
@@ -114,12 +124,12 @@ export function LibraryView({
           />
         ) : (
           <Virtuoso
-            key={flatKey}                      // ← force remount when needed
+            key={flatKey}
             style={{ height: "100%" }}
             data={derived.rowsSorted}
             increaseViewportBy={overscan}
             computeItemKey={(index, r) => r.id}
-            itemContent={(index /*, _item */) => {
+            itemContent={(index) => {
               const r = derived.rowsSorted[index];
               return (
                 <GameRow

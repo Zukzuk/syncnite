@@ -1,11 +1,9 @@
-// web/src/pages/SyncPage.tsx
 import React from "react";
 import { Stack, Group, Select, Button, FileButton, TextInput, Textarea, Text } from "@mantine/core";
-import { PageTitle } from "../components/ui/PageTitle";
 import SectionCard from "../components/ui/SectionCard";
 import { LoadingBar } from "../components/ui/LoadingBar";
 import { listZips, uploadZip, processZipStream } from "../lib/api";
-import { type StreamProgress, type ZipInfo } from "../lib/types";
+import type { StreamProgress, ZipInfo } from "../lib/types";
 
 export default function SyncPage() {
     const [zips, setZips] = React.useState<ZipInfo[]>([]);
@@ -122,24 +120,20 @@ export default function SyncPage() {
 
     return (
         <Stack gap="lg">
-            <PageTitle title="Sync Playnite Backup" subtitle="Upload a ZIP, then run export" />
-
-            {/* Upload card */}
-            <SectionCard title="Upload ZIP">
+            <SectionCard title="Upload">
                 <Group align="end" gap="sm" wrap="wrap">
                     <FileButton onChange={onUpload} accept=".zip">
-                        {(props) => <Button {...props} variant="light" loading={uploadBusy}>Upload ZIP…</Button>}
+                        {(props) => <Button {...props} variant="light" loading={uploadBusy}>Select Backup File</Button>}
                     </FileButton>
                 </Group>
                 <LoadingBar label="Uploading…" percent={uploadPercent} subtext={uploadSubtext} />
             </SectionCard>
 
-            {/* Export card */}
-            <SectionCard title="Export">
+            <SectionCard title="Import">
                 <Group align="end" gap="sm" wrap="wrap">
                     <Select
-                        label="Select Backup"
-                        placeholder="Select a ZIP"
+                        label="Select"
+                        placeholder="Select Available Backup"
                         value={selected}
                         onChange={setSelected}
                         data={zips.map((z) => ({ value: z.name, label: z.name }))}
@@ -152,7 +146,7 @@ export default function SyncPage() {
                         w={280}
                     />
                     <Button onClick={onRun} loading={exportBusy} disabled={!selected}>
-                        Run export
+                        Run import
                     </Button>
                 </Group>
                 <LoadingBar label={exportPhaseLabel} percent={exportPercent} subtext={exportSubtext} />
@@ -165,7 +159,7 @@ export default function SyncPage() {
                     autosize
                     styles={{ input: { fontFamily: "ui-monospace, Menlo, Consolas, monospace" } }}
                 />
-                <Text size="xs" c="dimmed">
+                <Text size="xs" c="is-dim">
                     Newest on top
                 </Text>
             </SectionCard>

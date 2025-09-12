@@ -1,8 +1,15 @@
-// concat-sources.js
 import fs from "fs";
 import path from "path";
 
-const rootDir = "./";                           // startmap
+const argv = process.argv.slice(2);
+function readFlag(name, fallback) {
+  const i = argv.findIndex(a => a === `--${name}`);
+  if (i >= 0 && argv[i + 1]) return argv[i + 1];
+  return fallback;
+}
+const positionalDir = argv.find(a => !a.startsWith("--"));
+const rootDir = path.resolve(readFlag("dir", positionalDir ?? "./"));
+
 const outputFile = "./scripts/concat-code.txt"; // outputbestand
 
 // Mappen negeren (exacte mapnamen)

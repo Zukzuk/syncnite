@@ -1,0 +1,60 @@
+.game-row {
+  position: relative;
+  transition: background-color 120ms ease-in-out;
+  overflow: hidden;
+
+  &:hover {
+    background: var(--mantine-color-default-hover);
+  }
+
+  .game-title:hover {
+    color: var(--mantine-color-primary-filled) !important;
+  }
+
+  &.is-installed {
+    background: var(--mantine-primary-color-light) !important;
+
+    &:hover {
+      background: var(--mantine-primary-color-9) !important;
+    }
+  }
+
+  .icon-wrap {
+    position: relative;
+
+    .play-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+
+      /* show on hover */
+      opacity: 0;
+      transition: opacity 120ms ease-in-out;
+      background: rgba(0, 0, 0, 0.5);
+      color: #fff;
+      text-decoration: none;
+
+      /* make SVGs crisp & aligned */
+      svg {
+        display: block;
+      }
+    }
+
+    &:hover .play-overlay {
+      opacity: 1;
+    }
+  }
+}
+
+.alpha-separator {
+  position: "sticky";
+  top: 0;
+  z-index: 5;
+  font-weight: 700;
+  padding: 6px 12px 6px 80px;
+  background: var(--mantine-color-body);
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}

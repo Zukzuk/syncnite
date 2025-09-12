@@ -1,5 +1,6 @@
-import type { GameDoc, NamedDoc, Row } from "./types";
-import { asGuid, asGuidArray, buildIconUrl, firstStoreishLink, normalizePath, sourceUrlTemplates, extractYear } from "./utils";
+import type { GameDoc, Loaded, NamedDoc, Row } from "./types";
+import { asGuid, asGuidArray, buildIconUrl, firstStoreishLink, 
+  normalizePath, sourceUrlTemplates, extractYear } from "./utils";
 
 async function getJson<T>(path: string): Promise<T> {
   const sep = path.includes("?") ? "&" : "?";
@@ -28,12 +29,6 @@ const FILES = {
     `${BASE}/sources.GameSource.json`,
     `${BASE}/sources.Source.json`,
   ],
-};
-
-export type Loaded = {
-  rows: Row[];
-  allSources: string[];
-  allTags: string[];
 };
 
 export async function loadLibrary(): Promise<Loaded> {

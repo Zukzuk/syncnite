@@ -1,10 +1,9 @@
-// src/theme.tsx
 import React from "react";
 import { MantineProvider, createTheme } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
 
 export const appTheme = createTheme({
-    primaryColor: "indigo",
+    primaryColor: "grape",
     fontFamily:
         'Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"',
     defaultRadius: "md",

@@ -13,7 +13,6 @@ export default function AppShellLayout({ children }: { children: React.ReactNode
         <AppShell
             header={{ height: 56 }}
             navbar={{ width: 260, breakpoint: "sm", collapsed: { mobile: !opened } }}
-            padding="md"
         >
             <AppShell.Header>
                 <Group h="100%" px="md" justify="space-between">
@@ -62,7 +61,7 @@ export default function AppShellLayout({ children }: { children: React.ReactNode
                         leftSection={<IconSettings size={18} />}
                         active={location.pathname.startsWith("/settings")}
                     />
-                    <Text c="dimmed" size="xs" pl={rem(12)} pt="md">v1.0</Text>
+                    <Text c="is-dim" size="xs" pl={rem(12)} pt="md">v1.0</Text>
                 </ScrollArea>
             </AppShell.Navbar>
 

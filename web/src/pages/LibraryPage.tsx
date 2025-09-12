@@ -1,10 +1,8 @@
-// web/src/pages/LibraryPage.tsx
 import React from "react";
 import { Stack, Group, Text } from "@mantine/core";
-import { PageTitle } from "../components/ui/PageTitle";
-import SectionCard from "../components/ui/SectionCard";
-import { loadLibrary, type Loaded } from "../lib/data";
-import { LibraryView } from "../components/library/LibraryView";
+import { loadLibrary } from "../lib/data";
+import type { Loaded } from "../lib/types";
+import { LibraryList } from "../components/library/LibraryList";
 
 export default function LibraryPage() {
     const [data, setData] = React.useState<Loaded | null>(null);
@@ -17,23 +15,18 @@ export default function LibraryPage() {
 
     return (
         <Stack gap="lg" style={{ height: "100%", minHeight: 0 }}>
-            <PageTitle
-                title="Library"
-                subtitle={total ? `${filtered.toLocaleString()} of ${total.toLocaleString()} shown` : undefined}
-            />
-
-            <SectionCard title="Browse">
-                {data ? (
-                    <div style={{ height: "calc(100vh - 220px)", minHeight: 400 }}>
-                        <LibraryView
-                            data={data}
-                            onCountsChange={(f, t) => { setFiltered(f); setTotal(t); }}
-                        />
-                    </div>
-                ) : (
-                    <Group><Text c="dimmed">Loading…</Text></Group>
-                )}
-            </SectionCard>
+            {data ? (
+                <div style={{ height: "calc(100vh - 90px)", minHeight: 400 }}>
+                    <LibraryList
+                        data={data}
+                        onCountsChange={(f, t) => { setFiltered(f); setTotal(t); }}
+                        filteredCount={filtered}
+                        totalCount={total}
+                    />
+                </div>
+            ) : (
+                <Group><Text c="is-dim">Loading…</Text></Group>
+            )}
         </Stack>
     );
 }

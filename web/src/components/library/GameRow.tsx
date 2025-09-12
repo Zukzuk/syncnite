@@ -1,20 +1,7 @@
-import React from "react";
 import { Badge, Group, Text } from "@mantine/core";
 import { IconImage } from "./IconImage";
 import { effectiveLink } from "../../lib/utils";
-
-export type GameRowProps = {
-  id: string;
-  hidden: boolean;
-  showHidden: boolean;
-  installed: boolean;
-  iconUrl: string;
-  title: string;
-  source: string;
-  tags: string[];
-  year?: number | null;
-  url: string | null;
-};
+import { GameRowProps } from "../../lib/types";
 
 export function GameRow(props: GameRowProps) {
   const { id, hidden, showHidden, installed, iconUrl, title, source, tags, year, url } = props;
@@ -28,22 +15,19 @@ export function GameRow(props: GameRowProps) {
       className={`game-row${dim ? " is-dim" : ""}${installed ? " is-installed" : ""}`}
       style={{
         display: "grid",
-        gridTemplateColumns: "56px minmax(0, 50%) 70px 70px minmax(200px, 1fr)",
+        gridTemplateColumns: "56px minmax(0, 40%) 60px 80px minmax(200px, 1fr)",
+        minWidth: "calc(56px + 40% + 60px + 80px + 200px + 24px)",
         alignItems: "center",
         gap: 12,
         height: 56,
         padding: "0 12px",
         borderBottom: "1px solid var(--mantine-color-default-border)",
-        opacity: dim ? 0.55 : 1,
-        minWidth:  // ensure grid can overflow horizontally when it needs to
-          "calc(56px + 50% + 70px + 70px + 200px + 24px)", // 24px = gaps approx; not critical but helps
       }}
     >
       <div style={{ width: 56 }}>
         <div
-          className="icon-wrap"
+          className={`icon-wrap game-row${dim ? " is-dim" : ""}`}
           style={{
-            opacity: dim ? 0.6 : 1,
             position: "relative",
             width: 40,
             height: 40
@@ -79,49 +63,50 @@ export function GameRow(props: GameRowProps) {
             target="_blank"
             rel="noopener"
             fw={500}
-            c={dim ? "dimmed" : undefined}
+            c={dim ? "is-dim" : undefined}
             className="game-title"
             style={{ textDecoration: "none" }}
           >
             {title}
           </Text>
         ) : (
-          <Text fw={500} c={dim ? "dimmed" : undefined}>
+          <Text fw={500} c={dim ? "is-dim" : undefined}>
             {title}
           </Text>
         )}
       </div>
 
       <div>
-        <Text c={dim ? "dimmed" : undefined}>{year ?? ""}</Text>
+        {year ? (
+          <Text c={dim ? "is-dim" : undefined}>{year}</Text>
+        ) : (
+          <Text c="is-dim">—</Text>
+        )}
       </div>
 
       <div>
         {source ? (
-          <Text c={dim ? "dimmed" : undefined}>{source}</Text>
+          <Text c={dim ? "is-dim" : undefined}>{source}</Text>
         ) : (
-          <Text c="dimmed">—</Text>
+          <Text c="is-dim">—</Text>
         )}
       </div>
 
       <div
         style={{
           display: "flex",
-          alignItems: "center", // vertical center
+          alignItems: "center",
           height: "100%",
           overflow: "hidden",
         }}
       >
         <Group
           gap={6}
-          wrap="wrap" // allow multiple lines
-          style={{
-            overflow: "hidden",
-            maxHeight: "100%", // prevent growing past row height
-          }}
+          wrap="wrap"
+          style={{ maxHeight: "100%" }}
         >
           {(tags ?? []).map((t) => (
-            <Badge key={t} variant="light" size="sm">
+            <Badge key={t} variant="light" size="sm" style={{ boxShadow: "0 2px 0 0 rgb(0 0 0 / 20%)" }}>
               {t}
             </Badge>
           ))}

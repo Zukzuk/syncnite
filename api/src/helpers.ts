@@ -2,15 +2,15 @@ import { spawn, type SpawnOptionsWithoutStdio } from "node:child_process";
 import { join, dirname } from "node:path";
 import { promises as fs } from "node:fs";
 import * as fsSync from "node:fs";
+import {  } from "node:child_process";
 
-export const INPUT_DIR = "/input";
-export const WORK_DIR = "/work";
-export const DATA_DIR = "/data";
-
-type RunOpts = SpawnOptionsWithoutStdio & {
+export type RunOpts = SpawnOptionsWithoutStdio & {
     onStdout?: (line: string) => void;
     onStderr?: (line: string) => void;
 };
+export const INPUT_DIR = "/input";
+export const WORK_DIR = "/work";
+export const DATA_DIR = "/data";
 
 export function run(
     cmd: string,

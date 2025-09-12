@@ -1,53 +1,8 @@
-.game-row {
-  position: relative;
-  transition: background-color 120ms ease-in-out;
-
-  &:hover {
-    background: var(--mantine-color-default-hover); // subtle highlight
+  img.icon {
+    image-rendering: -webkit-optimize-contrast;
+    -webkit-font-smoothing: antialiased;
   }
 
-  &.is-dim {
-    opacity: 0.55;
+  .is-dim {
+    opacity: 0.5 !important;
   }
-
-  .icon-wrap {
-    position: relative;
-
-    .play-overlay {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 6px;
-
-      /* show on hover */
-      opacity: 0;
-      transition: opacity 120ms ease-in-out;
-      background: rgba(0, 0, 0, 0.35);
-      color: #fff;
-      text-decoration: none;
-
-      /* make SVGs crisp & aligned */
-      svg {
-        display: block;
-      }
-    }
-
-    &:hover .play-overlay {
-      opacity: 1;
-    }
-  }
-
-
-}
-
-.game-title:hover {
-  color: var(--mantine-color-primary-filled) !important;
-}
-
-/* Ensure icons look clean even on dark themes */
-img.icon {
-  image-rendering: -webkit-optimize-contrast;
-  -webkit-font-smoothing: antialiased;
-}
