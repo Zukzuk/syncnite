@@ -24,9 +24,9 @@ export function GameRow(props: GameRowProps) {
         borderBottom: "1px solid var(--mantine-color-default-border)",
       }}
     >
-      <div style={{ width: 56 }}>
+      <div style={{ width: 56 }} className={dim ? " is-dim" : ""}>
         <div
-          className={`icon-wrap game-row${dim ? " is-dim" : ""}`}
+          className="icon-wrap game-row"
           style={{
             position: "relative",
             width: 40,
@@ -55,7 +55,7 @@ export function GameRow(props: GameRowProps) {
         </div>
       </div>
 
-      <div>
+      <div className={dim ? " is-dim" : ""}>
         {href ? (
           <Text
             component="a"
@@ -63,30 +63,29 @@ export function GameRow(props: GameRowProps) {
             target="_blank"
             rel="noopener"
             fw={500}
-            c={dim ? "is-dim" : undefined}
             className="game-title"
             style={{ textDecoration: "none" }}
           >
             {title}
           </Text>
         ) : (
-          <Text fw={500} c={dim ? "is-dim" : undefined}>
+          <Text fw={500}>
             {title}
           </Text>
         )}
       </div>
 
-      <div>
+      <div className={dim ? " is-dim" : ""}>
         {year ? (
-          <Text c={dim ? "is-dim" : undefined}>{year}</Text>
+          <Text>{year}</Text>
         ) : (
-          <Text c="is-dim">—</Text>
+          <Text>—</Text>
         )}
       </div>
 
-      <div>
+      <div className={dim ? " is-dim" : ""}>
         {source ? (
-          <Text c={dim ? "is-dim" : undefined}>{source}</Text>
+          <Text>{source}</Text>
         ) : (
           <Text c="is-dim">—</Text>
         )}

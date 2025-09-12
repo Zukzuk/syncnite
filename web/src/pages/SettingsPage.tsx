@@ -1,3 +1,9 @@
+import { Stack } from "@mantine/core";
+
 export default function SettingsPage() {
-  return <div style={{ padding: 8 }}><h2>Settings</h2><p>Coming soon.</p></div>;
+  return (
+    <Stack gap="lg" p="md">
+      <h2>Settings</h2><p>Coming soon.</p>
+    </Stack>
+  );
 }

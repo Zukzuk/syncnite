@@ -46,6 +46,18 @@ export type Row = {
   installed: boolean;
 };
 
+// export type Row = {
+//     id: string;
+//     title: string;
+//     hidden: boolean;
+//     installed: boolean;
+//     iconUrl?: string | null;
+//     source?: string | null;
+//     tags?: string[] | null;
+//     year?: number | null;
+//     url?: string | null;
+// };
+
 export type ZipInfo = { 
   name: string; 
   size: number; 
@@ -97,6 +109,15 @@ export type Loaded = {
   allSources: string[];
   allTags: string[];
 };
+
+export type WithBucket = { row: Row; bucket: string };
+
+export type AlphaGroup = { title: string; rows: Row[] };
+
+export type AlphabeticalRailCounts = Record<string, number>;
+
+export const LETTERS = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ", "#"] as const;
+export type Letter = typeof LETTERS[number];
 
 export type SortKey = "title" | "source" | "tags" | "year";
 export type SortDir = "asc" | "desc";

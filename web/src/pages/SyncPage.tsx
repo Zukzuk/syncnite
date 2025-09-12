@@ -1,5 +1,5 @@
 import React from "react";
-import { Stack, Group, Select, Button, FileButton, TextInput, Textarea, Text } from "@mantine/core";
+import { Stack, Group, Select, Button, FileButton, PasswordInput, Textarea, Text } from "@mantine/core";
 import SectionCard from "../components/ui/SectionCard";
 import { LoadingBar } from "../components/ui/LoadingBar";
 import { listZips, uploadZip, processZipStream } from "../lib/api";
@@ -119,7 +119,7 @@ export default function SyncPage() {
     const exportPhaseLabel = exportPhase === "unzip" ? "Unzipping…" : exportPhase === "copy" ? "Copying media…" : "";
 
     return (
-        <Stack gap="lg">
+        <Stack gap="lg" p="md">
             <SectionCard title="Upload">
                 <Group align="end" gap="sm" wrap="wrap">
                     <FileButton onChange={onUpload} accept=".zip">
@@ -137,15 +137,16 @@ export default function SyncPage() {
                         value={selected}
                         onChange={setSelected}
                         data={zips.map((z) => ({ value: z.name, label: z.name }))}
-                        w={320}
+                        w={360}
                     />
-                    <TextInput
+                    <PasswordInput
                         label="DB Password (optional)"
+                        placeholder="Password"
                         value={password}
                         onChange={(e) => setPassword(e.currentTarget.value)}
-                        w={280}
+                        w={200}
                     />
-                    <Button onClick={onRun} loading={exportBusy} disabled={!selected}>
+                    <Button onClick={onRun} loading={exportBusy} disabled={!selected} variant="light">
                         Run import
                     </Button>
                 </Group>
@@ -159,7 +160,7 @@ export default function SyncPage() {
                     autosize
                     styles={{ input: { fontFamily: "ui-monospace, Menlo, Consolas, monospace" } }}
                 />
-                <Text size="xs" c="is-dim">
+                <Text size="xs" className="is-dim">
                     Newest on top
                 </Text>
             </SectionCard>

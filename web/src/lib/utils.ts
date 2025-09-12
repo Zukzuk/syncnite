@@ -1,4 +1,4 @@
-import type { Guidish, Link, GameDoc } from "./types";
+import type { Guidish, Link, GameDoc, Letter } from "./types";
 import ICO from "icojs";
 
 export function isIcoPath(url: string): boolean {
@@ -186,4 +186,10 @@ export function extractYear(val: unknown): number | null {
     if (typeof o["Value"] === "number") return parseYearFromNumber(o["Value"]);
   }
   return null;
+}
+
+export function letterBucket(s: string | undefined | null): Letter {
+  if (!s) return "#";
+  const c = s.trim().charAt(0).toUpperCase();
+  return (c >= "A" && c <= "Z" ? c : "#") as Letter;
 }

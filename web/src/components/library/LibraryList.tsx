@@ -1,13 +1,17 @@
+// src/ui/library/LibraryList.tsx
 import React from "react";
 import { Box, Flex } from "@mantine/core";
 import { useElementSize } from "@mantine/hooks";
+import { Virtuoso, GroupedVirtuoso, VirtuosoHandle } from "react-virtuoso";
 import type { Loaded } from "../../lib/types";
 import { Controls } from "./Controls";
 import { useLibraryState } from "./useLibraryState";
 import { GameRow } from "./GameRow";
 import { AlphabeticalSeparatorRow } from "./AlphabeticalSeparatorRow";
 import { LibraryListHeader } from "./LibraryListHeader";
-import { Virtuoso, GroupedVirtuoso } from "react-virtuoso";
+import { AlphabeticalRail } from "./AlphabeticalRail";
+import { useAlphabetGroups } from "./useAlphabetGroups";
+import { useAlphabetRail } from "./useAlphabetRail";
 
 import "./library.scss";
 
@@ -26,29 +30,30 @@ export function LibraryList({
   const { ref: controlsRef, height: controlsH } = useElementSize();
   const { ref: headerRef, height: headerH } = useElementSize();
 
+  const virtuosoRef = React.useRef<VirtuosoHandle>(null);
+
   React.useEffect(() => {
     onCountsChange?.(derived.filteredCount, derived.totalCount);
   }, [derived.filteredCount, derived.totalCount, onCountsChange]);
 
-  const groups = React.useMemo(() => {
-    if (ui.sortKey !== "title") return null;
-    const out: Array<{ title: string; rows: typeof derived.rowsSorted }> = [];
-    let current: { title: string; rows: typeof derived.rowsSorted } | null = null;
-    for (const { row, bucket } of derived.withBuckets) {
-      if (!current || current.title !== bucket) {
-        current = { title: bucket, rows: [] };
-        out.push(current);
-      }
-      current.rows.push(row);
-    }
-    return out;
-  }, [ui.sortKey, derived.withBuckets, derived.rowsSorted]);
+  // Alphabet grouping is encapsulated here
+  const { groups, isGrouped, flatItems } = useAlphabetGroups(
+    ui.sortKey,
+    derived.withBuckets,
+    derived.rowsSorted
+  );
+
+  // Rail logic is fully encapsulated here
+  const { counts, activeLetter, handleJump } = useAlphabetRail(
+    { isGrouped, groups, flatItems },
+    virtuosoRef
+  );
 
   const overscan = { top: 600, bottom: 800 } as const;
   const stickyOffset = controlsH;
-  // Build a small signature that changes whenever the visible dataset semantics change
+
+  // remount keys
   const dataSig = `${derived.filteredCount}|${ui.q}|${ui.sources.join(",")}|${ui.tags.join(",")}|${ui.showHidden}|${ui.installedOnly}`;
-  // Force remount on mode switch (grouped vs flat) and dataset changes
   const groupedKey = `grp:${dataSig}|${ui.sortKey}|${ui.sortDir}`;
   const flatKey = `flt:${dataSig}|${ui.sortKey}|${ui.sortDir}`;
 
@@ -57,19 +62,21 @@ export function LibraryList({
       <Box
         ref={controlsRef}
         p="md"
-        style={{ 
-          position: "sticky", 
-          top: 0, 
-          zIndex: 20, 
-          background: "var(--mantine-color-body)" 
-        }}
+        style={{ position: "sticky", top: 0, zIndex: 20, background: "var(--mantine-color-body)" }}
       >
         <Controls
-          q={ui.q} setQ={ui.setQ}
-          sources={ui.sources} setSources={ui.setSources} allSources={data.allSources}
-          tags={ui.tags} setTags={ui.setTags} allTags={data.allTags}
-          showHidden={ui.showHidden} setShowHidden={ui.setShowHidden}
-          installedOnly={ui.installedOnly} setInstalledOnly={ui.setInstalledOnly}
+          q={ui.q}
+          setQ={ui.setQ}
+          sources={ui.sources}
+          setSources={ui.setSources}
+          allSources={data.allSources}
+          tags={ui.tags}
+          setTags={ui.setTags}
+          allTags={data.allTags}
+          showHidden={ui.showHidden}
+          setShowHidden={ui.setShowHidden}
+          installedOnly={ui.installedOnly}
+          setInstalledOnly={ui.setInstalledOnly}
           filteredCount={filteredCount}
           totalCount={totalCount}
         />
@@ -85,17 +92,15 @@ export function LibraryList({
       </div>
 
       <Box style={{ flex: 1, minHeight: 0, position: "relative", overflow: "hidden" }}>
-        {ui.sortKey === "title" && groups ? (
+        {isGrouped && groups ? (
           <GroupedVirtuoso
+            ref={virtuosoRef}
             key={groupedKey}
             style={{ height: "100%" }}
             groupCounts={groups.map((g) => g.rows.length)}
             increaseViewportBy={overscan}
             groupContent={(index) => (
-              <AlphabeticalSeparatorRow
-                bucket={groups[index].title}
-                top={(controlsH + headerH) || 0}
-              />
+              <AlphabeticalSeparatorRow bucket={groups[index].title} top={(controlsH + headerH) || 0} />
             )}
             itemContent={(index) => {
               let i = index;
@@ -124,6 +129,7 @@ export function LibraryList({
           />
         ) : (
           <Virtuoso
+            ref={virtuosoRef}
             key={flatKey}
             style={{ height: "100%" }}
             data={derived.rowsSorted}
@@ -147,6 +153,20 @@ export function LibraryList({
               );
             }}
           />
+        )}
+
+        {isGrouped && (
+          <Box
+            style={{
+              display: "flex",
+              alignItems: "stretch",
+              pointerEvents: "none",
+            }}
+          >
+            <Box style={{ pointerEvents: "auto", width: "100%" }}>
+              <AlphabeticalRail active={activeLetter} onJump={handleJump} counts={counts} />
+            </Box>
+          </Box>
         )}
       </Box>
     </Flex>

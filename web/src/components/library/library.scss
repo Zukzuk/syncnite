@@ -8,7 +8,7 @@
   }
 
   .game-title:hover {
-    color: var(--mantine-color-primary-filled) !important;
+    color: var(--mantine-primary-color-4) !important;
   }
 
   &.is-installed {
@@ -49,12 +49,51 @@
   }
 }
 
-.alpha-separator {
-  position: "sticky";
-  top: 0;
+.alphabetical-separator {
+  position: sticky;
   z-index: 5;
   font-weight: 700;
   padding: 6px 12px 6px 80px;
   background: var(--mantine-color-body);
   border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.alphabetical-rail {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  padding: 6px 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+
+  .item {
+    all: unset;
+    font-size: 11px;
+    line-height: 1;
+    padding: 4px 0;
+    text-align: center;
+    cursor: pointer;
+    opacity: 0.8;
+    user-select: none;
+  }
+
+  .item:hover {
+    opacity: 1;
+    text-decoration: underline;
+  }
+
+  .disabled {
+    cursor: default;
+    opacity: 0.3;
+  }
+
+  .active {
+    font-weight: 700;
+    opacity: 1;
+    color: var(--mantine-primary-color-4) !important;
+  }
 }

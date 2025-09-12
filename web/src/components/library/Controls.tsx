@@ -104,7 +104,7 @@ export function Controls(props: {
 
       <Group gap="lg" align="end">
         <Flex direction="column" align="center" justify="center" style={{ alignSelf: "stretch" }}>
-          <Text size="sm" c="is-dim" style={{ whiteSpace: "nowrap" }}>
+          <Text size="sm" className="is-dim" style={{ whiteSpace: "nowrap" }}>
             {totalCount ? `${filteredCount.toLocaleString()} / ${totalCount.toLocaleString()}` : ""}
           </Text>
         </Flex>
@@ -115,7 +115,7 @@ export function Controls(props: {
             onChange={(e) => setInstalledOnly(e.currentTarget.checked)}
             size="sm"
           />
-          <Text size="xs" c="is-dim">installed</Text>
+          <Text size="xs" className="is-dim">installed</Text>
         </Flex>
         <Flex direction="column" align="center" justify="center" style={{ alignSelf: "stretch" }}>
           <Switch
@@ -124,7 +124,7 @@ export function Controls(props: {
             onChange={(e) => setShowHidden(e.currentTarget.checked)}
             size="sm"
           />
-          <Text size="xs" c="is-dim">hidden</Text>
+          <Text size="xs" className="is-dim">hidden</Text>
         </Flex>
       </Group>
     </Group>
