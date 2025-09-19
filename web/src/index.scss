@@ -1,3 +1,9 @@
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+  
   img.icon {
     image-rendering: -webkit-optimize-contrast;
     -webkit-font-smoothing: antialiased;

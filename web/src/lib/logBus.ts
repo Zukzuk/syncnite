@@ -1,10 +1,8 @@
 // Global log buffer that survives route changes AND page reloads (via sessionStorage).
 // Newest-first order. Keeps up to MAX lines.
 
+import { KEY, MAX_LINES } from "./constants";
 import { LogListener } from "./types";
-
-const MAX_LINES = 1000;
-const KEY = "pn_logs_v1";
 
 let lines: string[] = restore();
 

@@ -1,4 +1,5 @@
 import { Stack, Progress, Text } from "@mantine/core";
+
 export function LoadingBar({ label, percent, subtext }: {
   label: string; percent: number | null; subtext?: string
 }) {

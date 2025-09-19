@@ -7,10 +7,6 @@
     background: var(--mantine-color-default-hover);
   }
 
-  .game-title:hover {
-    color: var(--mantine-color-text-hover) !important;
-  }
-
   &.is-installed {
     background: var(--mantine-primary-color-light) !important;
 
@@ -75,7 +71,7 @@
     all: unset;
     font-size: 11px;
     line-height: 1;
-    padding: 4px 0;
+    padding: 3px 0;
     text-align: center;
     cursor: pointer;
     opacity: 0.8;

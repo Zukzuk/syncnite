@@ -1,4 +1,4 @@
-import { api } from "./client";
+import { api } from "./api";
 import { ZipMeta } from "./types";
 
 export async function listZips() {

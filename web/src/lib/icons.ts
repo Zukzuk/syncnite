@@ -1,4 +1,3 @@
-// One place to import icons from the library.
 export {
     IconSearch,
     IconX,
@@ -9,4 +8,10 @@ export {
     IconTags,
     IconSortAscending,
     IconSortDescending,
+    IconSun, 
+    IconMoon, 
+    IconHome2, 
+    IconBooks, 
+    IconCloudUpload, 
+    IconSettings, 
 } from "@tabler/icons-react";

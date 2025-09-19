@@ -1,4 +1,5 @@
-import type { Guidish, Link, GameDoc, Letter } from "./types";
+import { FALLBACK_ICON } from "./constants";
+import type { Guidish, Link, Letter } from "./types";
 import ICO from "icojs";
 
 export function isIcoPath(url: string): boolean {
@@ -56,15 +57,6 @@ export function normalizePath(p?: string): string | null {
 }
 
 export function buildIconUrl(iconRel: string | null, iconId: string | null): string {
-  const FALLBACK_ICON =
-    "data:image/svg+xml;utf8," +
-    encodeURIComponent(
-      `<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'>
-      <rect width='100%' height='100%' fill='#ddd'/>
-      <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle'
-            font-family='sans-serif' font-size='10' fill='#777'>no icon</text>
-    </svg>`
-    );
   if (iconRel && /^https?:\/\//i.test(iconRel)) return iconRel;
   if (iconRel) {
     const rel = iconRel.replace(/\\/g, "/").replace(/^\.?\//, "");
@@ -74,43 +66,6 @@ export function buildIconUrl(iconRel: string | null, iconId: string | null): str
   if (iconId) return `/data/libraryfiles/${iconId}.png`;
   return FALLBACK_ICON;
 }
-
-export const sourceUrlTemplates: Record<string, (g: GameDoc) => string | null> = {
-  steam: (g) => {
-    const id = String((g as any).GameId ?? "").trim();
-    return /^\d+$/.test(id) ? `https://store.steampowered.com/app/${id}` : null;
-  },
-  epic: (g) => {
-    const id = String((g as any).GameId ?? "").trim();
-    return id ? `https://store.epicgames.com/p/${encodeURIComponent(id)}` : null;
-  },
-  gog: (g) => {
-    const id = String((g as any).GameId ?? "").trim();
-    return id ? `https://www.gog.com/game/${encodeURIComponent(id)}` : null;
-  },
-  "ubisoft connect": (g) => {
-    const id = String((g as any).Name ?? "").trim();
-    return id ? `https://www.ubisoft.com/en-us/search?gss-q=${encodeURIComponent(id)}` : null;
-  },
-  "ea app": () => null,
-  "battle.net": () => null,
-  xbox: (g) => {
-    const id = String((g as any).Name ?? "").trim();
-    return id ? `https://www.xbox.com/en-us/Search/Results?q=${encodeURIComponent(id)}` : null;
-  },
-  humble: (g) => {
-    const id = String((g as any).Name ?? "").trim();
-    return id ? `https://www.humblebundle.com/store/search?search=${encodeURIComponent(id)}` : null;
-  },
-  nintendo: (g) => {
-    const id = String((g as any).Name ?? "").trim();
-    return id ? `https://www.nintendo.com/us/search/?q=${encodeURIComponent(id)}` : null;
-  },
-  "microsoft store": (g) => {
-    const id = String((g as any).Name ?? "").trim();
-    return id ? `https://apps.microsoft.com/search?query=${encodeURIComponent(id)}` : null;
-  },
-};
 
 export function firstStoreishLink(links: Link[] | undefined, sourceName: string): string | null {
   if (!links?.length) return null;
@@ -129,7 +84,7 @@ export function firstStoreishLink(links: Link[] | undefined, sourceName: string)
       (lowerSrc.includes("gog") && u.includes("gog.com")) ||
       (lowerSrc.includes("ubisoft") && (u.includes("ubisoft.com") || u.includes("uplay"))) ||
       (lowerSrc.includes("ea") && (u.includes("ea.com") || u.includes("origin.com"))) ||
-      (lowerSrc.includes("battle.net") && (u.includes("battle.net") || u.includes("blizzard.com"))) ||
+      (lowerSrc.includes("battle") && (u.includes("battle.net") || u.includes("blizzard.com"))) ||
       (lowerSrc.includes("xbox") && (u.includes("xbox.com") || u.includes("microsoft.com"))) ||
       (lowerSrc.includes("humble") && u.includes("humblebundle.com")) ||
       (lowerSrc.includes("nintendo") && u.includes("nintendo.com"))

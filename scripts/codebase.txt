@@ -1055,6 +1055,7 @@ export function AlphabeticalSeparatorRow({ bucket, top }: { bucket: string; top:
 import React from "react";
 import { Group, MultiSelect, Switch, Text, Stack, Flex } from "@mantine/core";
 import { SearchInput } from "../ui/SearchInput";
+import { sourceLabel } from "../../lib/constants";
 
 export function Controls(props: {
   q: string; setQ: (v: string) => void;
@@ -1077,7 +1078,7 @@ export function Controls(props: {
   } = props;
 
   const sourceData = React.useMemo(
-    () => Array.from(new Set(allSources)).sort().map((s) => ({ value: s, label: s })),
+    () => Array.from(new Set(allSources)).sort().map((s) => ({ value: s, label: sourceLabel[s] })),
     [allSources]
   );
 
@@ -1108,7 +1109,7 @@ export function Controls(props: {
             data={sourceData}
             clearable
             searchable
-            w={230}          // keep fixed width
+            w={230} 
             size="sm"
             radius="xl"
             variant="filled"
@@ -1180,13 +1181,14 @@ export function Controls(props: {
 
 import { Badge, Group, Text } from "@mantine/core";
 import { IconImage } from "./IconImage";
-import { GRID } from "../../lib/constants";
+import { GRID, sourceProtocolLink, sourceTrim } from "../../lib/constants";
 import { PlayActionOverlay } from "../ui/PlayActionOverlay";
 import { effectiveLink } from "../../lib/utils";
 import { GameRowProps } from "../../lib/types";
+import { IconExternalLink } from "../../lib/icons";
 
 export function GameRow(props: GameRowProps) {
-  const { id, hidden, showHidden, installed, iconUrl, title, source, tags, year, url } = props;
+  const { id, hidden, installed, iconUrl, title, source, tags, year, url } = props;
   const href = url ?? effectiveLink({ url, source, title, tags });
   const dim = hidden;
   const actionHref = `playnite://playnite/start/${encodeURIComponent(id)}`;
@@ -1216,31 +1218,63 @@ export function GameRow(props: GameRowProps) {
         </div>
       </div>
 
-      <div className={dim ? " is-dim" : ""}>
-        {href ? (
-          <Text
-            component="a"
+      <div
+        className={dim ? " is-dim" : ""}
+        style={{ display: "flex", alignItems: "center", gap: 8 }}
+      >
+        <Text
+          fw={500}
+          title={title}
+          className="game-title"
+          style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+        >
+          {title}
+        </Text>
+
+        {href && (
+          <a
             href={href}
             target="_blank"
             rel="noopener"
-            fw={500}
-            className="game-title"
-            style={{ textDecoration: "underline" }}
-            title={title}
+            aria-label={`Open link for ${title} in a new tab`}
+            title={`Open ${title}`}
+            style={{ marginLeft: "auto", display: "inline-flex", lineHeight: 0 }}
           >
-            {title}
-          </Text>
-        ) : (
-          <Text fw={500} title={title}>{title}</Text>
+            <IconExternalLink size={16} stroke={2} />
+          </a>
         )}
       </div>
 
-      <div className={dim ? " is-dim" : ""}>
-        {year ? <Text>{year}</Text> : <Text>—</Text>}
+      <div className={dim ? " is-dim" : ""} style={{ textAlign: "center" }}>
+        {year ?
+          <Text>{year}</Text>
+          :
+          ""
+        }
       </div>
 
-      <div className={dim ? " is-dim" : ""}>
-        <Text>{source}</Text>
+      <div className={dim ? " is-dim" : ""} style={{ textAlign: "center" }}>
+        {source && (
+          (() => {
+            const proto = sourceProtocolLink(source, id || "");
+            return proto ? (
+              <Badge
+                variant="outline"
+                component="a"
+                href={proto}
+                rel="noopener"
+                title={`Open ${source}${id ? ` — ${title}` : ""}`}
+                style={{ boxShadow: "0 2px 0 0 rgb(0 0 0 / 30%)", textDecoration: "none", cursor: "pointer" }}
+              >
+                {sourceTrim[source]}
+              </Badge>
+            ) : (
+              <Badge variant="outline" size="sm" style={{ boxShadow: "0 2px 0 0 rgb(0 0 0 / 30%)" }}>
+                {sourceTrim[source]}
+              </Badge>
+            );
+          })()
+        )}
       </div>
 
       <div className={dim ? " is-dim" : ""}>
@@ -1310,10 +1344,6 @@ export function IconImage({ src, alt }: { src: string; alt?: string }) {
     background: var(--mantine-color-default-hover);
   }
 
-  .game-title:hover {
-    color: var(--mantine-color-text-hover) !important;
-  }
-
   &.is-installed {
     background: var(--mantine-primary-color-light) !important;
 
@@ -1378,7 +1408,7 @@ export function IconImage({ src, alt }: { src: string; alt?: string }) {
     all: unset;
     font-size: 11px;
     line-height: 1;
-    padding: 4px 0;
+    padding: 3px 0;
     text-align: center;
     cursor: pointer;
     opacity: 0.8;
@@ -1612,18 +1642,18 @@ export function LibraryListHeader(props: {
           display: "grid",
           gridTemplateColumns: GRID.cols,
           minWidth: GRID.minWidth,
+          height: GRID.headerHeight,
           alignItems: "center",
           gap: 12,
-          height: GRID.headerHeight,
           fontWeight: 600,
           padding: "0 12px",
         }}
       >
         <div />
-        <div style={{ cursor: "pointer" }} onClick={() => onToggleSort("title")}>{label("Title", "title")}</div>
-        <div style={{ cursor: "pointer" }} onClick={() => onToggleSort("year")}>{label("Year", "year")}</div>
-        <div style={{ cursor: "pointer" }} onClick={() => onToggleSort("source")}>{label("Source", "source")}</div>
-        <div style={{ cursor: "pointer" }} onClick={() => onToggleSort("tags")}>{label("Tags", "tags")}</div>
+        <div style={{ cursor: "pointer", textAlign: "left" }} onClick={() => onToggleSort("title")}>{label("Title", "title")}</div>
+        <div style={{ cursor: "pointer", textAlign: "center" }} onClick={() => onToggleSort("year")}>{label("Year", "year")}</div>
+        <div style={{ cursor: "pointer", textAlign: "center" }} onClick={() => onToggleSort("source")}>{label("Platform", "source")}</div>
+        <div style={{ cursor: "pointer", textAlign: "left" }} onClick={() => onToggleSort("tags")}>{label("Tags", "tags")}</div>
       </div>
     </div>
   );
@@ -1914,6 +1944,7 @@ export function useLibraryState(data: Loaded) {
 ===== web\src\components\ui\LoadingBar.tsx =====
 
 import { Stack, Progress, Text } from "@mantine/core";
+
 export function LoadingBar({ label, percent, subtext }: {
   label: string; percent: number | null; subtext?: string
 }) {
@@ -1965,12 +1996,11 @@ export function PlayActionOverlay({
                     textDecoration: "none",
                     zIndex: Z_INDEX.overlay,
                     borderRadius: 6,
-                    // transparent by default; hover styles are in CSS below
                     background: "transparent",
                 }}
             >
                 <span className="play-overlay__icon" aria-hidden>
-                    {installed ? <IconPlayerPlayFilled size={22} stroke={2.2} /> : <IconDownload size={22} stroke={2.2} />}
+                    {installed ? <IconPlayerPlayFilled size={22} stroke={1} /> : <IconDownload size={22} stroke={2.2} />}
                 </span>
             </a>
         </div>
@@ -2044,6 +2074,12 @@ export default function SectionCard({
 
 ===== web\src\index.scss =====
 
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+  
   img.icon {
     image-rendering: -webkit-optimize-contrast;
     -webkit-font-smoothing: antialiased;
@@ -2060,7 +2096,7 @@ import React from "react";
 import { AppShell, Burger, Group, Title, ActionIcon, NavLink, ScrollArea, Text, rem, useMantineColorScheme } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Link, useLocation } from "react-router-dom";
-import { IconMoon, IconSun, IconCloudUpload, IconSettings, IconHome2, IconBooks } from "@tabler/icons-react";
+import { IconSun, IconMoon, IconHome2, IconBooks, IconCloudUpload, IconSettings } from "../lib/icons";
 
 export default function AppShellLayout({ children }: { children: React.ReactNode }) {
     const [opened, { toggle }] = useDisclosure();
@@ -2132,7 +2168,13 @@ export default function AppShellLayout({ children }: { children: React.ReactNode
 ===== web\src\lib\api.ts =====
 
 import axios from "axios";
+
 import { LibraryItem, StreamProgress, ZipInfo } from "./types";
+
+export const api = axios.create({
+    baseURL: "/api",
+    withCredentials: true,
+});
 
 export async function listZips(): Promise<ZipInfo[]> {
   const r = await fetch("/api/playnitedump/zips");
@@ -2222,41 +2264,152 @@ export async function listLibrary(): Promise<LibraryItem[]> {
 }
 
 
-===== web\src\lib\client.ts =====
-
-import axios from "axios";
-
-export const api = axios.create({
-    baseURL: "/api",
-    withCredentials: true,
-});
-
-
 ===== web\src\lib\constants.ts =====
 
-// Centralized layout and cookie constants
 export const GRID = {
-    cols: "56px minmax(0, 40%) 60px 80px minmax(200px, 1fr)",
-    minWidth: "calc(56px + 40% + 60px + 80px + 200px + 24px)",
-    rowHeight: 56,
-    headerHeight: 40,
+  cols: "56px minmax(0, 40%) 60px 120px minmax(200px, 1fr)",
+  minWidth: "calc(56px + 40% + 60px + 120px + 200px + 24px)",
+  rowHeight: 56,
+  headerHeight: 40,
 };
 
 export const Z_INDEX = {
-    stickyHeader: 10,
-    overlay: 20,
+  stickyHeader: 10,
+  overlay: 20,
 };
 
 export const COOKIE = {
-    libraryState: "pn_library_ui_v2",
+  libraryState: "pn_library_ui_v2",
 };
+
+export const BASE = "/data";
+
+export const FILES = {
+  games: [
+    `${BASE}/games.Game.json`,
+  ],
+  tags: [
+    `${BASE}/tags.Tag.json`,
+  ],
+  sources: [
+    `${BASE}/sources.GameSource.json`,
+    `${BASE}/sources.Source.json`,
+  ],
+};
+
+export const FALLBACK_ICON =
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'>
+      <rect width='100%' height='100%' fill='#ddd'/>
+      <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle'
+            font-family='sans-serif' font-size='10' fill='#777'>no icon</text>
+    </svg>`
+  );
+
+export const sourceTrim: Record<string, string> = {
+  "steam": "steam",
+  "gog": "gog",
+  "ubisoft connect": "ubisoft",
+  "ea app": "ea",
+  "battle.net": "blizzard",
+  "epic": "epic",
+  "xbox": "xbox",
+  "humble": "humble",
+  "nintendo": "nintendo",
+  "microsoft store": "msstore",
+};
+
+export const sourceLabel: Record<string, string> = {
+  "steam": "Steampowered",
+  "gog": "Good Old Games",
+  "ubisoft connect": "Ubisoft Connect",
+  "ea app": "Electronic Arts",
+  "battle.net": "Activision/Blizzard",
+  "epic": "Epic Games",
+  "xbox": "XBox",
+  "humble": "Humble Bundle",
+  "nintendo": "Nintendo",
+  "microsoft store": "Microsoft Store",
+};
+
+export function sourceUrlFallback(s: string, id: string): string | null {
+  switch (s) {
+    case "steam":
+      return `https://store.steampowered.com/app/${encodeURIComponent(id)}`;
+    case "gog":
+      return `https://www.gog.com/game/${encodeURIComponent(id)}`;
+    case "ubisoft connect":
+      return `https://www.ubisoft.com/en-us/search?gss-q=${encodeURIComponent(id)}`;
+    case "ea app":
+      return null;
+    case "battle.net":
+      return null;
+    case "epic":
+      return `https://www.epicgames.com/store/en-US/p/${encodeURIComponent(id)}`;
+    case "xbox":
+      return `https://www.xbox.com/en-us/Search/Results?q=${encodeURIComponent(id)}`;
+    case "humble":
+      return `https://www.humblebundle.com/store/search?search=${encodeURIComponent(id)}`;
+    case "nintendo":
+      return `https://www.nintendo.com/us/search/?q=${encodeURIComponent(id)}`;
+    case "microsoft store":
+      return `https://apps.microsoft.com/search?query=${encodeURIComponent(id)}`;
+    default:
+      return null;
+  }
+};
+
+export function sourceProtocolLink(source: string, id: string): string | null {
+  const s = source.toLowerCase();
+
+  switch (s) {
+    case "steam":
+      // if id is numeric we can launch the game directly
+      return /^\d+$/.test(id) ? `steam://rungameid/${id}` : "steam://open";
+    case "gog":
+    case "gog galaxy":
+      return id ? `goggalaxy://openGameView/${encodeURIComponent(id)}` : "goggalaxy://openGOGGalaxy";
+    case "epic":
+      return id ? `com.epicgames.launcher://apps/${encodeURIComponent(id)}?action=show` : "com.epicgames.launcher://";
+    case "ubisoft connect":
+      return "uplay://";
+    case "ea app":
+      return "ealauncher://";
+    case "battle.net":
+      return "battlenet://";
+    case "xbox":
+      return "xbox://";
+    default:
+      return null;
+  }
+}
+
+
+export const NOTIF_IMPORT_ID = "pn-import";
+
+export const MAX_LINES = 1000;
+
+export const KEY = "pn_logs_v1";
+
+export const NOTIF_UPLOAD_ID = "pn-upload";
+
+export const STATE_KEY = "pn_upload_state_v1";
+
+export const LAST_UP_KEY = "pn_last_uploaded_v1";
+
+export const IDB_DB = "pn_fs_handles";
+
+export const IDB_STORE = "handles";
+
+export const DB_KEY = "backupDir";
 
 
 ===== web\src\lib\data.ts =====
 
+import { FILES, sourceUrlFallback } from "./constants";
 import type { GameDoc, Loaded, NamedDoc, Row } from "./types";
-import { asGuid, asGuidArray, buildIconUrl, firstStoreishLink, 
-  normalizePath, sourceUrlTemplates, extractYear } from "./utils";
+import { asGuid, asGuidArray, buildIconUrl, firstStoreishLink, normalizePath, extractYear } from "./utils";
 
 async function getJson<T>(path: string): Promise<T> {
   const sep = path.includes("?") ? "&" : "?";
@@ -2272,20 +2425,6 @@ async function tryLoadMany<T>(candidates: string[], fallback: T): Promise<T> {
   }
   return fallback;
 }
-
-const BASE = "/data";
-const FILES = {
-  games: [
-    `${BASE}/games.Game.json`,
-  ],
-  tags: [
-    `${BASE}/tags.Tag.json`,
-  ],
-  sources: [
-    `${BASE}/sources.GameSource.json`,
-    `${BASE}/sources.Source.json`,
-  ],
-};
 
 export async function loadLibrary(): Promise<Loaded> {
   const games = await tryLoadMany<GameDoc[]>(FILES.games, []);
@@ -2313,8 +2452,8 @@ export async function loadLibrary(): Promise<Loaded> {
 
     let url = firstStoreishLink(g.Links, sourceName);
     if (!url && sourceName) {
-      const tmpl = sourceUrlTemplates[sourceName.toLowerCase()];
-      if (tmpl) url = tmpl(g);
+      const tmpl = sourceUrlFallback(sourceName.toLowerCase(), g.Name ?? "");
+      if (tmpl) url = tmpl;
     }
 
     const iconRel = normalizePath((g as any).Icon);
@@ -2326,7 +2465,7 @@ export async function loadLibrary(): Promise<Loaded> {
       id,
       title: g.Name ?? "(Untitled)",
       sortingName: (g as any).SortingName ?? g.Name ?? "",
-      source: sourceName,
+      source: sourceName.toLowerCase().trim(),
       tags: (tagIds.map(tid => tagById.get(tid)).filter(Boolean) as string[]) ?? [],
       hidden: !!g.Hidden,
       url: url ?? null,
@@ -2344,15 +2483,8 @@ export async function loadLibrary(): Promise<Loaded> {
 }
 
 
-===== web\src\lib\extension.ts =====
-
-// Single source of truth for extension download endpoint
-export const EXT_DOWNLOAD_URL = "/api/extension/download";
-
-
 ===== web\src\lib\icons.ts =====
 
-// One place to import icons from the library.
 export {
     IconSearch,
     IconX,
@@ -2363,6 +2495,12 @@ export {
     IconTags,
     IconSortAscending,
     IconSortDescending,
+    IconSun, 
+    IconMoon, 
+    IconHome2, 
+    IconBooks, 
+    IconCloudUpload, 
+    IconSettings, 
 } from "@tabler/icons-react";
 
 
@@ -2378,8 +2516,8 @@ import { notifications } from "@mantine/notifications";
 import { processZipStream } from "./api";
 import { LogBus } from "../lib/logBus";
 import type { ImportState, Phase, StreamProgress } from "./types";
+import { NOTIF_IMPORT_ID } from "./constants";
 
-const notifId = "pn-import";
 let current: ImportState = {
     running: false,
     filename: null,
@@ -2388,7 +2526,6 @@ let current: ImportState = {
     subtext: "",
 };
 
-// throttle COPY progress lines so we don't spam the log
 let lastLoggedCopyPct = -1;
 
 function emit(type: string, detail: any) {
@@ -2422,7 +2559,7 @@ export const ImportRunner = {
         LogBus.append(`IMPORT ▶ ${filename}`);
 
         notifications.show({
-            id: notifId,
+            id: NOTIF_IMPORT_ID,
             title: "Import running…",
             message: filename,
             loading: true,
@@ -2469,7 +2606,7 @@ export const ImportRunner = {
             onDone: () => {
                 LogBus.append("IMPORT ✓ DONE");
                 notifications.update({
-                    id: notifId,
+                    id: NOTIF_IMPORT_ID,
                     loading: false,
                     title: "Import finished",
                     message: "Your library has been processed.",
@@ -2480,7 +2617,7 @@ export const ImportRunner = {
             onError: (msg: string) => {
                 LogBus.append(`IMPORT ✗ ERROR: ${msg || "Unknown error"}`);
                 notifications.update({
-                    id: notifId,
+                    id: NOTIF_IMPORT_ID,
                     loading: false,
                     color: "red",
                     title: "Import failed",
@@ -2499,10 +2636,8 @@ export const ImportRunner = {
 // Global log buffer that survives route changes AND page reloads (via sessionStorage).
 // Newest-first order. Keeps up to MAX lines.
 
+import { KEY, MAX_LINES } from "./constants";
 import { LogListener } from "./types";
-
-const MAX_LINES = 1000;
-const KEY = "pn_logs_v1";
 
 let lines: string[] = restore();
 
@@ -2587,7 +2722,7 @@ export function jsonSet<T>(key: string, value: T) {
 
 ===== web\src\lib\playnitedump.ts =====
 
-import { api } from "./client";
+import { api } from "./api";
 import { ZipMeta } from "./types";
 
 export async function listZips() {
@@ -2762,7 +2897,6 @@ export type UploadState = {
 
 ===== web\src\lib\uploader.ts =====
 
-// web/src/lib/uploadRunner.ts
 // Single source of truth for ALL uploads (manual or watcher-initiated).
 // Persists state across navigation, emits progress events, logs to LogBus,
 // notifies with Mantine, and announces availability via pn:zips-changed.
@@ -2771,10 +2905,7 @@ import { notifications } from "@mantine/notifications";
 import { uploadZip } from "./api";
 import { LogBus } from "../lib/logBus";
 import { UploadState } from "./types";
-
-const NOTIF_ID = "pn-upload";
-const STATE_KEY = "pn_upload_state_v1";
-const LAST_UP_KEY = "pn_last_uploaded_v1";
+import { LAST_UP_KEY, STATE_KEY, NOTIF_UPLOAD_ID } from "./constants";
 
 let current: UploadState = restoreState();
 let lastUploaded: { name: string; size?: number; lastModified?: number } | null = restoreLast();
@@ -2835,7 +2966,7 @@ export const UploadRunner = {
         LogBus.append(`UPLOAD ▶ ${file.name}`);
 
         notifications.show({
-            id: NOTIF_ID,
+            id: NOTIF_UPLOAD_ID,
             title: "Uploading…",
             message: file.name,
             loading: true,
@@ -2865,7 +2996,7 @@ export const UploadRunner = {
             emit("pn:upload-progress", { phase: "done", name: file.name, percent: 100 });
 
             notifications.update({
-                id: NOTIF_ID,
+                id: NOTIF_UPLOAD_ID,
                 loading: false,
                 title: "Upload finished",
                 message: file.name,
@@ -2880,7 +3011,7 @@ export const UploadRunner = {
             emit("pn:upload-progress", { phase: "error", name: file.name, message: String(e?.message || e) });
 
             notifications.update({
-                id: NOTIF_ID,
+                id: NOTIF_UPLOAD_ID,
                 loading: false,
                 color: "red",
                 title: "Upload failed",
@@ -2898,7 +3029,8 @@ export const UploadRunner = {
 
 ===== web\src\lib\utils.ts =====
 
-import type { Guidish, Link, GameDoc, Letter } from "./types";
+import { FALLBACK_ICON } from "./constants";
+import type { Guidish, Link, Letter } from "./types";
 import ICO from "icojs";
 
 export function isIcoPath(url: string): boolean {
@@ -2956,15 +3088,6 @@ export function normalizePath(p?: string): string | null {
 }
 
 export function buildIconUrl(iconRel: string | null, iconId: string | null): string {
-  const FALLBACK_ICON =
-    "data:image/svg+xml;utf8," +
-    encodeURIComponent(
-      `<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'>
-      <rect width='100%' height='100%' fill='#ddd'/>
-      <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle'
-            font-family='sans-serif' font-size='10' fill='#777'>no icon</text>
-    </svg>`
-    );
   if (iconRel && /^https?:\/\//i.test(iconRel)) return iconRel;
   if (iconRel) {
     const rel = iconRel.replace(/\\/g, "/").replace(/^\.?\//, "");
@@ -2974,43 +3097,6 @@ export function buildIconUrl(iconRel: string | null, iconId: string | null): str
   if (iconId) return `/data/libraryfiles/${iconId}.png`;
   return FALLBACK_ICON;
 }
-
-export const sourceUrlTemplates: Record<string, (g: GameDoc) => string | null> = {
-  steam: (g) => {
-    const id = String((g as any).GameId ?? "").trim();
-    return /^\d+$/.test(id) ? `https://store.steampowered.com/app/${id}` : null;
-  },
-  epic: (g) => {
-    const id = String((g as any).GameId ?? "").trim();
-    return id ? `https://store.epicgames.com/p/${encodeURIComponent(id)}` : null;
-  },
-  gog: (g) => {
-    const id = String((g as any).GameId ?? "").trim();
-    return id ? `https://www.gog.com/game/${encodeURIComponent(id)}` : null;
-  },
-  "ubisoft connect": (g) => {
-    const id = String((g as any).Name ?? "").trim();
-    return id ? `https://www.ubisoft.com/en-us/search?gss-q=${encodeURIComponent(id)}` : null;
-  },
-  "ea app": () => null,
-  "battle.net": () => null,
-  xbox: (g) => {
-    const id = String((g as any).Name ?? "").trim();
-    return id ? `https://www.xbox.com/en-us/Search/Results?q=${encodeURIComponent(id)}` : null;
-  },
-  humble: (g) => {
-    const id = String((g as any).Name ?? "").trim();
-    return id ? `https://www.humblebundle.com/store/search?search=${encodeURIComponent(id)}` : null;
-  },
-  nintendo: (g) => {
-    const id = String((g as any).Name ?? "").trim();
-    return id ? `https://www.nintendo.com/us/search/?q=${encodeURIComponent(id)}` : null;
-  },
-  "microsoft store": (g) => {
-    const id = String((g as any).Name ?? "").trim();
-    return id ? `https://apps.microsoft.com/search?query=${encodeURIComponent(id)}` : null;
-  },
-};
 
 export function firstStoreishLink(links: Link[] | undefined, sourceName: string): string | null {
   if (!links?.length) return null;
@@ -3029,7 +3115,7 @@ export function firstStoreishLink(links: Link[] | undefined, sourceName: string)
       (lowerSrc.includes("gog") && u.includes("gog.com")) ||
       (lowerSrc.includes("ubisoft") && (u.includes("ubisoft.com") || u.includes("uplay"))) ||
       (lowerSrc.includes("ea") && (u.includes("ea.com") || u.includes("origin.com"))) ||
-      (lowerSrc.includes("battle.net") && (u.includes("battle.net") || u.includes("blizzard.com"))) ||
+      (lowerSrc.includes("battle") && (u.includes("battle.net") || u.includes("blizzard.com"))) ||
       (lowerSrc.includes("xbox") && (u.includes("xbox.com") || u.includes("microsoft.com"))) ||
       (lowerSrc.includes("humble") && u.includes("humblebundle.com")) ||
       (lowerSrc.includes("nintendo") && u.includes("nintendo.com"))
@@ -3112,17 +3198,13 @@ export function letterBucket(s: string | undefined | null): Letter {
 
 ===== web\src\lib\watcher.ts =====
 
-// web/src/lib/watcher.ts
 // Detects newer local zips and delegates the actual upload to UploadRunner.
 // Still persists the selected folder and exposes UI state.
 
 import { UploadRunner } from "./uploader";
 import { LogBus } from "../lib/logBus";
 import { BackupListener, BackupWatcherState, ZipMeta } from "./types";
-
-const IDB_DB = "pn_fs_handles";
-const IDB_STORE = "handles";
-const DB_KEY = "backupDir";
+import { DB_KEY, IDB_DB, IDB_STORE } from "./constants";
 
 let dirHandle: FileSystemDirectoryHandle | null = null;
 let timer: number | null = null;
@@ -3408,7 +3490,6 @@ export default function SettingsPage() {
   }, []);
 
   const sample: Row | null = data?.rows?.[0] ?? null;
-  const sampleLinks: PnLink[] = (sample?.raw as any)?.Links ?? [];
   const primaryHref = sample ? (sample.url ?? effectiveLink({ url: sample.url, source: sample.source, title: sample.title, tags: sample.tags })) : null;
   const actionHref = sample ? `playnite://playnite/start/${encodeURIComponent(sample.id)}` : null;
 

@@ -32,12 +32,11 @@ export function PlayActionOverlay({
                     textDecoration: "none",
                     zIndex: Z_INDEX.overlay,
                     borderRadius: 6,
-                    // transparent by default; hover styles are in CSS below
                     background: "transparent",
                 }}
             >
                 <span className="play-overlay__icon" aria-hidden>
-                    {installed ? <IconPlayerPlayFilled size={22} stroke={2.2} /> : <IconDownload size={22} stroke={2.2} />}
+                    {installed ? <IconPlayerPlayFilled size={22} stroke={1} /> : <IconDownload size={22} stroke={2.2} />}
                 </span>
             </a>
         </div>

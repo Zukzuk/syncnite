@@ -8,8 +8,8 @@ import { notifications } from "@mantine/notifications";
 import { processZipStream } from "./api";
 import { LogBus } from "../lib/logBus";
 import type { ImportState, Phase, StreamProgress } from "./types";
+import { NOTIF_IMPORT_ID } from "./constants";
 
-const notifId = "pn-import";
 let current: ImportState = {
     running: false,
     filename: null,
@@ -18,7 +18,6 @@ let current: ImportState = {
     subtext: "",
 };
 
-// throttle COPY progress lines so we don't spam the log
 let lastLoggedCopyPct = -1;
 
 function emit(type: string, detail: any) {
@@ -52,7 +51,7 @@ export const ImportRunner = {
         LogBus.append(`IMPORT ▶ ${filename}`);
 
         notifications.show({
-            id: notifId,
+            id: NOTIF_IMPORT_ID,
             title: "Import running…",
             message: filename,
             loading: true,
@@ -99,7 +98,7 @@ export const ImportRunner = {
             onDone: () => {
                 LogBus.append("IMPORT ✓ DONE");
                 notifications.update({
-                    id: notifId,
+                    id: NOTIF_IMPORT_ID,
                     loading: false,
                     title: "Import finished",
                     message: "Your library has been processed.",
@@ -110,7 +109,7 @@ export const ImportRunner = {
             onError: (msg: string) => {
                 LogBus.append(`IMPORT ✗ ERROR: ${msg || "Unknown error"}`);
                 notifications.update({
-                    id: notifId,
+                    id: NOTIF_IMPORT_ID,
                     loading: false,
                     color: "red",
                     title: "Import failed",

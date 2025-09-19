@@ -2,7 +2,7 @@ import React from "react";
 import { AppShell, Burger, Group, Title, ActionIcon, NavLink, ScrollArea, Text, rem, useMantineColorScheme } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Link, useLocation } from "react-router-dom";
-import { IconMoon, IconSun, IconCloudUpload, IconSettings, IconHome2, IconBooks } from "@tabler/icons-react";
+import { IconSun, IconMoon, IconHome2, IconBooks, IconCloudUpload, IconSettings } from "../lib/icons";
 
 export default function AppShellLayout({ children }: { children: React.ReactNode }) {
     const [opened, { toggle }] = useDisclosure();

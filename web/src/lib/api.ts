@@ -1,5 +1,11 @@
 import axios from "axios";
+
 import { LibraryItem, StreamProgress, ZipInfo } from "./types";
+
+export const api = axios.create({
+    baseURL: "/api",
+    withCredentials: true,
+});
 
 export async function listZips(): Promise<ZipInfo[]> {
   const r = await fetch("/api/playnitedump/zips");

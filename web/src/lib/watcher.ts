@@ -1,14 +1,10 @@
-// web/src/lib/watcher.ts
 // Detects newer local zips and delegates the actual upload to UploadRunner.
 // Still persists the selected folder and exposes UI state.
 
 import { UploadRunner } from "./uploader";
 import { LogBus } from "../lib/logBus";
 import { BackupListener, BackupWatcherState, ZipMeta } from "./types";
-
-const IDB_DB = "pn_fs_handles";
-const IDB_STORE = "handles";
-const DB_KEY = "backupDir";
+import { DB_KEY, IDB_DB, IDB_STORE } from "./constants";
 
 let dirHandle: FileSystemDirectoryHandle | null = null;
 let timer: number | null = null;

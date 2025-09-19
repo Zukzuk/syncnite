@@ -1,6 +1,7 @@
 import React from "react";
 import { Group, MultiSelect, Switch, Text, Stack, Flex } from "@mantine/core";
 import { SearchInput } from "../ui/SearchInput";
+import { sourceLabel } from "../../lib/constants";
 
 export function Controls(props: {
   q: string; setQ: (v: string) => void;
@@ -23,7 +24,7 @@ export function Controls(props: {
   } = props;
 
   const sourceData = React.useMemo(
-    () => Array.from(new Set(allSources)).sort().map((s) => ({ value: s, label: s })),
+    () => Array.from(new Set(allSources)).sort().map((s) => ({ value: s, label: sourceLabel[s] })),
     [allSources]
   );
 
@@ -54,7 +55,7 @@ export function Controls(props: {
             data={sourceData}
             clearable
             searchable
-            w={230}          // keep fixed width
+            w={230} 
             size="sm"
             radius="xl"
             variant="filled"

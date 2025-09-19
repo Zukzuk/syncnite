@@ -1,12 +1,13 @@
 import { Badge, Group, Text } from "@mantine/core";
 import { IconImage } from "./IconImage";
-import { GRID } from "../../lib/constants";
+import { GRID, sourceProtocolLink, sourceTrim } from "../../lib/constants";
 import { PlayActionOverlay } from "../ui/PlayActionOverlay";
 import { effectiveLink } from "../../lib/utils";
 import { GameRowProps } from "../../lib/types";
+import { IconExternalLink } from "../../lib/icons";
 
 export function GameRow(props: GameRowProps) {
-  const { id, hidden, showHidden, installed, iconUrl, title, source, tags, year, url } = props;
+  const { id, hidden, installed, iconUrl, title, source, tags, year, url } = props;
   const href = url ?? effectiveLink({ url, source, title, tags });
   const dim = hidden;
   const actionHref = `playnite://playnite/start/${encodeURIComponent(id)}`;
@@ -36,31 +37,63 @@ export function GameRow(props: GameRowProps) {
         </div>
       </div>
 
-      <div className={dim ? " is-dim" : ""}>
-        {href ? (
-          <Text
-            component="a"
+      <div
+        className={dim ? " is-dim" : ""}
+        style={{ display: "flex", alignItems: "center", gap: 8 }}
+      >
+        <Text
+          fw={500}
+          title={title}
+          className="game-title"
+          style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+        >
+          {title}
+        </Text>
+
+        {href && (
+          <a
             href={href}
             target="_blank"
             rel="noopener"
-            fw={500}
-            className="game-title"
-            style={{ textDecoration: "underline" }}
-            title={title}
+            aria-label={`Open link for ${title} in a new tab`}
+            title={`Open ${title}`}
+            style={{ marginLeft: "auto", display: "inline-flex", lineHeight: 0 }}
           >
-            {title}
-          </Text>
-        ) : (
-          <Text fw={500} title={title}>{title}</Text>
+            <IconExternalLink size={16} stroke={2} />
+          </a>
         )}
       </div>
 
-      <div className={dim ? " is-dim" : ""}>
-        {year ? <Text>{year}</Text> : <Text>—</Text>}
+      <div className={dim ? " is-dim" : ""} style={{ textAlign: "center" }}>
+        {year ?
+          <Text>{year}</Text>
+          :
+          ""
+        }
       </div>
 
-      <div className={dim ? " is-dim" : ""}>
-        <Text>{source}</Text>
+      <div className={dim ? " is-dim" : ""} style={{ textAlign: "center" }}>
+        {source && (
+          (() => {
+            const proto = sourceProtocolLink(source, id || "");
+            return proto ? (
+              <Badge
+                variant="outline"
+                component="a"
+                href={proto}
+                rel="noopener"
+                title={`Open ${source}${id ? ` — ${title}` : ""}`}
+                style={{ boxShadow: "0 2px 0 0 rgb(0 0 0 / 30%)", textDecoration: "none", cursor: "pointer" }}
+              >
+                {sourceTrim[source]}
+              </Badge>
+            ) : (
+              <Badge variant="outline" size="sm" style={{ boxShadow: "0 2px 0 0 rgb(0 0 0 / 30%)" }}>
+                {sourceTrim[source]}
+              </Badge>
+            );
+          })()
+        )}
       </div>
 
       <div className={dim ? " is-dim" : ""}>

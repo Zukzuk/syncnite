@@ -1,4 +1,3 @@
-// web/src/lib/uploadRunner.ts
 // Single source of truth for ALL uploads (manual or watcher-initiated).
 // Persists state across navigation, emits progress events, logs to LogBus,
 // notifies with Mantine, and announces availability via pn:zips-changed.
@@ -7,10 +6,7 @@ import { notifications } from "@mantine/notifications";
 import { uploadZip } from "./api";
 import { LogBus } from "../lib/logBus";
 import { UploadState } from "./types";
-
-const NOTIF_ID = "pn-upload";
-const STATE_KEY = "pn_upload_state_v1";
-const LAST_UP_KEY = "pn_last_uploaded_v1";
+import { LAST_UP_KEY, STATE_KEY, NOTIF_UPLOAD_ID } from "./constants";
 
 let current: UploadState = restoreState();
 let lastUploaded: { name: string; size?: number; lastModified?: number } | null = restoreLast();
@@ -71,7 +67,7 @@ export const UploadRunner = {
         LogBus.append(`UPLOAD ▶ ${file.name}`);
 
         notifications.show({
-            id: NOTIF_ID,
+            id: NOTIF_UPLOAD_ID,
             title: "Uploading…",
             message: file.name,
             loading: true,
@@ -101,7 +97,7 @@ export const UploadRunner = {
             emit("pn:upload-progress", { phase: "done", name: file.name, percent: 100 });
 
             notifications.update({
-                id: NOTIF_ID,
+                id: NOTIF_UPLOAD_ID,
                 loading: false,
                 title: "Upload finished",
                 message: file.name,
@@ -116,7 +112,7 @@ export const UploadRunner = {
             emit("pn:upload-progress", { phase: "error", name: file.name, message: String(e?.message || e) });
 
             notifications.update({
-                id: NOTIF_ID,
+                id: NOTIF_UPLOAD_ID,
                 loading: false,
                 color: "red",
                 title: "Upload failed",

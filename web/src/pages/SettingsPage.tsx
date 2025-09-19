@@ -43,7 +43,6 @@ export default function SettingsPage() {
   }, []);
 
   const sample: Row | null = data?.rows?.[0] ?? null;
-  const sampleLinks: PnLink[] = (sample?.raw as any)?.Links ?? [];
   const primaryHref = sample ? (sample.url ?? effectiveLink({ url: sample.url, source: sample.source, title: sample.title, tags: sample.tags })) : null;
   const actionHref = sample ? `playnite://playnite/start/${encodeURIComponent(sample.id)}` : null;
 

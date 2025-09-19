@@ -25,18 +25,18 @@ export function LibraryListHeader(props: {
           display: "grid",
           gridTemplateColumns: GRID.cols,
           minWidth: GRID.minWidth,
+          height: GRID.headerHeight,
           alignItems: "center",
           gap: 12,
-          height: GRID.headerHeight,
           fontWeight: 600,
           padding: "0 12px",
         }}
       >
         <div />
-        <div style={{ cursor: "pointer" }} onClick={() => onToggleSort("title")}>{label("Title", "title")}</div>
-        <div style={{ cursor: "pointer" }} onClick={() => onToggleSort("year")}>{label("Year", "year")}</div>
-        <div style={{ cursor: "pointer" }} onClick={() => onToggleSort("source")}>{label("Source", "source")}</div>
-        <div style={{ cursor: "pointer" }} onClick={() => onToggleSort("tags")}>{label("Tags", "tags")}</div>
+        <div style={{ cursor: "pointer", textAlign: "left" }} onClick={() => onToggleSort("title")}>{label("Title", "title")}</div>
+        <div style={{ cursor: "pointer", textAlign: "center" }} onClick={() => onToggleSort("year")}>{label("Year", "year")}</div>
+        <div style={{ cursor: "pointer", textAlign: "center" }} onClick={() => onToggleSort("source")}>{label("Platform", "source")}</div>
+        <div style={{ cursor: "pointer", textAlign: "left" }} onClick={() => onToggleSort("tags")}>{label("Tags", "tags")}</div>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
+import { FILES, sourceUrlFallback } from "./constants";
 import type { GameDoc, Loaded, NamedDoc, Row } from "./types";
-import { asGuid, asGuidArray, buildIconUrl, firstStoreishLink, 
-  normalizePath, sourceUrlTemplates, extractYear } from "./utils";
+import { asGuid, asGuidArray, buildIconUrl, firstStoreishLink, normalizePath, extractYear } from "./utils";
 
 async function getJson<T>(path: string): Promise<T> {
   const sep = path.includes("?") ? "&" : "?";
@@ -16,20 +16,6 @@ async function tryLoadMany<T>(candidates: string[], fallback: T): Promise<T> {
   }
   return fallback;
 }
-
-const BASE = "/data";
-const FILES = {
-  games: [
-    `${BASE}/games.Game.json`,
-  ],
-  tags: [
-    `${BASE}/tags.Tag.json`,
-  ],
-  sources: [
-    `${BASE}/sources.GameSource.json`,
-    `${BASE}/sources.Source.json`,
-  ],
-};
 
 export async function loadLibrary(): Promise<Loaded> {
   const games = await tryLoadMany<GameDoc[]>(FILES.games, []);
@@ -57,8 +43,8 @@ export async function loadLibrary(): Promise<Loaded> {
 
     let url = firstStoreishLink(g.Links, sourceName);
     if (!url && sourceName) {
-      const tmpl = sourceUrlTemplates[sourceName.toLowerCase()];
-      if (tmpl) url = tmpl(g);
+      const tmpl = sourceUrlFallback(sourceName.toLowerCase(), g.Name ?? "");
+      if (tmpl) url = tmpl;
     }
 
     const iconRel = normalizePath((g as any).Icon);
@@ -70,7 +56,7 @@ export async function loadLibrary(): Promise<Loaded> {
       id,
       title: g.Name ?? "(Untitled)",
       sortingName: (g as any).SortingName ?? g.Name ?? "",
-      source: sourceName,
+      source: sourceName.toLowerCase().trim(),
       tags: (tagIds.map(tid => tagById.get(tid)).filter(Boolean) as string[]) ?? [],
       hidden: !!g.Hidden,
       url: url ?? null,
