@@ -4,7 +4,7 @@ using LiteDB;
 
 if (args.Length < 2)
 {
-    Console.Error.WriteLine("Usage: PlayniteDump <root-folder> <output-folder>");
+    Console.Error.WriteLine("Usage: PlayniteImport <root-folder> <output-folder>");
     Environment.Exit(1);
 }
 

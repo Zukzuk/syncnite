@@ -5,8 +5,8 @@ A self‑hosted web viewer and API for browsing and restoring **Playnite** libra
 It consists of:
 - **Web frontend** (`web/`) – React + Vite + Mantine UI to browse your library.
 - **API backend** (`api/`) – Express.js service that handles uploads, extraction, LiteDB → JSON conversion, and serves the Playnite extension. OpenAPI docs included.
-- **Extensions** (`extensions/`)
-  - `PlayniteDump` — .NET 8 console tool that dumps Playnite LiteDB files to JSON.
+- **Playnite** (`playnite/`)
+  - `PlayniteImport` — .NET 8 console tool that dumps Playnite LiteDB files to JSON.
   - `PlayniteViewerBridge` — Playnite plugin (.pext) that enables URI‑based backup restoration: `playnite://viewer/restore?...`
 
 Runs via **Docker Compose** for a one‑command setup.
@@ -87,7 +87,7 @@ playnite://viewer/restore?url=https://example.com/my.zip&items=0,1,2
 
 The plugin prepares a temporary config for Playnite’s `--restorebackup` mechanism and restarts Playnite to perform the restore.
 
-> The download endpoint currently serves: `extensions/PlayniteViewerBridge/playnite-viewer-bridge-1.0.0.pext`
+> The download endpoint currently serves: `playnite/PlayniteViewerBridge/playnite-viewer-bridge-1.0.0.pext`
 
 ---
 
@@ -116,7 +116,7 @@ Key endpoints (see JSDoc annotations in `api/src/routes/*.ts`):
 
 ## Local development
 
-> Prereqs: Node.js 20+, PNPM/NPM; .NET 8 SDK if you need to build `PlayniteDump` locally
+> Prereqs: Node.js 20+, PNPM/NPM; .NET 8 SDK if you need to build `PlayniteImport` locally
 
 Install deps (root + workspaces):
 

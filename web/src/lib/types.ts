@@ -7,9 +7,9 @@ export type Guidish =
   | null
   | undefined;
 
-export type Link = { 
-  Name?: string; 
-  Url?: string 
+export type Link = {
+  Name?: string;
+  Url?: string
 };
 
 export type GameDoc = {
@@ -26,10 +26,10 @@ export type GameDoc = {
   IsInstalled?: boolean;
 };
 
-export type NamedDoc = { 
-  _id?: Guidish; 
-  Id?: Guidish; 
-  Name?: string 
+export type NamedDoc = {
+  _id?: Guidish;
+  Id?: Guidish;
+  Name?: string
 };
 
 export type Row = {
@@ -46,10 +46,10 @@ export type Row = {
   installed: boolean;
 };
 
-export type ZipInfo = { 
-  name: string; 
-  size: number; 
-  mtime: number 
+export type ZipInfo = {
+  name: string;
+  size: number;
+  mtime: number
 };
 
 export type LibraryItem = {
@@ -112,3 +112,35 @@ export type Letter = typeof LETTERS[number];
 export type SortKey = "title" | "source" | "tags" | "year";
 
 export type SortDir = "asc" | "desc";
+
+export type BackupListener = (s: BackupWatcherState) => void;
+
+export type LogListener = (lines: string[]) => void;
+
+export type ZipMeta = { name: string; lastModified: number; size: number };
+
+export type BackupWatcherState = {
+  supported: boolean;
+  dirName: string | null;
+  latestLocalZip: ZipMeta | null;
+  running: boolean;
+  lastUploadedName: string | null;
+  permission: PermissionState | "prompt" | null; // keep for compatibility with your types
+};
+
+export type Phase = null | "unzip" | "copy";
+
+export type ImportState = {
+    running: boolean;
+    filename: string | null;
+    phase: Phase;
+    percent: number | null;
+    subtext?: string;
+};
+
+export type UploadState = {
+    running: boolean;
+    name: string | null;
+    percent: number | null;
+};
+

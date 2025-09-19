@@ -2,7 +2,7 @@ import axios from "axios";
 import { LibraryItem, StreamProgress, ZipInfo } from "./types";
 
 export async function listZips(): Promise<ZipInfo[]> {
-  const r = await fetch("/api/playnitedump/zips"); // server endpoint
+  const r = await fetch("/api/playnitedump/zips");
   return r.json();
 }
 

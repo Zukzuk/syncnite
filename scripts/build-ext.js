@@ -7,15 +7,15 @@ const { execSync } = require("child_process");
 const extName = "playnite-viewer-bridge";
 const version = "1.0.0";
 const dllName = "PlayniteViewerBridge.dll";
-const projectPath = "extensions/PlayniteViewerBridge/PlayniteViewerBridge.csproj";
-const buildOutput = "extensions/PlayniteViewerBridge/bin/Release/net462";
-const yamlPath = "extensions/PlayniteViewerBridge/extension.yaml";
+const projectPath = "playnite/PlayniteViewerBridge/PlayniteViewerBridge.csproj";
+const buildOutput = "playnite/PlayniteViewerBridge/bin/Release/net462";
+const yamlPath = "playnite/PlayniteViewerBridge/extension.yaml";
 
-const dist = "extensions/PlayniteViewerBridge";
+const dist = "playnite/PlayniteViewerBridge";
 const zipName = `${extName}-${version}.pext`;
-const tempDir = path.join("extensions/PlayniteViewerBridge/.temp", extName);
-const readmePath = "extensions/PlayniteViewerBridge/README.md";
-// const changelogPath = "extensions/PlayniteViewerBridge/CHANGELOG.md";
+const tempDir = path.join("playnite/PlayniteViewerBridge/.temp", extName);
+const readmePath = "playnite/PlayniteViewerBridge/README.md";
+// const changelogPath = "playnite/PlayniteViewerBridge/CHANGELOG.md";
 
 async function run() {
   try {

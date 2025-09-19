@@ -18,12 +18,12 @@ RUN npm run --workspace api build
 
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0 AS dump-build
 WORKDIR /src
-COPY extensions/PlayniteDump/ PlayniteDump/
+COPY playnite/PlayniteImport/ PlayniteImport/
 # Publish self-contained, single-file for the current arch (x64/arm64)
 ARG TARGETARCH
 RUN set -eux; \
     if [ "$TARGETARCH" = "arm64" ]; then RID=linux-musl-arm64; else RID=linux-musl-x64; fi; \
-    dotnet publish PlayniteDump/PlayniteDump.csproj \
+    dotnet publish PlayniteImport/PlayniteImport.csproj \
     -c Release \
     -o /out \
     -r $RID \
@@ -41,9 +41,9 @@ RUN apk add --no-cache p7zip icu-libs
 COPY --from=api-build /app/node_modules ./node_modules
 COPY --from=api-build /app/api/dist ./api/dist
 
-# Bring PlayniteDump (self-contained musl binary)
-COPY --from=dump-build /out/PlayniteDump ./api/PlayniteDump
-RUN chmod +x ./api/PlayniteDump
+# Bring PlayniteImport (self-contained musl binary)
+COPY --from=dump-build /out/PlayniteImport ./api/PlayniteImport
+RUN chmod +x ./api/PlayniteImport
 
 ENV NODE_ENV=production
 EXPOSE 3000

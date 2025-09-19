@@ -2,14 +2,19 @@ import React from "react";
 import { Stack, Group, Select, Button, FileButton, PasswordInput, Textarea, Text } from "@mantine/core";
 import SectionCard from "../components/ui/SectionCard";
 import { LoadingBar } from "../components/ui/LoadingBar";
-import { listZips, uploadZip, processZipStream } from "../lib/api";
-import type { StreamProgress, ZipInfo } from "../lib/types";
+import { listZips } from "../lib/api";
+import type { BackupWatcherState, ZipInfo } from "../lib/types";
+import { BackupWatcher } from "../lib/watcher";
+import { ImportRunner } from "../lib/importer";
+import { LogBus } from "../lib/logBus";
+import { UploadRunner } from "../lib/uploader";
 
 export default function SyncPage() {
     const [zips, setZips] = React.useState<ZipInfo[]>([]);
     const [selected, setSelected] = React.useState<string | null>(null);
     const [password, setPassword] = React.useState("");
     const [logs, setLogs] = React.useState("");
+    const [watch, setWatch] = React.useState<BackupWatcherState | null>(null);
 
     // Upload-only progress
     const [uploadBusy, setUploadBusy] = React.useState(false);
@@ -32,101 +37,168 @@ export default function SyncPage() {
         refresh();
     }, [refresh]);
 
-    const fmtMB = (n?: number) => (n || n === 0 ? (n / (1024 * 1024)).toFixed(1) : "");
+    React.useEffect(() => {
+        const unsub = BackupWatcher.subscribe(setWatch);
+        return () => {
+            unsub();            // ensure the cleanup returns void
+        };
+    }, []);
 
-    function appendLog(line: string) {
-        // newest on top
-        setLogs((prev) => (prev ? `${line}\n${prev}` : line));
-    }
+    React.useEffect(() => {
+        const onProg = (e: Event) => {
+            const { phase, name, percent, message } = (e as CustomEvent).detail ?? {};
+            if (phase === "start") {
+                setUploadBusy(true);
+                setUploadPercent(0);
+                setUploadSubtext(name ?? "");
+            } else if (phase === "progress") {
+                if (typeof percent === "number") setUploadPercent(percent);
+            } else if (phase === "done") {
+                setUploadPercent(100);
+                setTimeout(() => {
+                    setUploadBusy(false);
+                    setUploadPercent(null);
+                    setUploadSubtext("");
+                }, 300);
+            } else if (phase === "error") {
+                setUploadBusy(false);
+                setUploadPercent(null);
+                setUploadSubtext(message ?? "Upload failed");
+            }
+        };
+
+        const onZipsChanged = (e: Event) => {
+            const name = (e as CustomEvent).detail?.name as string | undefined;
+            (async () => {
+                await refresh();                    // refresh the /zips list
+                if (name) setSelected(name);        // auto-select newest
+                LogBus.append(`SELECT ⮕ ${name}`); // ← add this
+            })();
+        };
+
+        window.addEventListener("pn:upload-progress", onProg);
+        window.addEventListener("pn:zips-changed", onZipsChanged);
+        return () => {
+            window.removeEventListener("pn:upload-progress", onProg);
+            window.removeEventListener("pn:zips-changed", onZipsChanged);
+        };
+    }, [refresh, setSelected]);
 
     async function onUpload(file: File | null) {
         if (!file) return;
+        // instantaneous local feedback; events will keep it updated
         setUploadBusy(true);
         setUploadPercent(0);
         setUploadSubtext(file.name);
-        appendLog(`Uploading ${file.name}…`);
-        try {
-            const res = await uploadZip(file, (p) => setUploadPercent(p));
-            appendLog(`Upload complete: ${file.name}`);
-            setUploadPercent(100);
-
-            await refresh();
-            // prefer server-reported stored name
-            if (res?.file) {
-                setSelected(res.file);
-            } else {
-                const found = zips.find((z) => z.name === file.name);
-                setSelected(found ? found.name : zips[0]?.name ?? null);
-            }
-        } catch (e: any) {
-            appendLog(`ERROR during upload: ${String(e?.message || e)}`);
-        } finally {
-            setTimeout(() => {
-                setUploadPercent(null);
-                setUploadSubtext("");
-                setUploadBusy(false);
-            }, 250);
-        }
-    }
-
-    function onProgress(p: StreamProgress) {
-        if (p.phase === "unzip") {
-            setExportPhase("unzip");
-            setExportPercent(Math.round(p.percent ?? 0));
-            setExportSubtext("");
-        } else if (p.phase === "copy") {
-            setExportPhase("copy");
-            setExportPercent(Math.round(p.percent ?? 0));
-            setExportSubtext(
-                p.copiedBytes != null && p.totalBytes != null && p.deltaBytes != null
-                    ? `${fmtMB(p.copiedBytes)}MB / ${fmtMB(p.totalBytes)}MB (+${fmtMB(p.deltaBytes)}MB)`
-                    : ""
-            );
-        }
-        if (p.log) appendLog(p.log);
+        LogBus.append(`Uploading ${file.name}…`);
+        UploadRunner.start(file);
     }
 
     function onRun() {
         if (!selected) return;
+
+        // clear page UI; runner will drive it from here
         setExportBusy(true);
         setLogs("");
         setExportPhase("unzip");
         setExportPercent(0);
         setExportSubtext("");
 
-        processZipStream({
-            filename: selected,
-            password: password || undefined,
-            onLog: appendLog,
-            onProgress,
-            onDone: () => {
-                appendLog("DONE");
-                setExportBusy(false);
-                setExportPhase(null);
-                setExportPercent(null);
-                setExportSubtext("");
-            },
-            onError: (msg) => {
-                appendLog(`ERROR: ${msg}`);
-                setExportBusy(false);
-                setExportPhase(null);
-                setExportPercent(null);
-                setExportSubtext("");
-            },
-        });
+        ImportRunner.start({ filename: selected, password: password || undefined });
     }
+
+    React.useEffect(() => {
+        // Rehydrate current state on mount/route return
+        const s = ImportRunner.getState();
+        if (s.running) {
+            setExportBusy(true);
+            setExportPhase(s.phase);
+            setExportPercent(s.percent);
+            setExportSubtext(s.subtext || "");
+        } else {
+            setExportBusy(false);
+            setExportPhase(null);
+            setExportPercent(null);
+            setExportSubtext("");
+        }
+
+        const onProg = (e: Event) => {
+            const { phase, percent, extras } = (e as CustomEvent).detail ?? {};
+            setExportBusy(true);
+            setExportPhase(phase ?? null);
+            setExportPercent(typeof percent === "number" ? Math.round(percent) : null);
+            setExportSubtext(extras?.subtext ?? "");
+        };
+
+        const onState = (e: Event) => {
+            const st = (e as CustomEvent).detail as ReturnType<typeof ImportRunner.getState>;
+            if (!st?.running) {
+                // finished or error
+                setExportBusy(false);
+                setExportPhase(null);
+                setExportPercent(null);
+                setExportSubtext("");
+            }
+        };
+
+        const onLog = (e: Event) => {
+            const { line } = (e as CustomEvent).detail ?? {};
+            if (line) setLogs((prev) => (prev ? `${line}\n${prev}` : line));
+        };
+
+        window.addEventListener("pn:import-progress", onProg);
+        window.addEventListener("pn:import-state", onState);
+        window.addEventListener("pn:import-log", onLog);
+        return () => {
+            window.removeEventListener("pn:import-progress", onProg);
+            window.removeEventListener("pn:import-state", onState);
+            window.removeEventListener("pn:import-log", onLog);
+        };
+    }, []);
 
     const exportPhaseLabel = exportPhase === "unzip" ? "Unzipping…" : exportPhase === "copy" ? "Copying media…" : "";
 
     return (
         <Stack gap="lg" p="md">
-            <SectionCard title="Upload">
-                <Group align="end" gap="sm" wrap="wrap">
+            <SectionCard title="Shared library location">
+                <Group gap="sm" wrap="wrap" align="center">
                     <FileButton onChange={onUpload} accept=".zip">
-                        {(props) => <Button {...props} variant="light" loading={uploadBusy}>Select Backup File</Button>}
+                        {(props) => (
+                            <Button {...props} variant="light" loading={uploadBusy}>
+                                Select manually
+                            </Button>
+                        )}
                     </FileButton>
+
+                    <Button
+                        variant="subtle"
+                        onClick={() => BackupWatcher.selectDirectory()}
+                        disabled={!watch?.supported}
+                        title={
+                            watch?.supported
+                                ? "Pick your Playnite backup folder to monitor"
+                                : "Browser not supported"
+                        }
+                    >
+                        Watch location
+                    </Button>
+
+                    <Text
+                        size="sm"
+                        className="is-dim"
+                        style={{ whiteSpace: "nowrap", alignSelf: "center" }}
+                    >
+                        {watch?.dirName
+                            ? `/${watch.dirName}`
+                            : "Not watching a folder"}
+                    </Text>
                 </Group>
-                <LoadingBar label="Uploading…" percent={uploadPercent} subtext={uploadSubtext} />
+
+                <LoadingBar
+                    label="Uploading…"
+                    percent={uploadPercent}
+                    subtext={uploadSubtext}
+                />
             </SectionCard>
 
             <SectionCard title="Import">
@@ -156,7 +228,7 @@ export default function SyncPage() {
             <SectionCard title="Logs">
                 <Textarea
                     value={logs}
-                    maxRows={16}
+                    maxRows={10}
                     autosize
                     styles={{ input: { fontFamily: "ui-monospace, Menlo, Consolas, monospace" } }}
                 />

@@ -117,7 +117,7 @@ playniteDumpRouter.get("/process-stream", async (req, res) => {
         log("Dumping LiteDB to JSON…");
         const env = { ...process.env };
         if (password) env.LITEDB_PASSWORD = password;
-        const { out, err } = await run("./PlayniteDump", [libDir, DATA_DIR], { env });
+        const { out, err } = await run("./PlayniteImport", [libDir, DATA_DIR], { env });
         if (out?.trim()) out.trim().split(/\r?\n/).forEach((l) => log(l));
         if (err?.trim()) err.trim().split(/\r?\n/).forEach((l) => log(l));
 

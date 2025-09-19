@@ -13,7 +13,7 @@ const extensionRouter = express.Router();
  *         description: The extension file
  */
 extensionRouter.get("/download", (_req, res) => {
-  const file = path.resolve(__dirname, "../../extensions/PlayniteViewerBridge/playnite-viewer-bridge-1.0.0.pext");
+  const file = path.resolve(__dirname, "../../playnite/PlayniteViewerBridge/playnite-viewer-bridge-1.0.0.pext");
   res.download(file, "playnite-viewer-bridge.pext");
 });
 
