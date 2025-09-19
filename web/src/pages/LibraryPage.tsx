@@ -16,7 +16,7 @@ export default function LibraryPage() {
     return (
         <Stack gap="lg" style={{ height: "100%", minHeight: 0 }}>
             {data ? (
-                <div style={{ height: "calc(100vh - 90px)", minHeight: 400 }}>
+                <div style={{ height: "calc(100vh - 70px)", minHeight: 400 }}>
                     <LibraryList
                         data={data}
                         onCountsChange={(f, t) => { setFiltered(f); setTotal(t); }}

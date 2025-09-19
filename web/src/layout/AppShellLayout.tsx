@@ -12,7 +12,7 @@ export default function AppShellLayout({ children }: { children: React.ReactNode
     return (
         <AppShell
             header={{ height: 56 }}
-            navbar={{ width: 260, breakpoint: "sm", collapsed: { mobile: !opened } }}
+            navbar={{ width: 150, breakpoint: "sm", collapsed: { mobile: !opened } }}
         >
             <AppShell.Header>
                 <Group h="100%" px="md" justify="space-between">

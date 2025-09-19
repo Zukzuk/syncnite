@@ -1,0 +1,3899 @@
+
+
+===== api\Dockerfile =====
+
+FROM node:20-alpine AS api-build
+WORKDIR /app
+
+# Tools we also need at runtime (kept here to share cache)
+RUN apk add --no-cache p7zip icu-libs
+
+# Root lockfile (workspaces) + root package.json
+COPY package.json package-lock.json ./
+COPY api/package.json ./api/package.json
+COPY api/tsconfig.json ./api/tsconfig.json
+COPY api/src ./api/src
+
+# Install deps only for API workspace using the root lockfile
+RUN npm ci --workspaces --include-workspace-root=false --workspace api
+
+# Build TS -> dist (outputs to /app/api/dist)
+RUN npm run --workspace api build
+
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0 AS dump-build
+WORKDIR /src
+COPY playnite/PlayniteImport/ PlayniteImport/
+# Publish self-contained, single-file for the current arch (x64/arm64)
+ARG TARGETARCH
+RUN set -eux; \
+    if [ "$TARGETARCH" = "arm64" ]; then RID=linux-musl-arm64; else RID=linux-musl-x64; fi; \
+    dotnet publish PlayniteImport/PlayniteImport.csproj \
+    -c Release \
+    -o /out \
+    -r $RID \
+    --self-contained true \
+    /p:PublishSingleFile=true \
+    /p:IncludeNativeLibrariesForSelfExtract=true
+
+FROM node:20-alpine
+WORKDIR /app
+
+# Runtime system deps for the dumper and 7z
+RUN apk add --no-cache p7zip icu-libs
+
+# Bring built API and dependencies
+COPY --from=api-build /app/node_modules ./node_modules
+COPY --from=api-build /app/api/dist ./api/dist
+
+# Bring PlayniteImport (self-contained musl binary)
+COPY --from=dump-build /out/PlayniteImport ./api/PlayniteImport
+RUN chmod +x ./api/PlayniteImport
+
+ENV NODE_ENV=production
+EXPOSE 3000
+WORKDIR /app/api
+CMD ["node", "dist/server.js"]
+
+
+===== api\package.json =====
+
+{
+    "name": "playnite-api",
+    "private": true,
+    "scripts": {
+        "build": "tsc -p tsconfig.json",
+        "start": "node dist/server.js",
+        "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+        "typecheck": "tsc -p tsconfig.json --noEmit"
+    },
+    "dependencies": {
+        "express": "^4.19.2",
+        "multer": "^1.4.5-lts.1",
+        "swagger-jsdoc": "^6.2.8",
+        "swagger-ui-express": "^5.0.1"
+    },
+    "devDependencies": {
+        "@types/express": "^4.17.21",
+        "@types/multer": "^1.4.12",
+        "@types/node": "^20.12.12",
+        "ts-node-dev": "^2.0.0",
+        "typescript": "^5.5.4",
+        "@types/swagger-jsdoc": "^6.0.4",
+        "@types/swagger-ui-express": "^4.1.8"
+    }
+}
+
+
+===== api\src\app.ts =====
+
+import express from "express";
+import path from "path";
+import playniteDumpRouter from "./routes/playnitedump";
+import extensionRouter from "./routes/extension";
+import swaggerUi from "swagger-ui-express";
+import swaggerJsdoc from "swagger-jsdoc";
+
+export function createApp() {
+    const app = express();
+
+    const swaggerSpec = swaggerJsdoc({
+        definition: {
+            openapi: "3.0.0",
+            info: {
+                title: "Playnite Web API",
+                version: "1.0.0",
+                description: "API for Playnite web viewer and extension integration",
+            },
+        },
+
+        apis: [
+            path.join(__dirname, "routes/*.{ts,js}"),
+            path.join(process.cwd(), "api", "src", "routes", "*.{ts,js}"),
+        ],
+    });
+
+    app.get("/api/docs.json", (_req, res) => res.json(swaggerSpec)); // handy
+    app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+    app.use(express.json({ limit: "50mb" }));
+    app.use("/api/playnitedump", playniteDumpRouter);
+    app.use("/api/extension", extensionRouter);
+    return app;
+}
+
+
+===== api\src\helpers.ts =====
+
+import { spawn, type SpawnOptionsWithoutStdio } from "node:child_process";
+import { join, dirname } from "node:path";
+import { promises as fs } from "node:fs";
+import * as fsSync from "node:fs";
+import {  } from "node:child_process";
+
+export type RunOpts = SpawnOptionsWithoutStdio & {
+    onStdout?: (line: string) => void;
+    onStderr?: (line: string) => void;
+};
+export const INPUT_DIR = "/input";
+export const WORK_DIR = "/work";
+export const DATA_DIR = "/data";
+
+export function run(
+    cmd: string,
+    args: string[],
+    opts: RunOpts = {}
+): Promise<{ code: number | null; out: string; err: string }> {
+    return new Promise((resolve, reject) => {
+        const child = spawn(cmd, args, { stdio: ["ignore", "pipe", "pipe"], ...opts });
+        let out = "", err = "";
+
+        const feed = (buf: Buffer, sink: "out" | "err", cb?: (line: string) => void) => {
+            const s = buf.toString("utf8");
+            if (cb) s.split(/\r?\n/).forEach((ln) => ln && cb(ln));
+            if (sink === "out") out += s; else err += s;
+        };
+
+        child.stdout?.on("data", (b) => feed(b, "out", opts.onStdout));
+        child.stderr?.on("data", (b) => feed(b, "err", opts.onStderr));
+        child.on("error", reject);
+        child.on("close", (code) => resolve({ code, out, err }));
+    });
+}
+
+export async function cleanDir(dir: string) {
+    // Clear mount contents (works for tmpfs/bind mounts)
+    try {
+        const entries = await fs.readdir(dir, { withFileTypes: true });
+        await Promise.all(entries.map((e) => fs.rm(join(dir, e.name), { recursive: true, force: true })));
+    } catch (err: any) {
+        if (err?.code === "ENOENT") {
+            await fs.mkdir(dir, { recursive: true });
+        } else {
+            throw err;
+        }
+    }
+}
+
+export async function normalizeBackslashPaths(root: string): Promise<void> {
+    const entries = await fs.readdir(root, { withFileTypes: true });
+    for (const e of entries) {
+        const p = join(root, e.name);
+        if (e.isDirectory()) {
+            await normalizeBackslashPaths(p);
+        } else if (e.isFile() && e.name.includes("\\")) {
+            const parts = e.name.split("\\");
+            const dest = join(root, ...parts);
+            await fs.mkdir(dirname(dest), { recursive: true });
+            await fs.rename(p, dest);
+        }
+    }
+}
+
+export async function findLibraryDir(root: string): Promise<string | null> {
+    const stack = [root];
+    const candidates = new Map<string, { count: number; hasGameDb: boolean }>();
+    while (stack.length) {
+        const d = stack.pop()!;
+        const list = await fs.readdir(d, { withFileTypes: true });
+        for (const ent of list) {
+            const p = join(d, ent.name);
+            if (ent.isDirectory()) stack.push(p);
+            else if (ent.isFile() && ent.name.toLowerCase().endsWith(".db")) {
+                const dir = dirname(p);
+                const rec = candidates.get(dir) || { count: 0, hasGameDb: false };
+                rec.count += 1;
+                if (["games.db", "game.db"].includes(ent.name.toLowerCase())) rec.hasGameDb = true;
+                candidates.set(dir, rec);
+            }
+        }
+    }
+    if (!candidates.size) return null;
+    for (const [dir, rec] of candidates.entries()) if (rec.hasGameDb) return dir;
+    return [...candidates.entries()].sort((a, b) => b[1].count - a[1].count)[0][0];
+}
+
+/** Copy library media (usually sibling to /library) with live byte-level progress. */
+export async function copyLibraryFilesWithProgress(opts: {
+    libDir: string;          // e.g. /work/PlayniteBackup/library
+    workRoot: string;        // e.g. /work
+    dataRoot: string;        // e.g. /data
+    log: (m: string) => void;
+    progress?: (p: { phase: "copy"; percent: number; copiedBytes: number; totalBytes: number; deltaBytes: number }) => void;
+    concurrency?: number;
+    tickMs?: number;
+}) {
+    const { libDir, workRoot, dataRoot, log, progress, concurrency = 8, tickMs = 500 } = opts;
+
+    // Prefer sibling of libDir: ../libraryfiles
+    const sib = join(dirname(libDir), "libraryfiles");
+
+    // Resolve source folder: sibling first, else try common tops within extraction
+    const candidates: string[] = [sib];
+    // common layouts: /work/PlayniteBackup/libraryfiles, /work/libraryfiles
+    const entries = await fs.readdir(workRoot, { withFileTypes: true });
+    for (const e of entries) {
+        if (e.isDirectory()) {
+            candidates.push(join(workRoot, e.name, "libraryfiles"));
+        }
+    }
+    candidates.push(join(workRoot, "libraryfiles"));
+
+    const isDir = async (p: string) => { try { return (await fs.stat(p)).isDirectory(); } catch { return false; } };
+
+    let src: string | null = null;
+    for (const c of candidates) {
+        if (await isDir(c)) { src = c; break; }
+    }
+    if (!src) { log("No libraryfiles folder found."); return; }
+
+    const destRoot = join(dataRoot, "libraryfiles");
+    await fs.mkdir(destRoot, { recursive: true });
+
+    // Index files and total size
+    type Item = { src: string; rel: string; size: number };
+    const items: Item[] = [];
+    let totalBytes = 0;
+
+    async function indexDir(dir: string, rel = ""): Promise<void> {
+        const ents = await fs.readdir(dir, { withFileTypes: true });
+        for (const e of ents) {
+            const abs = join(dir, e.name);
+            const r = join(rel, e.name);
+            if (e.isDirectory()) await indexDir(abs, r);
+            else {
+                const st = await fs.stat(abs);
+                items.push({ src: abs, rel: r, size: st.size });
+                totalBytes += st.size;
+            }
+        }
+    }
+    await indexDir(src);
+
+    if (!items.length) { log("No media files to copy."); return; }
+
+    log(`Copying media from ${src} → ${destRoot}`);
+
+    let copiedBytes = 0, copiedFiles = 0, failures = 0, lastReport = 0;
+    const timer = setInterval(() => {
+        const pct = totalBytes ? (copiedBytes / totalBytes) * 100 : 100;
+        const delta = copiedBytes - lastReport; lastReport = copiedBytes;
+        progress?.({ phase: "copy", percent: pct, copiedBytes, totalBytes, deltaBytes: delta });
+    }, tickMs);
+
+    const ensureDir = (p: string) => fs.mkdir(p, { recursive: true });
+
+    let idx = 0;
+    async function worker() {
+        while (true) {
+            const i = idx++; if (i >= items.length) break;
+            const it = items[i];
+            const dst = join(destRoot, it.rel);
+            try {
+                await ensureDir(dirname(dst));
+                await new Promise<void>((resolve, reject) => {
+                    const rs = fsSync.createReadStream(it.src);
+                    const ws = fsSync.createWriteStream(dst);
+
+                    rs.on("data", (chunk: Buffer | string) => {
+                        copiedBytes += typeof chunk === "string" ? Buffer.byteLength(chunk) : chunk.length;
+                    });
+                    rs.on("error", reject);
+                    ws.on("error", reject);
+                    ws.on("finish", () => resolve());
+
+                    rs.pipe(ws);
+                });
+                copiedFiles++;
+            } catch (e: any) {
+                failures++; log(`ERROR copying ${it.rel}: ${e?.message ?? e}`);
+            }
+        }
+    }
+
+    const workers = Array.from({ length: Math.min(concurrency, items.length) }, () => worker());
+    await Promise.all(workers);
+    clearInterval(timer);
+
+    // final progress
+    const pct = totalBytes ? (copiedBytes / totalBytes) * 100 : 100;
+    progress?.({ phase: "copy", percent: pct, copiedBytes, totalBytes, deltaBytes: 0 });
+    log(`Copy complete: ${copiedFiles} files, ${pct.toFixed(1)}%, ${failures} errors`);
+}
+
+
+===== api\src\routes\extension.ts =====
+
+import express from "express";
+import path from "path";
+
+const extensionRouter = express.Router();
+
+/**
+ * @openapi
+ * /api/extension/download:
+ *   get:
+ *     summary: Download the latest Playnite extension.
+ *     responses:
+ *       200:
+ *         description: The extension file
+ */
+extensionRouter.get("/download", (_req, res) => {
+  const file = path.resolve(__dirname, "../../playnite/PlayniteViewerBridge/playnite-viewer-bridge-1.0.0.pext");
+  res.download(file, "playnite-viewer-bridge.pext");
+});
+
+export default extensionRouter;
+
+
+===== api\src\routes\playnitedump.ts =====
+
+import express from "express";
+import multer from "multer";
+import { promises as fs } from "node:fs";
+import { join, basename, dirname } from "node:path";
+import {
+    INPUT_DIR, WORK_DIR, DATA_DIR,
+    run, cleanDir, normalizeBackslashPaths, findLibraryDir,
+    copyLibraryFilesWithProgress,
+} from "../helpers";
+
+const playniteDumpRouter = express.Router();
+
+/**
+ * @openapi
+ * /api/playnitedump/zips:
+ *   get:
+ *     summary: List uploaded ZIP files.
+ *     responses:
+ *       200:
+ *         description: A list of ZIP files with metadata.
+ */
+playniteDumpRouter.get("/zips", async (_req, res) => {
+    const files = await fs.readdir(INPUT_DIR, { withFileTypes: true });
+    const zips: Array<{ name: string; size: number; mtime: number }> = [];
+    for (const f of files) {
+        if (f.isFile() && /\.zip$/i.test(f.name)) {
+            const st = await fs.stat(join(INPUT_DIR, f.name));
+            zips.push({ name: f.name, size: st.size, mtime: st.mtimeMs });
+        }
+    }
+    zips.sort((a, b) => b.mtime - a.mtime);
+    res.json(zips);
+});
+
+/**
+ * @openapi
+ * /api/playnitedump/upload:
+ *   post:
+ *     summary: Upload a ZIP file containing a Playnite library.
+ *     responses:
+ *       200:
+ *         description: Upload result
+ */
+const upload = multer({ dest: INPUT_DIR });
+playniteDumpRouter.post("/upload", upload.single("file"), async (req, res) => {
+    if (!req.file) return res.status(400).json({ ok: false, error: "no file" });
+    const safe = req.file.originalname.replace(/[^A-Za-z0-9._ -]/g, "_");
+    await fs.rename(req.file.path, join(INPUT_DIR, safe));
+    res.json({ ok: true, file: safe });
+});
+
+/**
+ * @openapi
+ * /api/playnitedump/process-stream:
+ *   get:
+ *     summary: Stream the processing of a ZIP file containing a Playnite library.
+ *     responses:
+ *       200:
+ *         description: Streaming result
+ */
+playniteDumpRouter.get("/process-stream", async (req, res) => {
+    const filename = String(req.query.filename ?? "");
+    const password = String(req.query.password ?? "");
+
+    if (!filename || !/\.zip$/i.test(filename)) {
+        res.setHeader("Content-Type", "text/event-stream");
+        return res.end("event: error\ndata: filename missing or not .zip\n\n");
+    }
+
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+
+    const send = (type: string, data: any) => {
+        const payload = typeof data === "string" ? data : JSON.stringify(data);
+        res.write(`event: ${type}\n`);
+        res.write(`data: ${payload.replace ? payload.replace(/\n/g, "\\n") : payload}\n\n`);
+    };
+    const log = (m: string) => send("log", m);
+    const progress = (phase: "unzip" | "copy", percent: number, extra?: Record<string, any>) =>
+        send("progress", { phase, percent, ...(extra || {}) });
+
+    const zipPath = join(INPUT_DIR, basename(filename));
+
+    try {
+        await fs.access(zipPath);
+        await cleanDir(WORK_DIR);
+
+        log("Validating ZIP with 7z…");
+        await run("7z", ["t", zipPath], {
+            onStdout: (ln) => {
+                const m = /(\d{1,3})%/.exec(ln);
+                if (m) progress("unzip", Number(m[1])); // reuse unzip bar for test
+            },
+            onStderr: (ln) => /error/i.test(ln) && log(`7z: ${ln}`),
+        });
+
+        log("Extracting ZIP with 7z…");
+        await run("7z", ["x", "-y", `-o${WORK_DIR}`, zipPath, "-bsp1", "-bso1"], {
+            onStdout: (ln) => {
+                const m = /(\d{1,3})%/.exec(ln);
+                if (m) progress("unzip", Number(m[1]));
+            },
+            onStderr: (ln) => /error/i.test(ln) && log(`7z: ${ln}`),
+        });
+
+        log("Normalizing backslash paths…");
+        await normalizeBackslashPaths(WORK_DIR);
+
+        log("Locating library dir…");
+        const libDir = await findLibraryDir(WORK_DIR);
+        if (!libDir) throw new Error("No library directory with *.db");
+
+        log("Clearing /data…");
+        await cleanDir(DATA_DIR);
+
+        log("Dumping LiteDB to JSON…");
+        const env = { ...process.env };
+        if (password) env.LITEDB_PASSWORD = password;
+        const { out, err } = await run("./PlayniteImport", [libDir, DATA_DIR], { env });
+        if (out?.trim()) out.trim().split(/\r?\n/).forEach((l) => log(l));
+        if (err?.trim()) err.trim().split(/\r?\n/).forEach((l) => log(l));
+
+        await copyLibraryFilesWithProgress({
+            libDir,
+            workRoot: WORK_DIR,
+            dataRoot: DATA_DIR,
+            log,
+            progress: ({ percent, copiedBytes, totalBytes, deltaBytes }) =>
+                progress("copy", percent, { copiedBytes, totalBytes, deltaBytes }),
+            concurrency: 8,
+            tickMs: 500,
+        });
+
+        send("done", "ok");
+        res.end();
+    } catch (e: any) {
+        send("error", String(e?.message || e));
+        res.end();
+    }
+});
+
+export default playniteDumpRouter;
+
+
+===== api\src\server.ts =====
+
+import { createApp } from "./app";
+
+const app = createApp();
+const port = process.env.PORT ? Number(process.env.PORT) : 3000;
+
+app.listen(port, () => {
+    console.log(`API listening on ${port}`);
+});
+
+
+===== api\tsconfig.json =====
+
+{
+    "compilerOptions": {
+        "target": "ES2020",
+        "module": "CommonJS",
+        "moduleResolution": "Node",
+        "outDir": "dist",
+        "rootDir": "src",
+        "strict": true,
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "skipLibCheck": true
+    },
+    "include": [
+        "src/**/*.ts"
+    ]
+}
+
+
+===== docker-compose.yml =====
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    environment:
+      NODE_ENV: production
+    volumes:
+      - ./backups:/input
+      - ./data:/data 
+    tmpfs:
+      - /work
+    ports:
+      - "3000:3000"
+
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    ports:
+      - "3001:80"
+    volumes:
+      - ./data:/usr/share/nginx/html/data:ro 
+    depends_on:
+      - api
+
+volumes:
+  data:
+
+
+===== package.json =====
+
+{
+  "name": "playnite-viewer",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "web",
+    "api",
+    "scripts"
+  ],
+  "scripts": {
+    "install:all": "npm i --workspaces --include-workspace-root",
+    "build": "npm -ws --if-present run build && npm run codebase && npm run build:ext",
+    "lint": "npm -ws --if-present run lint",
+    "test": "npm -ws --if-present run test",
+    "up": "docker compose -f docker-compose.yml up --build -d",
+    "clean": "node scripts/clean.js",
+    "codebase": "node scripts/codebase.js",
+    "build:ext": "node scripts/build-ext.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.13"
+  }
+}
+
+
+===== playnite\PlayniteImport\PlayniteImport.cs =====
+
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using LiteDB;
+
+if (args.Length < 2)
+{
+    Console.Error.WriteLine("Usage: PlayniteImport <root-folder> <output-folder>");
+    Environment.Exit(1);
+}
+
+var rootDir = args[0];
+var outDir = args[1];
+
+Directory.CreateDirectory(outDir);
+
+var password = Environment.GetEnvironmentVariable("LITEDB_PASSWORD");
+
+List<string> dbFiles;
+try
+{
+    dbFiles = Directory.EnumerateFiles(rootDir, "*.db", SearchOption.AllDirectories)
+                       .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
+                       .ToList();
+}
+catch (Exception e)
+{
+    Console.Error.WriteLine($"Failed to enumerate DB files under {rootDir}: {e.Message}");
+    Environment.Exit(2);
+    return;
+}
+
+if (!dbFiles.Any())
+{
+    Console.Error.WriteLine($"No *.db files found under {rootDir}");
+    Environment.Exit(2);
+}
+
+Console.WriteLine($"Found {dbFiles.Count} .db files:");
+
+int dumped = 0, skipped = 0;
+
+string SanitizeRel(string rel)
+{
+    var noExt = Path.ChangeExtension(rel, null) ?? rel;
+    return noExt.Replace(Path.DirectorySeparatorChar, '.')
+                .Replace(Path.AltDirectorySeparatorChar, '.');
+}
+
+void DumpDb(string dbPath, string rel, string? pwd)
+{
+    var cs = $"Filename={dbPath};ReadOnly=true" + (string.IsNullOrEmpty(pwd) ? "" : $";Password={pwd}");
+    using var db = new LiteDatabase(cs);
+
+    foreach (var name in db.GetCollectionNames())
+    {
+        var col = db.GetCollection(name);
+        var outFile = Path.Combine(outDir, $"{SanitizeRel(rel)}.{name}.json");
+        var outParent = Path.GetDirectoryName(outFile);
+        if (!string.IsNullOrEmpty(outParent))
+        {
+            Directory.CreateDirectory(outParent);
+        }
+
+        using var stream = File.Create(outFile);
+        using var writer = new Utf8JsonWriter(stream, new JsonWriterOptions
+        {
+            Indented = true,
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        });
+
+        writer.WriteStartArray();
+        foreach (var doc in col.FindAll())
+        {
+            using var jd = JsonDocument.Parse(doc.ToString());
+            jd.RootElement.WriteTo(writer);
+        }
+        writer.WriteEndArray();
+    }
+}
+
+foreach (var dbPath in dbFiles)
+{
+    var rel = Path.GetRelativePath(rootDir, dbPath);
+
+    try
+    {
+        try
+        {
+            DumpDb(dbPath, rel, null);
+            dumped++;
+            Console.WriteLine($"OK (no password): {rel}");
+            continue;
+        }
+        catch (LiteException ex1)
+        {
+            var msg = ex1.Message?.ToLowerInvariant() ?? "";
+            var looksEncrypted = msg.Contains("password") || msg.Contains("encrypted");
+            if (!looksEncrypted || string.IsNullOrEmpty(password))
+            {
+                throw;
+            }
+        }
+
+        DumpDb(dbPath, rel, password);
+        dumped++;
+        Console.WriteLine($"OK (with password): {rel}");
+    }
+    catch (LiteException ex)
+    {
+        skipped++;
+        Console.Error.WriteLine($"SKIP (LiteDB): {rel} :: {ex.Message}");
+    }
+    catch (Exception ex)
+    {
+        skipped++;
+        Console.Error.WriteLine($"SKIP (other): {rel} :: {ex.GetType().Name}: {ex.Message}");
+    }
+}
+
+Console.WriteLine($"Done. Dumped: {dumped}, Skipped: {skipped}");
+if (dumped == 0)
+{
+    Console.Error.WriteLine("No valid LiteDB files were dumped. If your library is encrypted, set LITEDB_PASSWORD.");
+    Environment.Exit(3);
+}
+
+
+===== playnite\PlayniteImport\PlayniteImport.csproj =====
+
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>PlayniteImport</AssemblyName>
+    <RootNamespace>PlayniteImport</RootNamespace>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="LiteDB" Version="4.1.4" />
+  </ItemGroup>
+</Project>
+
+
+===== playnite\PlayniteViewerBridge\extension.yaml =====
+
+Id: a85f0db8-39f4-40ea-9e03-bc5be2298c89
+Name: PlayniteViewerBridge
+Author: Dave Timmerman
+Version: 1.0.0
+Module: PlayniteViewerBridge.dll
+Type: GenericPlugin
+PlayniteApiVersion: 6.12.0
+
+
+===== playnite\PlayniteViewerBridge\PlayniteViewerBridge.cs =====
+
+using Playnite.SDK;
+using Playnite.SDK.Plugins;
+using Playnite.SDK.Events;
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Web;
+
+namespace PlayniteViewerBridge
+{
+    public class PlayniteViewerBridge : GenericPlugin
+    {
+        private static readonly ILogger logger = LogManager.GetLogger();
+        private readonly IPlayniteAPI api;
+
+        public override Guid Id { get; } = Guid.Parse("a85f0db8-39f4-40ea-9e03-bc5be2298c89");
+
+        public PlayniteViewerBridge(IPlayniteAPI api) : base(api)
+        {
+            this.api = api;
+
+            api.UriHandler.RegisterSource("viewer", args =>
+            {
+                try
+                {
+                    if (args?.Arguments?.Length > 0 && string.Equals(args.Arguments[0], "restore", StringComparison.OrdinalIgnoreCase))
+                    {
+                        HandleRestore(args.Arguments.Skip(1).ToArray());
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, "Restore handler error");
+                    api.Dialogs.ShowErrorMessage(ex.Message, "Restore");
+                }
+            });
+        }
+
+        private void HandleRestore(string[] tail)
+        {
+            var q = string.Join("/", tail ?? Array.Empty<string>());
+            var uri = new Uri("playnite://viewer/restore" + (q.StartsWith("?") ? q : "?" + q));
+            var qs = HttpUtility.ParseQueryString(uri.Query);
+
+            var fileParam = qs["file"];
+            var urlParam = qs["url"];
+            var items = qs["items"]; // "0,1,2,3,4,5" default
+
+            string backupZip;
+            if (!string.IsNullOrWhiteSpace(fileParam) && File.Exists(fileParam))
+            {
+                backupZip = fileParam;
+            }
+            else if (!string.IsNullOrWhiteSpace(urlParam))
+            {
+                var temp = Path.Combine(Path.GetTempPath(), "PlayniteBackup-" + Guid.NewGuid() + ".zip");
+                using (var wc = new WebClient())
+                {
+                    wc.DownloadFile(urlParam, temp);
+                }
+                backupZip = temp;
+            }
+            else
+            {
+                throw new InvalidOperationException("No backup specified (need ?file=... or ?url=...).");
+            }
+
+            var dataDir = api.Paths.ConfigurationPath;
+            var libraryDir = Path.Combine(dataDir, "library");
+            var itemsJson = string.IsNullOrWhiteSpace(items) ? "0,1,2,3,4,5" : items;
+
+            var cfgPath = Path.Combine(Path.GetTempPath(), "restore_config.json");
+            var json = $@"{{
+  ""BackupFile"": ""{backupZip.Replace("\\", "\\\\")}"",
+  ""DataDir"": ""{dataDir.Replace("\\", "\\\\")}"",
+  ""LibraryDir"": ""{libraryDir.Replace("\\", "\\\\")}"",
+  ""RestoreItems"": [{itemsJson}],
+  ""ClosedWhenDone"": false,
+  ""CancelIfGameRunning"": true
+}}";
+            File.WriteAllText(cfgPath, json);
+
+            api.Dialogs.ShowMessage("Playnite will restart to restore the selected backup.", "Restore");
+
+            var exe = Process.GetCurrentProcess().MainModule?.FileName
+                      ?? throw new InvalidOperationException("Cannot locate Playnite executable.");
+
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = exe,
+                Arguments = $"--restorebackup \"{cfgPath}\"",
+                UseShellExecute = false
+            });
+
+            Environment.Exit(0); // ✅ Replaces api.Application.Quit()
+        }
+    }
+}
+
+
+===== playnite\PlayniteViewerBridge\PlayniteViewerBridge.csproj =====
+
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net462</TargetFramework>
+    <AssemblyName>PlayniteViewerBridge</AssemblyName>
+    <RootNamespace>PlayniteViewerBridge</RootNamespace>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="PlayniteSDK" Version="6.12.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="PresentationFramework" />
+    <Reference Include="System.Web" />
+  </ItemGroup>
+</Project>
+
+
+===== web\Dockerfile =====
+
+FROM node:20-alpine AS build
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+COPY web/package.json web/tsconfig.json web/index.html web/
+COPY web/vite.config.mts web/vite.config.mts
+COPY web/src web/src
+
+RUN npm ci --include-workspace-root=false --workspace web
+RUN npm run -w web build
+
+FROM nginx:alpine
+COPY web/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/web/dist/ /usr/share/nginx/html/
+
+
+
+===== web\index.html =====
+
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Playnite Library Viewer</title>
+  <link rel="stylesheet" href="/src/index.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>
+
+
+===== web\nginx.conf =====
+
+# /etc/nginx/conf.d/default.conf  (or the site config you copy in your web image)
+server {
+  listen 80;
+
+  # allow huge uploads
+  client_max_body_size 20G;
+
+  # keep the connection alive for long uploads
+  client_body_timeout 3600s;
+  proxy_request_buffering off;
+
+  location / {
+    root   /usr/share/nginx/html;
+    try_files $uri /index.html;
+  }
+
+  location /api/ {
+    proxy_pass         http://api:3000;
+    proxy_http_version 1.1;
+    proxy_set_header   Connection "";
+    proxy_read_timeout 3600s;
+    proxy_send_timeout 3600s;
+
+    # large streaming bodies: don't buffer in nginx
+    proxy_request_buffering off;
+    proxy_buffering        off;
+  }
+}
+
+
+===== web\package.json =====
+
+{
+  "name": "playnite-web",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 5173"
+  },
+  "dependencies": {
+    "@mantine/core": "^8.2.8",
+    "@mantine/form": "^8.2.8",
+    "@mantine/hooks": "^8.2.8",
+    "@mantine/notifications": "^8.2.8",
+    "@tabler/icons-react": "^3.35.0",
+    "axios": "^1.11.0",
+    "icojs": "^0.16.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.8.2",
+    "react-virtuoso": "^4.7.12"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^5.0.2",
+    "sass": "^1.77.0",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.0"
+  }
+}
+
+
+===== web\src\App.tsx =====
+
+import { RouterProvider } from "react-router-dom";
+import { router } from "./router";
+
+export default function App() {
+  return <RouterProvider router={router} />;
+}
+
+
+===== web\src\components\library\AlphabeticalRail.tsx =====
+
+import { Paper, Stack, Text, Tooltip } from "@mantine/core";
+import { AlphabeticalRailCounts } from "../../lib/types";
+
+export const DEFAULT_LETTERS = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ", "#"];
+
+export function AlphabeticalRail({
+    letters = DEFAULT_LETTERS,
+    counts,
+    active,
+    onJump,
+    title = "Jump to letter",
+}: {
+    letters?: string[];
+    counts?: AlphabeticalRailCounts;
+    active?: string | null;
+    onJump: (letter: string) => void;
+    title?: string;
+}) {
+    const usable = counts
+        ? letters.filter((ch) => (counts[ch] ?? 0) > 0)
+        : letters;
+
+    if (usable.length === 0) return null;
+
+    return (
+        <Paper className="alphabetical-rail" radius="xl" withBorder shadow="sm" aria-label={title}>
+            <Stack gap={2} align="center" justify="center">
+                {usable.map((ch) => {
+                    const isActive = !!active && active.toUpperCase() === ch;
+                    return (
+                        <Tooltip key={ch} label={ch} position="left" withArrow>
+                            <Text
+                                component="button"
+                                type="button"
+                                className={["item", isActive ? "active" : ""].join(" ")}
+                                onClick={() => onJump(ch)}
+                                aria-pressed={isActive}
+                            >
+                                {ch}
+                            </Text>
+                        </Tooltip>
+                    );
+                })}
+            </Stack>
+        </Paper>
+    );
+}
+
+
+===== web\src\components\library\AlphabeticalSeparatorRow.tsx =====
+
+
+export function AlphabeticalSeparatorRow({ bucket, top }: { bucket: string; top: number }) {
+  return (
+    <div className="alphabetical-separator" style={{ top }}>
+      {bucket}
+    </div>
+  );
+}
+
+
+===== web\src\components\library\Controls.tsx =====
+
+import React from "react";
+import { Group, MultiSelect, Switch, Text, Stack, Flex } from "@mantine/core";
+import { SearchInput } from "../ui/SearchInput";
+
+export function Controls(props: {
+  q: string; setQ: (v: string) => void;
+  sources: string[]; setSources: (v: string[]) => void;
+  tags: string[]; setTags: (v: string[]) => void;
+  allSources: string[];
+  allTags: string[];
+  showHidden: boolean; setShowHidden: (v: boolean) => void;
+  installedOnly: boolean; setInstalledOnly: (v: boolean) => void;
+  filteredCount: number;
+  totalCount: number;
+}) {
+  const {
+    q, setQ,
+    sources, setSources, allSources,
+    tags, setTags, allTags,
+    showHidden, setShowHidden,
+    installedOnly, setInstalledOnly,
+    filteredCount, totalCount,
+  } = props;
+
+  const sourceData = React.useMemo(
+    () => Array.from(new Set(allSources)).sort().map((s) => ({ value: s, label: s })),
+    [allSources]
+  );
+
+  const tagData = React.useMemo(
+    () => Array.from(new Set(allTags)).sort().map((t) => ({ value: t, label: t })),
+    [allTags]
+  );
+
+  return (
+    <Group wrap="wrap" align="center" gap="sm">
+
+      <Group
+        gap="sm"
+        wrap="wrap"
+        style={{ flex: '1 1 0%', minWidth: 0 }}
+      >
+        <Group align="end" wrap="wrap">
+          <Stack gap="xs" style={{ flex: 1 }}>
+            <SearchInput value={q} onChange={setQ} />
+          </Stack>
+        </Group>
+
+        <Group gap="sm" align="end" wrap="nowrap" style={{ flex: '0 0 auto' }}>
+          <MultiSelect
+            placeholder="All sources"
+            value={sources}
+            onChange={setSources}
+            data={sourceData}
+            clearable
+            searchable
+            w={230}          // keep fixed width
+            size="sm"
+            radius="xl"
+            variant="filled"
+            comboboxProps={{ withinPortal: true }}
+            nothingFoundMessage="No sources found"
+            styles={{ pill: { display: "none" } }}
+          />
+          <MultiSelect
+            placeholder="All tags"
+            value={tags}
+            onChange={setTags}
+            data={tagData}
+            clearable
+            searchable
+            w={230}
+            size="sm"
+            radius="xl"
+            variant="filled"
+            comboboxProps={{ withinPortal: true }}
+            nothingFoundMessage="No tags found"
+            styles={{ pill: { display: "none" } }}
+          />
+        </Group>
+      </Group>
+
+      <Group
+        gap="sm"
+        wrap="wrap"
+        align="center"
+        justify="flex-end"
+        ml="auto"
+        style={{ flex: '0 0 auto' }}
+      >
+        <Flex direction="column" align="center" justify="center" style={{ alignSelf: "stretch" }}>
+          <Text size="sm" className="is-dim" p="0 0 10 0" style={{ whiteSpace: "nowrap" }}>
+            {totalCount ? `${filteredCount.toLocaleString()} / ${totalCount.toLocaleString()}` : ""}
+          </Text>
+
+          <Flex direction="row" align="center" justify="center" wrap="nowrap" style={{ alignSelf: "stretch" }}>
+            <Group gap="sm" align="end" wrap="nowrap">
+              <Flex direction="column" align="center" justify="center" style={{ alignSelf: "stretch" }}>
+                <Switch
+                  aria-label="Installed only"
+                  checked={installedOnly}
+                  onChange={(e) => setInstalledOnly(e.currentTarget.checked)}
+                  size="sm"
+                />
+                <Text size="xs" className="is-dim">installed</Text>
+              </Flex>
+              <Flex direction="column" align="center" justify="center" style={{ alignSelf: "stretch" }}>
+                <Switch
+                  aria-label="Show hidden"
+                  checked={showHidden}
+                  onChange={(e) => setShowHidden(e.currentTarget.checked)}
+                  size="sm"
+                />
+                <Text size="xs" className="is-dim">hidden</Text>
+              </Flex>
+            </Group>
+          </Flex>
+        </Flex>
+      </Group>
+    </Group>
+  );
+}
+
+
+===== web\src\components\library\GameRow.tsx =====
+
+import { Badge, Group, Text } from "@mantine/core";
+import { IconImage } from "./IconImage";
+import { GRID } from "../../lib/constants";
+import { PlayActionOverlay } from "../ui/PlayActionOverlay";
+import { effectiveLink } from "../../lib/utils";
+import { GameRowProps } from "../../lib/types";
+
+export function GameRow(props: GameRowProps) {
+  const { id, hidden, showHidden, installed, iconUrl, title, source, tags, year, url } = props;
+  const href = url ?? effectiveLink({ url, source, title, tags });
+  const dim = hidden;
+  const actionHref = `playnite://playnite/start/${encodeURIComponent(id)}`;
+
+  return (
+    <div
+      data-row-id={id}
+      className={`game-row${dim ? " is-dim" : ""}${installed ? " is-installed" : ""}`}
+      style={{
+        display: "grid",
+        gridTemplateColumns: GRID.cols,
+        minWidth: GRID.minWidth,
+        alignItems: "center",
+        gap: 12,
+        height: GRID.rowHeight,
+        padding: "0 12px",
+        borderBottom: "1px solid var(--mantine-color-default-border)",
+      }}
+    >
+      <div style={{ width: 56 }} className={dim ? " is-dim" : ""}>
+        <div className="icon-wrap" style={{ position: "relative", width: 40, height: 40 }}>
+          <PlayActionOverlay installed={installed} href={actionHref} title={title}>
+            <div className="icon-base">
+              <IconImage src={iconUrl} />
+            </div>
+          </PlayActionOverlay>
+        </div>
+      </div>
+
+      <div className={dim ? " is-dim" : ""}>
+        {href ? (
+          <Text
+            component="a"
+            href={href}
+            target="_blank"
+            rel="noopener"
+            fw={500}
+            className="game-title"
+            style={{ textDecoration: "underline" }}
+            title={title}
+          >
+            {title}
+          </Text>
+        ) : (
+          <Text fw={500} title={title}>{title}</Text>
+        )}
+      </div>
+
+      <div className={dim ? " is-dim" : ""}>
+        {year ? <Text>{year}</Text> : <Text>—</Text>}
+      </div>
+
+      <div className={dim ? " is-dim" : ""}>
+        <Text>{source}</Text>
+      </div>
+
+      <div className={dim ? " is-dim" : ""}>
+        <Group gap={6} align="center" wrap="wrap" style={{ maxHeight: "100%" }}>
+          {(tags ?? []).map((t) => (
+            <Badge key={t} variant="dark" size="sm" style={{ boxShadow: "0 2px 0 0 rgb(0 0 0 / 30%)" }}>
+              {t}
+            </Badge>
+          ))}
+        </Group>
+      </div>
+    </div>
+  );
+}
+
+
+===== web\src\components\library\IconImage.tsx =====
+
+import React from "react";
+import { isIcoPath, icoToPngDataUrl } from "../../lib/utils";
+
+export function IconImage({ src, alt }: { src: string; alt?: string }) {
+  const [url, setUrl] = React.useState(src);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    async function maybeConvert() {
+      if (isIcoPath(src)) {
+        const data = await icoToPngDataUrl(src);
+        if (!cancelled && data) setUrl(data);
+      } else {
+        setUrl(src);
+      }
+    }
+    maybeConvert();
+    return () => { cancelled = true; };
+  }, [src]);
+
+  return (
+    <img
+      className="icon"
+      src={url}
+      alt={alt ?? ""}
+      width={40}
+      height={40}
+      style={{ width: 40, height: 40, objectFit: "contain", borderRadius: 6, background: "var(--mantine-color-default)" }}
+      onError={async (e) => {
+        // fallback if the src fails to load
+        if (isIcoPath(src)) {
+          const data = await icoToPngDataUrl(src);
+          if (data) (e.target as HTMLImageElement).src = data;
+        }
+      }}
+    />
+  );
+}
+
+
+===== web\src\components\library\library.scss =====
+
+.game-row {
+  position: relative;
+  transition: background-color 120ms ease-in-out;
+  overflow: hidden;
+
+  &:hover {
+    background: var(--mantine-color-default-hover);
+  }
+
+  .game-title:hover {
+    color: var(--mantine-color-text-hover) !important;
+  }
+
+  &.is-installed {
+    background: var(--mantine-primary-color-light) !important;
+
+    &:hover {
+      background: var(--mantine-primary-color-filled) !important;
+    }
+  }
+
+  /* Ensure the overlay uses white icons from Tabler (currentColor) */
+  .play-overlay__icon {
+    color: #fff;
+    opacity: 0;
+    transform: scale(0.94);
+    transition: opacity .16s ease, transform .16s ease;
+    pointer-events: none;
+  }
+
+  /* Fade in the overlay icon on hover */
+  .icon-wrap:hover .play-overlay__icon {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* Fade the base game icon to .4 on hover */
+  .icon-base {
+    transition: opacity .16s ease;
+  }
+
+  .icon-wrap:hover .icon-base {
+    opacity: .3;
+  }
+
+  /* Optional: subtle hover tint to indicate interactivity */
+  .icon-wrap:hover .play-overlay {
+    background: radial-gradient(transparent 42%, rgba(0, 0, 0, .08));
+    border-radius: 6px;
+  }
+}
+
+.alphabetical-separator {
+  position: sticky;
+  z-index: 5;
+  font-weight: 700;
+  padding: 6px 12px 6px 80px;
+  background: var(--mantine-color-body);
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.alphabetical-rail {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  padding: 6px 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+
+  .item {
+    all: unset;
+    font-size: 11px;
+    line-height: 1;
+    padding: 4px 0;
+    text-align: center;
+    cursor: pointer;
+    opacity: 0.8;
+    user-select: none;
+  }
+
+  .item:hover {
+    opacity: 1;
+    font-weight: 700;
+    color: var(--mantine-primary-color-4) !important;
+  }
+
+  .disabled {
+    cursor: default;
+    opacity: 0.3;
+  }
+
+  .active {
+    font-weight: 700;
+    opacity: 1;
+    color: var(--mantine-primary-color-4) !important;
+  }
+}
+
+
+===== web\src\components\library\LibraryList.tsx =====
+
+import React from "react";
+import { Box, Flex } from "@mantine/core";
+import { useElementSize } from "@mantine/hooks";
+import { Virtuoso, GroupedVirtuoso, VirtuosoHandle } from "react-virtuoso";
+import type { Loaded } from "../../lib/types";
+import { Controls } from "./Controls";
+import { useLibraryState } from "./useLibraryState";
+import { GameRow } from "./GameRow";
+import { AlphabeticalSeparatorRow } from "./AlphabeticalSeparatorRow";
+import { LibraryListHeader } from "./LibraryListHeader";
+import { AlphabeticalRail } from "./AlphabeticalRail";
+import { useAlphabetGroups } from "./useAlphabetGroups";
+import { useAlphabetRail } from "./useAlphabetRail";
+
+import "./library.scss";
+
+export function LibraryList({
+  data,
+  onCountsChange,
+  filteredCount,
+  totalCount,
+}: {
+  data: Loaded;
+  onCountsChange?: (filtered: number, total: number) => void;
+  filteredCount: number;
+  totalCount: number;
+}) {
+  const { ui, derived } = useLibraryState(data);
+  const { ref: controlsRef, height: controlsH } = useElementSize();
+  const { ref: headerRef, height: headerH } = useElementSize();
+
+  const virtuosoRef = React.useRef<VirtuosoHandle>(null);
+
+  React.useEffect(() => {
+    onCountsChange?.(derived.filteredCount, derived.totalCount);
+  }, [derived.filteredCount, derived.totalCount, onCountsChange]);
+
+  // Alphabet grouping is encapsulated here
+  const { groups, isGrouped, flatItems } = useAlphabetGroups(
+    ui.sortKey,
+    derived.withBuckets,
+    derived.rowsSorted
+  );
+
+  // Rail logic is fully encapsulated here
+  const { counts, activeLetter, handleJump, rangeChanged } = useAlphabetRail(
+    { isGrouped, groups, flatItems },
+    virtuosoRef
+  );
+
+  const overscan = { top: 600, bottom: 800 } as const;
+  const stickyOffset = controlsH;
+
+  // remount keys
+  const dataSig = `${derived.filteredCount}|${ui.q}|${ui.sources.join(",")}|${ui.tags.join(",")}|${ui.showHidden}|${ui.installedOnly}`;
+  const groupedKey = `grp:${dataSig}|${ui.sortKey}|${ui.sortDir}`;
+  const flatKey = `flt:${dataSig}|${ui.sortKey}|${ui.sortDir}`;
+
+  return (
+    <Flex direction="column" h="100%" style={{ minHeight: 0 }}>
+      <Box
+        ref={controlsRef}
+        p="md"
+        style={{ position: "sticky", top: 0, zIndex: 20, background: "var(--mantine-color-body)" }}
+      >
+        <Controls
+          q={ui.q}
+          setQ={ui.setQ}
+          sources={ui.sources}
+          setSources={ui.setSources}
+          allSources={data.allSources}
+          tags={ui.tags}
+          setTags={ui.setTags}
+          allTags={data.allTags}
+          showHidden={ui.showHidden}
+          setShowHidden={ui.setShowHidden}
+          installedOnly={ui.installedOnly}
+          setInstalledOnly={ui.setInstalledOnly}
+          filteredCount={filteredCount}
+          totalCount={totalCount}
+        />
+      </Box>
+
+      <div style={{ position: "sticky", top: stickyOffset, zIndex: 15 }}>
+        <LibraryListHeader
+          headerRef={headerRef as unknown as (el: HTMLElement | null) => void}
+          sortKey={ui.sortKey}
+          sortDir={ui.sortDir}
+          onToggleSort={ui.toggleSort}
+        />
+      </div>
+
+      <Box style={{ flex: 1, minHeight: 0, position: "relative", overflow: "hidden" }}>
+        {isGrouped && groups ? (
+          <GroupedVirtuoso
+            ref={virtuosoRef}
+            key={groupedKey}
+            style={{ height: "100%" }}
+            groupCounts={groups.map((g) => g.rows.length)}
+            increaseViewportBy={overscan}
+            rangeChanged={rangeChanged}
+            groupContent={(index) => (
+              <AlphabeticalSeparatorRow bucket={groups[index].title} top={(controlsH + headerH) || 0} />
+            )}
+            itemContent={(index) => {
+              let i = index;
+              for (const g of groups) {
+                if (i < g.rows.length) {
+                  const r = g.rows[i];
+                  return (
+                    <GameRow
+                      id={r.id}
+                      hidden={r.hidden}
+                      showHidden={ui.showHidden}
+                      installed={r.installed}
+                      iconUrl={r.iconUrl}
+                      title={r.title}
+                      source={r.source}
+                      tags={r.tags}
+                      year={r.year}
+                      url={r.url}
+                    />
+                  );
+                }
+                i -= g.rows.length;
+              }
+              return null;
+            }}
+          />
+        ) : (
+          <Virtuoso
+            ref={virtuosoRef}
+            key={flatKey}
+            style={{ height: "100%" }}
+            data={derived.rowsSorted}
+            increaseViewportBy={overscan}
+            rangeChanged={rangeChanged}
+            computeItemKey={(index, r) => r.id}
+            itemContent={(index) => {
+              const r = derived.rowsSorted[index];
+              return (
+                <GameRow
+                  id={r.id}
+                  hidden={r.hidden}
+                  showHidden={ui.showHidden}
+                  installed={r.installed}
+                  iconUrl={r.iconUrl}
+                  title={r.title}
+                  source={r.source}
+                  tags={r.tags}
+                  year={r.year}
+                  url={r.url}
+                />
+              );
+            }}
+          />
+        )}
+
+        {isGrouped && (
+          <Box
+            style={{
+              display: "flex",
+              alignItems: "stretch",
+              pointerEvents: "none",
+            }}
+          >
+            <Box style={{ pointerEvents: "auto", width: "100%" }}>
+              <AlphabeticalRail active={activeLetter} onJump={handleJump} counts={counts} />
+            </Box>
+          </Box>
+        )}
+      </Box>
+    </Flex>
+  );
+}
+
+
+===== web\src\components\library\LibraryListHeader.tsx =====
+
+import type { SortKey } from "../../lib/types";
+import { GRID } from "../../lib/constants";
+
+export function LibraryListHeader(props: {
+  headerRef: (el: HTMLElement | null) => void;
+  sortKey: SortKey;
+  sortDir: "asc" | "desc";
+  onToggleSort: (k: SortKey) => void;
+}) {
+  const { headerRef, sortKey, sortDir, onToggleSort } = props;
+  const label = (base: string, key: SortKey) => (sortKey === key ? `${base} ${sortDir === "asc" ? "▲" : "▼"}` : base);
+
+  return (
+    <div
+      ref={headerRef}
+      style={{
+        background: "var(--mantine-color-body)",
+        borderTop: "1px solid var(--mantine-color-default-border)",
+        borderBottom: "1px solid var(--mantine-color-default-border)",
+      }}
+    >
+      <div
+        className="library-header"
+        style={{
+          display: "grid",
+          gridTemplateColumns: GRID.cols,
+          minWidth: GRID.minWidth,
+          alignItems: "center",
+          gap: 12,
+          height: GRID.headerHeight,
+          fontWeight: 600,
+          padding: "0 12px",
+        }}
+      >
+        <div />
+        <div style={{ cursor: "pointer" }} onClick={() => onToggleSort("title")}>{label("Title", "title")}</div>
+        <div style={{ cursor: "pointer" }} onClick={() => onToggleSort("year")}>{label("Year", "year")}</div>
+        <div style={{ cursor: "pointer" }} onClick={() => onToggleSort("source")}>{label("Source", "source")}</div>
+        <div style={{ cursor: "pointer" }} onClick={() => onToggleSort("tags")}>{label("Tags", "tags")}</div>
+      </div>
+    </div>
+  );
+}
+
+
+===== web\src\components\library\useAlphabetGroups.ts =====
+
+import * as React from "react";
+import { letterBucket } from "../../lib/utils";
+import { AlphaGroup, Row, WithBucket } from "../../lib/types";
+
+export function useAlphabetGroups(
+    sortKey: string | undefined,
+    withBuckets: WithBucket[] | undefined,
+    rowsSorted: Row[] | undefined
+) {
+    const groups = React.useMemo<AlphaGroup[] | null>(() => {
+        if (sortKey !== "title" || !withBuckets || withBuckets.length === 0) {
+            return null;
+        }
+        const out: AlphaGroup[] = [];
+        let current: AlphaGroup | null = null;
+        for (const { row, bucket } of withBuckets) {
+            const b = (bucket || letterBucket(row?.title)) as string;
+            if (!current || current.title !== b) {
+                current = { title: b, rows: [] };
+                out.push(current);
+            }
+            current.rows.push(row);
+        }
+        return out;
+    }, [sortKey, withBuckets]);
+
+    const isGrouped = !!groups && groups.length > 0;
+    const flatItems = rowsSorted ?? [];
+
+    return { groups, isGrouped, flatItems };
+}
+
+
+===== web\src\components\library\useAlphabetRail.tsx =====
+
+import * as React from "react";
+import type { VirtuosoHandle } from "react-virtuoso";
+import { letterBucket } from "../../lib/utils";
+import type { Letter, AlphaGroup, AlphabeticalRailCounts, Row, Range } from "../../lib/types";
+import { LETTERS } from "../../lib/types";
+
+export function useAlphabetRail(
+    params: { isGrouped: boolean; groups: AlphaGroup[] | null; flatItems: Row[] },
+    virtuosoRef: React.RefObject<VirtuosoHandle>
+) {
+    const { isGrouped, groups, flatItems } = params;
+
+    // flat
+    const { flatFirstIndex, flatCounts } = React.useMemo(() => {
+        const firstIndex = Object.fromEntries(LETTERS.map((L) => [L, -1])) as Record<Letter, number>;
+        const counts = Object.fromEntries(LETTERS.map((L) => [L, 0])) as AlphabeticalRailCounts;
+
+        flatItems.forEach((r, idx) => {
+            const L = letterBucket(r?.title);
+            counts[L] = (counts[L] ?? 0) + 1;
+            if (firstIndex[L] === -1) firstIndex[L] = idx;
+        });
+
+        return { flatFirstIndex: firstIndex, flatCounts: counts };
+    }, [flatItems]);
+
+    // group
+    const { groupFirstItemIndex, groupCounts, totalItems } = React.useMemo(() => {
+        if (!groups) {
+            return {
+                groupFirstItemIndex: {} as Record<Letter, number>,
+                groupCounts: Object.fromEntries(LETTERS.map((L) => [L, 0])) as AlphabeticalRailCounts,
+                totalItems: 0,
+            };
+        }
+
+        const firstIndex = Object.fromEntries(LETTERS.map((L) => [L, -1])) as Record<Letter, number>;
+        const counts = Object.fromEntries(LETTERS.map((L) => [L, 0])) as AlphabeticalRailCounts;
+
+        let running = 0;
+        for (const g of groups) {
+            const L = letterBucket(g.title);
+            if (firstIndex[L] === -1) firstIndex[L] = running;
+            counts[L] = (counts[L] ?? 0) + g.rows.length;
+            running += g.rows.length;
+        }
+        return { groupFirstItemIndex: firstIndex, groupCounts: counts, totalItems: running };
+    }, [groups]);
+
+    const [activeLetter, setActiveLetter] = React.useState<string | null>(null);
+    const lastRangeRef = React.useRef<Range | null>(null);
+
+    // 1) If the letter's first item can be placed at the top, go there.
+    // 2) Otherwise, go straight to the *end* of the list.
+    const handleJump = React.useCallback(
+        (L: string) => {
+            const targetIdx = isGrouped
+                ? groupFirstItemIndex[L as Letter]
+                : flatFirstIndex[L as Letter];
+            if (targetIdx == null || targetIdx < 0) return;
+
+            const total = isGrouped ? totalItems : flatItems.length;
+            const lastRange = lastRangeRef.current;
+
+            // If we don't yet know viewport size, try aligning to the target "start".
+            // If it ends up clamped by Virtuoso, next rangeChanged will give us viewport,
+            // and subsequent clicks will follow rule (2).
+            if (!lastRange) {
+                virtuosoRef.current?.scrollToIndex({ index: targetIdx, align: "start", behavior: "auto" });
+                return;
+            }
+
+            const visibleCount = Math.max(1, lastRange.endIndex - lastRange.startIndex + 1);
+            const highStart = Math.max(0, total - visibleCount); // last possible start index
+            const canPlaceAtTop = targetIdx <= highStart;
+
+            if (canPlaceAtTop) {
+                // Already at desired start? no-op
+                if (lastRange.startIndex !== targetIdx) {
+                    virtuosoRef.current?.scrollToIndex({ index: targetIdx, align: "start", behavior: "auto" });
+                }
+            } else {
+                // Can't place at top -> scroll to end of list
+                const endIndex = total > 0 ? total - 1 : 0;
+                if (lastRange.endIndex !== endIndex) {
+                    virtuosoRef.current?.scrollToIndex({ index: endIndex, align: "end", behavior: "auto" });
+                }
+            }
+        },
+        [isGrouped, groupFirstItemIndex, flatFirstIndex, totalItems, flatItems.length, virtuosoRef]
+    );
+
+    // Determine the letter at a global item index
+    const currentLetterAtIndex = React.useCallback(
+        (idx: number): string | null => {
+            if (idx == null || idx < 0) return null;
+
+            if (isGrouped && groups && groups.length) {
+                let i = idx;
+                for (const g of groups) {
+                    if (i < g.rows.length) return letterBucket(g.title);
+                    i -= g.rows.length;
+                }
+                return null;
+            }
+
+            const r = flatItems[idx];
+            return r ? letterBucket(r.title) : null;
+        },
+        [isGrouped, groups, flatItems]
+    );
+
+    // Follow the scroll (top-of-view determines active)
+    const rangeChanged = React.useCallback(
+        (range: Range) => {
+            lastRangeRef.current = range;
+            const L = currentLetterAtIndex(range.startIndex);
+            if (L) setActiveLetter(L);
+        },
+        [currentLetterAtIndex]
+    );
+
+    // Reset when dataset semantics change
+    React.useEffect(() => {
+        setActiveLetter(null);
+        lastRangeRef.current = null;
+    }, [isGrouped, groups?.length, flatItems.length, totalItems]);
+
+    const counts: AlphabeticalRailCounts = isGrouped ? groupCounts : flatCounts;
+
+    return { counts, activeLetter, handleJump, rangeChanged };
+}
+
+
+===== web\src\components\library\useLibraryState.ts =====
+
+import * as React from "react";
+import type { SortKey, SortDir, Persisted, Loaded } from "../../lib/types";
+import { bucketLetter } from "../../lib/utils";
+import { jsonGet, jsonSet } from "../../lib/persist";
+import { COOKIE } from "../../lib/constants";
+
+const DEFAULTS: Persisted = {
+  q: "",
+  sources: [],
+  tags: [],
+  showHidden: false,
+  installedOnly: false,
+  sortKey: "title",
+  sortDir: "asc",
+};
+
+function loadStateFromCookie(): Persisted {
+  try {
+    return jsonGet<Persisted>(COOKIE.libraryState, DEFAULTS);
+  } catch {
+    return DEFAULTS;
+  }
+}
+
+function saveStateToCookie(s: Persisted) {
+  jsonSet(COOKIE.libraryState, s);
+}
+
+export function useLibraryState(data: Loaded) {
+  const persisted = React.useMemo(loadStateFromCookie, []);
+
+  const [q, setQ] = React.useState<string>(persisted.q);
+  const [sources, setSources] = React.useState<string[]>(persisted.sources);
+  const [tags, setTags] = React.useState<string[]>(persisted.tags);
+  const [showHidden, setShowHidden] = React.useState<boolean>(persisted.showHidden);
+  const [sortKey, setSortKey] = React.useState<SortKey>(persisted.sortKey);
+  const [sortDir, setSortDir] = React.useState<SortDir>(persisted.sortDir);
+  const [installedOnly, setInstalledOnly] = React.useState<boolean>(persisted.installedOnly);
+
+  React.useEffect(() => {
+    const toSave: Persisted = { q, sources, tags, showHidden, installedOnly, sortKey, sortDir };
+    saveStateToCookie(toSave);
+  }, [q, sources, tags, showHidden, installedOnly, sortKey, sortDir]);
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setSortKey(key); setSortDir("asc"); }
+  };
+
+  const filteredSorted = React.useMemo(() => {
+    const qv = q.toLowerCase().trim();
+
+    const pass = data.rows.filter((r) =>
+      (!sources.length || sources.includes(r.source)) &&
+      (!tags.length || tags.some((t) => r.tags?.includes(t))) &&
+      (!qv || (r.title?.toLowerCase().includes(qv) || r.source?.toLowerCase().includes(qv) || r.tags?.some((t) => t.toLowerCase().includes(qv)))) &&
+      (!installedOnly || !!r.installed) &&
+      (showHidden || !r.hidden)
+    );
+
+    const sortVal = (r: (typeof pass)[number]) => {
+      if (sortKey === "title") return (r.sortingName || r.title || "").toLowerCase();
+      if (sortKey === "tags") return (r.tags?.join(",") || "").toLowerCase();
+      if (sortKey === "source") return (r.source || "").toLowerCase();
+      if (sortKey === "year") return r.year ?? -Infinity;
+      return (r.sortingName || r.title || "").toLowerCase();
+    };
+
+    pass.sort((a, b) => {
+      if (sortKey === "year") {
+        const av = a.year ?? -Infinity;
+        const bv = b.year ?? -Infinity;
+        if (av < bv) return sortDir === "asc" ? -1 : 1;
+        if (av > bv) return sortDir === "asc" ? 1 : -1;
+        const at = (a.sortingName || a.title).toLowerCase();
+        const bt = (b.sortingName || b.title).toLowerCase();
+        return at.localeCompare(bt);
+      }
+      const av = sortVal(a), bv = sortVal(b);
+      if (av < bv) return sortDir === "asc" ? -1 : 1;
+      if (av > bv) return sortDir === "asc" ? 1 : -1;
+      return 0;
+    });
+
+    return pass;
+  }, [q, sources, tags, showHidden, installedOnly, sortKey, sortDir, data.rows]);
+
+  return {
+    ui: {
+      q, setQ,
+      sources, setSources,
+      tags, setTags,
+      showHidden, setShowHidden,
+      sortKey, sortDir, setSortKey, toggleSort,
+      installedOnly, setInstalledOnly,
+    },
+    derived: {
+      filteredCount: filteredSorted.length,
+      totalCount: data.rows.length,
+      rowsSorted: filteredSorted,
+      withBuckets: filteredSorted.map(
+        (row) => ({ row, bucket: bucketLetter(row.title, row.sortingName) })
+      ),
+    },
+  };
+}
+
+
+===== web\src\components\ui\LoadingBar.tsx =====
+
+import { Stack, Progress, Text } from "@mantine/core";
+export function LoadingBar({ label, percent, subtext }: {
+  label: string; percent: number | null; subtext?: string
+}) {
+  if (percent == null) return null;
+  return (
+    <Stack gap={4}>
+      <Text size="sm">
+        {label} {Math.round(percent)}% {subtext ? `(${subtext})` : ""}
+      </Text>
+      <Progress value={percent} />
+    </Stack>
+  );
+}
+
+
+===== web\src\components\ui\PlayActionOverlay.tsx =====
+
+import React from "react";
+import { IconPlayerPlayFilled, IconDownload } from "../../lib/icons";
+import { Z_INDEX } from "../../lib/constants";
+
+export function PlayActionOverlay({
+    installed,
+    href,
+    title,
+    children,
+}: {
+    installed: boolean;
+    href: string;
+    title: string;
+    children: React.ReactNode;
+}) {
+    const label = installed ? `Play ${title}` : `Install ${title}`;
+
+    return (
+        <div style={{ position: "relative", width: 40, height: 40 }}>
+            {children}
+            <a
+                href={href}
+                title={label}
+                aria-label={label}
+                className="play-overlay"
+                style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    textDecoration: "none",
+                    zIndex: Z_INDEX.overlay,
+                    borderRadius: 6,
+                    // transparent by default; hover styles are in CSS below
+                    background: "transparent",
+                }}
+            >
+                <span className="play-overlay__icon" aria-hidden>
+                    {installed ? <IconPlayerPlayFilled size={22} stroke={2.2} /> : <IconDownload size={22} stroke={2.2} />}
+                </span>
+            </a>
+        </div>
+    );
+}
+
+
+===== web\src\components\ui\SearchInput.tsx =====
+
+import { ActionIcon, TextInput } from "@mantine/core";
+import { IconSearch, IconX } from "../../lib/icons";
+
+export function SearchInput({
+    value,
+    onChange,
+    placeholder = "Search…",
+    width = 475,
+}: {
+    value: string;
+    onChange: (v: string) => void;
+    placeholder?: string;
+    width?: number | string;
+}) {
+    return (
+        <TextInput
+            placeholder={placeholder}
+            value={value}
+            onChange={(e) => onChange(e.currentTarget.value)}
+            w={width}
+            size="sm"
+            radius="xl"
+            variant="filled"
+            leftSection={<IconSearch size={18} stroke={2} aria-hidden />}
+            leftSectionPointerEvents="none"
+            rightSection={
+                value ? (
+                    <ActionIcon
+                        size="sm"
+                        variant="subtle"
+                        aria-label="Clear search"
+                        onClick={() => onChange("")}
+                        title="Clear"
+                    >
+                        <IconX size={16} stroke={2} />
+                    </ActionIcon>
+                ) : null
+            }
+        />
+    );
+}
+
+
+===== web\src\components\ui\SectionCard.tsx =====
+
+import React from "react";
+import { Card, Group, Stack, Text } from "@mantine/core";
+export default function SectionCard({
+    title, right, children,
+}: { title: string; right?: React.ReactNode; children: React.ReactNode }) {
+    return (
+        <Card>
+            <Group justify="space-between" mb="xs">
+                <Text fw={600}>{title}</Text>
+                {right}
+            </Group>
+            <Stack gap="sm">{children}</Stack>
+        </Card>
+    );
+}
+
+
+===== web\src\index.scss =====
+
+  img.icon {
+    image-rendering: -webkit-optimize-contrast;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .is-dim {
+    opacity: 0.5 !important;
+  }
+
+
+===== web\src\layout\AppShellLayout.tsx =====
+
+import React from "react";
+import { AppShell, Burger, Group, Title, ActionIcon, NavLink, ScrollArea, Text, rem, useMantineColorScheme } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
+import { Link, useLocation } from "react-router-dom";
+import { IconMoon, IconSun, IconCloudUpload, IconSettings, IconHome2, IconBooks } from "@tabler/icons-react";
+
+export default function AppShellLayout({ children }: { children: React.ReactNode }) {
+    const [opened, { toggle }] = useDisclosure();
+    const location = useLocation();
+    const { colorScheme, setColorScheme } = useMantineColorScheme();
+
+    return (
+        <AppShell
+            header={{ height: 56 }}
+            navbar={{ width: 150, breakpoint: "sm", collapsed: { mobile: !opened } }}
+        >
+            <AppShell.Header>
+                <Group h="100%" px="md" justify="space-between">
+                    <Group>
+                        <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
+                        <Title order={3}>Playnite Viewer</Title>
+                    </Group>
+                    <ActionIcon
+                        variant="subtle"
+                        aria-label="Toggle color scheme"
+                        onClick={() => setColorScheme(colorScheme === "dark" ? "light" : "dark")}
+                        size="lg"
+                    >
+                        {colorScheme === "dark" ? <IconSun size={20} /> : <IconMoon size={20} />}
+                    </ActionIcon>
+                </Group>
+            </AppShell.Header>
+
+            <AppShell.Navbar p="sm">
+                <ScrollArea style={{ height: "calc(100vh - 56px)" }}>
+                    <NavLink
+                        component={Link}
+                        to="/"
+                        label="Home"
+                        leftSection={<IconHome2 size={18} />}
+                        active={location.pathname === "/"}
+                    />
+                    <NavLink
+                        component={Link}
+                        to="/library"
+                        label="Library"
+                        leftSection={<IconBooks size={18} />}
+                        active={location.pathname.startsWith("/library")}
+                    />
+                    <NavLink
+                        component={Link}
+                        to="/sync"
+                        label="Sync"
+                        leftSection={<IconCloudUpload size={18} />}
+                        active={location.pathname.startsWith("/sync")}
+                    />
+                    <NavLink
+                        component={Link}
+                        to="/settings"
+                        label="Settings"
+                        leftSection={<IconSettings size={18} />}
+                        active={location.pathname.startsWith("/settings")}
+                    />
+                    <Text className="is-dim" size="xs" pl={rem(12)} pt="md">v1.0</Text>
+                </ScrollArea>
+            </AppShell.Navbar>
+
+            <AppShell.Main>{children}</AppShell.Main>
+        </AppShell>
+    );
+}
+
+
+===== web\src\lib\api.ts =====
+
+import axios from "axios";
+import { LibraryItem, StreamProgress, ZipInfo } from "./types";
+
+export async function listZips(): Promise<ZipInfo[]> {
+  const r = await fetch("/api/playnitedump/zips");
+  return r.json();
+}
+
+export async function uploadZip(
+  file: File,
+  onProgress?: (pcent: number) => void
+): Promise<{ ok: boolean; file?: string; error?: string }> {
+  const form = new FormData();
+  form.append("file", file);
+  const r = await axios.post("/api/playnitedump/upload", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+    onUploadProgress: (e) => {
+      if (e.total) onProgress?.(Math.round((e.loaded * 100) / e.total));
+    },
+    maxContentLength: Infinity,
+    maxBodyLength: Infinity,
+  });
+  return r.data;
+}
+
+export function processZipStream({
+  filename,
+  password,
+  onLog,
+  onProgress,
+  onDone,
+  onError,
+}: {
+  filename: string;
+  password?: string;
+  onLog?: (msg: string) => void;
+  onProgress?: (p: StreamProgress) => void;
+  onDone?: () => void;
+  onError?: (msg: string) => void;
+}) {
+  const url = new URL("/api/playnitedump/process-stream", window.location.origin);
+  url.searchParams.set("filename", filename);
+  if (password) url.searchParams.set("password", password);
+
+  const es = new EventSource(url.toString());
+
+  let finished = false;
+  const finishOnce = (cb?: () => void) => {
+    if (finished) return;
+    finished = true;
+    try { es.close(); } catch { }
+    cb?.();
+  };
+
+  // server emits named events: "log", "progress", "done", "error"
+  es.addEventListener("log", (ev: MessageEvent) => {
+    onLog?.(String(ev.data));
+  });
+
+  es.addEventListener("progress", (ev: MessageEvent) => {
+    try {
+      const data = JSON.parse(String(ev.data)) as StreamProgress;
+      onProgress?.(data);
+    } catch {
+      /* ignore malformed progress lines */
+    }
+  });
+
+  es.addEventListener("done", () => {
+    finishOnce(onDone);
+  });
+
+  // The server also emits a named "error" event with a human message.
+  es.addEventListener("error", (ev: MessageEvent) => {
+    // If the server sent data, prefer that. Otherwise fall back below.
+    const msg = String(ev.data || "Export failed");
+    finishOnce(() => onError?.(msg));
+  });
+
+  // Fallback: transport-level errors (disconnects, etc.)
+  es.onerror = () => finishOnce(() => onError?.("Stream closed unexpectedly"));
+
+  return () => finishOnce();
+}
+
+export async function listLibrary(): Promise<LibraryItem[]> {
+  const r = await fetch("/api/library");
+  return r.json();
+}
+
+
+===== web\src\lib\client.ts =====
+
+import axios from "axios";
+
+export const api = axios.create({
+    baseURL: "/api",
+    withCredentials: true,
+});
+
+
+===== web\src\lib\constants.ts =====
+
+// Centralized layout and cookie constants
+export const GRID = {
+    cols: "56px minmax(0, 40%) 60px 80px minmax(200px, 1fr)",
+    minWidth: "calc(56px + 40% + 60px + 80px + 200px + 24px)",
+    rowHeight: 56,
+    headerHeight: 40,
+};
+
+export const Z_INDEX = {
+    stickyHeader: 10,
+    overlay: 20,
+};
+
+export const COOKIE = {
+    libraryState: "pn_library_ui_v2",
+};
+
+
+===== web\src\lib\data.ts =====
+
+import type { GameDoc, Loaded, NamedDoc, Row } from "./types";
+import { asGuid, asGuidArray, buildIconUrl, firstStoreishLink, 
+  normalizePath, sourceUrlTemplates, extractYear } from "./utils";
+
+async function getJson<T>(path: string): Promise<T> {
+  const sep = path.includes("?") ? "&" : "?";
+  const url = `${path}${sep}v=${Date.now()}`;   // cache-bust
+  const r = await fetch(url, { cache: "no-store" });
+  if (!r.ok) throw new Error(`${path} -> ${r.status}`);
+  return r.json();
+}
+
+async function tryLoadMany<T>(candidates: string[], fallback: T): Promise<T> {
+  for (const c of candidates) {
+    try { return await getJson<T>(c); } catch { /* try next */ }
+  }
+  return fallback;
+}
+
+const BASE = "/data";
+const FILES = {
+  games: [
+    `${BASE}/games.Game.json`,
+  ],
+  tags: [
+    `${BASE}/tags.Tag.json`,
+  ],
+  sources: [
+    `${BASE}/sources.GameSource.json`,
+    `${BASE}/sources.Source.json`,
+  ],
+};
+
+export async function loadLibrary(): Promise<Loaded> {
+  const games = await tryLoadMany<GameDoc[]>(FILES.games, []);
+  const tags = await tryLoadMany<NamedDoc[]>(FILES.tags, []);
+  const sources = await tryLoadMany<NamedDoc[]>(FILES.sources, []);
+
+  const normNamed = (x: NamedDoc) => ({
+    id: asGuid(x.Id) ?? asGuid(x._id),
+    name: x.Name ?? ""
+  });
+
+  const tagById = new Map(tags.map(normNamed).filter(t => t.id).map(t => [t.id as string, t.name]));
+  const sourceById = new Map(sources.map(normNamed).filter(s => s.id).map(s => [s.id as string, s.name]));
+
+  const rows: Row[] = games.map(g => {
+    const id = asGuid(g.Id) ?? asGuid(g._id) ?? "";
+    const tagIds = asGuidArray(g.TagIds);
+    const sourceId = asGuid(g.SourceId);
+    const sourceName = sourceId ? (sourceById.get(sourceId) ?? "") : "";
+    const year =
+      extractYear((g as any).ReleaseYear) ??
+      extractYear((g as any).ReleaseDate) ??
+      extractYear((g as any).Release) ??
+      null;
+
+    let url = firstStoreishLink(g.Links, sourceName);
+    if (!url && sourceName) {
+      const tmpl = sourceUrlTemplates[sourceName.toLowerCase()];
+      if (tmpl) url = tmpl(g);
+    }
+
+    const iconRel = normalizePath((g as any).Icon);
+    const iconId = asGuid((g as any).IconId);
+    const iconUrl = buildIconUrl(iconRel, iconId);
+    const installed = (g as any).IsInstalled === true;
+
+    return {
+      id,
+      title: g.Name ?? "(Untitled)",
+      sortingName: (g as any).SortingName ?? g.Name ?? "",
+      source: sourceName,
+      tags: (tagIds.map(tid => tagById.get(tid)).filter(Boolean) as string[]) ?? [],
+      hidden: !!g.Hidden,
+      url: url ?? null,
+      iconUrl,
+      year,
+      installed,
+      raw: g
+    };
+  });
+
+  const allSources = Array.from(new Set(rows.map(r => r.source).filter(Boolean))).sort();
+  const allTags = Array.from(new Set(rows.flatMap(r => r.tags).filter(Boolean))).sort();
+
+  return { rows, allSources, allTags };
+}
+
+
+===== web\src\lib\extension.ts =====
+
+// Single source of truth for extension download endpoint
+export const EXT_DOWNLOAD_URL = "/api/extension/download";
+
+
+===== web\src\lib\icons.ts =====
+
+// One place to import icons from the library.
+export {
+    IconSearch,
+    IconX,
+    IconPlayerPlayFilled,
+    IconDownload,
+    IconExternalLink,
+    IconClock,
+    IconTags,
+    IconSortAscending,
+    IconSortDescending,
+} from "@tabler/icons-react";
+
+
+===== web\src\lib\importer.ts =====
+
+// Centralized "Run import" controller that survives route changes.
+// Emits:
+//  - "pn:import-progress" { phase: "unzip"|"copy"|null, percent, filename, extras? }
+//  - "pn:import-log"      { line }
+//  - "pn:import-state"    { snapshot of state }
+
+import { notifications } from "@mantine/notifications";
+import { processZipStream } from "./api";
+import { LogBus } from "../lib/logBus";
+import type { ImportState, Phase, StreamProgress } from "./types";
+
+const notifId = "pn-import";
+let current: ImportState = {
+    running: false,
+    filename: null,
+    phase: null,
+    percent: null,
+    subtext: "",
+};
+
+// throttle COPY progress lines so we don't spam the log
+let lastLoggedCopyPct = -1;
+
+function emit(type: string, detail: any) {
+    window.dispatchEvent(new CustomEvent(type, { detail }));
+}
+function snapshot() {
+    return { ...current };
+}
+function reset() {
+    current = { running: false, filename: null, phase: null, percent: null, subtext: "" };
+    lastLoggedCopyPct = -1;
+    emit("pn:import-state", snapshot());
+}
+
+export const ImportRunner = {
+    getState(): ImportState {
+        return snapshot();
+    },
+
+    async start(opts: { filename: string; password?: string }) {
+        const { filename, password } = opts;
+        if (!filename) return;
+
+        // If already running for same file, ignore; if different, we "replace" (no server cancel)
+        if (current.running && current.filename === filename) return;
+
+        current = { running: true, filename, phase: "unzip", percent: 0, subtext: "" };
+        lastLoggedCopyPct = -1;
+        emit("pn:import-state", snapshot());
+
+        LogBus.append(`IMPORT ▶ ${filename}`);
+
+        notifications.show({
+            id: notifId,
+            title: "Import running…",
+            message: filename,
+            loading: true,
+            autoClose: false,
+        });
+
+        processZipStream({
+            filename,
+            password,
+            onLog: (line: string) => {
+                LogBus.append(line);
+                emit("pn:import-log", { line });
+            },
+            onProgress: (p: StreamProgress) => {
+                const phase: Phase = p.phase === "unzip" || p.phase === "copy" ? p.phase : null;
+                const percent = p.percent ?? current.percent ?? 0;
+
+                current.phase = phase;
+                current.percent = percent;
+
+                if (phase === "copy" && p.copiedBytes != null && p.totalBytes != null) {
+                    // human-readable MB summary
+                    const mb = (n: number) => (n / (1024 * 1024)).toFixed(1);
+                    current.subtext = `${mb(p.copiedBytes)}MB / ${mb(p.totalBytes)}MB`;
+
+                    // Throttle log line every 5%
+                    const pct = Math.round(percent);
+                    if (pct >= lastLoggedCopyPct + 5) {
+                        LogBus.append(`COPY ${pct}% • ${current.subtext}`);
+                        lastLoggedCopyPct = pct;
+                    }
+                } else {
+                    current.subtext = "";
+                }
+
+                emit("pn:import-progress", {
+                    phase: current.phase,
+                    percent: current.percent,
+                    filename: current.filename,
+                    extras: { subtext: current.subtext },
+                });
+                emit("pn:import-state", snapshot());
+            },
+            onDone: () => {
+                LogBus.append("IMPORT ✓ DONE");
+                notifications.update({
+                    id: notifId,
+                    loading: false,
+                    title: "Import finished",
+                    message: "Your library has been processed.",
+                    autoClose: 2500,
+                });
+                reset();
+            },
+            onError: (msg: string) => {
+                LogBus.append(`IMPORT ✗ ERROR: ${msg || "Unknown error"}`);
+                notifications.update({
+                    id: notifId,
+                    loading: false,
+                    color: "red",
+                    title: "Import failed",
+                    message: msg || "Unknown error",
+                    autoClose: 4000,
+                });
+                reset();
+            },
+        });
+    },
+};
+
+
+===== web\src\lib\logBus.ts =====
+
+// Global log buffer that survives route changes AND page reloads (via sessionStorage).
+// Newest-first order. Keeps up to MAX lines.
+
+import { LogListener } from "./types";
+
+const MAX_LINES = 1000;
+const KEY = "pn_logs_v1";
+
+let lines: string[] = restore();
+
+const listeners = new Set<LogListener>();
+
+function store() {
+    try {
+        sessionStorage.setItem(KEY, JSON.stringify(lines));
+    } catch { }
+}
+
+function restore(): string[] {
+    try {
+        const raw = sessionStorage.getItem(KEY);
+        if (!raw) return [];
+        const arr = JSON.parse(raw);
+        return Array.isArray(arr) ? arr : [];
+    } catch {
+        return [];
+    }
+}
+
+function emit() {
+    const snapshot = [...lines];
+    listeners.forEach((fn) => fn(snapshot));
+}
+
+export const LogBus = {
+    append(line: string) {
+        if (!line) return;
+        lines = [line, ...lines].slice(0, MAX_LINES);
+        store();
+        emit();
+    },
+    clear() {
+        lines = [];
+        store();
+        emit();
+    },
+    get(): string[] {
+        return [...lines];
+    },
+    subscribe(fn: LogListener) {
+        listeners.add(fn);
+        fn([...lines]); // immediate hydration
+        return () => { listeners.delete(fn); };
+    },
+};
+
+
+===== web\src\lib\persist.ts =====
+
+export function readCookie(name: string): string | null {
+    if (typeof document === "undefined") return null;
+    const m = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+    return m ? decodeURIComponent(m[1]) : null;
+}
+
+export function writeCookie(name: string, value: string, maxAgeSeconds = 60 * 60 * 24 * 180) {
+    if (typeof document === "undefined") return;
+    document.cookie = `${name}=${encodeURIComponent(value)}; Max-Age=${maxAgeSeconds}; Path=/; SameSite=Lax`;
+}
+
+export function jsonGet<T>(key: string, fallback: T): T {
+    try {
+        const raw = readCookie(key);
+        if (!raw) return fallback;
+        return JSON.parse(raw) as T;
+    } catch {
+        return fallback;
+    }
+}
+
+export function jsonSet<T>(key: string, value: T) {
+    try {
+        writeCookie(key, JSON.stringify(value));
+    } catch {
+        /* no-op */
+    }
+}
+
+
+===== web\src\lib\playnitedump.ts =====
+
+import { api } from "./client";
+import { ZipMeta } from "./types";
+
+export async function listZips() {
+    const { data } = await api.get<ZipMeta[]>("/playnitedump/zips");
+    return data;
+}
+
+export async function uploadZip(file: File) {
+    const fd = new FormData();
+    fd.append("file", file);
+    const { data } = await api.post<{ ok: boolean; file: string }>("/playnitedump/upload", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data;
+}
+
+export function processStreamUrl(zipName: string) {
+    const p = new URLSearchParams({ zip: zipName });
+    return `/api/playnitedump/process-stream?${p.toString()}`;
+}
+
+
+===== web\src\lib\types.ts =====
+
+export type Guidish =
+  | string
+  | { $guid?: string }
+  | { $oid?: string }
+  | { Guid?: string }
+  | { Value?: string }
+  | null
+  | undefined;
+
+export type Link = {
+  Name?: string;
+  Url?: string
+};
+
+export type GameDoc = {
+  _id?: Guidish;
+  Id?: Guidish;
+  Name?: string;
+  TagIds?: Guidish[];
+  SourceId?: Guidish;
+  Hidden?: boolean;
+  GameId?: string | number;
+  Links?: Link[];
+  Icon?: string;
+  IconId?: Guidish;
+  IsInstalled?: boolean;
+};
+
+export type NamedDoc = {
+  _id?: Guidish;
+  Id?: Guidish;
+  Name?: string
+};
+
+export type Row = {
+  id: string;
+  title: string;
+  sortingName: string;
+  source: string;
+  tags: string[];
+  hidden: boolean;
+  url: string | null;
+  iconUrl: string;
+  year?: number | null;
+  raw: GameDoc;
+  installed: boolean;
+};
+
+export type ZipInfo = {
+  name: string;
+  size: number;
+  mtime: number
+};
+
+export type LibraryItem = {
+  id: string | number;
+  title: string;
+  platform?: string;
+  addedAt?: string;
+  playtimeMinutes?: number;
+};
+
+export type StreamProgress = {
+  phase?: "unzip" | "copy";
+  percent?: number;
+  copiedBytes?: number;
+  totalBytes?: number;
+  deltaBytes?: number;
+  log?: string;
+};
+
+export type Persisted = {
+  q: string;
+  sources: string[];
+  tags: string[];
+  showHidden: boolean;
+  installedOnly: boolean;
+  sortKey: SortKey;
+  sortDir: SortDir;
+};
+
+export type GameRowProps = {
+  id: string;
+  hidden: boolean;
+  showHidden: boolean;
+  installed: boolean;
+  iconUrl: string;
+  title: string;
+  source: string;
+  tags: string[];
+  year?: number | null;
+  url: string | null;
+};
+
+export type Loaded = {
+  rows: Row[];
+  allSources: string[];
+  allTags: string[];
+};
+
+export type Range = { startIndex: number; endIndex: number };
+
+export type WithBucket = { row: Row; bucket: string };
+
+export type AlphaGroup = { title: string; rows: Row[] };
+
+export type AlphabeticalRailCounts = Record<string, number>;
+
+export const LETTERS = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ", "#"] as const;
+export type Letter = typeof LETTERS[number];
+
+export type SortKey = "title" | "source" | "tags" | "year";
+
+export type SortDir = "asc" | "desc";
+
+export type BackupListener = (s: BackupWatcherState) => void;
+
+export type LogListener = (lines: string[]) => void;
+
+export type ZipMeta = { name: string; lastModified: number; size: number };
+
+export type BackupWatcherState = {
+  supported: boolean;
+  dirName: string | null;
+  latestLocalZip: ZipMeta | null;
+  running: boolean;
+  lastUploadedName: string | null;
+  permission: PermissionState | "prompt" | null; // keep for compatibility with your types
+};
+
+export type Phase = null | "unzip" | "copy";
+
+export type ImportState = {
+    running: boolean;
+    filename: string | null;
+    phase: Phase;
+    percent: number | null;
+    subtext?: string;
+};
+
+export type UploadState = {
+    running: boolean;
+    name: string | null;
+    percent: number | null;
+};
+
+
+
+===== web\src\lib\uploader.ts =====
+
+// web/src/lib/uploadRunner.ts
+// Single source of truth for ALL uploads (manual or watcher-initiated).
+// Persists state across navigation, emits progress events, logs to LogBus,
+// notifies with Mantine, and announces availability via pn:zips-changed.
+
+import { notifications } from "@mantine/notifications";
+import { uploadZip } from "./api";
+import { LogBus } from "../lib/logBus";
+import { UploadState } from "./types";
+
+const NOTIF_ID = "pn-upload";
+const STATE_KEY = "pn_upload_state_v1";
+const LAST_UP_KEY = "pn_last_uploaded_v1";
+
+let current: UploadState = restoreState();
+let lastUploaded: { name: string; size?: number; lastModified?: number } | null = restoreLast();
+
+function emit(type: string, detail: any) {
+    window.dispatchEvent(new CustomEvent(type, { detail }));
+}
+function storeState() {
+    try { sessionStorage.setItem(STATE_KEY, JSON.stringify(current)); } catch { }
+}
+function restoreState(): UploadState {
+    try {
+        const raw = sessionStorage.getItem(STATE_KEY);
+        if (!raw) return { running: false, name: null, percent: null };
+        const obj = JSON.parse(raw);
+        return {
+            running: !!obj?.running,
+            name: typeof obj?.name === "string" ? obj.name : null,
+            percent: typeof obj?.percent === "number" ? obj.percent : null,
+        };
+    } catch { return { running: false, name: null, percent: null }; }
+}
+function storeLast(meta: { name: string; size?: number; lastModified?: number } | null) {
+    try {
+        if (!meta) localStorage.removeItem(LAST_UP_KEY);
+        else localStorage.setItem(LAST_UP_KEY, JSON.stringify(meta));
+    } catch { }
+}
+function restoreLast() {
+    try {
+        const raw = localStorage.getItem(LAST_UP_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+}
+function showRunImportNotice(fileName: string) {
+    const id = `pn-upload-done-${Date.now()}`;
+    notifications.show({
+        id,
+        title: "Backup uploaded",
+        message: `Ready to import: ${fileName}. Open the Import section to run it.`,
+        autoClose: 4000,
+    });
+}
+
+export const UploadRunner = {
+    getState(): UploadState { return { ...current }; },
+    getLastUploaded(): { name: string; size?: number; lastModified?: number } | null { return lastUploaded ? { ...lastUploaded } : null; },
+    isUploadingName(name: string) { return current.running && current.name === name; },
+
+    async start(file: File) {
+        if (!file) return;
+        if (current.running && current.name === file.name) return;
+
+        current = { running: true, name: file.name, percent: 0 };
+        storeState();
+        emit("pn:upload-state", { ...current });
+
+        LogBus.append(`UPLOAD ▶ ${file.name}`);
+
+        notifications.show({
+            id: NOTIF_ID,
+            title: "Uploading…",
+            message: file.name,
+            loading: true,
+            autoClose: false,
+        });
+
+        // Kick progress to UI
+        emit("pn:upload-progress", { phase: "start", name: file.name, percent: 0 });
+
+        try {
+            await uploadZip(file, (p: number) => {
+                current.percent = p ?? current.percent ?? 0;
+                storeState();
+                emit("pn:upload-progress", { phase: "progress", name: file.name, percent: current.percent });
+            });
+
+            // success
+            lastUploaded = {
+                name: file.name,
+                size: file.size,
+                lastModified: (file as any)?.lastModified ?? Date.now(),
+            };
+            storeLast(lastUploaded);
+
+            LogBus.append(`UPLOAD ✓ ${file.name}`);
+
+            emit("pn:upload-progress", { phase: "done", name: file.name, percent: 100 });
+
+            notifications.update({
+                id: NOTIF_ID,
+                loading: false,
+                title: "Upload finished",
+                message: file.name,
+                autoClose: 2500,
+            });
+
+            // announce to app so /zips refresh + select happens
+            window.dispatchEvent(new CustomEvent("pn:zips-changed", { detail: { name: file.name } }));
+            showRunImportNotice(file.name);
+        } catch (e: any) {
+            LogBus.append(`UPLOAD ✗ ${file.name} — ${String(e?.message || e)}`);
+            emit("pn:upload-progress", { phase: "error", name: file.name, message: String(e?.message || e) });
+
+            notifications.update({
+                id: NOTIF_ID,
+                loading: false,
+                color: "red",
+                title: "Upload failed",
+                message: String(e?.message || e),
+                autoClose: 4000,
+            });
+        } finally {
+            current = { running: false, name: null, percent: null };
+            storeState();
+            emit("pn:upload-state", { ...current });
+        }
+    },
+};
+
+
+===== web\src\lib\utils.ts =====
+
+import type { Guidish, Link, GameDoc, Letter } from "./types";
+import ICO from "icojs";
+
+export function isIcoPath(url: string): boolean {
+  try {
+    const u = new URL(url, window.location.origin);
+    return /\.ico(\?|#|$)/i.test(u.pathname);
+  } catch {
+    return /\.ico(\?|#|$)/i.test(url);
+  }
+}
+
+export function bucketLetter(title: string, sortingName: string) {
+  const s = (sortingName || title || "").trim();
+  const ch = s.charAt(0).toUpperCase();
+  return /[A-Z]/.test(ch) ? ch : "@";
+}
+
+export async function icoToPngDataUrl(icoUrl: string): Promise<string | null> {
+  try {
+    const res = await fetch(icoUrl, { cache: "force-cache" });
+    if (!res.ok) return null;
+    const buf = await res.arrayBuffer();
+    const images = await ICO.parse(buf, "image/png"); // returns PNG blobs
+    if (!images?.length) return null;
+    // choose largest by width
+    const best = images.slice().sort((a, b) => (b.width ?? 0) - (a.width ?? 0))[0];
+    const blob = new Blob([best.buffer], { type: "image/png" });
+    return await new Promise<string>((resolve) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(String(fr.result));
+      fr.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+export const asGuid = (v: Guidish): string | null => {
+  if (!v) return null;
+  if (typeof v === "string") return v;
+  const obj = v as Record<string, unknown>;
+  for (const key of ["$guid", "$oid", "Guid", "Value"]) {
+    const val = obj[key];
+    if (typeof val === "string" && val.length) return val;
+  }
+  return null;
+};
+
+export const asGuidArray = (arr: Guidish[] | undefined): string[] =>
+  Array.isArray(arr) ? (arr.map(asGuid).filter(Boolean) as string[]) : [];
+
+export function normalizePath(p?: string): string | null {
+  if (!p) return null;
+  return p.replace(/\\/g, "/").replace(/^\.?\//, "");
+}
+
+export function buildIconUrl(iconRel: string | null, iconId: string | null): string {
+  const FALLBACK_ICON =
+    "data:image/svg+xml;utf8," +
+    encodeURIComponent(
+      `<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'>
+      <rect width='100%' height='100%' fill='#ddd'/>
+      <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle'
+            font-family='sans-serif' font-size='10' fill='#777'>no icon</text>
+    </svg>`
+    );
+  if (iconRel && /^https?:\/\//i.test(iconRel)) return iconRel;
+  if (iconRel) {
+    const rel = iconRel.replace(/\\/g, "/").replace(/^\.?\//, "");
+    const path = rel.startsWith("libraryfiles/") ? rel : `libraryfiles/${rel}`;
+    return `/data/${path}`;
+  }
+  if (iconId) return `/data/libraryfiles/${iconId}.png`;
+  return FALLBACK_ICON;
+}
+
+export const sourceUrlTemplates: Record<string, (g: GameDoc) => string | null> = {
+  steam: (g) => {
+    const id = String((g as any).GameId ?? "").trim();
+    return /^\d+$/.test(id) ? `https://store.steampowered.com/app/${id}` : null;
+  },
+  epic: (g) => {
+    const id = String((g as any).GameId ?? "").trim();
+    return id ? `https://store.epicgames.com/p/${encodeURIComponent(id)}` : null;
+  },
+  gog: (g) => {
+    const id = String((g as any).GameId ?? "").trim();
+    return id ? `https://www.gog.com/game/${encodeURIComponent(id)}` : null;
+  },
+  "ubisoft connect": (g) => {
+    const id = String((g as any).Name ?? "").trim();
+    return id ? `https://www.ubisoft.com/en-us/search?gss-q=${encodeURIComponent(id)}` : null;
+  },
+  "ea app": () => null,
+  "battle.net": () => null,
+  xbox: (g) => {
+    const id = String((g as any).Name ?? "").trim();
+    return id ? `https://www.xbox.com/en-us/Search/Results?q=${encodeURIComponent(id)}` : null;
+  },
+  humble: (g) => {
+    const id = String((g as any).Name ?? "").trim();
+    return id ? `https://www.humblebundle.com/store/search?search=${encodeURIComponent(id)}` : null;
+  },
+  nintendo: (g) => {
+    const id = String((g as any).Name ?? "").trim();
+    return id ? `https://www.nintendo.com/us/search/?q=${encodeURIComponent(id)}` : null;
+  },
+  "microsoft store": (g) => {
+    const id = String((g as any).Name ?? "").trim();
+    return id ? `https://apps.microsoft.com/search?query=${encodeURIComponent(id)}` : null;
+  },
+};
+
+export function firstStoreishLink(links: Link[] | undefined, sourceName: string): string | null {
+  if (!links?.length) return null;
+  const lowerSrc = sourceName.toLowerCase();
+  const prefer = links.find(l => {
+    const n = (l.Name ?? "").toLowerCase();
+    return n === "store" || n === lowerSrc || n.includes("store");
+  });
+  if (prefer?.Url) return prefer.Url;
+
+  const byDomain = links.find(l => {
+    const u = (l.Url ?? "").toLowerCase();
+    return (
+      (lowerSrc.includes("steam") && u.includes("steampowered.com")) ||
+      (lowerSrc.includes("epic") && u.includes("epicgames.com")) ||
+      (lowerSrc.includes("gog") && u.includes("gog.com")) ||
+      (lowerSrc.includes("ubisoft") && (u.includes("ubisoft.com") || u.includes("uplay"))) ||
+      (lowerSrc.includes("ea") && (u.includes("ea.com") || u.includes("origin.com"))) ||
+      (lowerSrc.includes("battle.net") && (u.includes("battle.net") || u.includes("blizzard.com"))) ||
+      (lowerSrc.includes("xbox") && (u.includes("xbox.com") || u.includes("microsoft.com"))) ||
+      (lowerSrc.includes("humble") && u.includes("humblebundle.com")) ||
+      (lowerSrc.includes("nintendo") && u.includes("nintendo.com"))
+    );
+  });
+  return byDomain?.Url ?? null;
+}
+
+export function hasEmulatorTag(tags?: string[]): boolean {
+  return Array.isArray(tags) && tags.some(t => /\bemulator(s)?\b/i.test(t));
+}
+
+export function myAbandonwareLink(title: string): string {
+  return `https://www.myabandonware.com/search/q/${encodeURIComponent(title)}`;
+}
+
+export function effectiveLink(
+  r: { url: string | null; source: string; title: string; tags: string[] }
+): string | null {
+  if (r.url) return r.url;
+  if (!r.source && !hasEmulatorTag(r.tags)) {
+    return myAbandonwareLink(r.title);
+  }
+  return null;
+}
+
+function parseYearFromString(s: string): number | null {
+  // Accept "2021", "2021-05-03", "2021/05/03", "2021-05", "May 5, 2021", etc.
+  const m = s.match(/(\d{4})/);
+  if (!m) return null;
+  const y = Number(m[1]);
+  if (y >= 1970 && y <= 2100) return y;
+  return null;
+}
+
+function parseYearFromNumber(n: number): number | null {
+  // Heuristic: treat 10 or 13 digits as epoch seconds/millis
+  if (n > 10_000_000_000) {
+    const y = new Date(n).getUTCFullYear();
+    return y >= 1970 && y <= 2100 ? y : null;
+  }
+  if (n > 1_000_000_000) {
+    const y = new Date(n * 1000).getUTCFullYear();
+    return y >= 1970 && y <= 2100 ? y : null;
+  }
+  // maybe already a year
+  if (n >= 1970 && n <= 2100) return n;
+  return null;
+}
+
+export function extractYear(val: unknown): number | null {
+  if (val == null) return null;
+  if (typeof val === "number") return parseYearFromNumber(val);
+  if (typeof val === "string") return parseYearFromString(val);
+  if (typeof val === "object") {
+    const o = val as Record<string, unknown>;
+    // LiteDB / BSON-style
+    if (typeof o["$date"] === "string") return parseYearFromString(o["$date"]);
+    if (typeof o["Date"] === "string") return parseYearFromString(o["Date"]);
+    if (typeof o["Ticks"] === "number") {
+      // Ticks since 0001; convert to ms
+      const ticks = o["Ticks"];
+      const ms = (ticks - 621355968000000000) / 10000;
+      return parseYearFromNumber(ms);
+    }
+    // Generic Year or Value fields:
+    if (typeof o["Year"] === "number") return parseYearFromNumber(o["Year"]);
+    if (typeof o["Value"] === "string") return parseYearFromString(o["Value"]);
+    if (typeof o["Value"] === "number") return parseYearFromNumber(o["Value"]);
+  }
+  return null;
+}
+
+export function letterBucket(s: string | undefined | null): Letter {
+  if (!s) return "#";
+  const c = s.trim().charAt(0).toUpperCase();
+  return (c >= "A" && c <= "Z" ? c : "#") as Letter;
+}
+
+
+===== web\src\lib\watcher.ts =====
+
+// web/src/lib/watcher.ts
+// Detects newer local zips and delegates the actual upload to UploadRunner.
+// Still persists the selected folder and exposes UI state.
+
+import { UploadRunner } from "./uploader";
+import { LogBus } from "../lib/logBus";
+import { BackupListener, BackupWatcherState, ZipMeta } from "./types";
+
+const IDB_DB = "pn_fs_handles";
+const IDB_STORE = "handles";
+const DB_KEY = "backupDir";
+
+let dirHandle: FileSystemDirectoryHandle | null = null;
+let timer: number | null = null;
+const listeners = new Set<BackupListener>();
+const state: BackupWatcherState = {
+    supported: "showDirectoryPicker" in window,
+    dirName: null,
+    latestLocalZip: null,
+    running: false,
+    lastUploadedName: UploadRunner.getLastUploaded()?.name ?? null,
+    permission: null,
+};
+
+// --- IndexedDB helpers ---
+function idb(): Promise<IDBDatabase> {
+    return new Promise((resolve, reject) => {
+        const req = indexedDB.open(IDB_DB, 1);
+        req.onupgradeneeded = () => req.result.createObjectStore(IDB_STORE);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+}
+async function idbPut<T>(key: string, val: T) {
+    const db = await idb();
+    await new Promise<void>((res, rej) => {
+        const tx = db.transaction(IDB_STORE, "readwrite");
+        tx.objectStore(IDB_STORE).put(val as any, key);
+        tx.oncomplete = () => res();
+        tx.onerror = () => rej(tx.error);
+    });
+}
+async function idbGet<T>(key: string): Promise<T | null> {
+    const db = await idb();
+    return await new Promise<T | null>((res, rej) => {
+        const tx = db.transaction(IDB_STORE, "readonly");
+        const req = tx.objectStore(IDB_STORE).get(key);
+        req.onsuccess = () => res((req.result as T) ?? null);
+        req.onerror = () => rej(req.error);
+    });
+}
+async function saveHandle(h: FileSystemDirectoryHandle | null) { await idbPut(DB_KEY, h); }
+async function loadHandleFromStorage(): Promise<FileSystemDirectoryHandle | null> {
+    try { return (await idbGet<FileSystemDirectoryHandle>(DB_KEY)) ?? null; } catch { return null; }
+}
+
+function emit() { listeners.forEach((fn) => fn({ ...state })); }
+
+async function ensurePermission() {
+    if (!dirHandle) { state.permission = null; emit(); return false; }
+    // @ts-ignore
+    const perm = await dirHandle.queryPermission?.({ mode: "read" }) as PermissionState | undefined;
+    if (perm === "granted") { state.permission = "granted"; emit(); return true; }
+    // @ts-ignore
+    const req = await dirHandle.requestPermission?.({ mode: "read" }) as PermissionState | undefined;
+    state.permission = req ?? "prompt"; emit();
+    return req === "granted";
+}
+
+async function scanLatestZip(): Promise<ZipMeta | null> {
+    if (!dirHandle) return null;
+    let newest: ZipMeta | null = null;
+    // @ts-ignore
+    for await (const [name, handle] of dirHandle.entries?.() ?? []) {
+        if (!name.toLowerCase().endsWith(".zip")) continue;
+        // @ts-ignore
+        const file = await handle.getFile?.();
+        if (!file) continue;
+        const meta: ZipMeta = {
+            name,
+            lastModified: file.lastModified ?? 0,
+            size: file.size ?? 0,
+        };
+        if (!newest || meta.lastModified > newest.lastModified) newest = meta;
+    }
+    return newest;
+}
+
+function strictlyNewer(a: ZipMeta, b: { name: string; size?: number; lastModified?: number } | null) {
+    if (!b) return true;
+    const blm = b.lastModified ?? 0;
+    if (a.lastModified > blm) return true;
+    if (a.lastModified < blm) return false;
+    return a.size > (b.size ?? 0);
+}
+
+async function tick() {
+    if (!dirHandle) return;
+    if (!(await ensurePermission())) return;
+
+    const newest = await scanLatestZip();
+    state.latestLocalZip = newest; emit();
+    if (!newest) return;
+
+    // skip if UploadRunner is already uploading that file
+    if (UploadRunner.isUploadingName(newest.name)) return;
+
+    // only prompt if strictly newer than lastUploaded known by the runner
+    if (!strictlyNewer(newest, UploadRunner.getLastUploaded())) return;
+
+    // prompt & delegate to runner
+    const proceed = window.confirm(`New Playnite backup detected:\n${newest.name}\n\nUpload & import now?`);
+    if (!proceed) return;
+
+    try {
+        // @ts-ignore
+        const fh = await dirHandle.getFileHandle?.(newest.name);
+        // @ts-ignore
+        const file = await fh.getFile?.();
+        if (!file) return;
+
+        LogBus.append(`UPLOAD ▶ ${newest.name}`);
+        await UploadRunner.start(file); // runner handles progress, logs, notifications, zips-changed
+        state.lastUploadedName = newest.name; emit();
+    } catch (e) {
+        LogBus.append(`UPLOAD ✗ ${newest.name} — ${String((e as any)?.message || e)}`);
+    }
+}
+
+export const BackupWatcher = {
+    subscribe(fn: BackupListener) { listeners.add(fn); fn({ ...state }); return () => { listeners.delete(fn); }; },
+
+    async selectDirectory() {
+        if (!state.supported) return false;
+        // @ts-ignore
+        dirHandle = await (window as any).showDirectoryPicker?.();
+        if (!dirHandle) return false;
+        // @ts-ignore
+        state.dirName = dirHandle.name ?? null;
+        await saveHandle(dirHandle);
+        emit();
+        LogBus.append(`WATCH ▶ Selected folder: ${state.dirName}`);
+        start();
+        return true;
+    },
+
+    async tryRestorePrevious() {
+        if (!state.supported) return false;
+        const restored = await loadHandleFromStorage();
+        if (!restored) return false;
+        dirHandle = restored;
+        // @ts-ignore
+        state.dirName = dirHandle?.name ?? null;
+        emit();
+        LogBus.append(`WATCH ⟳ Restored folder: ${state.dirName}`);
+        start();
+        return true;
+    },
+
+    start, stop,
+};
+
+function start() {
+    if (timer != null) return;
+    state.running = true; emit();
+    timer = window.setInterval(() => { tick().catch(() => { }); }, 15000);
+    tick().catch(() => { });
+}
+function stop() {
+    if (timer != null) { clearInterval(timer); timer = null; }
+    state.running = false; emit();
+}
+
+
+===== web\src\main.tsx =====
+
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App";
+import { BackupWatcher } from "./lib/watcher";
+import { AppProviders } from "./theme";
+import "@mantine/core/styles.css";
+import "@mantine/notifications/styles.css";
+import "./index.scss";
+
+BackupWatcher.tryRestorePrevious().catch(() => { });
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
+    <React.StrictMode>
+        <AppProviders>
+            <App />
+        </AppProviders>
+    </React.StrictMode>
+);
+
+
+===== web\src\pages\HomePage.tsx =====
+
+import { Alert, Stack, Text } from "@mantine/core";
+
+export default function HomePage() {
+  return (
+    <Stack gap="lg" p="md">
+      <Text fz={28} fw={700}>Home</Text>
+      
+      <Alert variant="light" color="gray" title="About this page">
+        Welcome to your shared game library
+      </Alert>
+    </Stack>
+  );
+}
+
+
+===== web\src\pages\LibraryPage.tsx =====
+
+import React from "react";
+import { Stack, Group, Text } from "@mantine/core";
+import { loadLibrary } from "../lib/data";
+import type { Loaded } from "../lib/types";
+import { LibraryList } from "../components/library/LibraryList";
+
+export default function LibraryPage() {
+    const [data, setData] = React.useState<Loaded | null>(null);
+    const [filtered, setFiltered] = React.useState(0);
+    const [total, setTotal] = React.useState(0);
+
+    React.useEffect(() => {
+        (async () => setData(await loadLibrary()))();
+    }, []);
+
+    return (
+        <Stack gap="lg" style={{ height: "100%", minHeight: 0 }}>
+            {data ? (
+                <div style={{ height: "calc(100vh - 70px)", minHeight: 400 }}>
+                    <LibraryList
+                        data={data}
+                        onCountsChange={(f, t) => { setFiltered(f); setTotal(t); }}
+                        filteredCount={filtered}
+                        totalCount={total}
+                    />
+                </div>
+            ) : (
+                <Group><Text className="is-dim">Loading…</Text></Group>
+            )}
+        </Stack>
+    );
+}
+
+
+===== web\src\pages\SettingsPage.tsx =====
+
+import React from "react";
+import {
+  Stack,
+  Group,
+  Card,
+  Text,
+  Table,
+  Badge,
+  Code,
+  Alert,
+  Divider,
+  Anchor,
+  Loader,
+  List,
+} from "@mantine/core";
+import { loadLibrary } from "../lib/data";
+import { effectiveLink } from "../lib/utils";
+import type { Loaded, Row, Link as PnLink } from "../lib/types";
+
+function SampleValue({ row, field }: { row: Row; field: keyof Row }) {
+  const v = row[field] as any;
+  if (v == null) return <Text className="is-dim">null</Text>;
+  if (Array.isArray(v)) return <Code>{v.slice(0, 5).join(", ")}{v.length > 5 ? " …" : ""}</Code>;
+  if (typeof v === "object") return <Text className="is-dim">(object)</Text>;
+  return <Code>{String(v)}</Code>;
+}
+
+/**
+ * Settings page that reflects the discrete "app data interface" we actually use.
+ *
+ * It uses the normalized Row shape from web/src/lib/types.ts and shows:
+ * - The exact fields the app reads from each game (Row)
+ * - Example values pulled from your current data
+ * - Where those values originate in the dumped Playnite JSON (brief hint)
+ * - A JSON preview of the first Row for quick validation
+ * - Plus a helper section for *derived/UI* values like the play/install action link and platform links.
+ */
+export default function SettingsPage() {
+  const [data, setData] = React.useState<Loaded | null>(null);
+
+  React.useEffect(() => {
+    (async () => setData(await loadLibrary()))();
+  }, []);
+
+  const sample: Row | null = data?.rows?.[0] ?? null;
+  const sampleLinks: PnLink[] = (sample?.raw as any)?.Links ?? [];
+  const primaryHref = sample ? (sample.url ?? effectiveLink({ url: sample.url, source: sample.source, title: sample.title, tags: sample.tags })) : null;
+  const actionHref = sample ? `playnite://playnite/start/${encodeURIComponent(sample.id)}` : null;
+
+  // NOTE: This list mirrors the Row type from web/src/lib/types.ts.
+  // If you add/remove a field on Row, update this array.
+  const FIELDS: Array<{
+    key: keyof Row;
+    type: string;
+    desc: string;
+    sourceHint?: string;
+  }> = [
+      { key: "id", type: "string (GUID)", desc: "Stable game identifier used for keys and Play actions.", sourceHint: "Game.Id / _id" },
+      { key: "title", type: "string", desc: "Display title.", sourceHint: "Game.Name" },
+      { key: "sortingName", type: "string", desc: "Used only for alphabetical sort + buckets.", sourceHint: "Game.SortingName || Game.Name" },
+      { key: "source", type: "string", desc: "Store / launcher name shown as Source column and filter.", sourceHint: "Game.SourceId → sources.*.Name" },
+      { key: "tags", type: "string[]", desc: "Tags badges and filtering.", sourceHint: "Game.TagIds → tags.*.Name" },
+      { key: "hidden", type: "boolean", desc: "Controls visibility and dimming in UI.", sourceHint: "Game.Hidden" },
+      { key: "installed", type: "boolean", desc: "Highlights row and toggles Play / Install overlay.", sourceHint: "Game.IsInstalled" },
+      { key: "year", type: "number | null", desc: "Derived release year (used for sorting and display).", sourceHint: "ReleaseYear/ReleaseDate/Ticks → year" },
+      { key: "url", type: "string | null", desc: "Primary external link for the game title.", sourceHint: "Game.Links (best guess) or source-specific template" },
+      { key: "iconUrl", type: "string", desc: "Icon used in grid; ICOs are converted to PNG on demand.", sourceHint: "Game.Icon / IconId → /data/libraryfiles" },
+    ];
+
+  return (
+    <Stack gap="lg" p="md">
+      <Text fz={28} fw={700}>Settings</Text>
+
+      <Alert variant="light" color="gray" title="About this page">
+        This page reflects the exact <em>normalized</em> data shape the app uses—the
+        <Code>Row</Code> type from <Code>web/src/lib/types.ts</Code>. It pulls a sample from your current import so you can verify
+        values and quickly spot mapping issues.
+      </Alert>
+
+      {!data ? (
+        <Group><Loader size="sm" /><Text className="is-dim">Loading data…</Text></Group>
+      ) : (
+        <>
+          <Card withBorder>
+            <Group justify="space-between" mb="xs">
+              <Text fw={600}>Game data fields (Row)</Text>
+              <Badge variant="light">{data.rows.length.toLocaleString()} games</Badge>
+            </Group>
+            <Table striped highlightOnHover verticalSpacing="xs" horizontalSpacing="md">
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th style={{ width: 160 }}>Field</Table.Th>
+                  <Table.Th style={{ width: 160 }}>Type</Table.Th>
+                  <Table.Th>Description</Table.Th>
+                  <Table.Th style={{ width: 260 }}>Source (hint)</Table.Th>
+                  <Table.Th style={{ width: 260 }}>Example</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
+                {FIELDS.map((f) => (
+                  <Table.Tr key={String(f.key)}>
+                    <Table.Td><Code>{String(f.key)}</Code></Table.Td>
+                    <Table.Td><Code>{f.type}</Code></Table.Td>
+                    <Table.Td>{f.desc}</Table.Td>
+                    <Table.Td className="is-dim">{f.sourceHint ?? "—"}</Table.Td>
+                    <Table.Td>
+                      {sample ? (
+                        <SampleValue row={sample} field={f.key} />
+                      ) : (
+                        <Text className="is-dim">—</Text>
+                      )}
+                    </Table.Td>
+                  </Table.Tr>
+                ))}
+              </Table.Tbody>
+            </Table>
+          </Card>
+
+          <Card withBorder>
+            <Text fw={600} mb="xs">Derived links & actions (UI)</Text>
+            <Text size="sm" className="is-dim" mb="sm">
+              These aren’t stored on <Code>Row</Code> but are derived at render time.
+            </Text>
+            <Divider my="sm" />
+            <List spacing="xs" size="sm">
+              <List.Item>
+                <Text>
+                  <b>Title link</b>: {primaryHref ? <Anchor href={primaryHref} target="_blank" rel="noopener">{primaryHref}</Anchor> : <span className="is-dim">(none)</span>}
+                  <span className="is-dim"> (from <Code>row.url</Code> or <Code>effectiveLink()</Code>)</span>
+                </Text>
+              </List.Item>
+              <List.Item>
+                <Text>
+                  <b>Play/Install action</b>: {actionHref ? <Anchor href={actionHref}>{actionHref}</Anchor> : <span className="is-dim">(—)</span>}
+                  <span className="is-dim"> (computed as <Code>playnite://playnite/start/{"${row.id}"}</Code>)</span>
+                </Text>
+              </List.Item>
+            </List>
+          </Card>
+
+          <Card withBorder>
+            <Text fw={600} mb="xs">Filters & Facets</Text>
+            <Text size="sm" className="is-dim">
+              The Library view builds filters from <Code>Loaded.allSources</Code> and <Code>Loaded.allTags</Code>.
+            </Text>
+            <Divider my="sm" />
+            <Group align="start" gap="xl">
+              <div>
+                <Text fw={600} mb={6}>Sources</Text>
+                <Group gap="xs">
+                  {data.allSources.length ? data.allSources.map((s) => (
+                    <Badge key={s} variant="outline">{s}</Badge>
+                  )) : <Text className="is-dim">(none)</Text>}
+                </Group>
+              </div>
+              <div>
+                <Text fw={600} mb={6}>Tags</Text>
+                <Group gap="xs">
+                  {data.allTags.length ? data.allTags.slice(0, 50).map((t) => (
+                    <Badge key={t} variant="outline">{t}</Badge>
+                  )) : <Text className="is-dim">(none)</Text>}
+                </Group>
+                {data.allTags.length > 50 && (
+                  <Text size="xs" className="is-dim" mt={6}>+{data.allTags.length - 50} more…</Text>
+                )}
+              </div>
+            </Group>
+          </Card>
+
+          <Card withBorder>
+            <Text fw={600} mb="xs">Sample Row (JSON)</Text>
+            <Text size="sm" className="is-dim" mb="sm">
+              The first game from your current dataset, as consumed by the app.
+            </Text>
+            <Code block>
+              {JSON.stringify(sample ?? {}, null, 2)}
+            </Code>
+          </Card>
+
+          <Card withBorder>
+            <Text fw={600} mb="xs">Docs & Sources</Text>
+            <Text size="sm">
+              • Normalization: <Code>web/src/lib/data.ts → loadLibrary()</Code><br />
+              • Types: <Code>web/src/lib/types.ts → Row, Loaded</Code><br />
+              • Link heuristics: <Code>web/src/lib/utils.ts → effectiveLink()</Code><br />
+              • UI Play overlay: <Code>web/src/components/library/GameRow.tsx</Code>
+            </Text>
+            <Text size="sm" mt="sm" className="is-dim">
+              Edit this page to add custom fields later. It is intentionally data-driven and safe to
+              ship in production as a self-documenting contract.
+            </Text>
+          </Card>
+        </>
+      )}
+    </Stack>
+  );
+}
+
+
+===== web\src\pages\SyncPage.tsx =====
+
+import React from "react";
+import { Stack, Group, Select, Button, FileButton, PasswordInput, Textarea, Text } from "@mantine/core";
+import SectionCard from "../components/ui/SectionCard";
+import { LoadingBar } from "../components/ui/LoadingBar";
+import { listZips } from "../lib/api";
+import type { BackupWatcherState, ZipInfo } from "../lib/types";
+import { BackupWatcher } from "../lib/watcher";
+import { ImportRunner } from "../lib/importer";
+import { LogBus } from "../lib/logBus";
+import { UploadRunner } from "../lib/uploader";
+
+export default function SyncPage() {
+    const [zips, setZips] = React.useState<ZipInfo[]>([]);
+    const [selected, setSelected] = React.useState<string | null>(null);
+    const [password, setPassword] = React.useState("");
+    const [logs, setLogs] = React.useState("");
+    const [watch, setWatch] = React.useState<BackupWatcherState | null>(null);
+
+    // Upload-only progress
+    const [uploadBusy, setUploadBusy] = React.useState(false);
+    const [uploadPercent, setUploadPercent] = React.useState<number | null>(null);
+    const [uploadSubtext, setUploadSubtext] = React.useState<string>("");
+
+    // Export-only progress
+    const [exportBusy, setExportBusy] = React.useState(false);
+    const [exportPhase, setExportPhase] = React.useState<null | "unzip" | "copy">(null);
+    const [exportPercent, setExportPercent] = React.useState<number | null>(null);
+    const [exportSubtext, setExportSubtext] = React.useState<string>("");
+
+    const refresh = React.useCallback(async () => {
+        const zs = await listZips();
+        setZips(zs);
+        if (!selected && zs.length) setSelected(zs[0].name);
+    }, [selected]);
+
+    React.useEffect(() => {
+        refresh();
+    }, [refresh]);
+
+    React.useEffect(() => {
+        const unsub = BackupWatcher.subscribe(setWatch);
+        return () => {
+            unsub();            // ensure the cleanup returns void
+        };
+    }, []);
+
+    React.useEffect(() => {
+        const onProg = (e: Event) => {
+            const { phase, name, percent, message } = (e as CustomEvent).detail ?? {};
+            if (phase === "start") {
+                setUploadBusy(true);
+                setUploadPercent(0);
+                setUploadSubtext(name ?? "");
+            } else if (phase === "progress") {
+                if (typeof percent === "number") setUploadPercent(percent);
+            } else if (phase === "done") {
+                setUploadPercent(100);
+                setTimeout(() => {
+                    setUploadBusy(false);
+                    setUploadPercent(null);
+                    setUploadSubtext("");
+                }, 300);
+            } else if (phase === "error") {
+                setUploadBusy(false);
+                setUploadPercent(null);
+                setUploadSubtext(message ?? "Upload failed");
+            }
+        };
+
+        const onZipsChanged = (e: Event) => {
+            const name = (e as CustomEvent).detail?.name as string | undefined;
+            (async () => {
+                await refresh();                    // refresh the /zips list
+                if (name) setSelected(name);        // auto-select newest
+                LogBus.append(`SELECT ⮕ ${name}`); // ← add this
+            })();
+        };
+
+        window.addEventListener("pn:upload-progress", onProg);
+        window.addEventListener("pn:zips-changed", onZipsChanged);
+        return () => {
+            window.removeEventListener("pn:upload-progress", onProg);
+            window.removeEventListener("pn:zips-changed", onZipsChanged);
+        };
+    }, [refresh, setSelected]);
+
+    async function onUpload(file: File | null) {
+        if (!file) return;
+        // instantaneous local feedback; events will keep it updated
+        setUploadBusy(true);
+        setUploadPercent(0);
+        setUploadSubtext(file.name);
+        LogBus.append(`Uploading ${file.name}…`);
+        UploadRunner.start(file);
+    }
+
+    function onRun() {
+        if (!selected) return;
+
+        // clear page UI; runner will drive it from here
+        setExportBusy(true);
+        setLogs("");
+        setExportPhase("unzip");
+        setExportPercent(0);
+        setExportSubtext("");
+
+        ImportRunner.start({ filename: selected, password: password || undefined });
+    }
+
+    React.useEffect(() => {
+        // Rehydrate current state on mount/route return
+        const s = ImportRunner.getState();
+        if (s.running) {
+            setExportBusy(true);
+            setExportPhase(s.phase);
+            setExportPercent(s.percent);
+            setExportSubtext(s.subtext || "");
+        } else {
+            setExportBusy(false);
+            setExportPhase(null);
+            setExportPercent(null);
+            setExportSubtext("");
+        }
+
+        const onProg = (e: Event) => {
+            const { phase, percent, extras } = (e as CustomEvent).detail ?? {};
+            setExportBusy(true);
+            setExportPhase(phase ?? null);
+            setExportPercent(typeof percent === "number" ? Math.round(percent) : null);
+            setExportSubtext(extras?.subtext ?? "");
+        };
+
+        const onState = (e: Event) => {
+            const st = (e as CustomEvent).detail as ReturnType<typeof ImportRunner.getState>;
+            if (!st?.running) {
+                // finished or error
+                setExportBusy(false);
+                setExportPhase(null);
+                setExportPercent(null);
+                setExportSubtext("");
+            }
+        };
+
+        const onLog = (e: Event) => {
+            const { line } = (e as CustomEvent).detail ?? {};
+            if (line) setLogs((prev) => (prev ? `${line}\n${prev}` : line));
+        };
+
+        window.addEventListener("pn:import-progress", onProg);
+        window.addEventListener("pn:import-state", onState);
+        window.addEventListener("pn:import-log", onLog);
+        return () => {
+            window.removeEventListener("pn:import-progress", onProg);
+            window.removeEventListener("pn:import-state", onState);
+            window.removeEventListener("pn:import-log", onLog);
+        };
+    }, []);
+
+    const exportPhaseLabel = exportPhase === "unzip" ? "Unzipping…" : exportPhase === "copy" ? "Copying media…" : "";
+
+    return (
+        <Stack gap="lg" p="md">
+            <SectionCard title="Shared library location">
+                <Group gap="sm" wrap="wrap" align="center">
+                    <FileButton onChange={onUpload} accept=".zip">
+                        {(props) => (
+                            <Button {...props} variant="light" loading={uploadBusy}>
+                                Select manually
+                            </Button>
+                        )}
+                    </FileButton>
+
+                    <Button
+                        variant="subtle"
+                        onClick={() => BackupWatcher.selectDirectory()}
+                        disabled={!watch?.supported}
+                        title={
+                            watch?.supported
+                                ? "Pick your Playnite backup folder to monitor"
+                                : "Browser not supported"
+                        }
+                    >
+                        Watch location
+                    </Button>
+
+                    <Text
+                        size="sm"
+                        className="is-dim"
+                        style={{ whiteSpace: "nowrap", alignSelf: "center" }}
+                    >
+                        {watch?.dirName
+                            ? `/${watch.dirName}`
+                            : "Not watching a folder"}
+                    </Text>
+                </Group>
+
+                <LoadingBar
+                    label="Uploading…"
+                    percent={uploadPercent}
+                    subtext={uploadSubtext}
+                />
+            </SectionCard>
+
+            <SectionCard title="Import">
+                <Group align="end" gap="sm" wrap="wrap">
+                    <Select
+                        label="Select"
+                        placeholder="Select Available Backup"
+                        value={selected}
+                        onChange={setSelected}
+                        data={zips.map((z) => ({ value: z.name, label: z.name }))}
+                        w={360}
+                    />
+                    <PasswordInput
+                        label="DB Password (optional)"
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.currentTarget.value)}
+                        w={200}
+                    />
+                    <Button onClick={onRun} loading={exportBusy} disabled={!selected} variant="light">
+                        Run import
+                    </Button>
+                </Group>
+                <LoadingBar label={exportPhaseLabel} percent={exportPercent} subtext={exportSubtext} />
+            </SectionCard>
+
+            <SectionCard title="Logs">
+                <Textarea
+                    value={logs}
+                    maxRows={10}
+                    autosize
+                    styles={{ input: { fontFamily: "ui-monospace, Menlo, Consolas, monospace" } }}
+                />
+                <Text size="xs" className="is-dim">
+                    Newest on top
+                </Text>
+            </SectionCard>
+        </Stack>
+    );
+}
+
+
+===== web\src\router.tsx =====
+
+import { createBrowserRouter } from "react-router-dom";
+import AppShellLayout from "./layout/AppShellLayout";
+import LibraryPage from "./pages/LibraryPage";
+import SyncPage from "./pages/SyncPage";
+import HomePage from "./pages/HomePage";
+import SettingsPage from "./pages/SettingsPage";
+
+export const router = createBrowserRouter([
+  { path: "/", element: <AppShellLayout><HomePage /></AppShellLayout> },
+  { path: "/library", element: <AppShellLayout><LibraryPage /></AppShellLayout> },
+  { path: "/sync", element: <AppShellLayout><SyncPage /></AppShellLayout> },
+  { path: "/settings", element: <AppShellLayout><SettingsPage /></AppShellLayout> },
+]);
+
+
+===== web\src\theme.tsx =====
+
+import React from "react";
+import { MantineProvider, createTheme } from "@mantine/core";
+import { Notifications } from "@mantine/notifications";
+
+export const appTheme = createTheme({
+    primaryColor: "grape",
+    fontFamily:
+        'Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"',
+    defaultRadius: "md",
+    headings: {
+        fontFamily:
+            'Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial',
+    },
+    components: {
+        Button: { defaultProps: { size: "sm", radius: "md" } },
+        TextInput: { defaultProps: { size: "sm", radius: "md" } },
+        PasswordInput: { defaultProps: { size: "sm", radius: "md" } },
+        Select: { defaultProps: { size: "sm", radius: "md", searchable: true } },
+        Textarea: { defaultProps: { size: "sm", radius: "md", autosize: true } },
+        Card: { defaultProps: { radius: "lg", withBorder: true, p: "md" } },
+        Progress: { defaultProps: { radius: "xl" } },
+        Switch: { defaultProps: { size: "md" } },
+        Table: { defaultProps: { striped: true, highlightOnHover: true } },
+    },
+});
+
+export function AppProviders({ children }: { children: React.ReactNode }) {
+    return (
+        <MantineProvider theme={appTheme} defaultColorScheme="auto">
+            <Notifications position="top-right" />
+            {children}
+        </MantineProvider>
+    );
+}
+
+
+===== web\tsconfig.json =====
+
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM"],
+    "jsx": "react-jsx",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "sourceMap": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "types": []
+  },
+  "include": ["src", "vite.config.mts"]
+}
+
+
+===== web\vite.config.mts =====
+
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+
+export default defineConfig({
+  plugins: [react()],
+  build: { sourcemap: true },
+  server: {
+    proxy: {
+      "/api": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+      },
+    },
+  },
+});

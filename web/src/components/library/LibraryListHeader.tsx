@@ -1,4 +1,5 @@
 import type { SortKey } from "../../lib/types";
+import { GRID } from "../../lib/constants";
 
 export function LibraryListHeader(props: {
   headerRef: (el: HTMLElement | null) => void;
@@ -22,11 +23,11 @@ export function LibraryListHeader(props: {
         className="library-header"
         style={{
           display: "grid",
-          gridTemplateColumns: "56px minmax(0, 40%) 60px 80px minmax(200px, 1fr)",
-          minWidth: "calc(56px + 40% + 60px + 80px + 200px + 24px)",
+          gridTemplateColumns: GRID.cols,
+          minWidth: GRID.minWidth,
           alignItems: "center",
           gap: 12,
-          height: 40,
+          height: GRID.headerHeight,
           fontWeight: 600,
           padding: "0 12px",
         }}

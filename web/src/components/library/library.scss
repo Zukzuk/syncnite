@@ -19,33 +19,34 @@
     }
   }
 
-  .icon-wrap {
-    position: relative;
+  /* Ensure the overlay uses white icons from Tabler (currentColor) */
+  .play-overlay__icon {
+    color: #fff;
+    opacity: 0;
+    transform: scale(0.94);
+    transition: opacity .16s ease, transform .16s ease;
+    pointer-events: none;
+  }
 
-    .play-overlay {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 6px;
+  /* Fade in the overlay icon on hover */
+  .icon-wrap:hover .play-overlay__icon {
+    opacity: 1;
+    transform: scale(1);
+  }
 
-      /* show on hover */
-      opacity: 0;
-      transition: opacity 120ms ease-in-out;
-      background: rgba(0, 0, 0, 0.5);
-      color: #fff;
-      text-decoration: none;
+  /* Fade the base game icon to .4 on hover */
+  .icon-base {
+    transition: opacity .16s ease;
+  }
 
-      /* make SVGs crisp & aligned */
-      svg {
-        display: block;
-      }
-    }
+  .icon-wrap:hover .icon-base {
+    opacity: .3;
+  }
 
-    &:hover .play-overlay {
-      opacity: 1;
-    }
+  /* Optional: subtle hover tint to indicate interactivity */
+  .icon-wrap:hover .play-overlay {
+    background: radial-gradient(transparent 42%, rgba(0, 0, 0, .08));
+    border-radius: 6px;
   }
 }
 

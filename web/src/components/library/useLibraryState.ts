@@ -1,8 +1,8 @@
 import * as React from "react";
 import type { SortKey, SortDir, Persisted, Loaded } from "../../lib/types";
 import { bucketLetter } from "../../lib/utils";
-
-const COOKIE_NAME = "pn_library_ui_v2";
+import { jsonGet, jsonSet } from "../../lib/persist";
+import { COOKIE } from "../../lib/constants";
 
 const DEFAULTS: Persisted = {
   q: "",
@@ -14,35 +14,16 @@ const DEFAULTS: Persisted = {
   sortDir: "asc",
 };
 
-function readCookie(name: string): string | null {
-  if (typeof document === "undefined") return null;
-  const m = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
-  return m ? decodeURIComponent(m[1]) : null;
-}
-
-function writeCookie(name: string, value: string, maxAgeSeconds = 60 * 60 * 24 * 180) {
-  if (typeof document === "undefined") return;
-  document.cookie = `${name}=${encodeURIComponent(value)}; Max-Age=${maxAgeSeconds}; Path=/; SameSite=Lax`;
-}
-
 function loadStateFromCookie(): Persisted {
   try {
-    const raw = readCookie(COOKIE_NAME);
-    if (!raw) return DEFAULTS;
-    const parsed = JSON.parse(raw) as Partial<Persisted>;
-    return {
-      ...DEFAULTS,
-      ...parsed,
-      sources: Array.isArray(parsed.sources) ? parsed.sources : [],
-      tags: Array.isArray(parsed.tags) ? parsed.tags : [],
-    };
+    return jsonGet<Persisted>(COOKIE.libraryState, DEFAULTS);
   } catch {
     return DEFAULTS;
   }
 }
 
 function saveStateToCookie(s: Persisted) {
-  writeCookie(COOKIE_NAME, JSON.stringify(s));
+  jsonSet(COOKIE.libraryState, s);
 }
 
 export function useLibraryState(data: Loaded) {
@@ -57,9 +38,7 @@ export function useLibraryState(data: Loaded) {
   const [installedOnly, setInstalledOnly] = React.useState<boolean>(persisted.installedOnly);
 
   React.useEffect(() => {
-    const toSave: Persisted = {
-      q, sources, tags, showHidden, installedOnly, sortKey, sortDir,
-    };
+    const toSave: Persisted = { q, sources, tags, showHidden, installedOnly, sortKey, sortDir };
     saveStateToCookie(toSave);
   }, [q, sources, tags, showHidden, installedOnly, sortKey, sortDir]);
 
@@ -73,24 +52,18 @@ export function useLibraryState(data: Loaded) {
 
     const pass = data.rows.filter((r) =>
       (!sources.length || sources.includes(r.source)) &&
-      (!tags.length || tags.some((t) => r.tags.includes(t))) &&
-      (showHidden || !r.hidden) &&
-      (!installedOnly || r.installed) &&
-      (!qv ||
-        r.title.toLowerCase().includes(qv) ||
-        r.source.toLowerCase().includes(qv) ||
-        (r.year != null && String(r.year).includes(qv)) ||
-        r.tags.some((t) => t.toLowerCase().includes(qv))
-      )
+      (!tags.length || tags.some((t) => r.tags?.includes(t))) &&
+      (!qv || (r.title?.toLowerCase().includes(qv) || r.source?.toLowerCase().includes(qv) || r.tags?.some((t) => t.toLowerCase().includes(qv)))) &&
+      (!installedOnly || !!r.installed) &&
+      (showHidden || !r.hidden)
     );
 
-    const sortVal = (r: typeof data.rows[number]) => {
-      switch (sortKey) {
-        case "title": return (r.sortingName || r.title).toLowerCase();
-        case "source": return (r.source || "").toLowerCase();
-        case "tags": return r.tags.join(", ").toLowerCase();
-        case "year": return String(r.year ?? "");
-      }
+    const sortVal = (r: (typeof pass)[number]) => {
+      if (sortKey === "title") return (r.sortingName || r.title || "").toLowerCase();
+      if (sortKey === "tags") return (r.tags?.join(",") || "").toLowerCase();
+      if (sortKey === "source") return (r.source || "").toLowerCase();
+      if (sortKey === "year") return r.year ?? -Infinity;
+      return (r.sortingName || r.title || "").toLowerCase();
     };
 
     pass.sort((a, b) => {
@@ -126,9 +99,7 @@ export function useLibraryState(data: Loaded) {
       totalCount: data.rows.length,
       rowsSorted: filteredSorted,
       withBuckets: filteredSorted.map(
-        (row) => (
-          { row, bucket: bucketLetter(row.title, row.sortingName) }
-        )
+        (row) => ({ row, bucket: bucketLetter(row.title, row.sortingName) })
       ),
     },
   };
