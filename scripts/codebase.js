@@ -10,7 +10,7 @@ function readFlag(name, fallback) {
 const positionalDir = argv.find(a => !a.startsWith("--"));
 const rootDir = path.resolve(readFlag("dir", positionalDir ?? "./"));
 
-const outputFile = "./scripts/concat-code.txt"; // outputbestand
+const outputFile = "./scripts/codebase.txt"; // outputbestand
 
 // Mappen negeren (exacte mapnamen)
 const ignoreDirs = new Set([

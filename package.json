@@ -9,12 +9,12 @@
   ],
   "scripts": {
     "install:all": "npm i --workspaces --include-workspace-root",
-    "build": "npm -ws --if-present run build && npm run concat && npm run build:ext",
+    "build": "npm -ws --if-present run build && npm run codebase && npm run build:ext",
     "lint": "npm -ws --if-present run lint",
     "test": "npm -ws --if-present run test",
     "up": "docker compose -f docker-compose.yml up --build -d",
     "clean": "node scripts/clean.js",
-    "concat": "node scripts/concat-code.js",
+    "codebase": "node scripts/codebase.js",
     "build:ext": "node scripts/build-ext.js"
   },
   "devDependencies": {

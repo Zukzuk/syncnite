@@ -1,154 +1,141 @@
-# Playnite Viewer
+# Playnite Viewer (Web + API + Extension)
 
-A self‑hosted web viewer and API for browsing and restoring **Playnite** libraries from backups.
+A small stack to **view** your Playnite library in the browser, and to **ingest** Playnite backup ZIPs into static JSON + media that the web UI can browse.
 
-It consists of:
-- **Web frontend** (`web/`) – React + Vite + Mantine UI to browse your library.
-- **API backend** (`api/`) – Express.js service that handles uploads, extraction, LiteDB → JSON conversion, and serves the Playnite extension. OpenAPI docs included.
-- **Playnite** (`playnite/`)
-  - `PlayniteImport` — .NET 8 console tool that dumps Playnite LiteDB files to JSON.
-  - `PlayniteViewerBridge` — Playnite plugin (.pext) that enables URI‑based backup restoration: `playnite://viewer/restore?...`
-
-Runs via **Docker Compose** for a one‑command setup.
+- **Web UI** (React + Mantine + Vite). Upload backups, watch a folder, import with progress, and browse your library.
+- **API** (Node/Express) for uploads, streaming import, and the Playnite extension download.
+- **Importer** (self-contained .NET 8 tool) that reads Playnite LiteDB files and dumps them to JSON (with optional password).
 
 ---
 
 ## Features
 
-- Upload a Playnite backup `.zip` from the web UI.
-- Validates and extracts with 7‑Zip, normalizes paths, and auto‑detects the library folder.
-- Dumps all LiteDB `.db` files to pretty‑printed JSON (handles encrypted DBs when `LITEDB_PASSWORD` is provided).
-- Copies `libraryfiles` (icons/media) with live progress.
-- Browse, search, sort and filter (source, tags, installed, hidden) with a fast virtual list.
-- Serve the Playnite extension (`.pext`) for installation directly in Playnite.
-- REST API with **Swagger/OpenAPI** docs at `/api/docs` and raw spec at `/api/docs.json`.
+- **Upload** Playnite backup ZIPs (large files supported). Uploads show a live bar and survive navigation.
+- **Watch a backup folder** via the browser’s directory picker (Chromium). Detects newer ZIPs and offers to upload & import.
+- **Import with logs & progress**: server streams “unzip” and “copy” progress; UI shows phase + percent; logs persist across page changes.
+- **Browse your library**: fast search, filters, tags, alphabetical rail, and quick actions.
+- **Swagger** docs at `/api/docs`.
+- **Playnite extension** download endpoint at `/api/extension/download`.
 
 ---
 
-## Quick start (Docker)
+## Quick Start (Docker)
 
-> Prereqs: Docker & Docker Compose
+**Prereqs:** Docker + Docker Compose.
 
 ```bash
-# Build and start API + Web
+# From the repo root
+docker compose up --build -d
+# or
 npm run up
 ```
 
-Services:
-- **Web UI** → http://localhost:3001  
-- **API** → http://localhost:3000  
-- **API docs** → http://localhost:3000/api/docs
+- Web UI: http://localhost:3001  
+- API:    http://localhost:3000
 
-Mounted folders:
-- `./backups` → container `/input` (drop your Playnite backup ZIPs here or use the UI uploader)
-- `./data` → container `/data` (generated JSON & copied media). Also mounted read‑only into the web container for static serving at `/data`.
+**Notes**
 
-The API uses a tmpfs mount for `/work` (scratch space for extraction).
+- Nginx is configured for large uploads and long-lived connections.
+- `/data` is served as static content by Nginx; the frontend reads JSON from there.
+
+---
+
+## Development
+
+### 1) Install & run dev servers
+
+```bash
+# install workspaces
+npm i --workspaces --include-workspace-root
+
+# API (http://localhost:3000)
+npm run -w api dev
+
+# Web (http://localhost:5173)
+npm run -w web dev
+```
+
+Vite is configured to proxy `/api` → `http://localhost:3000` in development.
+
+### 2) Importer binary for local API dev
+
+When running the API outside Docker, the server expects a platform-appropriate **PlayniteImport** binary alongside `api` (invoked as `./PlayniteImport`). Build it with .NET 8, self-contained for your OS/arch, then copy the output next to the API (name it `PlayniteImport` or `PlayniteImport.exe`).
+
+Example:
+
+```bash
+# from repo root
+dotnet publish playnite/PlayniteImport/PlayniteImport.csproj \
+  -c Release -r win-x64 --self-contained true \
+  /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true
+
+# copy the produced binary to ./api/PlayniteImport(.exe)
+```
+
+The API runs it as `./PlayniteImport <libDir> <dataDir>` and forwards `LITEDB_PASSWORD` if provided.
+
+---
+
+## How It Works
+
+### Data flow
+
+1. **Upload** → `POST /api/playnitedump/upload` (multer saves ZIP to `/input`).
+2. **Import (SSE)** → `GET /api/playnitedump/process-stream?filename=...&password=...`  
+   - Extracts the archive and streams progress & logs.  
+   - Locates the library folder and runs `PlayniteImport` to dump LiteDB → JSON.  
+   - Copies `libraryfiles` (icons/media) with byte-level progress.
+3. **Web UI** reads processed JSON & media from `/data` and renders the library.
+
+### Key endpoints
+
+- `GET /api/playnitedump/zips` — list uploaded ZIPs  
+- `POST /api/playnitedump/upload` — upload ZIP file  
+- `GET /api/playnitedump/process-stream` — **SSE** progress/logs for import  
+- `GET /api/extension/download` — download the Playnite extension  
+- `GET /api/docs` — Swagger UI
 
 ---
 
 ## Using the Web UI
 
-1. Open **http://localhost:3001**.
-2. Click **Menu → Sync backup…**.
-3. Pick an existing ZIP from the dropdown *or* click **Upload ZIP…** to add one.
-4. (Optional) Provide a **DB Password** if your LiteDB is encrypted.
-5. Click **Run export**.  
-   You’ll see **Unzipping** and **Copying media** progress. Logs stream live.
+1. Open **Sync**:
+   - **Select manually** to choose a ZIP, or
+   - **Watch location** to pick a backup folder (Chromium browsers). When a newer ZIP appears, you’ll be prompted to upload & import.
+2. Click **Run import** on the selected ZIP. You’ll see “Unzipping…” then “Copying media…”, with logs updating live.
+3. Open **Library** to browse games (search, filter by source/tags, installed/hidden toggles, alphabetical rail).
 
-When complete, the UI reloads the data from `./data/` and you can browse:
-- Search across titles/sources/tags/year
-- Filter by **Source**, **Tags**, **Installed**, **Hidden**
-- Sort by **Title**, **Year**, **Source**, **Tags**
-- Click a game title to open a best‑effort store/community page
+> **Encrypted libraries**: provide the **DB Password** in the Import section — the server forwards it as `LITEDB_PASSWORD` to the importer.
 
 ---
 
-## Installing / using the Playnite extension
+## Playnite Extension (optional)
 
-The API serves a packaged `.pext`:
-
-```
-http://localhost:3000/api/extension/download
-```
-
-Install it in Playnite to enable a URI handler: `playnite://viewer/restore?...`
-
-Supported query params (handled by the plugin):
-- `file` — local path to a backup zip, e.g. `?file=C:\Backups\my.zip`
-- `url` — HTTP(S) link to a backup zip (plugin downloads to a temp file), e.g. `?url=https://example.com/my.zip`
-- `items` — optional restore items list like `0,1,2,3,4,5` (defaults to all).
-
-Examples:
-```
-playnite://viewer/restore?file=C:\Backups\my.zip
-playnite://viewer/restore?url=https://example.com/my.zip&items=0,1,2
-```
-
-The plugin prepares a temporary config for Playnite’s `--restorebackup` mechanism and restarts Playnite to perform the restore.
-
-> The download endpoint currently serves: `playnite/PlayniteViewerBridge/playnite-viewer-bridge-1.0.0.pext`
+- Download from the API: `/api/extension/download` (the packaged `.pext` is served directly).
+- The plugin registers a custom URI handler and can restart Playnite to run a restore with a given ZIP (`playnite://viewer/restore?...`).
 
 ---
 
-## REST API
+## Project Layout
 
-OpenAPI UI: **`/api/docs`** — Raw JSON: **`/api/docs.json`**
-
-Key endpoints (see JSDoc annotations in `api/src/routes/*.ts`):
-
-- `GET /api/playnitedump/zips`  
-  List uploaded ZIP files found under `/input` (mapped from `./backups`).
-
-- `POST /api/playnitedump/upload` (multipart, field: `file`)  
-  Upload a ZIP into `/input` (name sanitized).
-
-- `GET /api/playnitedump/process-stream?filename=<name>&password=<optional>`  
-  **Server‑Sent Events (SSE)** stream of the processing pipeline:  
-  - `log` — textual updates  
-  - `progress` — `{ phase: "unzip" | "copy", percent, ... }`  
-  - `done` or `error`
-
-- `GET /api/extension/download`  
-  Download the packaged `.pext`.
+- `web/` — React app (Vite + Mantine). Production served by Nginx; dev proxy for `/api`.
+- `api/` — Express server, SSE import pipeline, Swagger docs.
+- `playnite/PlayniteImport` — .NET 8 console app (LiteDB → JSON).
+- `playnite/PlayniteViewerBridge` — Playnite plugin.
+- `docker-compose.yml` — two services (`api`, `web`) + volumes for `/input` and `/data`.
+- Root scripts: `npm run up`, `npm run build`, `npm run clean`, etc.
 
 ---
 
-## Local development
+## Troubleshooting
 
-> Prereqs: Node.js 20+, PNPM/NPM; .NET 8 SDK if you need to build `PlayniteImport` locally
-
-Install deps (root + workspaces):
-
-```bash
-npm run install:all
-```
-
-Build everything (web, api, concat snapshot, pack extension):
-
-```bash
-npm run build
-```
-
-Useful scripts:
-```bash
-npm run -w web dev     # Frontend dev server (Vite)
-npm run -w api dev     # API with ts-node-dev
-npm run clean          # Remove build artifacts & concatenated code file
-npm run concat         # Rebuild /concat-code.txt (repo snapshot helper)
-npm run build:ext      # Builds/repacks the .pext (see scripts/)
-```
-
-## Notes & tips
-
-- The API relies on **7‑Zip** (`p7zip`) inside the container.
-- Media copy looks for a sibling `libraryfiles` directory next to the detected library folder (or top‑level folders). Progress includes `copiedBytes`, `totalBytes`, and `deltaBytes` between updates.
-- If your library databases are encrypted, set `LITEDB_PASSWORD` in the **process‑stream** query (the router forwards env to the dumper). From the UI, fill the **DB Password** field.
-- Frontend cache‑busts JSON fetches with `?v=<timestamp>` to always see fresh dumps.
-- Web container exposes `/data/` with `autoindex on` for quick inspection.
+- **Uploads time out or fail**: if you’re behind another proxy, mirror Nginx’s large body size and long timeout settings.
+- **No `/api` in dev**: ensure the API is on `:3000` and Vite dev server is running — the proxy is preconfigured.
+- **Encrypted DBs**: wrong/empty password → importer may skip those DBs; supply the correct password in the UI.
+- **Windows paths inside ZIPs**: handled during extraction (path normalization).
 
 ---
 
 ## License
 
-MIT (or choose a license and update this section).
+TBD
