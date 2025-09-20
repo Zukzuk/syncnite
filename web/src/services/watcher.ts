@@ -2,9 +2,9 @@
 // Still persists the selected folder and exposes UI state.
 
 import { UploadRunner } from "./uploader";
-import { LogBus } from "../lib/logBus";
-import { BackupListener, BackupWatcherState, ZipMeta } from "./types";
-import { DB_KEY, IDB_DB, IDB_STORE } from "./constants";
+import { LogBus } from "../services/logBus";
+import { BackupListener, BackupWatcherState, ZipMeta } from "../lib/types";
+import { DB_KEY, IDB_DB, IDB_STORE } from "../lib/constants";
 
 let dirHandle: FileSystemDirectoryHandle | null = null;
 let timer: number | null = null;

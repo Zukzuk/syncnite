@@ -1,7 +1,7 @@
 import type { SortKey } from "../../lib/types";
 import { GRID } from "../../lib/constants";
 
-export function LibraryListHeader(props: {
+export function SortHeader(props: {
   headerRef: (el: HTMLElement | null) => void;
   sortKey: SortKey;
   sortDir: "asc" | "desc";
@@ -29,7 +29,7 @@ export function LibraryListHeader(props: {
           alignItems: "center",
           gap: 12,
           fontWeight: 600,
-          padding: "0 12px",
+          padding: "0 16px 0 12px",
         }}
       >
         <div />

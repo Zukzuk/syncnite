@@ -3,16 +3,31 @@ import { Box, Flex } from "@mantine/core";
 import { useElementSize } from "@mantine/hooks";
 import { Virtuoso, GroupedVirtuoso, VirtuosoHandle } from "react-virtuoso";
 import type { Loaded } from "../../lib/types";
-import { Controls } from "./Controls";
-import { useLibraryState } from "./useLibraryState";
+import { ControlsHeader } from "./ControlsHeader";
 import { GameRow } from "./GameRow";
 import { AlphabeticalSeparatorRow } from "./AlphabeticalSeparatorRow";
-import { LibraryListHeader } from "./LibraryListHeader";
+import { SortHeader } from "./SortHeader";
 import { AlphabeticalRail } from "./AlphabeticalRail";
-import { useAlphabetGroups } from "./useAlphabetGroups";
-import { useAlphabetRail } from "./useAlphabetRail";
+import { useAlphabetGroups } from "./hooks/useAlphabetGroups";
+import { useAlphabetRail } from "./hooks/useAlphabetRail";
+import { useLibraryState } from "./hooks/useLibraryState";
 
-import "./library.scss";
+import "./LibraryList.scss";
+
+const Scroller = React.forwardRef<HTMLDivElement, React.HTMLProps<HTMLDivElement>>(
+  (props, ref) => (
+    <div
+      {...props}
+      ref={ref}
+      style={{
+        ...props.style,
+        overflowY: "scroll",
+        scrollbarGutter: "stable both-edges",
+      }}
+    />
+  )
+);
+Scroller.displayName = "Scroller";
 
 export function LibraryList({
   data,
@@ -58,12 +73,8 @@ export function LibraryList({
 
   return (
     <Flex direction="column" h="100%" style={{ minHeight: 0 }}>
-      <Box
-        ref={controlsRef}
-        p="md"
-        style={{ position: "sticky", top: 0, zIndex: 20, background: "var(--mantine-color-body)" }}
-      >
-        <Controls
+      <Box ref={controlsRef} p="md" style={{ position: "sticky", top: 0, zIndex: 20, background: "var(--mantine-color-body)" }}>
+        <ControlsHeader
           q={ui.q}
           setQ={ui.setQ}
           sources={ui.sources}
@@ -81,14 +92,14 @@ export function LibraryList({
         />
       </Box>
 
-      <div style={{ position: "sticky", top: stickyOffset, zIndex: 15 }}>
-        <LibraryListHeader
+      <Box style={{ position: "sticky", top: stickyOffset, zIndex: 15 }}>
+        <SortHeader
           headerRef={headerRef as unknown as (el: HTMLElement | null) => void}
           sortKey={ui.sortKey}
           sortDir={ui.sortDir}
           onToggleSort={ui.toggleSort}
         />
-      </div>
+      </Box>
 
       <Box style={{ flex: 1, minHeight: 0, position: "relative", overflow: "hidden" }}>
         {isGrouped && groups ? (
@@ -96,6 +107,7 @@ export function LibraryList({
             ref={virtuosoRef}
             key={groupedKey}
             style={{ height: "100%" }}
+            components={{ Scroller }}
             groupCounts={groups.map((g) => g.rows.length)}
             increaseViewportBy={overscan}
             rangeChanged={rangeChanged}
@@ -111,7 +123,6 @@ export function LibraryList({
                     <GameRow
                       id={r.id}
                       hidden={r.hidden}
-                      showHidden={ui.showHidden}
                       installed={r.installed}
                       iconUrl={r.iconUrl}
                       title={r.title}
@@ -119,6 +130,8 @@ export function LibraryList({
                       tags={r.tags}
                       year={r.year}
                       url={r.url}
+                      raw={r.raw}
+                      sortingName={r.sortingName}
                     />
                   );
                 }
@@ -132,6 +145,7 @@ export function LibraryList({
             ref={virtuosoRef}
             key={flatKey}
             style={{ height: "100%" }}
+            components={{ Scroller }}
             data={derived.rowsSorted}
             increaseViewportBy={overscan}
             rangeChanged={rangeChanged}
@@ -142,7 +156,6 @@ export function LibraryList({
                 <GameRow
                   id={r.id}
                   hidden={r.hidden}
-                  showHidden={ui.showHidden}
                   installed={r.installed}
                   iconUrl={r.iconUrl}
                   title={r.title}
@@ -150,6 +163,8 @@ export function LibraryList({
                   tags={r.tags}
                   year={r.year}
                   url={r.url}
+                  raw={r.raw}
+                  sortingName={r.sortingName}
                 />
               );
             }}

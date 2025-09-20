@@ -1,0 +1,27 @@
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+  
+  img.icon {
+    image-rendering: -webkit-optimize-contrast;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .is-dim {
+    opacity: 0.5 !important;
+  }
+
+  /* Firefox: make it a normal-width visible bar */
+* { scrollbar-width: auto; scrollbar-color: var(--mantine-color-default-border) transparent; }
+
+/* WebKit (Chromium/Safari) */
+*::-webkit-scrollbar { width: 12px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background-color: var(--mantine-color-default-border);
+  border-radius: 8px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}

@@ -1,11 +1,11 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
-import { BackupWatcher } from "./lib/watcher";
+import { BackupWatcher } from "./services/watcher";
 import { AppProviders } from "./theme";
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
-import "./index.scss";
+import "./main.scss";
 
 BackupWatcher.tryRestorePrevious().catch(() => { });
 

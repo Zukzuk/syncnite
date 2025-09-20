@@ -1,6 +1,6 @@
 
 
-===== api\Dockerfile =====
+===== api/Dockerfile =====
 
 FROM node:20-alpine AS api-build
 WORKDIR /app
@@ -55,7 +55,7 @@ WORKDIR /app/api
 CMD ["node", "dist/server.js"]
 
 
-===== api\package.json =====
+===== api/package.json =====
 
 {
     "name": "playnite-api",
@@ -84,7 +84,7 @@ CMD ["node", "dist/server.js"]
 }
 
 
-===== api\src\app.ts =====
+===== api/src/app.ts =====
 
 import express from "express";
 import path from "path";
@@ -122,7 +122,7 @@ export function createApp() {
 }
 
 
-===== api\src\helpers.ts =====
+===== api/src/helpers.ts =====
 
 import { spawn, type SpawnOptionsWithoutStdio } from "node:child_process";
 import { join, dirname } from "node:path";
@@ -321,7 +321,7 @@ export async function copyLibraryFilesWithProgress(opts: {
 }
 
 
-===== api\src\routes\extension.ts =====
+===== api/src/routes/extension.ts =====
 
 import express from "express";
 import path from "path";
@@ -345,7 +345,7 @@ extensionRouter.get("/download", (_req, res) => {
 export default extensionRouter;
 
 
-===== api\src\routes\playnitedump.ts =====
+===== api/src/routes/playnitedump.ts =====
 
 import express from "express";
 import multer from "multer";
@@ -492,7 +492,7 @@ playniteDumpRouter.get("/process-stream", async (req, res) => {
 export default playniteDumpRouter;
 
 
-===== api\src\server.ts =====
+===== api/src/server.ts =====
 
 import { createApp } from "./app";
 
@@ -504,7 +504,7 @@ app.listen(port, () => {
 });
 
 
-===== api\tsconfig.json =====
+===== api/tsconfig.json =====
 
 {
     "compilerOptions": {
@@ -583,7 +583,7 @@ volumes:
 }
 
 
-===== playnite\PlayniteImport\PlayniteImport.cs =====
+===== playnite/PlayniteImport/PlayniteImport.cs =====
 
 using System.Text.Encodings.Web;
 using System.Text.Json;
@@ -712,7 +712,7 @@ if (dumped == 0)
 }
 
 
-===== playnite\PlayniteImport\PlayniteImport.csproj =====
+===== playnite/PlayniteImport/PlayniteImport.csproj =====
 
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -732,18 +732,7 @@ if (dumped == 0)
 </Project>
 
 
-===== playnite\PlayniteViewerBridge\extension.yaml =====
-
-Id: a85f0db8-39f4-40ea-9e03-bc5be2298c89
-Name: PlayniteViewerBridge
-Author: Dave Timmerman
-Version: 1.0.0
-Module: PlayniteViewerBridge.dll
-Type: GenericPlugin
-PlayniteApiVersion: 6.12.0
-
-
-===== playnite\PlayniteViewerBridge\PlayniteViewerBridge.cs =====
+===== playnite/PlayniteViewerBridge/PlayniteViewerBridge.cs =====
 
 using Playnite.SDK;
 using Playnite.SDK.Plugins;
@@ -847,7 +836,7 @@ namespace PlayniteViewerBridge
 }
 
 
-===== playnite\PlayniteViewerBridge\PlayniteViewerBridge.csproj =====
+===== playnite/PlayniteViewerBridge/PlayniteViewerBridge.csproj =====
 
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -869,7 +858,18 @@ namespace PlayniteViewerBridge
 </Project>
 
 
-===== web\Dockerfile =====
+===== playnite/PlayniteViewerBridge/extension.yaml =====
+
+Id: a85f0db8-39f4-40ea-9e03-bc5be2298c89
+Name: PlayniteViewerBridge
+Author: Dave Timmerman
+Version: 1.0.0
+Module: PlayniteViewerBridge.dll
+Type: GenericPlugin
+PlayniteApiVersion: 6.12.0
+
+
+===== web/Dockerfile =====
 
 FROM node:20-alpine AS build
 WORKDIR /app
@@ -888,7 +888,7 @@ COPY --from=build /app/web/dist/ /usr/share/nginx/html/
 
 
 
-===== web\index.html =====
+===== web/index.html =====
 
 <!doctype html>
 <html lang="en">
@@ -911,7 +911,7 @@ COPY --from=build /app/web/dist/ /usr/share/nginx/html/
 </html>
 
 
-===== web\nginx.conf =====
+===== web/nginx.conf =====
 
 # /etc/nginx/conf.d/default.conf  (or the site config you copy in your web image)
 server {
@@ -943,7 +943,7 @@ server {
 }
 
 
-===== web\package.json =====
+===== web/package.json =====
 
 {
   "name": "playnite-web",
@@ -977,7 +977,7 @@ server {
 }
 
 
-===== web\src\App.tsx =====
+===== web/src/App.tsx =====
 
 import { RouterProvider } from "react-router-dom";
 import { router } from "./router";
@@ -987,7 +987,7 @@ export default function App() {
 }
 
 
-===== web\src\components\library\AlphabeticalRail.tsx =====
+===== web/src/components/library/AlphabeticalRail.tsx =====
 
 import { Paper, Stack, Text, Tooltip } from "@mantine/core";
 import { AlphabeticalRailCounts } from "../../lib/types";
@@ -1038,7 +1038,7 @@ export function AlphabeticalRail({
 }
 
 
-===== web\src\components\library\AlphabeticalSeparatorRow.tsx =====
+===== web/src/components/library/AlphabeticalSeparatorRow.tsx =====
 
 
 export function AlphabeticalSeparatorRow({ bucket, top }: { bucket: string; top: number }) {
@@ -1050,7 +1050,7 @@ export function AlphabeticalSeparatorRow({ bucket, top }: { bucket: string; top:
 }
 
 
-===== web\src\components\library\Controls.tsx =====
+===== web/src/components/library/Controls.tsx =====
 
 import React from "react";
 import { Group, MultiSelect, Switch, Text, Stack, Flex } from "@mantine/core";
@@ -1177,7 +1177,7 @@ export function Controls(props: {
 }
 
 
-===== web\src\components\library\GameRow.tsx =====
+===== web/src/components/library/GameRow.tsx =====
 
 import { Badge, Group, Text } from "@mantine/core";
 import { IconImage } from "./IconImage";
@@ -1291,7 +1291,7 @@ export function GameRow(props: GameRowProps) {
 }
 
 
-===== web\src\components\library\IconImage.tsx =====
+===== web/src/components/library/IconImage.tsx =====
 
 import React from "react";
 import { isIcoPath, icoToPngDataUrl } from "../../lib/utils";
@@ -1333,108 +1333,7 @@ export function IconImage({ src, alt }: { src: string; alt?: string }) {
 }
 
 
-===== web\src\components\library\library.scss =====
-
-.game-row {
-  position: relative;
-  transition: background-color 120ms ease-in-out;
-  overflow: hidden;
-
-  &:hover {
-    background: var(--mantine-color-default-hover);
-  }
-
-  &.is-installed {
-    background: var(--mantine-primary-color-light) !important;
-
-    &:hover {
-      background: var(--mantine-primary-color-filled) !important;
-    }
-  }
-
-  /* Ensure the overlay uses white icons from Tabler (currentColor) */
-  .play-overlay__icon {
-    color: #fff;
-    opacity: 0;
-    transform: scale(0.94);
-    transition: opacity .16s ease, transform .16s ease;
-    pointer-events: none;
-  }
-
-  /* Fade in the overlay icon on hover */
-  .icon-wrap:hover .play-overlay__icon {
-    opacity: 1;
-    transform: scale(1);
-  }
-
-  /* Fade the base game icon to .4 on hover */
-  .icon-base {
-    transition: opacity .16s ease;
-  }
-
-  .icon-wrap:hover .icon-base {
-    opacity: .3;
-  }
-
-  /* Optional: subtle hover tint to indicate interactivity */
-  .icon-wrap:hover .play-overlay {
-    background: radial-gradient(transparent 42%, rgba(0, 0, 0, .08));
-    border-radius: 6px;
-  }
-}
-
-.alphabetical-separator {
-  position: sticky;
-  z-index: 5;
-  font-weight: 700;
-  padding: 6px 12px 6px 80px;
-  background: var(--mantine-color-body);
-  border-bottom: 1px solid var(--mantine-color-default-border);
-}
-
-.alphabetical-rail {
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 28px;
-  padding: 6px 2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-
-  .item {
-    all: unset;
-    font-size: 11px;
-    line-height: 1;
-    padding: 3px 0;
-    text-align: center;
-    cursor: pointer;
-    opacity: 0.8;
-    user-select: none;
-  }
-
-  .item:hover {
-    opacity: 1;
-    font-weight: 700;
-    color: var(--mantine-primary-color-4) !important;
-  }
-
-  .disabled {
-    cursor: default;
-    opacity: 0.3;
-  }
-
-  .active {
-    font-weight: 700;
-    opacity: 1;
-    color: var(--mantine-primary-color-4) !important;
-  }
-}
-
-
-===== web\src\components\library\LibraryList.tsx =====
+===== web/src/components/library/LibraryList.tsx =====
 
 import React from "react";
 import { Box, Flex } from "@mantine/core";
@@ -1613,7 +1512,7 @@ export function LibraryList({
 }
 
 
-===== web\src\components\library\LibraryListHeader.tsx =====
+===== web/src/components/library/LibraryListHeader.tsx =====
 
 import type { SortKey } from "../../lib/types";
 import { GRID } from "../../lib/constants";
@@ -1660,7 +1559,108 @@ export function LibraryListHeader(props: {
 }
 
 
-===== web\src\components\library\useAlphabetGroups.ts =====
+===== web/src/components/library/library.scss =====
+
+.game-row {
+  position: relative;
+  transition: background-color 120ms ease-in-out;
+  overflow: hidden;
+
+  &:hover {
+    background: var(--mantine-color-default-hover);
+  }
+
+  &.is-installed {
+    background: var(--mantine-primary-color-light) !important;
+
+    &:hover {
+      background: var(--mantine-primary-color-filled) !important;
+    }
+  }
+
+  /* Ensure the overlay uses white icons from Tabler (currentColor) */
+  .play-overlay__icon {
+    color: #fff;
+    opacity: 0;
+    transform: scale(0.94);
+    transition: opacity .16s ease, transform .16s ease;
+    pointer-events: none;
+  }
+
+  /* Fade in the overlay icon on hover */
+  .icon-wrap:hover .play-overlay__icon {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* Fade the base game icon to .4 on hover */
+  .icon-base {
+    transition: opacity .16s ease;
+  }
+
+  .icon-wrap:hover .icon-base {
+    opacity: .3;
+  }
+
+  /* Optional: subtle hover tint to indicate interactivity */
+  .icon-wrap:hover .play-overlay {
+    background: radial-gradient(transparent 42%, rgba(0, 0, 0, .08));
+    border-radius: 6px;
+  }
+}
+
+.alphabetical-separator {
+  position: sticky;
+  z-index: 5;
+  font-weight: 700;
+  padding: 6px 12px 6px 80px;
+  background: var(--mantine-color-body);
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.alphabetical-rail {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  padding: 6px 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+
+  .item {
+    all: unset;
+    font-size: 11px;
+    line-height: 1;
+    padding: 3px 0;
+    text-align: center;
+    cursor: pointer;
+    opacity: 0.8;
+    user-select: none;
+  }
+
+  .item:hover {
+    opacity: 1;
+    font-weight: 700;
+    color: var(--mantine-primary-color-4) !important;
+  }
+
+  .disabled {
+    cursor: default;
+    opacity: 0.3;
+  }
+
+  .active {
+    font-weight: 700;
+    opacity: 1;
+    color: var(--mantine-primary-color-4) !important;
+  }
+}
+
+
+===== web/src/components/library/useAlphabetGroups.ts =====
 
 import * as React from "react";
 import { letterBucket } from "../../lib/utils";
@@ -1695,7 +1695,7 @@ export function useAlphabetGroups(
 }
 
 
-===== web\src\components\library\useAlphabetRail.tsx =====
+===== web/src/components/library/useAlphabetRail.tsx =====
 
 import * as React from "react";
 import type { VirtuosoHandle } from "react-virtuoso";
@@ -1831,7 +1831,7 @@ export function useAlphabetRail(
 }
 
 
-===== web\src\components\library\useLibraryState.ts =====
+===== web/src/components/library/useLibraryState.ts =====
 
 import * as React from "react";
 import type { SortKey, SortDir, Persisted, Loaded } from "../../lib/types";
@@ -1941,7 +1941,7 @@ export function useLibraryState(data: Loaded) {
 }
 
 
-===== web\src\components\ui\LoadingBar.tsx =====
+===== web/src/components/ui/LoadingBar.tsx =====
 
 import { Stack, Progress, Text } from "@mantine/core";
 
@@ -1960,7 +1960,7 @@ export function LoadingBar({ label, percent, subtext }: {
 }
 
 
-===== web\src\components\ui\PlayActionOverlay.tsx =====
+===== web/src/components/ui/PlayActionOverlay.tsx =====
 
 import React from "react";
 import { IconPlayerPlayFilled, IconDownload } from "../../lib/icons";
@@ -2008,7 +2008,7 @@ export function PlayActionOverlay({
 }
 
 
-===== web\src\components\ui\SearchInput.tsx =====
+===== web/src/components/ui/SearchInput.tsx =====
 
 import { ActionIcon, TextInput } from "@mantine/core";
 import { IconSearch, IconX } from "../../lib/icons";
@@ -2053,7 +2053,7 @@ export function SearchInput({
 }
 
 
-===== web\src\components\ui\SectionCard.tsx =====
+===== web/src/components/ui/SectionCard.tsx =====
 
 import React from "react";
 import { Card, Group, Stack, Text } from "@mantine/core";
@@ -2072,7 +2072,7 @@ export default function SectionCard({
 }
 
 
-===== web\src\index.scss =====
+===== web/src/index.scss =====
 
   body {
     -webkit-font-smoothing: antialiased;
@@ -2090,7 +2090,7 @@ export default function SectionCard({
   }
 
 
-===== web\src\layout\AppShellLayout.tsx =====
+===== web/src/layout/AppShellLayout.tsx =====
 
 import React from "react";
 import { AppShell, Burger, Group, Title, ActionIcon, NavLink, ScrollArea, Text, rem, useMantineColorScheme } from "@mantine/core";
@@ -2165,7 +2165,7 @@ export default function AppShellLayout({ children }: { children: React.ReactNode
 }
 
 
-===== web\src\lib\api.ts =====
+===== web/src/lib/api.ts =====
 
 import axios from "axios";
 
@@ -2264,7 +2264,7 @@ export async function listLibrary(): Promise<LibraryItem[]> {
 }
 
 
-===== web\src\lib\constants.ts =====
+===== web/src/lib/constants.ts =====
 
 export const GRID = {
   cols: "56px minmax(0, 40%) 60px 120px minmax(200px, 1fr)",
@@ -2405,7 +2405,7 @@ export const IDB_STORE = "handles";
 export const DB_KEY = "backupDir";
 
 
-===== web\src\lib\data.ts =====
+===== web/src/lib/data.ts =====
 
 import { FILES, sourceUrlFallback } from "./constants";
 import type { GameDoc, Loaded, NamedDoc, Row } from "./types";
@@ -2483,7 +2483,7 @@ export async function loadLibrary(): Promise<Loaded> {
 }
 
 
-===== web\src\lib\icons.ts =====
+===== web/src/lib/icons.ts =====
 
 export {
     IconSearch,
@@ -2504,7 +2504,7 @@ export {
 } from "@tabler/icons-react";
 
 
-===== web\src\lib\importer.ts =====
+===== web/src/lib/importer.ts =====
 
 // Centralized "Run import" controller that survives route changes.
 // Emits:
@@ -2631,7 +2631,7 @@ export const ImportRunner = {
 };
 
 
-===== web\src\lib\logBus.ts =====
+===== web/src/lib/logBus.ts =====
 
 // Global log buffer that survives route changes AND page reloads (via sessionStorage).
 // Newest-first order. Keeps up to MAX lines.
@@ -2688,7 +2688,7 @@ export const LogBus = {
 };
 
 
-===== web\src\lib\persist.ts =====
+===== web/src/lib/persist.ts =====
 
 export function readCookie(name: string): string | null {
     if (typeof document === "undefined") return null;
@@ -2720,7 +2720,7 @@ export function jsonSet<T>(key: string, value: T) {
 }
 
 
-===== web\src\lib\playnitedump.ts =====
+===== web/src/lib/playnitedump.ts =====
 
 import { api } from "./api";
 import { ZipMeta } from "./types";
@@ -2745,7 +2745,7 @@ export function processStreamUrl(zipName: string) {
 }
 
 
-===== web\src\lib\types.ts =====
+===== web/src/lib/types.ts =====
 
 export type Guidish =
   | string
@@ -2895,7 +2895,7 @@ export type UploadState = {
 
 
 
-===== web\src\lib\uploader.ts =====
+===== web/src/lib/uploader.ts =====
 
 // Single source of truth for ALL uploads (manual or watcher-initiated).
 // Persists state across navigation, emits progress events, logs to LogBus,
@@ -3027,7 +3027,7 @@ export const UploadRunner = {
 };
 
 
-===== web\src\lib\utils.ts =====
+===== web/src/lib/utils.ts =====
 
 import { FALLBACK_ICON } from "./constants";
 import type { Guidish, Link, Letter } from "./types";
@@ -3196,7 +3196,7 @@ export function letterBucket(s: string | undefined | null): Letter {
 }
 
 
-===== web\src\lib\watcher.ts =====
+===== web/src/lib/watcher.ts =====
 
 // Detects newer local zips and delegates the actual upload to UploadRunner.
 // Still persists the selected folder and exposes UI state.
@@ -3368,7 +3368,7 @@ function stop() {
 }
 
 
-===== web\src\main.tsx =====
+===== web/src/main.tsx =====
 
 import React from "react";
 import ReactDOM from "react-dom/client";
@@ -3390,7 +3390,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 );
 
 
-===== web\src\pages\HomePage.tsx =====
+===== web/src/pages/HomePage.tsx =====
 
 import { Alert, Stack, Text } from "@mantine/core";
 
@@ -3407,7 +3407,7 @@ export default function HomePage() {
 }
 
 
-===== web\src\pages\LibraryPage.tsx =====
+===== web/src/pages/LibraryPage.tsx =====
 
 import React from "react";
 import { Stack, Group, Text } from "@mantine/core";
@@ -3443,7 +3443,7 @@ export default function LibraryPage() {
 }
 
 
-===== web\src\pages\SettingsPage.tsx =====
+===== web/src/pages/SettingsPage.tsx =====
 
 import React from "react";
 import {
@@ -3643,7 +3643,7 @@ export default function SettingsPage() {
 }
 
 
-===== web\src\pages\SyncPage.tsx =====
+===== web/src/pages/SyncPage.tsx =====
 
 import React from "react";
 import { Stack, Group, Select, Button, FileButton, PasswordInput, Textarea, Text } from "@mantine/core";
@@ -3888,7 +3888,7 @@ export default function SyncPage() {
 }
 
 
-===== web\src\router.tsx =====
+===== web/src/router.tsx =====
 
 import { createBrowserRouter } from "react-router-dom";
 import AppShellLayout from "./layout/AppShellLayout";
@@ -3905,7 +3905,7 @@ export const router = createBrowserRouter([
 ]);
 
 
-===== web\src\theme.tsx =====
+===== web/src/theme.tsx =====
 
 import React from "react";
 import { MantineProvider, createTheme } from "@mantine/core";
@@ -3943,7 +3943,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 }
 
 
-===== web\tsconfig.json =====
+===== web/tsconfig.json =====
 
 {
   "compilerOptions": {
@@ -3961,7 +3961,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 }
 
 
-===== web\vite.config.mts =====
+===== web/vite.config.mts =====
 
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";

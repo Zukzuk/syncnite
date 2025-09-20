@@ -1,3 +1,5 @@
+import { Persisted } from "./types";
+
 export const GRID = {
   cols: "56px minmax(0, 40%) 60px 120px minmax(200px, 1fr)",
   minWidth: "calc(56px + 40% + 60px + 120px + 200px + 24px)",
@@ -27,6 +29,16 @@ export const FILES = {
     `${BASE}/sources.GameSource.json`,
     `${BASE}/sources.Source.json`,
   ],
+};
+
+export const COOKIE_DEFAULTS: Persisted = {
+  q: "",
+  sources: [],
+  tags: [],
+  showHidden: false,
+  installedOnly: false,
+  sortKey: "title",
+  sortDir: "asc",
 };
 
 export const FALLBACK_ICON =
@@ -116,7 +128,6 @@ export function sourceProtocolLink(source: string, id: string): string | null {
       return null;
   }
 }
-
 
 export const NOTIF_IMPORT_ID = "pn-import";
 

@@ -1,3 +1,6 @@
+import { COOKIE, COOKIE_DEFAULTS } from "./constants";
+import { Persisted } from "./types";
+
 export function readCookie(name: string): string | null {
     if (typeof document === "undefined") return null;
     const m = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
@@ -25,4 +28,16 @@ export function jsonSet<T>(key: string, value: T) {
     } catch {
         /* no-op */
     }
+}
+
+export function loadStateFromCookie(): Persisted {
+  try {
+    return jsonGet<Persisted>(COOKIE.libraryState, COOKIE_DEFAULTS);
+  } catch {
+    return COOKIE_DEFAULTS;
+  }
+}
+
+export function saveStateToCookie(s: Persisted) {
+  jsonSet(COOKIE.libraryState, s);
 }

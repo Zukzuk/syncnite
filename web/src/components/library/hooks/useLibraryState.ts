@@ -1,30 +1,7 @@
 import * as React from "react";
-import type { SortKey, SortDir, Persisted, Loaded } from "../../lib/types";
-import { bucketLetter } from "../../lib/utils";
-import { jsonGet, jsonSet } from "../../lib/persist";
-import { COOKIE } from "../../lib/constants";
-
-const DEFAULTS: Persisted = {
-  q: "",
-  sources: [],
-  tags: [],
-  showHidden: false,
-  installedOnly: false,
-  sortKey: "title",
-  sortDir: "asc",
-};
-
-function loadStateFromCookie(): Persisted {
-  try {
-    return jsonGet<Persisted>(COOKIE.libraryState, DEFAULTS);
-  } catch {
-    return DEFAULTS;
-  }
-}
-
-function saveStateToCookie(s: Persisted) {
-  jsonSet(COOKIE.libraryState, s);
-}
+import type { SortKey, SortDir, Persisted, Loaded } from "../../../lib/types";
+import { bucketLetter } from "../../../lib/utils";
+import { loadStateFromCookie, saveStateToCookie } from "../../../lib/persist";
 
 export function useLibraryState(data: Loaded) {
   const persisted = React.useMemo(loadStateFromCookie, []);

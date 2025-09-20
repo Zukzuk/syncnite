@@ -3,7 +3,7 @@ import { Group, MultiSelect, Switch, Text, Stack, Flex } from "@mantine/core";
 import { SearchInput } from "../ui/SearchInput";
 import { sourceLabel } from "../../lib/constants";
 
-export function Controls(props: {
+export function ControlsHeader(props: {
   q: string; setQ: (v: string) => void;
   sources: string[]; setSources: (v: string[]) => void;
   tags: string[]; setTags: (v: string[]) => void;

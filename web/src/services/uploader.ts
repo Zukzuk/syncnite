@@ -3,10 +3,10 @@
 // notifies with Mantine, and announces availability via pn:zips-changed.
 
 import { notifications } from "@mantine/notifications";
-import { uploadZip } from "./api";
-import { LogBus } from "../lib/logBus";
-import { UploadState } from "./types";
-import { LAST_UP_KEY, STATE_KEY, NOTIF_UPLOAD_ID } from "./constants";
+import { uploadZip } from "../lib/api";
+import { LogBus } from "../services/logBus";
+import { UploadState } from "../lib/types";
+import { LAST_UP_KEY, STATE_KEY, NOTIF_UPLOAD_ID } from "../lib/constants";
 
 let current: UploadState = restoreState();
 let lastUploaded: { name: string; size?: number; lastModified?: number } | null = restoreLast();

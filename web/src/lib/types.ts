@@ -79,19 +79,6 @@ export type Persisted = {
   sortDir: SortDir;
 };
 
-export type GameRowProps = {
-  id: string;
-  hidden: boolean;
-  showHidden: boolean;
-  installed: boolean;
-  iconUrl: string;
-  title: string;
-  source: string;
-  tags: string[];
-  year?: number | null;
-  url: string | null;
-};
-
 export type Loaded = {
   rows: Row[];
   allSources: string[];

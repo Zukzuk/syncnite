@@ -4,10 +4,10 @@ import SectionCard from "../components/ui/SectionCard";
 import { LoadingBar } from "../components/ui/LoadingBar";
 import { listZips } from "../lib/api";
 import type { BackupWatcherState, ZipInfo } from "../lib/types";
-import { BackupWatcher } from "../lib/watcher";
-import { ImportRunner } from "../lib/importer";
-import { LogBus } from "../lib/logBus";
-import { UploadRunner } from "../lib/uploader";
+import { BackupWatcher } from "../services/watcher";
+import { ImportRunner } from "../services/importer";
+import { LogBus } from "../services/logBus";
+import { UploadRunner } from "../services/uploader";
 
 export default function SyncPage() {
     const [zips, setZips] = React.useState<ZipInfo[]>([]);

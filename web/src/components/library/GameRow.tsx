@@ -3,10 +3,10 @@ import { IconImage } from "./IconImage";
 import { GRID, sourceProtocolLink, sourceTrim } from "../../lib/constants";
 import { PlayActionOverlay } from "../ui/PlayActionOverlay";
 import { effectiveLink } from "../../lib/utils";
-import { GameRowProps } from "../../lib/types";
+import { Row } from "../../lib/types";
 import { IconExternalLink } from "../../lib/icons";
 
-export function GameRow(props: GameRowProps) {
+export function GameRow(props: Row) {
   const { id, hidden, installed, iconUrl, title, source, tags, year, url } = props;
   const href = url ?? effectiveLink({ url, source, title, tags });
   const dim = hidden;
