@@ -4,15 +4,13 @@ import { useElementSize } from "@mantine/hooks";
 import { Virtuoso, GroupedVirtuoso, VirtuosoHandle } from "react-virtuoso";
 import type { Loaded } from "../../lib/types";
 import { ControlsHeader } from "./ControlsHeader";
-import { GameRow } from "./GameRow";
-import { AlphabeticalSeparatorRow } from "./AlphabeticalSeparatorRow";
 import { SortHeader } from "./SortHeader";
-import { AlphabeticalRail } from "./AlphabeticalRail";
+import { GameRow } from "./GameRow";
+import { AlphabeticalRail } from "../ui/AlphabeticalRail";
+import { AlphabeticalSeparatorRow } from "../ui/AlphabeticalSeparatorRow";
 import { useAlphabetGroups } from "./hooks/useAlphabetGroups";
 import { useAlphabetRail } from "./hooks/useAlphabetRail";
 import { useLibraryState } from "./hooks/useLibraryState";
-
-import "./LibraryList.scss";
 
 const Scroller = React.forwardRef<HTMLDivElement, React.HTMLProps<HTMLDivElement>>(
   (props, ref) => (
@@ -73,6 +71,7 @@ export function LibraryList({
 
   return (
     <Flex direction="column" h="100%" style={{ minHeight: 0 }}>
+
       <Box ref={controlsRef} p="md" style={{ position: "sticky", top: 0, zIndex: 20, background: "var(--mantine-color-body)" }}>
         <ControlsHeader
           q={ui.q}

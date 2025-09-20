@@ -51,6 +51,8 @@ export const FALLBACK_ICON =
     </svg>`
   );
 
+export function playniteAction(id: string): string { return `playnite://playnite/start/${encodeURIComponent(id)}`; };
+
 export const sourceTrim: Record<string, string> = {
   "steam": "steam",
   "gog": "gog",

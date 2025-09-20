@@ -1,19 +1,20 @@
-import { Badge, Group, Text } from "@mantine/core";
-import { IconImage } from "./IconImage";
-import { GRID, sourceProtocolLink, sourceTrim } from "../../lib/constants";
+import { Badge, Box, Group, Text } from "@mantine/core";
+import { IconImage } from "../ui/IconImage";
+import { GRID, playniteAction, sourceProtocolLink, sourceTrim } from "../../lib/constants";
 import { PlayActionOverlay } from "../ui/PlayActionOverlay";
 import { effectiveLink } from "../../lib/utils";
 import { Row } from "../../lib/types";
 import { IconExternalLink } from "../../lib/icons";
 
+import "./GameRow.scss";
+
 export function GameRow(props: Row) {
   const { id, hidden, installed, iconUrl, title, source, tags, year, url } = props;
   const href = url ?? effectiveLink({ url, source, title, tags });
   const dim = hidden;
-  const actionHref = `playnite://playnite/start/${encodeURIComponent(id)}`;
 
   return (
-    <div
+    <Box
       data-row-id={id}
       className={`game-row${dim ? " is-dim" : ""}${installed ? " is-installed" : ""}`}
       style={{
@@ -27,17 +28,18 @@ export function GameRow(props: Row) {
         borderBottom: "1px solid var(--mantine-color-default-border)",
       }}
     >
-      <div style={{ width: 56 }} className={dim ? " is-dim" : ""}>
-        <div className="icon-wrap" style={{ position: "relative", width: 40, height: 40 }}>
-          <PlayActionOverlay installed={installed} href={actionHref} title={title}>
-            <div className="icon-base">
+      <Box style={{ width: 56 }} className={dim ? " is-dim" : ""}>
+        
+        <Box className="icon-wrap" style={{ position: "relative", width: 40, height: 40 }}>
+          <PlayActionOverlay installed={installed} href={playniteAction(id)} title={title}>
+            <Box className="icon-base">
               <IconImage src={iconUrl} />
-            </div>
+            </Box>
           </PlayActionOverlay>
-        </div>
-      </div>
+        </Box>
+      </Box>
 
-      <div
+      <Box
         className={dim ? " is-dim" : ""}
         style={{ display: "flex", alignItems: "center", gap: 8 }}
       >
@@ -62,17 +64,17 @@ export function GameRow(props: Row) {
             <IconExternalLink size={16} stroke={2} />
           </a>
         )}
-      </div>
+      </Box>
 
-      <div className={dim ? " is-dim" : ""} style={{ textAlign: "center" }}>
+      <Box className={dim ? " is-dim" : ""} style={{ textAlign: "center" }}>
         {year ?
           <Text>{year}</Text>
           :
           ""
         }
-      </div>
+      </Box>
 
-      <div className={dim ? " is-dim" : ""} style={{ textAlign: "center" }}>
+      <Box className={dim ? " is-dim" : ""} style={{ textAlign: "center" }}>
         {source && (
           (() => {
             const proto = sourceProtocolLink(source, id || "");
@@ -94,9 +96,9 @@ export function GameRow(props: Row) {
             );
           })()
         )}
-      </div>
+      </Box>
 
-      <div className={dim ? " is-dim" : ""}>
+      <Box className={dim ? " is-dim" : ""}>
         <Group gap={6} align="center" wrap="wrap" style={{ maxHeight: "100%" }}>
           {(tags ?? []).map((t) => (
             <Badge key={t} variant="dark" size="sm" style={{ boxShadow: "0 2px 0 0 rgb(0 0 0 / 30%)" }}>
@@ -104,7 +106,8 @@ export function GameRow(props: Row) {
             </Badge>
           ))}
         </Group>
-      </div>
-    </div>
+      </Box>
+
+    </Box>
   );
 }
