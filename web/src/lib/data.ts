@@ -1,6 +1,6 @@
-import { FILES, sourceUrlFallback } from "./constants";
+import { FILES } from "./constants";
 import type { GameDoc, Loaded, NamedDoc, Row } from "./types";
-import { asGuid, asGuidArray, buildIconUrl, firstStoreishLink, normalizePath, extractYear } from "./utils";
+import { asGuid, asGuidArray, buildIconUrl, firstStoreishLink, normalizePath, extractYear, sourceUrlFallback } from "./utils";
 
 async function getJson<T>(path: string): Promise<T> {
   const sep = path.includes("?") ? "&" : "?";

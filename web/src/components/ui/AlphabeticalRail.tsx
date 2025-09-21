@@ -28,7 +28,7 @@ export function AlphabeticalRail({
             shadow="sm"
             style={{
                 position: "absolute",
-                right: 16,
+                right: 15,
                 top: "50%",
                 transform: "translateY(-50%)",
                 width: 28,

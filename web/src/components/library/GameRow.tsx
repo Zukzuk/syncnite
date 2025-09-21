@@ -1,15 +1,15 @@
 import { Badge, Box, Group, Text } from "@mantine/core";
 import { IconImage } from "../ui/IconImage";
-import { GRID, playniteAction, sourceProtocolLink, sourceTrim } from "../../lib/constants";
 import { PlayActionOverlay } from "../ui/PlayActionOverlay";
-import { effectiveLink } from "../../lib/utils";
+import { GRID, sourceTrim } from "../../lib/constants";
+import { effectiveLink, playniteAction, sourceProtocolLink } from "../../lib/utils";
 import { Row } from "../../lib/types";
 import { IconExternalLink } from "../../lib/icons";
 
 import "./GameRow.scss";
 
 export function GameRow(props: Row) {
-  const { id, hidden, installed, iconUrl, title, source, tags, year, url } = props;
+  const { id, hidden, installed, iconUrl, title, source, tags, year, url, raw } = props;
   const href = url ?? effectiveLink({ url, source, title, tags });
   const dim = hidden;
 
@@ -20,11 +20,10 @@ export function GameRow(props: Row) {
       style={{
         display: "grid",
         gridTemplateColumns: GRID.cols,
-        minWidth: GRID.minWidth,
         alignItems: "center",
         gap: 12,
         height: GRID.rowHeight,
-        padding: "0 12px",
+        padding: "0 0 0 12px",
         borderBottom: "1px solid var(--mantine-color-default-border)",
       }}
     >
@@ -77,7 +76,7 @@ export function GameRow(props: Row) {
       <Box className={dim ? " is-dim" : ""} style={{ textAlign: "center" }}>
         {source && (
           (() => {
-            const proto = sourceProtocolLink(source, id || "");
+            const proto = sourceProtocolLink(source, raw.GameId ? raw.GameId.toString() : "");
             return proto ? (
               <Badge
                 variant="outline"

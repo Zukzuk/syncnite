@@ -2,7 +2,6 @@ import { Persisted } from "./types";
 
 export const GRID = {
   cols: "56px minmax(0, 40%) 60px 120px minmax(200px, 1fr)",
-  minWidth: "calc(56px + 40% + 60px + 120px + 200px + 24px)",
   rowHeight: 56,
   headerHeight: 40,
 };
@@ -10,10 +9,6 @@ export const GRID = {
 export const Z_INDEX = {
   stickyHeader: 10,
   overlay: 20,
-};
-
-export const COOKIE = {
-  libraryState: "pn_library_ui_v2",
 };
 
 export const BASE = "/data";
@@ -31,16 +26,6 @@ export const FILES = {
   ],
 };
 
-export const COOKIE_DEFAULTS: Persisted = {
-  q: "",
-  sources: [],
-  tags: [],
-  showHidden: false,
-  installedOnly: false,
-  sortKey: "title",
-  sortDir: "asc",
-};
-
 export const FALLBACK_ICON =
   "data:image/svg+xml;utf8," +
   encodeURIComponent(
@@ -50,8 +35,6 @@ export const FALLBACK_ICON =
             font-family='sans-serif' font-size='10' fill='#777'>no icon</text>
     </svg>`
   );
-
-export function playniteAction(id: string): string { return `playnite://playnite/start/${encodeURIComponent(id)}`; };
 
 export const sourceTrim: Record<string, string> = {
   "steam": "steam",
@@ -79,61 +62,23 @@ export const sourceLabel: Record<string, string> = {
   "microsoft store": "Microsoft Store",
 };
 
-export function sourceUrlFallback(s: string, id: string): string | null {
-  switch (s) {
-    case "steam":
-      return `https://store.steampowered.com/app/${encodeURIComponent(id)}`;
-    case "gog":
-      return `https://www.gog.com/game/${encodeURIComponent(id)}`;
-    case "ubisoft connect":
-      return `https://www.ubisoft.com/en-us/search?gss-q=${encodeURIComponent(id)}`;
-    case "ea app":
-      return null;
-    case "battle.net":
-      return null;
-    case "epic":
-      return `https://www.epicgames.com/store/en-US/p/${encodeURIComponent(id)}`;
-    case "xbox":
-      return `https://www.xbox.com/en-us/Search/Results?q=${encodeURIComponent(id)}`;
-    case "humble":
-      return `https://www.humblebundle.com/store/search?search=${encodeURIComponent(id)}`;
-    case "nintendo":
-      return `https://www.nintendo.com/us/search/?q=${encodeURIComponent(id)}`;
-    case "microsoft store":
-      return `https://apps.microsoft.com/search?query=${encodeURIComponent(id)}`;
-    default:
-      return null;
-  }
+export const COOKIE = {
+  libraryState: "pn_library_ui_v2",
 };
 
-export function sourceProtocolLink(source: string, id: string): string | null {
-  const s = source.toLowerCase();
-
-  switch (s) {
-    case "steam":
-      // if id is numeric we can launch the game directly
-      return /^\d+$/.test(id) ? `steam://rungameid/${id}` : "steam://open";
-    case "gog":
-    case "gog galaxy":
-      return id ? `goggalaxy://openGameView/${encodeURIComponent(id)}` : "goggalaxy://openGOGGalaxy";
-    case "epic":
-      return id ? `com.epicgames.launcher://apps/${encodeURIComponent(id)}?action=show` : "com.epicgames.launcher://";
-    case "ubisoft connect":
-      return "uplay://";
-    case "ea app":
-      return "ealauncher://";
-    case "battle.net":
-      return "battlenet://";
-    case "xbox":
-      return "xbox://";
-    default:
-      return null;
-  }
-}
-
-export const NOTIF_IMPORT_ID = "pn-import";
+export const COOKIE_DEFAULTS: Persisted = {
+  q: "",
+  sources: [],
+  tags: [],
+  showHidden: false,
+  installedOnly: false,
+  sortKey: "title",
+  sortDir: "asc",
+};
 
 export const MAX_LINES = 1000;
+
+export const NOTIF_IMPORT_ID = "pn-import";
 
 export const KEY = "pn_logs_v1";
 

@@ -1,6 +1,6 @@
 
 
-===== api/Dockerfile =====
+===== api\Dockerfile =====
 
 FROM node:20-alpine AS api-build
 WORKDIR /app
@@ -55,7 +55,7 @@ WORKDIR /app/api
 CMD ["node", "dist/server.js"]
 
 
-===== api/package.json =====
+===== api\package.json =====
 
 {
     "name": "playnite-api",
@@ -84,7 +84,7 @@ CMD ["node", "dist/server.js"]
 }
 
 
-===== api/src/app.ts =====
+===== api\src\app.ts =====
 
 import express from "express";
 import path from "path";
@@ -122,7 +122,7 @@ export function createApp() {
 }
 
 
-===== api/src/helpers.ts =====
+===== api\src\helpers.ts =====
 
 import { spawn, type SpawnOptionsWithoutStdio } from "node:child_process";
 import { join, dirname } from "node:path";
@@ -321,7 +321,7 @@ export async function copyLibraryFilesWithProgress(opts: {
 }
 
 
-===== api/src/routes/extension.ts =====
+===== api\src\routes\extension.ts =====
 
 import express from "express";
 import path from "path";
@@ -345,7 +345,7 @@ extensionRouter.get("/download", (_req, res) => {
 export default extensionRouter;
 
 
-===== api/src/routes/playnitedump.ts =====
+===== api\src\routes\playnitedump.ts =====
 
 import express from "express";
 import multer from "multer";
@@ -492,7 +492,7 @@ playniteDumpRouter.get("/process-stream", async (req, res) => {
 export default playniteDumpRouter;
 
 
-===== api/src/server.ts =====
+===== api\src\server.ts =====
 
 import { createApp } from "./app";
 
@@ -504,7 +504,7 @@ app.listen(port, () => {
 });
 
 
-===== api/tsconfig.json =====
+===== api\tsconfig.json =====
 
 {
     "compilerOptions": {
@@ -583,7 +583,7 @@ volumes:
 }
 
 
-===== playnite/PlayniteImport/PlayniteImport.cs =====
+===== playnite\PlayniteImport\PlayniteImport.cs =====
 
 using System.Text.Encodings.Web;
 using System.Text.Json;
@@ -712,7 +712,7 @@ if (dumped == 0)
 }
 
 
-===== playnite/PlayniteImport/PlayniteImport.csproj =====
+===== playnite\PlayniteImport\PlayniteImport.csproj =====
 
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -732,7 +732,18 @@ if (dumped == 0)
 </Project>
 
 
-===== playnite/PlayniteViewerBridge/PlayniteViewerBridge.cs =====
+===== playnite\PlayniteViewerBridge\extension.yaml =====
+
+Id: a85f0db8-39f4-40ea-9e03-bc5be2298c89
+Name: PlayniteViewerBridge
+Author: Dave Timmerman
+Version: 1.0.0
+Module: PlayniteViewerBridge.dll
+Type: GenericPlugin
+PlayniteApiVersion: 6.12.0
+
+
+===== playnite\PlayniteViewerBridge\PlayniteViewerBridge.cs =====
 
 using Playnite.SDK;
 using Playnite.SDK.Plugins;
@@ -836,7 +847,7 @@ namespace PlayniteViewerBridge
 }
 
 
-===== playnite/PlayniteViewerBridge/PlayniteViewerBridge.csproj =====
+===== playnite\PlayniteViewerBridge\PlayniteViewerBridge.csproj =====
 
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -858,18 +869,7 @@ namespace PlayniteViewerBridge
 </Project>
 
 
-===== playnite/PlayniteViewerBridge/extension.yaml =====
-
-Id: a85f0db8-39f4-40ea-9e03-bc5be2298c89
-Name: PlayniteViewerBridge
-Author: Dave Timmerman
-Version: 1.0.0
-Module: PlayniteViewerBridge.dll
-Type: GenericPlugin
-PlayniteApiVersion: 6.12.0
-
-
-===== web/Dockerfile =====
+===== web\Dockerfile =====
 
 FROM node:20-alpine AS build
 WORKDIR /app
@@ -888,7 +888,7 @@ COPY --from=build /app/web/dist/ /usr/share/nginx/html/
 
 
 
-===== web/index.html =====
+===== web\index.html =====
 
 <!doctype html>
 <html lang="en">
@@ -911,7 +911,7 @@ COPY --from=build /app/web/dist/ /usr/share/nginx/html/
 </html>
 
 
-===== web/nginx.conf =====
+===== web\nginx.conf =====
 
 # /etc/nginx/conf.d/default.conf  (or the site config you copy in your web image)
 server {
@@ -943,7 +943,7 @@ server {
 }
 
 
-===== web/package.json =====
+===== web\package.json =====
 
 {
   "name": "playnite-web",
@@ -977,7 +977,7 @@ server {
 }
 
 
-===== web/src/App.tsx =====
+===== web\src\App.tsx =====
 
 import { RouterProvider } from "react-router-dom";
 import { router } from "./router";
@@ -987,77 +987,14 @@ export default function App() {
 }
 
 
-===== web/src/components/library/AlphabeticalRail.tsx =====
-
-import { Paper, Stack, Text, Tooltip } from "@mantine/core";
-import { AlphabeticalRailCounts } from "../../lib/types";
-
-export const DEFAULT_LETTERS = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ", "#"];
-
-export function AlphabeticalRail({
-    letters = DEFAULT_LETTERS,
-    counts,
-    active,
-    onJump,
-    title = "Jump to letter",
-}: {
-    letters?: string[];
-    counts?: AlphabeticalRailCounts;
-    active?: string | null;
-    onJump: (letter: string) => void;
-    title?: string;
-}) {
-    const usable = counts
-        ? letters.filter((ch) => (counts[ch] ?? 0) > 0)
-        : letters;
-
-    if (usable.length === 0) return null;
-
-    return (
-        <Paper className="alphabetical-rail" radius="xl" withBorder shadow="sm" aria-label={title}>
-            <Stack gap={2} align="center" justify="center">
-                {usable.map((ch) => {
-                    const isActive = !!active && active.toUpperCase() === ch;
-                    return (
-                        <Tooltip key={ch} label={ch} position="left" withArrow>
-                            <Text
-                                component="button"
-                                type="button"
-                                className={["item", isActive ? "active" : ""].join(" ")}
-                                onClick={() => onJump(ch)}
-                                aria-pressed={isActive}
-                            >
-                                {ch}
-                            </Text>
-                        </Tooltip>
-                    );
-                })}
-            </Stack>
-        </Paper>
-    );
-}
-
-
-===== web/src/components/library/AlphabeticalSeparatorRow.tsx =====
-
-
-export function AlphabeticalSeparatorRow({ bucket, top }: { bucket: string; top: number }) {
-  return (
-    <div className="alphabetical-separator" style={{ top }}>
-      {bucket}
-    </div>
-  );
-}
-
-
-===== web/src/components/library/Controls.tsx =====
+===== web\src\components\library\ControlsHeader.tsx =====
 
 import React from "react";
 import { Group, MultiSelect, Switch, Text, Stack, Flex } from "@mantine/core";
 import { SearchInput } from "../ui/SearchInput";
 import { sourceLabel } from "../../lib/constants";
 
-export function Controls(props: {
+export function ControlsHeader(props: {
   q: string; setQ: (v: string) => void;
   sources: string[]; setSources: (v: string[]) => void;
   tags: string[]; setTags: (v: string[]) => void;
@@ -1177,389 +1114,7 @@ export function Controls(props: {
 }
 
 
-===== web/src/components/library/GameRow.tsx =====
-
-import { Badge, Group, Text } from "@mantine/core";
-import { IconImage } from "./IconImage";
-import { GRID, sourceProtocolLink, sourceTrim } from "../../lib/constants";
-import { PlayActionOverlay } from "../ui/PlayActionOverlay";
-import { effectiveLink } from "../../lib/utils";
-import { GameRowProps } from "../../lib/types";
-import { IconExternalLink } from "../../lib/icons";
-
-export function GameRow(props: GameRowProps) {
-  const { id, hidden, installed, iconUrl, title, source, tags, year, url } = props;
-  const href = url ?? effectiveLink({ url, source, title, tags });
-  const dim = hidden;
-  const actionHref = `playnite://playnite/start/${encodeURIComponent(id)}`;
-
-  return (
-    <div
-      data-row-id={id}
-      className={`game-row${dim ? " is-dim" : ""}${installed ? " is-installed" : ""}`}
-      style={{
-        display: "grid",
-        gridTemplateColumns: GRID.cols,
-        minWidth: GRID.minWidth,
-        alignItems: "center",
-        gap: 12,
-        height: GRID.rowHeight,
-        padding: "0 12px",
-        borderBottom: "1px solid var(--mantine-color-default-border)",
-      }}
-    >
-      <div style={{ width: 56 }} className={dim ? " is-dim" : ""}>
-        <div className="icon-wrap" style={{ position: "relative", width: 40, height: 40 }}>
-          <PlayActionOverlay installed={installed} href={actionHref} title={title}>
-            <div className="icon-base">
-              <IconImage src={iconUrl} />
-            </div>
-          </PlayActionOverlay>
-        </div>
-      </div>
-
-      <div
-        className={dim ? " is-dim" : ""}
-        style={{ display: "flex", alignItems: "center", gap: 8 }}
-      >
-        <Text
-          fw={500}
-          title={title}
-          className="game-title"
-          style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
-        >
-          {title}
-        </Text>
-
-        {href && (
-          <a
-            href={href}
-            target="_blank"
-            rel="noopener"
-            aria-label={`Open link for ${title} in a new tab`}
-            title={`Open ${title}`}
-            style={{ marginLeft: "auto", display: "inline-flex", lineHeight: 0 }}
-          >
-            <IconExternalLink size={16} stroke={2} />
-          </a>
-        )}
-      </div>
-
-      <div className={dim ? " is-dim" : ""} style={{ textAlign: "center" }}>
-        {year ?
-          <Text>{year}</Text>
-          :
-          ""
-        }
-      </div>
-
-      <div className={dim ? " is-dim" : ""} style={{ textAlign: "center" }}>
-        {source && (
-          (() => {
-            const proto = sourceProtocolLink(source, id || "");
-            return proto ? (
-              <Badge
-                variant="outline"
-                component="a"
-                href={proto}
-                rel="noopener"
-                title={`Open ${source}${id ? ` — ${title}` : ""}`}
-                style={{ boxShadow: "0 2px 0 0 rgb(0 0 0 / 30%)", textDecoration: "none", cursor: "pointer" }}
-              >
-                {sourceTrim[source]}
-              </Badge>
-            ) : (
-              <Badge variant="outline" size="sm" style={{ boxShadow: "0 2px 0 0 rgb(0 0 0 / 30%)" }}>
-                {sourceTrim[source]}
-              </Badge>
-            );
-          })()
-        )}
-      </div>
-
-      <div className={dim ? " is-dim" : ""}>
-        <Group gap={6} align="center" wrap="wrap" style={{ maxHeight: "100%" }}>
-          {(tags ?? []).map((t) => (
-            <Badge key={t} variant="dark" size="sm" style={{ boxShadow: "0 2px 0 0 rgb(0 0 0 / 30%)" }}>
-              {t}
-            </Badge>
-          ))}
-        </Group>
-      </div>
-    </div>
-  );
-}
-
-
-===== web/src/components/library/IconImage.tsx =====
-
-import React from "react";
-import { isIcoPath, icoToPngDataUrl } from "../../lib/utils";
-
-export function IconImage({ src, alt }: { src: string; alt?: string }) {
-  const [url, setUrl] = React.useState(src);
-
-  React.useEffect(() => {
-    let cancelled = false;
-    async function maybeConvert() {
-      if (isIcoPath(src)) {
-        const data = await icoToPngDataUrl(src);
-        if (!cancelled && data) setUrl(data);
-      } else {
-        setUrl(src);
-      }
-    }
-    maybeConvert();
-    return () => { cancelled = true; };
-  }, [src]);
-
-  return (
-    <img
-      className="icon"
-      src={url}
-      alt={alt ?? ""}
-      width={40}
-      height={40}
-      style={{ width: 40, height: 40, objectFit: "contain", borderRadius: 6, background: "var(--mantine-color-default)" }}
-      onError={async (e) => {
-        // fallback if the src fails to load
-        if (isIcoPath(src)) {
-          const data = await icoToPngDataUrl(src);
-          if (data) (e.target as HTMLImageElement).src = data;
-        }
-      }}
-    />
-  );
-}
-
-
-===== web/src/components/library/LibraryList.tsx =====
-
-import React from "react";
-import { Box, Flex } from "@mantine/core";
-import { useElementSize } from "@mantine/hooks";
-import { Virtuoso, GroupedVirtuoso, VirtuosoHandle } from "react-virtuoso";
-import type { Loaded } from "../../lib/types";
-import { Controls } from "./Controls";
-import { useLibraryState } from "./useLibraryState";
-import { GameRow } from "./GameRow";
-import { AlphabeticalSeparatorRow } from "./AlphabeticalSeparatorRow";
-import { LibraryListHeader } from "./LibraryListHeader";
-import { AlphabeticalRail } from "./AlphabeticalRail";
-import { useAlphabetGroups } from "./useAlphabetGroups";
-import { useAlphabetRail } from "./useAlphabetRail";
-
-import "./library.scss";
-
-export function LibraryList({
-  data,
-  onCountsChange,
-  filteredCount,
-  totalCount,
-}: {
-  data: Loaded;
-  onCountsChange?: (filtered: number, total: number) => void;
-  filteredCount: number;
-  totalCount: number;
-}) {
-  const { ui, derived } = useLibraryState(data);
-  const { ref: controlsRef, height: controlsH } = useElementSize();
-  const { ref: headerRef, height: headerH } = useElementSize();
-
-  const virtuosoRef = React.useRef<VirtuosoHandle>(null);
-
-  React.useEffect(() => {
-    onCountsChange?.(derived.filteredCount, derived.totalCount);
-  }, [derived.filteredCount, derived.totalCount, onCountsChange]);
-
-  // Alphabet grouping is encapsulated here
-  const { groups, isGrouped, flatItems } = useAlphabetGroups(
-    ui.sortKey,
-    derived.withBuckets,
-    derived.rowsSorted
-  );
-
-  // Rail logic is fully encapsulated here
-  const { counts, activeLetter, handleJump, rangeChanged } = useAlphabetRail(
-    { isGrouped, groups, flatItems },
-    virtuosoRef
-  );
-
-  const overscan = { top: 600, bottom: 800 } as const;
-  const stickyOffset = controlsH;
-
-  // remount keys
-  const dataSig = `${derived.filteredCount}|${ui.q}|${ui.sources.join(",")}|${ui.tags.join(",")}|${ui.showHidden}|${ui.installedOnly}`;
-  const groupedKey = `grp:${dataSig}|${ui.sortKey}|${ui.sortDir}`;
-  const flatKey = `flt:${dataSig}|${ui.sortKey}|${ui.sortDir}`;
-
-  return (
-    <Flex direction="column" h="100%" style={{ minHeight: 0 }}>
-      <Box
-        ref={controlsRef}
-        p="md"
-        style={{ position: "sticky", top: 0, zIndex: 20, background: "var(--mantine-color-body)" }}
-      >
-        <Controls
-          q={ui.q}
-          setQ={ui.setQ}
-          sources={ui.sources}
-          setSources={ui.setSources}
-          allSources={data.allSources}
-          tags={ui.tags}
-          setTags={ui.setTags}
-          allTags={data.allTags}
-          showHidden={ui.showHidden}
-          setShowHidden={ui.setShowHidden}
-          installedOnly={ui.installedOnly}
-          setInstalledOnly={ui.setInstalledOnly}
-          filteredCount={filteredCount}
-          totalCount={totalCount}
-        />
-      </Box>
-
-      <div style={{ position: "sticky", top: stickyOffset, zIndex: 15 }}>
-        <LibraryListHeader
-          headerRef={headerRef as unknown as (el: HTMLElement | null) => void}
-          sortKey={ui.sortKey}
-          sortDir={ui.sortDir}
-          onToggleSort={ui.toggleSort}
-        />
-      </div>
-
-      <Box style={{ flex: 1, minHeight: 0, position: "relative", overflow: "hidden" }}>
-        {isGrouped && groups ? (
-          <GroupedVirtuoso
-            ref={virtuosoRef}
-            key={groupedKey}
-            style={{ height: "100%" }}
-            groupCounts={groups.map((g) => g.rows.length)}
-            increaseViewportBy={overscan}
-            rangeChanged={rangeChanged}
-            groupContent={(index) => (
-              <AlphabeticalSeparatorRow bucket={groups[index].title} top={(controlsH + headerH) || 0} />
-            )}
-            itemContent={(index) => {
-              let i = index;
-              for (const g of groups) {
-                if (i < g.rows.length) {
-                  const r = g.rows[i];
-                  return (
-                    <GameRow
-                      id={r.id}
-                      hidden={r.hidden}
-                      showHidden={ui.showHidden}
-                      installed={r.installed}
-                      iconUrl={r.iconUrl}
-                      title={r.title}
-                      source={r.source}
-                      tags={r.tags}
-                      year={r.year}
-                      url={r.url}
-                    />
-                  );
-                }
-                i -= g.rows.length;
-              }
-              return null;
-            }}
-          />
-        ) : (
-          <Virtuoso
-            ref={virtuosoRef}
-            key={flatKey}
-            style={{ height: "100%" }}
-            data={derived.rowsSorted}
-            increaseViewportBy={overscan}
-            rangeChanged={rangeChanged}
-            computeItemKey={(index, r) => r.id}
-            itemContent={(index) => {
-              const r = derived.rowsSorted[index];
-              return (
-                <GameRow
-                  id={r.id}
-                  hidden={r.hidden}
-                  showHidden={ui.showHidden}
-                  installed={r.installed}
-                  iconUrl={r.iconUrl}
-                  title={r.title}
-                  source={r.source}
-                  tags={r.tags}
-                  year={r.year}
-                  url={r.url}
-                />
-              );
-            }}
-          />
-        )}
-
-        {isGrouped && (
-          <Box
-            style={{
-              display: "flex",
-              alignItems: "stretch",
-              pointerEvents: "none",
-            }}
-          >
-            <Box style={{ pointerEvents: "auto", width: "100%" }}>
-              <AlphabeticalRail active={activeLetter} onJump={handleJump} counts={counts} />
-            </Box>
-          </Box>
-        )}
-      </Box>
-    </Flex>
-  );
-}
-
-
-===== web/src/components/library/LibraryListHeader.tsx =====
-
-import type { SortKey } from "../../lib/types";
-import { GRID } from "../../lib/constants";
-
-export function LibraryListHeader(props: {
-  headerRef: (el: HTMLElement | null) => void;
-  sortKey: SortKey;
-  sortDir: "asc" | "desc";
-  onToggleSort: (k: SortKey) => void;
-}) {
-  const { headerRef, sortKey, sortDir, onToggleSort } = props;
-  const label = (base: string, key: SortKey) => (sortKey === key ? `${base} ${sortDir === "asc" ? "▲" : "▼"}` : base);
-
-  return (
-    <div
-      ref={headerRef}
-      style={{
-        background: "var(--mantine-color-body)",
-        borderTop: "1px solid var(--mantine-color-default-border)",
-        borderBottom: "1px solid var(--mantine-color-default-border)",
-      }}
-    >
-      <div
-        className="library-header"
-        style={{
-          display: "grid",
-          gridTemplateColumns: GRID.cols,
-          minWidth: GRID.minWidth,
-          height: GRID.headerHeight,
-          alignItems: "center",
-          gap: 12,
-          fontWeight: 600,
-          padding: "0 12px",
-        }}
-      >
-        <div />
-        <div style={{ cursor: "pointer", textAlign: "left" }} onClick={() => onToggleSort("title")}>{label("Title", "title")}</div>
-        <div style={{ cursor: "pointer", textAlign: "center" }} onClick={() => onToggleSort("year")}>{label("Year", "year")}</div>
-        <div style={{ cursor: "pointer", textAlign: "center" }} onClick={() => onToggleSort("source")}>{label("Platform", "source")}</div>
-        <div style={{ cursor: "pointer", textAlign: "left" }} onClick={() => onToggleSort("tags")}>{label("Tags", "tags")}</div>
-      </div>
-    </div>
-  );
-}
-
-
-===== web/src/components/library/library.scss =====
+===== web\src\components\library\GameRow.scss =====
 
 .game-row {
   position: relative;
@@ -1609,62 +1164,128 @@ export function LibraryListHeader(props: {
   }
 }
 
-.alphabetical-separator {
-  position: sticky;
-  z-index: 5;
-  font-weight: 700;
-  padding: 6px 12px 6px 80px;
-  background: var(--mantine-color-body);
-  border-bottom: 1px solid var(--mantine-color-default-border);
+
+===== web\src\components\library\GameRow.tsx =====
+
+import { Badge, Box, Group, Text } from "@mantine/core";
+import { IconImage } from "../ui/IconImage";
+import { PlayActionOverlay } from "../ui/PlayActionOverlay";
+import { GRID, sourceTrim } from "../../lib/constants";
+import { effectiveLink, playniteAction, sourceProtocolLink } from "../../lib/utils";
+import { Row } from "../../lib/types";
+import { IconExternalLink } from "../../lib/icons";
+
+import "./GameRow.scss";
+
+export function GameRow(props: Row) {
+  const { id, hidden, installed, iconUrl, title, source, tags, year, url, raw } = props;
+  const href = url ?? effectiveLink({ url, source, title, tags });
+  const dim = hidden;
+
+  return (
+    <Box
+      data-row-id={id}
+      className={`game-row${dim ? " is-dim" : ""}${installed ? " is-installed" : ""}`}
+      style={{
+        display: "grid",
+        gridTemplateColumns: GRID.cols,
+        alignItems: "center",
+        gap: 12,
+        height: GRID.rowHeight,
+        padding: "0 0 0 12px",
+        borderBottom: "1px solid var(--mantine-color-default-border)",
+      }}
+    >
+      <Box style={{ width: 56 }} className={dim ? " is-dim" : ""}>
+        
+        <Box className="icon-wrap" style={{ position: "relative", width: 40, height: 40 }}>
+          <PlayActionOverlay installed={installed} href={playniteAction(id)} title={title}>
+            <Box className="icon-base">
+              <IconImage src={iconUrl} />
+            </Box>
+          </PlayActionOverlay>
+        </Box>
+      </Box>
+
+      <Box
+        className={dim ? " is-dim" : ""}
+        style={{ display: "flex", alignItems: "center", gap: 8 }}
+      >
+        <Text
+          fw={500}
+          title={title}
+          className="game-title"
+          style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+        >
+          {title}
+        </Text>
+
+        {href && (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener"
+            aria-label={`Open link for ${title} in a new tab`}
+            title={`Open ${title}`}
+            style={{ marginLeft: "auto", display: "inline-flex", lineHeight: 0 }}
+          >
+            <IconExternalLink size={16} stroke={2} />
+          </a>
+        )}
+      </Box>
+
+      <Box className={dim ? " is-dim" : ""} style={{ textAlign: "center" }}>
+        {year ?
+          <Text>{year}</Text>
+          :
+          ""
+        }
+      </Box>
+
+      <Box className={dim ? " is-dim" : ""} style={{ textAlign: "center" }}>
+        {source && (
+          (() => {
+            const proto = sourceProtocolLink(source, raw.GameId ? raw.GameId.toString() : "");
+            return proto ? (
+              <Badge
+                variant="outline"
+                component="a"
+                href={proto}
+                rel="noopener"
+                title={`Open ${source}${id ? ` — ${title}` : ""}`}
+                style={{ boxShadow: "0 2px 0 0 rgb(0 0 0 / 30%)", textDecoration: "none", cursor: "pointer" }}
+              >
+                {sourceTrim[source]}
+              </Badge>
+            ) : (
+              <Badge variant="outline" size="sm" style={{ boxShadow: "0 2px 0 0 rgb(0 0 0 / 30%)" }}>
+                {sourceTrim[source]}
+              </Badge>
+            );
+          })()
+        )}
+      </Box>
+
+      <Box className={dim ? " is-dim" : ""}>
+        <Group gap={6} align="center" wrap="wrap" style={{ maxHeight: "100%" }}>
+          {(tags ?? []).map((t) => (
+            <Badge key={t} variant="dark" size="sm" style={{ boxShadow: "0 2px 0 0 rgb(0 0 0 / 30%)" }}>
+              {t}
+            </Badge>
+          ))}
+        </Group>
+      </Box>
+
+    </Box>
+  );
 }
 
-.alphabetical-rail {
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 28px;
-  padding: 6px 2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
 
-  .item {
-    all: unset;
-    font-size: 11px;
-    line-height: 1;
-    padding: 3px 0;
-    text-align: center;
-    cursor: pointer;
-    opacity: 0.8;
-    user-select: none;
-  }
-
-  .item:hover {
-    opacity: 1;
-    font-weight: 700;
-    color: var(--mantine-primary-color-4) !important;
-  }
-
-  .disabled {
-    cursor: default;
-    opacity: 0.3;
-  }
-
-  .active {
-    font-weight: 700;
-    opacity: 1;
-    color: var(--mantine-primary-color-4) !important;
-  }
-}
-
-
-===== web/src/components/library/useAlphabetGroups.ts =====
+===== web\src\components\library\hooks\useAlphabetGroups.ts =====
 
 import * as React from "react";
-import { letterBucket } from "../../lib/utils";
-import { AlphaGroup, Row, WithBucket } from "../../lib/types";
+import { letterBucket } from "../../../lib/utils";
+import { AlphaGroup, Row, WithBucket } from "../../../lib/types";
 
 export function useAlphabetGroups(
     sortKey: string | undefined,
@@ -1695,13 +1316,13 @@ export function useAlphabetGroups(
 }
 
 
-===== web/src/components/library/useAlphabetRail.tsx =====
+===== web\src\components\library\hooks\useAlphabetRail.tsx =====
 
 import * as React from "react";
 import type { VirtuosoHandle } from "react-virtuoso";
-import { letterBucket } from "../../lib/utils";
-import type { Letter, AlphaGroup, AlphabeticalRailCounts, Row, Range } from "../../lib/types";
-import { LETTERS } from "../../lib/types";
+import { letterBucket } from "../../../lib/utils";
+import type { Letter, AlphaGroup, AlphabeticalRailCounts, Row, Range } from "../../../lib/types";
+import { LETTERS } from "../../../lib/types";
 
 export function useAlphabetRail(
     params: { isGrouped: boolean; groups: AlphaGroup[] | null; flatItems: Row[] },
@@ -1831,35 +1452,12 @@ export function useAlphabetRail(
 }
 
 
-===== web/src/components/library/useLibraryState.ts =====
+===== web\src\components\library\hooks\useLibraryState.ts =====
 
 import * as React from "react";
-import type { SortKey, SortDir, Persisted, Loaded } from "../../lib/types";
-import { bucketLetter } from "../../lib/utils";
-import { jsonGet, jsonSet } from "../../lib/persist";
-import { COOKIE } from "../../lib/constants";
-
-const DEFAULTS: Persisted = {
-  q: "",
-  sources: [],
-  tags: [],
-  showHidden: false,
-  installedOnly: false,
-  sortKey: "title",
-  sortDir: "asc",
-};
-
-function loadStateFromCookie(): Persisted {
-  try {
-    return jsonGet<Persisted>(COOKIE.libraryState, DEFAULTS);
-  } catch {
-    return DEFAULTS;
-  }
-}
-
-function saveStateToCookie(s: Persisted) {
-  jsonSet(COOKIE.libraryState, s);
-}
+import type { SortKey, SortDir, Persisted, Loaded } from "../../../lib/types";
+import { bucketLetter } from "../../../lib/utils";
+import { loadStateFromCookie, saveStateToCookie } from "../../../lib/persist";
 
 export function useLibraryState(data: Loaded) {
   const persisted = React.useMemo(loadStateFromCookie, []);
@@ -1941,7 +1539,386 @@ export function useLibraryState(data: Loaded) {
 }
 
 
-===== web/src/components/ui/LoadingBar.tsx =====
+===== web\src\components\library\LibraryList.tsx =====
+
+import React from "react";
+import { Box, Flex } from "@mantine/core";
+import { useElementSize } from "@mantine/hooks";
+import { Virtuoso, GroupedVirtuoso, VirtuosoHandle } from "react-virtuoso";
+import type { Loaded } from "../../lib/types";
+import { ControlsHeader } from "./ControlsHeader";
+import { SortHeader } from "./SortHeader";
+import { GameRow } from "./GameRow";
+import { AlphabeticalRail } from "../ui/AlphabeticalRail";
+import { AlphabeticalSeparatorRow } from "../ui/AlphabeticalSeparatorRow";
+import { useAlphabetGroups } from "./hooks/useAlphabetGroups";
+import { useAlphabetRail } from "./hooks/useAlphabetRail";
+import { useLibraryState } from "./hooks/useLibraryState";
+
+const Scroller = React.forwardRef<HTMLDivElement, React.HTMLProps<HTMLDivElement>>(
+  (props, ref) => (
+    <div
+      {...props}
+      ref={ref}
+      style={{
+        ...props.style,
+        overflowY: "scroll",
+        scrollbarGutter: "stable right-edge",
+      }}
+    />
+  )
+);
+Scroller.displayName = "Scroller";
+
+export function LibraryList({
+  data,
+  onCountsChange,
+  filteredCount,
+  totalCount,
+}: {
+  data: Loaded;
+  onCountsChange?: (filtered: number, total: number) => void;
+  filteredCount: number;
+  totalCount: number;
+}) {
+  const { ui, derived } = useLibraryState(data);
+  const { ref: controlsRef, height: controlsH } = useElementSize();
+  const { ref: headerRef, height: headerH } = useElementSize();
+
+  const virtuosoRef = React.useRef<VirtuosoHandle>(null);
+
+  React.useEffect(() => {
+    onCountsChange?.(derived.filteredCount, derived.totalCount);
+  }, [derived.filteredCount, derived.totalCount, onCountsChange]);
+
+  // Alphabet grouping is encapsulated here
+  const { groups, isGrouped, flatItems } = useAlphabetGroups(
+    ui.sortKey,
+    derived.withBuckets,
+    derived.rowsSorted
+  );
+
+  // Rail logic is fully encapsulated here
+  const { counts, activeLetter, handleJump, rangeChanged } = useAlphabetRail(
+    { isGrouped, groups, flatItems },
+    virtuosoRef
+  );
+
+  const overscan = { top: 600, bottom: 800 } as const;
+  const stickyOffset = controlsH;
+
+  // remount keys
+  const dataSig = `${derived.filteredCount}|${ui.q}|${ui.sources.join(",")}|${ui.tags.join(",")}|${ui.showHidden}|${ui.installedOnly}`;
+  const groupedKey = `grp:${dataSig}|${ui.sortKey}|${ui.sortDir}`;
+  const flatKey = `flt:${dataSig}|${ui.sortKey}|${ui.sortDir}`;
+
+  return (
+    <Flex direction="column" h="100%" style={{ minHeight: 0 }}>
+
+      <Box ref={controlsRef} p="md" style={{ position: "sticky", top: 0, zIndex: 20, background: "var(--mantine-color-body)" }}>
+        <ControlsHeader
+          q={ui.q}
+          setQ={ui.setQ}
+          sources={ui.sources}
+          setSources={ui.setSources}
+          allSources={data.allSources}
+          tags={ui.tags}
+          setTags={ui.setTags}
+          allTags={data.allTags}
+          showHidden={ui.showHidden}
+          setShowHidden={ui.setShowHidden}
+          installedOnly={ui.installedOnly}
+          setInstalledOnly={ui.setInstalledOnly}
+          filteredCount={filteredCount}
+          totalCount={totalCount}
+        />
+      </Box>
+
+      <Box style={{ position: "sticky", top: stickyOffset, zIndex: 15 }}>
+        <SortHeader
+          headerRef={headerRef as unknown as (el: HTMLElement | null) => void}
+          sortKey={ui.sortKey}
+          sortDir={ui.sortDir}
+          onToggleSort={ui.toggleSort}
+        />
+      </Box>
+
+      <Box style={{ flex: 1, minHeight: 0, position: "relative", overflow: "hidden" }}>
+        {isGrouped && groups ? (
+          <GroupedVirtuoso
+            ref={virtuosoRef}
+            key={groupedKey}
+            style={{ height: "100%" }}
+            components={{ Scroller }}
+            groupCounts={groups.map((g) => g.rows.length)}
+            increaseViewportBy={overscan}
+            rangeChanged={rangeChanged}
+            groupContent={(index) => (
+              <AlphabeticalSeparatorRow bucket={groups[index].title} top={(controlsH + headerH) || 0} />
+            )}
+            itemContent={(index) => {
+              let i = index;
+              for (const g of groups) {
+                if (i < g.rows.length) {
+                  const r = g.rows[i];
+                  return (
+                    <GameRow
+                      id={r.id}
+                      hidden={r.hidden}
+                      installed={r.installed}
+                      iconUrl={r.iconUrl}
+                      title={r.title}
+                      source={r.source}
+                      tags={r.tags}
+                      year={r.year}
+                      url={r.url}
+                      raw={r.raw}
+                      sortingName={r.sortingName}
+                    />
+                  );
+                }
+                i -= g.rows.length;
+              }
+              return null;
+            }}
+          />
+        ) : (
+          <Virtuoso
+            ref={virtuosoRef}
+            key={flatKey}
+            style={{ height: "100%" }}
+            components={{ Scroller }}
+            data={derived.rowsSorted}
+            increaseViewportBy={overscan}
+            rangeChanged={rangeChanged}
+            computeItemKey={(index, r) => r.id}
+            itemContent={(index) => {
+              const r = derived.rowsSorted[index];
+              return (
+                <GameRow
+                  id={r.id}
+                  hidden={r.hidden}
+                  installed={r.installed}
+                  iconUrl={r.iconUrl}
+                  title={r.title}
+                  source={r.source}
+                  tags={r.tags}
+                  year={r.year}
+                  url={r.url}
+                  raw={r.raw}
+                  sortingName={r.sortingName}
+                />
+              );
+            }}
+          />
+        )}
+
+        {isGrouped && (
+          <Box
+            style={{
+              display: "flex",
+              alignItems: "stretch",
+              pointerEvents: "none",
+            }}
+          >
+            <Box style={{ pointerEvents: "auto", width: "100%" }}>
+              <AlphabeticalRail active={activeLetter} onJump={handleJump} counts={counts} />
+            </Box>
+          </Box>
+        )}
+      </Box>
+    </Flex>
+  );
+}
+
+
+===== web\src\components\library\SortHeader.tsx =====
+
+import type { SortKey } from "../../lib/types";
+import { GRID } from "../../lib/constants";
+
+export function SortHeader(props: {
+  headerRef: (el: HTMLElement | null) => void;
+  sortKey: SortKey;
+  sortDir: "asc" | "desc";
+  onToggleSort: (k: SortKey) => void;
+}) {
+  const { headerRef, sortKey, sortDir, onToggleSort } = props;
+  const label = (base: string, key: SortKey) => (sortKey === key ? `${base} ${sortDir === "asc" ? "▲" : "▼"}` : base);
+
+  return (
+    <div
+      ref={headerRef}
+      style={{
+        background: "var(--mantine-color-body)",
+        borderTop: "1px solid var(--mantine-color-default-border)",
+        borderBottom: "1px solid var(--mantine-color-default-border)",
+      }}
+    >
+      <div
+        className="library-header"
+        style={{
+          display: "grid",
+          gridTemplateColumns: GRID.cols,
+          height: GRID.headerHeight,
+          alignItems: "center",
+          gap: 12,
+          fontWeight: 600,
+          padding: "0 16px 0 12px",
+        }}
+      >
+        <div />
+        <div style={{ cursor: "pointer", textAlign: "left" }} onClick={() => onToggleSort("title")}>{label("Title", "title")}</div>
+        <div style={{ cursor: "pointer", textAlign: "center" }} onClick={() => onToggleSort("year")}>{label("Year", "year")}</div>
+        <div style={{ cursor: "pointer", textAlign: "center" }} onClick={() => onToggleSort("source")}>{label("Platform", "source")}</div>
+        <div style={{ cursor: "pointer", textAlign: "left" }} onClick={() => onToggleSort("tags")}>{label("Tags", "tags")}</div>
+      </div>
+    </div>
+  );
+}
+
+
+===== web\src\components\ui\AlphabeticalRail.tsx =====
+
+import { Paper, Stack, Tooltip, UnstyledButton } from "@mantine/core";
+import { AlphabeticalRailCounts } from "../../lib/types";
+
+export const DEFAULT_LETTERS = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ", "#"];
+
+export function AlphabeticalRail({
+    letters = DEFAULT_LETTERS,
+    counts,
+    active,
+    onJump,
+    title = "Jump to letter",
+}: {
+    letters?: string[];
+    counts?: AlphabeticalRailCounts;
+    active?: string | null;
+    onJump: (letter: string) => void;
+    title?: string;
+}) {
+    const usable = counts ? letters.filter((ch) => (counts[ch] ?? 0) > 0) : letters;
+    if (usable.length === 0) return null;
+
+    return (
+        <Paper
+            component="nav"
+            aria-label={title}
+            radius="xl"
+            withBorder
+            shadow="sm"
+            style={{
+                position: "absolute",
+                right: 15,
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: 28,
+                padding: "6px 2px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 100,
+            }}
+        >
+            <Stack gap={2} align="center" justify="center">
+                {usable.map((ch) => {
+                    const isActive = !!active && active.toUpperCase() === ch;
+                    return (
+                        <Tooltip key={ch} label={ch} position="left" withArrow>
+                            <UnstyledButton
+                                type="button"
+                                aria-pressed={isActive}
+                                onClick={() => onJump(ch)}
+                                style={{
+                                    fontSize: 11,
+                                    lineHeight: 1,
+                                    padding: "3px 0",
+                                    textAlign: "center",
+                                    cursor: "pointer",
+                                    userSelect: "none",
+                                    opacity: isActive ? 1 : 0.8,
+                                    fontWeight: isActive ? 700 : 400,
+                                    color: isActive ? "var(--mantine-primary-color-4)" : "inherit",
+                                }}
+                            >
+                                {ch}
+                            </UnstyledButton>
+                        </Tooltip>
+                    );
+                })}
+            </Stack>
+        </Paper>
+    );
+}
+
+
+===== web\src\components\ui\AlphabeticalSeparatorRow.tsx =====
+
+import { Box } from '@mantine/core';
+
+export function AlphabeticalSeparatorRow({ bucket, top }: { bucket: string; top: number }) {
+  return (
+    <Box
+      style={{
+        position: 'sticky',
+        zIndex: 1,
+        fontWeight: 700,
+        padding: '6px 12px 6px 80px',
+        background: 'var(--mantine-color-body)',
+        borderBottom: '1px solid var(--mantine-color-default-border)',
+        top, // from props
+      }}
+    >
+      {bucket}
+    </Box>
+  );
+}
+
+
+===== web\src\components\ui\IconImage.tsx =====
+
+import React from "react";
+import { isIcoPath, icoToPngDataUrl } from "../../lib/utils";
+
+export function IconImage({ src, alt }: { src: string; alt?: string }) {
+  const [url, setUrl] = React.useState(src);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    async function maybeConvert() {
+      if (isIcoPath(src)) {
+        const data = await icoToPngDataUrl(src);
+        if (!cancelled && data) setUrl(data);
+      } else {
+        setUrl(src);
+      }
+    }
+    maybeConvert();
+    return () => { cancelled = true; };
+  }, [src]);
+
+  return (
+    <img
+      className="icon"
+      src={url}
+      alt={alt ?? ""}
+      width={40}
+      height={40}
+      style={{ width: 40, height: 40, objectFit: "contain", borderRadius: 6, background: "var(--mantine-color-default)" }}
+      onError={async (e) => {
+        // fallback if the src fails to load
+        if (isIcoPath(src)) {
+          const data = await icoToPngDataUrl(src);
+          if (data) (e.target as HTMLImageElement).src = data;
+        }
+      }}
+    />
+  );
+}
+
+
+===== web\src\components\ui\LoadingBar.tsx =====
 
 import { Stack, Progress, Text } from "@mantine/core";
 
@@ -1960,7 +1937,7 @@ export function LoadingBar({ label, percent, subtext }: {
 }
 
 
-===== web/src/components/ui/PlayActionOverlay.tsx =====
+===== web\src\components\ui\PlayActionOverlay.tsx =====
 
 import React from "react";
 import { IconPlayerPlayFilled, IconDownload } from "../../lib/icons";
@@ -2008,7 +1985,7 @@ export function PlayActionOverlay({
 }
 
 
-===== web/src/components/ui/SearchInput.tsx =====
+===== web\src\components\ui\SearchInput.tsx =====
 
 import { ActionIcon, TextInput } from "@mantine/core";
 import { IconSearch, IconX } from "../../lib/icons";
@@ -2053,7 +2030,7 @@ export function SearchInput({
 }
 
 
-===== web/src/components/ui/SectionCard.tsx =====
+===== web\src\components\ui\SectionCard.tsx =====
 
 import React from "react";
 import { Card, Group, Stack, Text } from "@mantine/core";
@@ -2072,25 +2049,7 @@ export default function SectionCard({
 }
 
 
-===== web/src/index.scss =====
-
-  body {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    overflow-x: hidden;
-  }
-  
-  img.icon {
-    image-rendering: -webkit-optimize-contrast;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  .is-dim {
-    opacity: 0.5 !important;
-  }
-
-
-===== web/src/layout/AppShellLayout.tsx =====
+===== web\src\layout\AppShellLayout.tsx =====
 
 import React from "react";
 import { AppShell, Burger, Group, Title, ActionIcon, NavLink, ScrollArea, Text, rem, useMantineColorScheme } from "@mantine/core";
@@ -2165,7 +2124,7 @@ export default function AppShellLayout({ children }: { children: React.ReactNode
 }
 
 
-===== web/src/lib/api.ts =====
+===== web\src\lib\api.ts =====
 
 import axios from "axios";
 
@@ -2264,11 +2223,12 @@ export async function listLibrary(): Promise<LibraryItem[]> {
 }
 
 
-===== web/src/lib/constants.ts =====
+===== web\src\lib\constants.ts =====
+
+import { Persisted } from "./types";
 
 export const GRID = {
   cols: "56px minmax(0, 40%) 60px 120px minmax(200px, 1fr)",
-  minWidth: "calc(56px + 40% + 60px + 120px + 200px + 24px)",
   rowHeight: 56,
   headerHeight: 40,
 };
@@ -2276,10 +2236,6 @@ export const GRID = {
 export const Z_INDEX = {
   stickyHeader: 10,
   overlay: 20,
-};
-
-export const COOKIE = {
-  libraryState: "pn_library_ui_v2",
 };
 
 export const BASE = "/data";
@@ -2333,62 +2289,23 @@ export const sourceLabel: Record<string, string> = {
   "microsoft store": "Microsoft Store",
 };
 
-export function sourceUrlFallback(s: string, id: string): string | null {
-  switch (s) {
-    case "steam":
-      return `https://store.steampowered.com/app/${encodeURIComponent(id)}`;
-    case "gog":
-      return `https://www.gog.com/game/${encodeURIComponent(id)}`;
-    case "ubisoft connect":
-      return `https://www.ubisoft.com/en-us/search?gss-q=${encodeURIComponent(id)}`;
-    case "ea app":
-      return null;
-    case "battle.net":
-      return null;
-    case "epic":
-      return `https://www.epicgames.com/store/en-US/p/${encodeURIComponent(id)}`;
-    case "xbox":
-      return `https://www.xbox.com/en-us/Search/Results?q=${encodeURIComponent(id)}`;
-    case "humble":
-      return `https://www.humblebundle.com/store/search?search=${encodeURIComponent(id)}`;
-    case "nintendo":
-      return `https://www.nintendo.com/us/search/?q=${encodeURIComponent(id)}`;
-    case "microsoft store":
-      return `https://apps.microsoft.com/search?query=${encodeURIComponent(id)}`;
-    default:
-      return null;
-  }
+export const COOKIE = {
+  libraryState: "pn_library_ui_v2",
 };
 
-export function sourceProtocolLink(source: string, id: string): string | null {
-  const s = source.toLowerCase();
-
-  switch (s) {
-    case "steam":
-      // if id is numeric we can launch the game directly
-      return /^\d+$/.test(id) ? `steam://rungameid/${id}` : "steam://open";
-    case "gog":
-    case "gog galaxy":
-      return id ? `goggalaxy://openGameView/${encodeURIComponent(id)}` : "goggalaxy://openGOGGalaxy";
-    case "epic":
-      return id ? `com.epicgames.launcher://apps/${encodeURIComponent(id)}?action=show` : "com.epicgames.launcher://";
-    case "ubisoft connect":
-      return "uplay://";
-    case "ea app":
-      return "ealauncher://";
-    case "battle.net":
-      return "battlenet://";
-    case "xbox":
-      return "xbox://";
-    default:
-      return null;
-  }
-}
-
-
-export const NOTIF_IMPORT_ID = "pn-import";
+export const COOKIE_DEFAULTS: Persisted = {
+  q: "",
+  sources: [],
+  tags: [],
+  showHidden: false,
+  installedOnly: false,
+  sortKey: "title",
+  sortDir: "asc",
+};
 
 export const MAX_LINES = 1000;
+
+export const NOTIF_IMPORT_ID = "pn-import";
 
 export const KEY = "pn_logs_v1";
 
@@ -2405,11 +2322,11 @@ export const IDB_STORE = "handles";
 export const DB_KEY = "backupDir";
 
 
-===== web/src/lib/data.ts =====
+===== web\src\lib\data.ts =====
 
-import { FILES, sourceUrlFallback } from "./constants";
+import { FILES } from "./constants";
 import type { GameDoc, Loaded, NamedDoc, Row } from "./types";
-import { asGuid, asGuidArray, buildIconUrl, firstStoreishLink, normalizePath, extractYear } from "./utils";
+import { asGuid, asGuidArray, buildIconUrl, firstStoreishLink, normalizePath, extractYear, sourceUrlFallback } from "./utils";
 
 async function getJson<T>(path: string): Promise<T> {
   const sep = path.includes("?") ? "&" : "?";
@@ -2483,7 +2400,7 @@ export async function loadLibrary(): Promise<Loaded> {
 }
 
 
-===== web/src/lib/icons.ts =====
+===== web\src\lib\icons.ts =====
 
 export {
     IconSearch,
@@ -2504,191 +2421,10 @@ export {
 } from "@tabler/icons-react";
 
 
-===== web/src/lib/importer.ts =====
+===== web\src\lib\persist.ts =====
 
-// Centralized "Run import" controller that survives route changes.
-// Emits:
-//  - "pn:import-progress" { phase: "unzip"|"copy"|null, percent, filename, extras? }
-//  - "pn:import-log"      { line }
-//  - "pn:import-state"    { snapshot of state }
-
-import { notifications } from "@mantine/notifications";
-import { processZipStream } from "./api";
-import { LogBus } from "../lib/logBus";
-import type { ImportState, Phase, StreamProgress } from "./types";
-import { NOTIF_IMPORT_ID } from "./constants";
-
-let current: ImportState = {
-    running: false,
-    filename: null,
-    phase: null,
-    percent: null,
-    subtext: "",
-};
-
-let lastLoggedCopyPct = -1;
-
-function emit(type: string, detail: any) {
-    window.dispatchEvent(new CustomEvent(type, { detail }));
-}
-function snapshot() {
-    return { ...current };
-}
-function reset() {
-    current = { running: false, filename: null, phase: null, percent: null, subtext: "" };
-    lastLoggedCopyPct = -1;
-    emit("pn:import-state", snapshot());
-}
-
-export const ImportRunner = {
-    getState(): ImportState {
-        return snapshot();
-    },
-
-    async start(opts: { filename: string; password?: string }) {
-        const { filename, password } = opts;
-        if (!filename) return;
-
-        // If already running for same file, ignore; if different, we "replace" (no server cancel)
-        if (current.running && current.filename === filename) return;
-
-        current = { running: true, filename, phase: "unzip", percent: 0, subtext: "" };
-        lastLoggedCopyPct = -1;
-        emit("pn:import-state", snapshot());
-
-        LogBus.append(`IMPORT ▶ ${filename}`);
-
-        notifications.show({
-            id: NOTIF_IMPORT_ID,
-            title: "Import running…",
-            message: filename,
-            loading: true,
-            autoClose: false,
-        });
-
-        processZipStream({
-            filename,
-            password,
-            onLog: (line: string) => {
-                LogBus.append(line);
-                emit("pn:import-log", { line });
-            },
-            onProgress: (p: StreamProgress) => {
-                const phase: Phase = p.phase === "unzip" || p.phase === "copy" ? p.phase : null;
-                const percent = p.percent ?? current.percent ?? 0;
-
-                current.phase = phase;
-                current.percent = percent;
-
-                if (phase === "copy" && p.copiedBytes != null && p.totalBytes != null) {
-                    // human-readable MB summary
-                    const mb = (n: number) => (n / (1024 * 1024)).toFixed(1);
-                    current.subtext = `${mb(p.copiedBytes)}MB / ${mb(p.totalBytes)}MB`;
-
-                    // Throttle log line every 5%
-                    const pct = Math.round(percent);
-                    if (pct >= lastLoggedCopyPct + 5) {
-                        LogBus.append(`COPY ${pct}% • ${current.subtext}`);
-                        lastLoggedCopyPct = pct;
-                    }
-                } else {
-                    current.subtext = "";
-                }
-
-                emit("pn:import-progress", {
-                    phase: current.phase,
-                    percent: current.percent,
-                    filename: current.filename,
-                    extras: { subtext: current.subtext },
-                });
-                emit("pn:import-state", snapshot());
-            },
-            onDone: () => {
-                LogBus.append("IMPORT ✓ DONE");
-                notifications.update({
-                    id: NOTIF_IMPORT_ID,
-                    loading: false,
-                    title: "Import finished",
-                    message: "Your library has been processed.",
-                    autoClose: 2500,
-                });
-                reset();
-            },
-            onError: (msg: string) => {
-                LogBus.append(`IMPORT ✗ ERROR: ${msg || "Unknown error"}`);
-                notifications.update({
-                    id: NOTIF_IMPORT_ID,
-                    loading: false,
-                    color: "red",
-                    title: "Import failed",
-                    message: msg || "Unknown error",
-                    autoClose: 4000,
-                });
-                reset();
-            },
-        });
-    },
-};
-
-
-===== web/src/lib/logBus.ts =====
-
-// Global log buffer that survives route changes AND page reloads (via sessionStorage).
-// Newest-first order. Keeps up to MAX lines.
-
-import { KEY, MAX_LINES } from "./constants";
-import { LogListener } from "./types";
-
-let lines: string[] = restore();
-
-const listeners = new Set<LogListener>();
-
-function store() {
-    try {
-        sessionStorage.setItem(KEY, JSON.stringify(lines));
-    } catch { }
-}
-
-function restore(): string[] {
-    try {
-        const raw = sessionStorage.getItem(KEY);
-        if (!raw) return [];
-        const arr = JSON.parse(raw);
-        return Array.isArray(arr) ? arr : [];
-    } catch {
-        return [];
-    }
-}
-
-function emit() {
-    const snapshot = [...lines];
-    listeners.forEach((fn) => fn(snapshot));
-}
-
-export const LogBus = {
-    append(line: string) {
-        if (!line) return;
-        lines = [line, ...lines].slice(0, MAX_LINES);
-        store();
-        emit();
-    },
-    clear() {
-        lines = [];
-        store();
-        emit();
-    },
-    get(): string[] {
-        return [...lines];
-    },
-    subscribe(fn: LogListener) {
-        listeners.add(fn);
-        fn([...lines]); // immediate hydration
-        return () => { listeners.delete(fn); };
-    },
-};
-
-
-===== web/src/lib/persist.ts =====
+import { COOKIE, COOKIE_DEFAULTS } from "./constants";
+import { Persisted } from "./types";
 
 export function readCookie(name: string): string | null {
     if (typeof document === "undefined") return null;
@@ -2719,33 +2455,20 @@ export function jsonSet<T>(key: string, value: T) {
     }
 }
 
-
-===== web/src/lib/playnitedump.ts =====
-
-import { api } from "./api";
-import { ZipMeta } from "./types";
-
-export async function listZips() {
-    const { data } = await api.get<ZipMeta[]>("/playnitedump/zips");
-    return data;
+export function loadStateFromCookie(): Persisted {
+  try {
+    return jsonGet<Persisted>(COOKIE.libraryState, COOKIE_DEFAULTS);
+  } catch {
+    return COOKIE_DEFAULTS;
+  }
 }
 
-export async function uploadZip(file: File) {
-    const fd = new FormData();
-    fd.append("file", file);
-    const { data } = await api.post<{ ok: boolean; file: string }>("/playnitedump/upload", fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-    });
-    return data;
-}
-
-export function processStreamUrl(zipName: string) {
-    const p = new URLSearchParams({ zip: zipName });
-    return `/api/playnitedump/process-stream?${p.toString()}`;
+export function saveStateToCookie(s: Persisted) {
+  jsonSet(COOKIE.libraryState, s);
 }
 
 
-===== web/src/lib/types.ts =====
+===== web\src\lib\types.ts =====
 
 export type Guidish =
   | string
@@ -2828,19 +2551,6 @@ export type Persisted = {
   sortDir: SortDir;
 };
 
-export type GameRowProps = {
-  id: string;
-  hidden: boolean;
-  showHidden: boolean;
-  installed: boolean;
-  iconUrl: string;
-  title: string;
-  source: string;
-  tags: string[];
-  year?: number | null;
-  url: string | null;
-};
-
 export type Loaded = {
   rows: Row[];
   allSources: string[];
@@ -2895,139 +2605,7 @@ export type UploadState = {
 
 
 
-===== web/src/lib/uploader.ts =====
-
-// Single source of truth for ALL uploads (manual or watcher-initiated).
-// Persists state across navigation, emits progress events, logs to LogBus,
-// notifies with Mantine, and announces availability via pn:zips-changed.
-
-import { notifications } from "@mantine/notifications";
-import { uploadZip } from "./api";
-import { LogBus } from "../lib/logBus";
-import { UploadState } from "./types";
-import { LAST_UP_KEY, STATE_KEY, NOTIF_UPLOAD_ID } from "./constants";
-
-let current: UploadState = restoreState();
-let lastUploaded: { name: string; size?: number; lastModified?: number } | null = restoreLast();
-
-function emit(type: string, detail: any) {
-    window.dispatchEvent(new CustomEvent(type, { detail }));
-}
-function storeState() {
-    try { sessionStorage.setItem(STATE_KEY, JSON.stringify(current)); } catch { }
-}
-function restoreState(): UploadState {
-    try {
-        const raw = sessionStorage.getItem(STATE_KEY);
-        if (!raw) return { running: false, name: null, percent: null };
-        const obj = JSON.parse(raw);
-        return {
-            running: !!obj?.running,
-            name: typeof obj?.name === "string" ? obj.name : null,
-            percent: typeof obj?.percent === "number" ? obj.percent : null,
-        };
-    } catch { return { running: false, name: null, percent: null }; }
-}
-function storeLast(meta: { name: string; size?: number; lastModified?: number } | null) {
-    try {
-        if (!meta) localStorage.removeItem(LAST_UP_KEY);
-        else localStorage.setItem(LAST_UP_KEY, JSON.stringify(meta));
-    } catch { }
-}
-function restoreLast() {
-    try {
-        const raw = localStorage.getItem(LAST_UP_KEY);
-        return raw ? JSON.parse(raw) : null;
-    } catch { return null; }
-}
-function showRunImportNotice(fileName: string) {
-    const id = `pn-upload-done-${Date.now()}`;
-    notifications.show({
-        id,
-        title: "Backup uploaded",
-        message: `Ready to import: ${fileName}. Open the Import section to run it.`,
-        autoClose: 4000,
-    });
-}
-
-export const UploadRunner = {
-    getState(): UploadState { return { ...current }; },
-    getLastUploaded(): { name: string; size?: number; lastModified?: number } | null { return lastUploaded ? { ...lastUploaded } : null; },
-    isUploadingName(name: string) { return current.running && current.name === name; },
-
-    async start(file: File) {
-        if (!file) return;
-        if (current.running && current.name === file.name) return;
-
-        current = { running: true, name: file.name, percent: 0 };
-        storeState();
-        emit("pn:upload-state", { ...current });
-
-        LogBus.append(`UPLOAD ▶ ${file.name}`);
-
-        notifications.show({
-            id: NOTIF_UPLOAD_ID,
-            title: "Uploading…",
-            message: file.name,
-            loading: true,
-            autoClose: false,
-        });
-
-        // Kick progress to UI
-        emit("pn:upload-progress", { phase: "start", name: file.name, percent: 0 });
-
-        try {
-            await uploadZip(file, (p: number) => {
-                current.percent = p ?? current.percent ?? 0;
-                storeState();
-                emit("pn:upload-progress", { phase: "progress", name: file.name, percent: current.percent });
-            });
-
-            // success
-            lastUploaded = {
-                name: file.name,
-                size: file.size,
-                lastModified: (file as any)?.lastModified ?? Date.now(),
-            };
-            storeLast(lastUploaded);
-
-            LogBus.append(`UPLOAD ✓ ${file.name}`);
-
-            emit("pn:upload-progress", { phase: "done", name: file.name, percent: 100 });
-
-            notifications.update({
-                id: NOTIF_UPLOAD_ID,
-                loading: false,
-                title: "Upload finished",
-                message: file.name,
-                autoClose: 2500,
-            });
-
-            // announce to app so /zips refresh + select happens
-            window.dispatchEvent(new CustomEvent("pn:zips-changed", { detail: { name: file.name } }));
-            showRunImportNotice(file.name);
-        } catch (e: any) {
-            LogBus.append(`UPLOAD ✗ ${file.name} — ${String(e?.message || e)}`);
-            emit("pn:upload-progress", { phase: "error", name: file.name, message: String(e?.message || e) });
-
-            notifications.update({
-                id: NOTIF_UPLOAD_ID,
-                loading: false,
-                color: "red",
-                title: "Upload failed",
-                message: String(e?.message || e),
-                autoClose: 4000,
-            });
-        } finally {
-            current = { running: false, name: null, percent: null };
-            storeState();
-            emit("pn:upload-state", { ...current });
-        }
-    },
-};
-
-
-===== web/src/lib/utils.ts =====
+===== web\src\lib\utils.ts =====
 
 import { FALLBACK_ICON } from "./constants";
 import type { Guidish, Link, Letter } from "./types";
@@ -3124,12 +2702,67 @@ export function firstStoreishLink(links: Link[] | undefined, sourceName: string)
   return byDomain?.Url ?? null;
 }
 
+export function sourceUrlFallback(s: string, id: string): string | null {
+  switch (s) {
+    case "steam":
+      return `https://store.steampowered.com/app/${encodeURIComponent(id)}`;
+    case "gog":
+      return `https://www.gog.com/game/${encodeURIComponent(id)}`;
+    case "ubisoft connect":
+      return `https://www.ubisoft.com/en-us/search?gss-q=${encodeURIComponent(id)}`;
+    case "ea app":
+      return null;
+    case "battle.net":
+      return null;
+    case "epic":
+      return `https://www.epicgames.com/store/en-US/p/${encodeURIComponent(id)}`;
+    case "xbox":
+      return `https://www.xbox.com/en-us/Search/Results?q=${encodeURIComponent(id)}`;
+    case "humble":
+      return `https://www.humblebundle.com/store/search?search=${encodeURIComponent(id)}`;
+    case "nintendo":
+      return `https://www.nintendo.com/us/search/?q=${encodeURIComponent(id)}`;
+    case "microsoft store":
+      return `https://apps.microsoft.com/search?query=${encodeURIComponent(id)}`;
+    default:
+      return null;
+  }
+};
+
+export function sourceProtocolLink(source: string, id: string): string | null {
+  const s = source.toLowerCase();
+
+  switch (s) {
+    case "steam":
+      return id ? `steam://store/${encodeURIComponent(id)}` : "steam://store";
+    case "gog":
+    case "gog galaxy":
+      return id ? `goggalaxy://openGameView/${encodeURIComponent(id)}` : "goggalaxy://openGOGGalaxy";
+    case "epic":
+      return id ? `com.epicgames.launcher://apps/${encodeURIComponent(id)}?action=show` : "com.epicgames.launcher://";
+    case "ubisoft connect":
+      return "uplay://";
+    case "ea app":
+      return "ealauncher://";
+    case "battle.net":
+      return "battlenet://";
+    case "xbox":
+      return "xbox://";
+    default:
+      return null;
+  }
+}
+
 export function hasEmulatorTag(tags?: string[]): boolean {
   return Array.isArray(tags) && tags.some(t => /\bemulator(s)?\b/i.test(t));
 }
 
 export function myAbandonwareLink(title: string): string {
   return `https://www.myabandonware.com/search/q/${encodeURIComponent(title)}`;
+}
+
+export function playniteAction(id: string): string { 
+  return `playnite://playnite/start/${encodeURIComponent(id)}`; 
 }
 
 export function effectiveLink(
@@ -3196,188 +2829,47 @@ export function letterBucket(s: string | undefined | null): Letter {
 }
 
 
-===== web/src/lib/watcher.ts =====
+===== web\src\main.scss =====
 
-// Detects newer local zips and delegates the actual upload to UploadRunner.
-// Still persists the selected folder and exposes UI state.
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+  
+  img.icon {
+    image-rendering: -webkit-optimize-contrast;
+    -webkit-font-smoothing: antialiased;
+  }
 
-import { UploadRunner } from "./uploader";
-import { LogBus } from "../lib/logBus";
-import { BackupListener, BackupWatcherState, ZipMeta } from "./types";
-import { DB_KEY, IDB_DB, IDB_STORE } from "./constants";
+  .is-dim {
+    opacity: 0.5 !important;
+  }
 
-let dirHandle: FileSystemDirectoryHandle | null = null;
-let timer: number | null = null;
-const listeners = new Set<BackupListener>();
-const state: BackupWatcherState = {
-    supported: "showDirectoryPicker" in window,
-    dirName: null,
-    latestLocalZip: null,
-    running: false,
-    lastUploadedName: UploadRunner.getLastUploaded()?.name ?? null,
-    permission: null,
-};
+  /* Firefox: make it a normal-width visible bar */
+* { scrollbar-width: auto; scrollbar-color: var(--mantine-color-default-border) transparent; }
 
-// --- IndexedDB helpers ---
-function idb(): Promise<IDBDatabase> {
-    return new Promise((resolve, reject) => {
-        const req = indexedDB.open(IDB_DB, 1);
-        req.onupgradeneeded = () => req.result.createObjectStore(IDB_STORE);
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
-    });
-}
-async function idbPut<T>(key: string, val: T) {
-    const db = await idb();
-    await new Promise<void>((res, rej) => {
-        const tx = db.transaction(IDB_STORE, "readwrite");
-        tx.objectStore(IDB_STORE).put(val as any, key);
-        tx.oncomplete = () => res();
-        tx.onerror = () => rej(tx.error);
-    });
-}
-async function idbGet<T>(key: string): Promise<T | null> {
-    const db = await idb();
-    return await new Promise<T | null>((res, rej) => {
-        const tx = db.transaction(IDB_STORE, "readonly");
-        const req = tx.objectStore(IDB_STORE).get(key);
-        req.onsuccess = () => res((req.result as T) ?? null);
-        req.onerror = () => rej(req.error);
-    });
-}
-async function saveHandle(h: FileSystemDirectoryHandle | null) { await idbPut(DB_KEY, h); }
-async function loadHandleFromStorage(): Promise<FileSystemDirectoryHandle | null> {
-    try { return (await idbGet<FileSystemDirectoryHandle>(DB_KEY)) ?? null; } catch { return null; }
-}
-
-function emit() { listeners.forEach((fn) => fn({ ...state })); }
-
-async function ensurePermission() {
-    if (!dirHandle) { state.permission = null; emit(); return false; }
-    // @ts-ignore
-    const perm = await dirHandle.queryPermission?.({ mode: "read" }) as PermissionState | undefined;
-    if (perm === "granted") { state.permission = "granted"; emit(); return true; }
-    // @ts-ignore
-    const req = await dirHandle.requestPermission?.({ mode: "read" }) as PermissionState | undefined;
-    state.permission = req ?? "prompt"; emit();
-    return req === "granted";
-}
-
-async function scanLatestZip(): Promise<ZipMeta | null> {
-    if (!dirHandle) return null;
-    let newest: ZipMeta | null = null;
-    // @ts-ignore
-    for await (const [name, handle] of dirHandle.entries?.() ?? []) {
-        if (!name.toLowerCase().endsWith(".zip")) continue;
-        // @ts-ignore
-        const file = await handle.getFile?.();
-        if (!file) continue;
-        const meta: ZipMeta = {
-            name,
-            lastModified: file.lastModified ?? 0,
-            size: file.size ?? 0,
-        };
-        if (!newest || meta.lastModified > newest.lastModified) newest = meta;
-    }
-    return newest;
-}
-
-function strictlyNewer(a: ZipMeta, b: { name: string; size?: number; lastModified?: number } | null) {
-    if (!b) return true;
-    const blm = b.lastModified ?? 0;
-    if (a.lastModified > blm) return true;
-    if (a.lastModified < blm) return false;
-    return a.size > (b.size ?? 0);
-}
-
-async function tick() {
-    if (!dirHandle) return;
-    if (!(await ensurePermission())) return;
-
-    const newest = await scanLatestZip();
-    state.latestLocalZip = newest; emit();
-    if (!newest) return;
-
-    // skip if UploadRunner is already uploading that file
-    if (UploadRunner.isUploadingName(newest.name)) return;
-
-    // only prompt if strictly newer than lastUploaded known by the runner
-    if (!strictlyNewer(newest, UploadRunner.getLastUploaded())) return;
-
-    // prompt & delegate to runner
-    const proceed = window.confirm(`New Playnite backup detected:\n${newest.name}\n\nUpload & import now?`);
-    if (!proceed) return;
-
-    try {
-        // @ts-ignore
-        const fh = await dirHandle.getFileHandle?.(newest.name);
-        // @ts-ignore
-        const file = await fh.getFile?.();
-        if (!file) return;
-
-        LogBus.append(`UPLOAD ▶ ${newest.name}`);
-        await UploadRunner.start(file); // runner handles progress, logs, notifications, zips-changed
-        state.lastUploadedName = newest.name; emit();
-    } catch (e) {
-        LogBus.append(`UPLOAD ✗ ${newest.name} — ${String((e as any)?.message || e)}`);
-    }
-}
-
-export const BackupWatcher = {
-    subscribe(fn: BackupListener) { listeners.add(fn); fn({ ...state }); return () => { listeners.delete(fn); }; },
-
-    async selectDirectory() {
-        if (!state.supported) return false;
-        // @ts-ignore
-        dirHandle = await (window as any).showDirectoryPicker?.();
-        if (!dirHandle) return false;
-        // @ts-ignore
-        state.dirName = dirHandle.name ?? null;
-        await saveHandle(dirHandle);
-        emit();
-        LogBus.append(`WATCH ▶ Selected folder: ${state.dirName}`);
-        start();
-        return true;
-    },
-
-    async tryRestorePrevious() {
-        if (!state.supported) return false;
-        const restored = await loadHandleFromStorage();
-        if (!restored) return false;
-        dirHandle = restored;
-        // @ts-ignore
-        state.dirName = dirHandle?.name ?? null;
-        emit();
-        LogBus.append(`WATCH ⟳ Restored folder: ${state.dirName}`);
-        start();
-        return true;
-    },
-
-    start, stop,
-};
-
-function start() {
-    if (timer != null) return;
-    state.running = true; emit();
-    timer = window.setInterval(() => { tick().catch(() => { }); }, 15000);
-    tick().catch(() => { });
-}
-function stop() {
-    if (timer != null) { clearInterval(timer); timer = null; }
-    state.running = false; emit();
+/* WebKit (Chromium/Safari) */
+*::-webkit-scrollbar { width: 12px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background-color: var(--mantine-color-default-border);
+  border-radius: 8px;
+  border: 3px solid transparent;
+  background-clip: content-box;
 }
 
 
-===== web/src/main.tsx =====
+===== web\src\main.tsx =====
 
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
-import { BackupWatcher } from "./lib/watcher";
+import { BackupWatcher } from "./services/watcher";
 import { AppProviders } from "./theme";
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
-import "./index.scss";
+import "./main.scss";
 
 BackupWatcher.tryRestorePrevious().catch(() => { });
 
@@ -3390,7 +2882,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 );
 
 
-===== web/src/pages/HomePage.tsx =====
+===== web\src\pages\HomePage.tsx =====
 
 import { Alert, Stack, Text } from "@mantine/core";
 
@@ -3407,7 +2899,7 @@ export default function HomePage() {
 }
 
 
-===== web/src/pages/LibraryPage.tsx =====
+===== web\src\pages\LibraryPage.tsx =====
 
 import React from "react";
 import { Stack, Group, Text } from "@mantine/core";
@@ -3443,7 +2935,7 @@ export default function LibraryPage() {
 }
 
 
-===== web/src/pages/SettingsPage.tsx =====
+===== web\src\pages\SettingsPage.tsx =====
 
 import React from "react";
 import {
@@ -3643,7 +3135,7 @@ export default function SettingsPage() {
 }
 
 
-===== web/src/pages/SyncPage.tsx =====
+===== web\src\pages\SyncPage.tsx =====
 
 import React from "react";
 import { Stack, Group, Select, Button, FileButton, PasswordInput, Textarea, Text } from "@mantine/core";
@@ -3651,10 +3143,10 @@ import SectionCard from "../components/ui/SectionCard";
 import { LoadingBar } from "../components/ui/LoadingBar";
 import { listZips } from "../lib/api";
 import type { BackupWatcherState, ZipInfo } from "../lib/types";
-import { BackupWatcher } from "../lib/watcher";
-import { ImportRunner } from "../lib/importer";
-import { LogBus } from "../lib/logBus";
-import { UploadRunner } from "../lib/uploader";
+import { BackupWatcher } from "../services/watcher";
+import { ImportRunner } from "../services/importer";
+import { LogBus } from "../services/logBus";
+import { UploadRunner } from "../services/uploader";
 
 export default function SyncPage() {
     const [zips, setZips] = React.useState<ZipInfo[]>([]);
@@ -3888,7 +3380,7 @@ export default function SyncPage() {
 }
 
 
-===== web/src/router.tsx =====
+===== web\src\router.tsx =====
 
 import { createBrowserRouter } from "react-router-dom";
 import AppShellLayout from "./layout/AppShellLayout";
@@ -3905,7 +3397,495 @@ export const router = createBrowserRouter([
 ]);
 
 
-===== web/src/theme.tsx =====
+===== web\src\services\importer.ts =====
+
+// Centralized "Run import" controller that survives route changes.
+// Emits:
+//  - "pn:import-progress" { phase: "unzip"|"copy"|null, percent, filename, extras? }
+//  - "pn:import-log"      { line }
+//  - "pn:import-state"    { snapshot of state }
+
+import { notifications } from "@mantine/notifications";
+import { processZipStream } from "../lib/api";
+import type { ImportState, Phase, StreamProgress } from "../lib/types";
+import { NOTIF_IMPORT_ID } from "../lib/constants";
+import { LogBus } from "../services/logBus";
+
+let current: ImportState = {
+    running: false,
+    filename: null,
+    phase: null,
+    percent: null,
+    subtext: "",
+};
+
+let lastLoggedCopyPct = -1;
+
+function emit(type: string, detail: any) {
+    window.dispatchEvent(new CustomEvent(type, { detail }));
+}
+function snapshot() {
+    return { ...current };
+}
+function reset() {
+    current = { running: false, filename: null, phase: null, percent: null, subtext: "" };
+    lastLoggedCopyPct = -1;
+    emit("pn:import-state", snapshot());
+}
+
+export const ImportRunner = {
+    getState(): ImportState {
+        return snapshot();
+    },
+
+    async start(opts: { filename: string; password?: string }) {
+        const { filename, password } = opts;
+        if (!filename) return;
+
+        // If already running for same file, ignore; if different, we "replace" (no server cancel)
+        if (current.running && current.filename === filename) return;
+
+        current = { running: true, filename, phase: "unzip", percent: 0, subtext: "" };
+        lastLoggedCopyPct = -1;
+        emit("pn:import-state", snapshot());
+
+        LogBus.append(`IMPORT ▶ ${filename}`);
+
+        notifications.show({
+            id: NOTIF_IMPORT_ID,
+            title: "Import running…",
+            message: filename,
+            loading: true,
+            autoClose: false,
+        });
+
+        processZipStream({
+            filename,
+            password,
+            onLog: (line: string) => {
+                LogBus.append(line);
+                emit("pn:import-log", { line });
+            },
+            onProgress: (p: StreamProgress) => {
+                const phase: Phase = p.phase === "unzip" || p.phase === "copy" ? p.phase : null;
+                const percent = p.percent ?? current.percent ?? 0;
+
+                current.phase = phase;
+                current.percent = percent;
+
+                if (phase === "copy" && p.copiedBytes != null && p.totalBytes != null) {
+                    // human-readable MB summary
+                    const mb = (n: number) => (n / (1024 * 1024)).toFixed(1);
+                    current.subtext = `${mb(p.copiedBytes)}MB / ${mb(p.totalBytes)}MB`;
+
+                    // Throttle log line every 5%
+                    const pct = Math.round(percent);
+                    if (pct >= lastLoggedCopyPct + 5) {
+                        LogBus.append(`COPY ${pct}% • ${current.subtext}`);
+                        lastLoggedCopyPct = pct;
+                    }
+                } else {
+                    current.subtext = "";
+                }
+
+                emit("pn:import-progress", {
+                    phase: current.phase,
+                    percent: current.percent,
+                    filename: current.filename,
+                    extras: { subtext: current.subtext },
+                });
+                emit("pn:import-state", snapshot());
+            },
+            onDone: () => {
+                LogBus.append("IMPORT ✓ DONE");
+                notifications.update({
+                    id: NOTIF_IMPORT_ID,
+                    loading: false,
+                    title: "Import finished",
+                    message: "Your library has been processed.",
+                    autoClose: 2500,
+                });
+                reset();
+            },
+            onError: (msg: string) => {
+                LogBus.append(`IMPORT ✗ ERROR: ${msg || "Unknown error"}`);
+                notifications.update({
+                    id: NOTIF_IMPORT_ID,
+                    loading: false,
+                    color: "red",
+                    title: "Import failed",
+                    message: msg || "Unknown error",
+                    autoClose: 4000,
+                });
+                reset();
+            },
+        });
+    },
+};
+
+
+===== web\src\services\logBus.ts =====
+
+// Global log buffer that survives route changes AND page reloads (via sessionStorage).
+// Newest-first order. Keeps up to MAX lines.
+
+import { KEY, MAX_LINES } from "../lib/constants";
+import { LogListener } from "../lib/types";
+
+let lines: string[] = restore();
+
+const listeners = new Set<LogListener>();
+
+function store() {
+    try {
+        sessionStorage.setItem(KEY, JSON.stringify(lines));
+    } catch { }
+}
+
+function restore(): string[] {
+    try {
+        const raw = sessionStorage.getItem(KEY);
+        if (!raw) return [];
+        const arr = JSON.parse(raw);
+        return Array.isArray(arr) ? arr : [];
+    } catch {
+        return [];
+    }
+}
+
+function emit() {
+    const snapshot = [...lines];
+    listeners.forEach((fn) => fn(snapshot));
+}
+
+export const LogBus = {
+    append(line: string) {
+        if (!line) return;
+        lines = [line, ...lines].slice(0, MAX_LINES);
+        store();
+        emit();
+    },
+    clear() {
+        lines = [];
+        store();
+        emit();
+    },
+    get(): string[] {
+        return [...lines];
+    },
+    subscribe(fn: LogListener) {
+        listeners.add(fn);
+        fn([...lines]); // immediate hydration
+        return () => { listeners.delete(fn); };
+    },
+};
+
+
+===== web\src\services\uploader.ts =====
+
+// Single source of truth for ALL uploads (manual or watcher-initiated).
+// Persists state across navigation, emits progress events, logs to LogBus,
+// notifies with Mantine, and announces availability via pn:zips-changed.
+
+import { notifications } from "@mantine/notifications";
+import { uploadZip } from "../lib/api";
+import { LogBus } from "../services/logBus";
+import { UploadState } from "../lib/types";
+import { LAST_UP_KEY, STATE_KEY, NOTIF_UPLOAD_ID } from "../lib/constants";
+
+let current: UploadState = restoreState();
+let lastUploaded: { name: string; size?: number; lastModified?: number } | null = restoreLast();
+
+function emit(type: string, detail: any) {
+    window.dispatchEvent(new CustomEvent(type, { detail }));
+}
+function storeState() {
+    try { sessionStorage.setItem(STATE_KEY, JSON.stringify(current)); } catch { }
+}
+function restoreState(): UploadState {
+    try {
+        const raw = sessionStorage.getItem(STATE_KEY);
+        if (!raw) return { running: false, name: null, percent: null };
+        const obj = JSON.parse(raw);
+        return {
+            running: !!obj?.running,
+            name: typeof obj?.name === "string" ? obj.name : null,
+            percent: typeof obj?.percent === "number" ? obj.percent : null,
+        };
+    } catch { return { running: false, name: null, percent: null }; }
+}
+function storeLast(meta: { name: string; size?: number; lastModified?: number } | null) {
+    try {
+        if (!meta) localStorage.removeItem(LAST_UP_KEY);
+        else localStorage.setItem(LAST_UP_KEY, JSON.stringify(meta));
+    } catch { }
+}
+function restoreLast() {
+    try {
+        const raw = localStorage.getItem(LAST_UP_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+}
+function showRunImportNotice(fileName: string) {
+    const id = `pn-upload-done-${Date.now()}`;
+    notifications.show({
+        id,
+        title: "Backup uploaded",
+        message: `Ready to import: ${fileName}. Open the Import section to run it.`,
+        autoClose: 4000,
+    });
+}
+
+export const UploadRunner = {
+    getState(): UploadState { return { ...current }; },
+    getLastUploaded(): { name: string; size?: number; lastModified?: number } | null { return lastUploaded ? { ...lastUploaded } : null; },
+    isUploadingName(name: string) { return current.running && current.name === name; },
+
+    async start(file: File) {
+        if (!file) return;
+        if (current.running && current.name === file.name) return;
+
+        current = { running: true, name: file.name, percent: 0 };
+        storeState();
+        emit("pn:upload-state", { ...current });
+
+        LogBus.append(`UPLOAD ▶ ${file.name}`);
+
+        notifications.show({
+            id: NOTIF_UPLOAD_ID,
+            title: "Uploading…",
+            message: file.name,
+            loading: true,
+            autoClose: false,
+        });
+
+        // Kick progress to UI
+        emit("pn:upload-progress", { phase: "start", name: file.name, percent: 0 });
+
+        try {
+            await uploadZip(file, (p: number) => {
+                current.percent = p ?? current.percent ?? 0;
+                storeState();
+                emit("pn:upload-progress", { phase: "progress", name: file.name, percent: current.percent });
+            });
+
+            // success
+            lastUploaded = {
+                name: file.name,
+                size: file.size,
+                lastModified: (file as any)?.lastModified ?? Date.now(),
+            };
+            storeLast(lastUploaded);
+
+            LogBus.append(`UPLOAD ✓ ${file.name}`);
+
+            emit("pn:upload-progress", { phase: "done", name: file.name, percent: 100 });
+
+            notifications.update({
+                id: NOTIF_UPLOAD_ID,
+                loading: false,
+                title: "Upload finished",
+                message: file.name,
+                autoClose: 2500,
+            });
+
+            // announce to app so /zips refresh + select happens
+            window.dispatchEvent(new CustomEvent("pn:zips-changed", { detail: { name: file.name } }));
+            showRunImportNotice(file.name);
+        } catch (e: any) {
+            LogBus.append(`UPLOAD ✗ ${file.name} — ${String(e?.message || e)}`);
+            emit("pn:upload-progress", { phase: "error", name: file.name, message: String(e?.message || e) });
+
+            notifications.update({
+                id: NOTIF_UPLOAD_ID,
+                loading: false,
+                color: "red",
+                title: "Upload failed",
+                message: String(e?.message || e),
+                autoClose: 4000,
+            });
+        } finally {
+            current = { running: false, name: null, percent: null };
+            storeState();
+            emit("pn:upload-state", { ...current });
+        }
+    },
+};
+
+
+===== web\src\services\watcher.ts =====
+
+// Detects newer local zips and delegates the actual upload to UploadRunner.
+// Still persists the selected folder and exposes UI state.
+
+import { UploadRunner } from "./uploader";
+import { LogBus } from "../services/logBus";
+import { BackupListener, BackupWatcherState, ZipMeta } from "../lib/types";
+import { DB_KEY, IDB_DB, IDB_STORE } from "../lib/constants";
+
+let dirHandle: FileSystemDirectoryHandle | null = null;
+let timer: number | null = null;
+const listeners = new Set<BackupListener>();
+const state: BackupWatcherState = {
+    supported: "showDirectoryPicker" in window,
+    dirName: null,
+    latestLocalZip: null,
+    running: false,
+    lastUploadedName: UploadRunner.getLastUploaded()?.name ?? null,
+    permission: null,
+};
+
+// --- IndexedDB helpers ---
+function idb(): Promise<IDBDatabase> {
+    return new Promise((resolve, reject) => {
+        const req = indexedDB.open(IDB_DB, 1);
+        req.onupgradeneeded = () => req.result.createObjectStore(IDB_STORE);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+}
+async function idbPut<T>(key: string, val: T) {
+    const db = await idb();
+    await new Promise<void>((res, rej) => {
+        const tx = db.transaction(IDB_STORE, "readwrite");
+        tx.objectStore(IDB_STORE).put(val as any, key);
+        tx.oncomplete = () => res();
+        tx.onerror = () => rej(tx.error);
+    });
+}
+async function idbGet<T>(key: string): Promise<T | null> {
+    const db = await idb();
+    return await new Promise<T | null>((res, rej) => {
+        const tx = db.transaction(IDB_STORE, "readonly");
+        const req = tx.objectStore(IDB_STORE).get(key);
+        req.onsuccess = () => res((req.result as T) ?? null);
+        req.onerror = () => rej(req.error);
+    });
+}
+async function saveHandle(h: FileSystemDirectoryHandle | null) { await idbPut(DB_KEY, h); }
+async function loadHandleFromStorage(): Promise<FileSystemDirectoryHandle | null> {
+    try { return (await idbGet<FileSystemDirectoryHandle>(DB_KEY)) ?? null; } catch { return null; }
+}
+
+function emit() { listeners.forEach((fn) => fn({ ...state })); }
+
+async function ensurePermission() {
+    if (!dirHandle) { state.permission = null; emit(); return false; }
+    // @ts-ignore
+    const perm = await dirHandle.queryPermission?.({ mode: "read" }) as PermissionState | undefined;
+    if (perm === "granted") { state.permission = "granted"; emit(); return true; }
+    // @ts-ignore
+    const req = await dirHandle.requestPermission?.({ mode: "read" }) as PermissionState | undefined;
+    state.permission = req ?? "prompt"; emit();
+    return req === "granted";
+}
+
+async function scanLatestZip(): Promise<ZipMeta | null> {
+    if (!dirHandle) return null;
+    let newest: ZipMeta | null = null;
+    // @ts-ignore
+    for await (const [name, handle] of dirHandle.entries?.() ?? []) {
+        if (!name.toLowerCase().endsWith(".zip")) continue;
+        // @ts-ignore
+        const file = await handle.getFile?.();
+        if (!file) continue;
+        const meta: ZipMeta = {
+            name,
+            lastModified: file.lastModified ?? 0,
+            size: file.size ?? 0,
+        };
+        if (!newest || meta.lastModified > newest.lastModified) newest = meta;
+    }
+    return newest;
+}
+
+function strictlyNewer(a: ZipMeta, b: { name: string; size?: number; lastModified?: number } | null) {
+    if (!b) return true;
+    const blm = b.lastModified ?? 0;
+    if (a.lastModified > blm) return true;
+    if (a.lastModified < blm) return false;
+    return a.size > (b.size ?? 0);
+}
+
+async function tick() {
+    if (!dirHandle) return;
+    if (!(await ensurePermission())) return;
+
+    const newest = await scanLatestZip();
+    state.latestLocalZip = newest; emit();
+    if (!newest) return;
+
+    // skip if UploadRunner is already uploading that file
+    if (UploadRunner.isUploadingName(newest.name)) return;
+
+    // only prompt if strictly newer than lastUploaded known by the runner
+    if (!strictlyNewer(newest, UploadRunner.getLastUploaded())) return;
+
+    // prompt & delegate to runner
+    const proceed = window.confirm(`New Playnite backup detected:\n${newest.name}\n\nUpload & import now?`);
+    if (!proceed) return;
+
+    try {
+        // @ts-ignore
+        const fh = await dirHandle.getFileHandle?.(newest.name);
+        // @ts-ignore
+        const file = await fh.getFile?.();
+        if (!file) return;
+
+        LogBus.append(`UPLOAD ▶ ${newest.name}`);
+        await UploadRunner.start(file); // runner handles progress, logs, notifications, zips-changed
+        state.lastUploadedName = newest.name; emit();
+    } catch (e) {
+        LogBus.append(`UPLOAD ✗ ${newest.name} — ${String((e as any)?.message || e)}`);
+    }
+}
+
+export const BackupWatcher = {
+    subscribe(fn: BackupListener) { listeners.add(fn); fn({ ...state }); return () => { listeners.delete(fn); }; },
+
+    async selectDirectory() {
+        if (!state.supported) return false;
+        // @ts-ignore
+        dirHandle = await (window as any).showDirectoryPicker?.();
+        if (!dirHandle) return false;
+        // @ts-ignore
+        state.dirName = dirHandle.name ?? null;
+        await saveHandle(dirHandle);
+        emit();
+        LogBus.append(`WATCH ▶ Selected folder: ${state.dirName}`);
+        start();
+        return true;
+    },
+
+    async tryRestorePrevious() {
+        if (!state.supported) return false;
+        const restored = await loadHandleFromStorage();
+        if (!restored) return false;
+        dirHandle = restored;
+        // @ts-ignore
+        state.dirName = dirHandle?.name ?? null;
+        emit();
+        LogBus.append(`WATCH ⟳ Restored folder: ${state.dirName}`);
+        start();
+        return true;
+    },
+
+    start, stop,
+};
+
+function start() {
+    if (timer != null) return;
+    state.running = true; emit();
+    timer = window.setInterval(() => { tick().catch(() => { }); }, 15000);
+    tick().catch(() => { });
+}
+function stop() {
+    if (timer != null) { clearInterval(timer); timer = null; }
+    state.running = false; emit();
+}
+
+
+===== web\src\theme.tsx =====
 
 import React from "react";
 import { MantineProvider, createTheme } from "@mantine/core";
@@ -3943,7 +3923,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 }
 
 
-===== web/tsconfig.json =====
+===== web\tsconfig.json =====
 
 {
   "compilerOptions": {
@@ -3961,7 +3941,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 }
 
 
-===== web/vite.config.mts =====
+===== web\vite.config.mts =====
 
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";

@@ -93,12 +93,67 @@ export function firstStoreishLink(links: Link[] | undefined, sourceName: string)
   return byDomain?.Url ?? null;
 }
 
+export function sourceUrlFallback(s: string, id: string): string | null {
+  switch (s) {
+    case "steam":
+      return `https://store.steampowered.com/app/${encodeURIComponent(id)}`;
+    case "gog":
+      return `https://www.gog.com/game/${encodeURIComponent(id)}`;
+    case "ubisoft connect":
+      return `https://www.ubisoft.com/en-us/search?gss-q=${encodeURIComponent(id)}`;
+    case "ea app":
+      return null;
+    case "battle.net":
+      return null;
+    case "epic":
+      return `https://www.epicgames.com/store/en-US/p/${encodeURIComponent(id)}`;
+    case "xbox":
+      return `https://www.xbox.com/en-us/Search/Results?q=${encodeURIComponent(id)}`;
+    case "humble":
+      return `https://www.humblebundle.com/store/search?search=${encodeURIComponent(id)}`;
+    case "nintendo":
+      return `https://www.nintendo.com/us/search/?q=${encodeURIComponent(id)}`;
+    case "microsoft store":
+      return `https://apps.microsoft.com/search?query=${encodeURIComponent(id)}`;
+    default:
+      return null;
+  }
+};
+
+export function sourceProtocolLink(source: string, id: string): string | null {
+  const s = source.toLowerCase();
+
+  switch (s) {
+    case "steam":
+      return id ? `steam://store/${encodeURIComponent(id)}` : "steam://store";
+    case "gog":
+    case "gog galaxy":
+      return id ? `goggalaxy://openGameView/${encodeURIComponent(id)}` : "goggalaxy://openGOGGalaxy";
+    case "epic":
+      return id ? `com.epicgames.launcher://apps/${encodeURIComponent(id)}?action=show` : "com.epicgames.launcher://";
+    case "ubisoft connect":
+      return "uplay://";
+    case "ea app":
+      return "ealauncher://";
+    case "battle.net":
+      return "battlenet://";
+    case "xbox":
+      return "xbox://";
+    default:
+      return null;
+  }
+}
+
 export function hasEmulatorTag(tags?: string[]): boolean {
   return Array.isArray(tags) && tags.some(t => /\bemulator(s)?\b/i.test(t));
 }
 
 export function myAbandonwareLink(title: string): string {
   return `https://www.myabandonware.com/search/q/${encodeURIComponent(title)}`;
+}
+
+export function playniteAction(id: string): string { 
+  return `playnite://playnite/start/${encodeURIComponent(id)}`; 
 }
 
 export function effectiveLink(

@@ -20,7 +20,7 @@ const Scroller = React.forwardRef<HTMLDivElement, React.HTMLProps<HTMLDivElement
       style={{
         ...props.style,
         overflowY: "scroll",
-        scrollbarGutter: "stable both-edges",
+        scrollbarGutter: "stable right-edge",
       }}
     />
   )
