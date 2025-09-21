@@ -7,15 +7,16 @@ const { execSync } = require("child_process");
 const extName = "playnite-viewer-bridge";
 const version = "1.0.0";
 const dllName = "PlayniteViewerBridge.dll";
-const projectPath = "playnite/PlayniteViewerBridge/PlayniteViewerBridge.csproj";
-const buildOutput = "playnite/PlayniteViewerBridge/bin/Release/net462";
-const yamlPath = "playnite/PlayniteViewerBridge/extension.yaml";
+const root = "playnite/PlayniteViewerBridge";
+const dist = "extension";
+const projectPath = `${root}/PlayniteViewerBridge.csproj`;
+const buildOutput = `${root}/bin/Release/net462`;
+const yamlPath = `${root}/extension.yaml`;
 
-const dist = "playnite/PlayniteViewerBridge";
 const zipName = `${extName}-${version}.pext`;
-const tempDir = path.join("playnite/PlayniteViewerBridge/.temp", extName);
-const readmePath = "playnite/PlayniteViewerBridge/README.md";
-// const changelogPath = "playnite/PlayniteViewerBridge/CHANGELOG.md";
+const tempDir = path.join(`${root}/.temp`, extName);
+const readmePath = `${root}/README.md`;
+// const changelogPath = `${root}/CHANGELOG.md`;
 
 async function run() {
   try {
@@ -46,6 +47,8 @@ async function run() {
     await fs.ensureDir(dist);
     const zipPath = path.join(dist, zipName);
     zip.writeZip(zipPath);
+    const latestZipPath = path.join(dist, "latest.pext");
+    zip.writeZip(latestZipPath);
 
     if (await fs.pathExists(readmePath)) {
       zip.addLocalFile(readmePath);

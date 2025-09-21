@@ -11,14 +11,14 @@ services:
     tmpfs:
       - /work
     ports:
-      - "3000:3000"
+      - "3004:3004"
 
   web:
     build:
       context: .
       dockerfile: web/Dockerfile
     ports:
-      - "3001:80"
+      - "3003:3003"
     volumes:
       - ./data:/usr/share/nginx/html/data:ro 
     depends_on:

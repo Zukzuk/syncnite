@@ -1,0 +1,23 @@
+services:
+  api:
+    image: zukzuk/playnite-viewer-api:latest
+    environment:
+      NODE_ENV: production
+    volumes:
+      - ./backups:/input
+      - ./data:/data
+      - ./extension:/extension:ro
+    ports:
+      - "3004:3004"
+    restart: unless-stopped
+
+  web:
+    image: zukzuk/playnite-viewer-web:latest
+    ports:
+      - "3003:3003"
+    depends_on:
+      - api
+    volumes:
+      - ./data:/usr/share/nginx/html/data:ro
+      - ./extension:/usr/share/nginx/html/extension:ro
+    restart: unless-stopped

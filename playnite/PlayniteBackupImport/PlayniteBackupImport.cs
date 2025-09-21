@@ -2,15 +2,15 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using LiteDB;
 
-namespace PlayniteImport;
+namespace PlayniteBackupImport;
 
-public static class PlayniteImport
+public static class PlayniteBackupImport
 {
     public static int Main(string[] args)
     {
         if (args.Length < 2)
         {
-            Console.Error.WriteLine("Usage: PlayniteImport <root-folder> <output-folder>");
+            Console.Error.WriteLine("Usage: PlayniteBackupImport <root-folder> <output-folder>");
             return 1;
         }
 
@@ -23,9 +23,10 @@ public static class PlayniteImport
         List<string> dbFiles;
         try
         {
-            dbFiles = Directory.EnumerateFiles(rootDir, "*.db", SearchOption.AllDirectories)
-                               .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
-                               .ToList();
+            dbFiles = Directory
+                .EnumerateFiles(rootDir, "*.db", SearchOption.AllDirectories)
+                .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
+                .ToList();
         }
         catch (Exception e)
         {
@@ -41,18 +42,22 @@ public static class PlayniteImport
 
         Console.WriteLine($"Found {dbFiles.Count} .db files:");
 
-        int dumped = 0, skipped = 0;
+        int dumped = 0,
+            skipped = 0;
 
         string SanitizeRel(string rel)
         {
             var noExt = Path.ChangeExtension(rel, null) ?? rel;
-            return noExt.Replace(Path.DirectorySeparatorChar, '.')
-                        .Replace(Path.AltDirectorySeparatorChar, '.');
+            return noExt
+                .Replace(Path.DirectorySeparatorChar, '.')
+                .Replace(Path.AltDirectorySeparatorChar, '.');
         }
 
         void DumpDb(string dbPath, string rel, string? pwd)
         {
-            var cs = $"Filename={dbPath};ReadOnly=true" + (string.IsNullOrEmpty(pwd) ? "" : $";Password={pwd}");
+            var cs =
+                $"Filename={dbPath};ReadOnly=true"
+                + (string.IsNullOrEmpty(pwd) ? "" : $";Password={pwd}");
             using var db = new LiteDatabase(cs);
 
             foreach (var name in db.GetCollectionNames())
@@ -66,11 +71,14 @@ public static class PlayniteImport
                 }
 
                 using var stream = File.Create(outFile);
-                using var writer = new Utf8JsonWriter(stream, new JsonWriterOptions
-                {
-                    Indented = true,
-                    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-                });
+                using var writer = new Utf8JsonWriter(
+                    stream,
+                    new JsonWriterOptions
+                    {
+                        Indented = true,
+                        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+                    }
+                );
 
                 writer.WriteStartArray();
                 foreach (var doc in col.FindAll())
@@ -119,14 +127,18 @@ public static class PlayniteImport
             catch (Exception ex)
             {
                 skipped++;
-                Console.Error.WriteLine($"SKIP (other): {rel} :: {ex.GetType().Name}: {ex.Message}");
+                Console.Error.WriteLine(
+                    $"SKIP (other): {rel} :: {ex.GetType().Name}: {ex.Message}"
+                );
             }
         }
 
         Console.WriteLine($"Done. Dumped: {dumped}, Skipped: {skipped}");
         if (dumped == 0)
         {
-            Console.Error.WriteLine("No valid LiteDB files were dumped. If your library is encrypted, set LITEDB_PASSWORD.");
+            Console.Error.WriteLine(
+                "No valid LiteDB files were dumped. If your library is encrypted, set LITEDB_PASSWORD."
+            );
             return 3;
         }
 

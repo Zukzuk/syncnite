@@ -28,7 +28,7 @@ const router = express.Router();
  *         description: Server error while reading the extension package.
  */
 router.get("/download", (_req, res) => {
-  const file = path.resolve(__dirname, "../../playnite/PlayniteViewerBridge/playnite-viewer-bridge-1.0.0.pext");
+  const file = "/extension/latest.pext";
   res.download(file, "playnite-viewer-bridge.pext");
 });
 

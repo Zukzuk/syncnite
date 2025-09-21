@@ -4,7 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <StartupObject>PlayniteImport.PlayniteImport</StartupObject>
+    <StartupObject>PlayniteBackupImport.PlayniteBackupImport</StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="LiteDB" Version="4.1.4" />

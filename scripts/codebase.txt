@@ -22,12 +22,13 @@ RUN npm run --workspace api build
 
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0 AS dump-build
 WORKDIR /src
-COPY playnite/PlayniteImport/ PlayniteImport/
+COPY playnite/PlayniteBackupImport/ PlayniteBackupImport/
+
 # Publish self-contained, single-file for the current arch (x64/arm64)
 ARG TARGETARCH
 RUN set -eux; \
     if [ "$TARGETARCH" = "arm64" ]; then RID=linux-musl-arm64; else RID=linux-musl-x64; fi; \
-    dotnet publish PlayniteImport/PlayniteImport.csproj \
+    dotnet publish PlayniteBackupImport/PlayniteBackupImport.csproj \
     -c Release \
     -o /out \
     -r $RID \
@@ -45,12 +46,12 @@ RUN apk add --no-cache p7zip icu-libs
 COPY --from=api-build /app/node_modules ./node_modules
 COPY --from=api-build /app/api/dist ./api/dist
 
-# Bring PlayniteImport (self-contained musl binary)
-COPY --from=dump-build /out/PlayniteImport ./api/PlayniteImport
-RUN chmod +x ./api/PlayniteImport
+# Bring PlayniteBackupImport (self-contained musl binary)
+COPY --from=dump-build /out/PlayniteBackupImport ./api/PlayniteBackupImport
+RUN chmod +x ./api/PlayniteBackupImport
 
 ENV NODE_ENV=production
-EXPOSE 3000
+EXPOSE 3004
 WORKDIR /app/api
 CMD ["node", "dist/server.js"]
 
@@ -361,7 +362,7 @@ const router = express.Router();
  *         description: Server error while reading the extension package.
  */
 router.get("/download", (_req, res) => {
-  const file = path.resolve(__dirname, "../../playnite/PlayniteViewerBridge/playnite-viewer-bridge-1.0.0.pext");
+  const file = "/extension/latest.pext";
   res.download(file, "playnite-viewer-bridge.pext");
 });
 
@@ -623,7 +624,7 @@ router.get("/process-stream", async (req, res) => {
         log("Dumping LiteDB to JSON…");
         const env = { ...process.env };
         if (password) env.LITEDB_PASSWORD = password;
-        const { out, err } = await run("./PlayniteImport", [libDir, DATA_DIR], { env });
+        const { out, err } = await run("./PlayniteBackupImport", [libDir, DATA_DIR], { env });
         if (out?.trim()) out.trim().split(/\r?\n/).forEach((l) => log(l));
         if (err?.trim()) err.trim().split(/\r?\n/).forEach((l) => log(l));
 
@@ -718,7 +719,7 @@ export default router;
 import { createApp } from "./app";
 
 const app = createApp();
-const port = process.env.PORT ? Number(process.env.PORT) : 3000;
+const port = process.env.PORT ? Number(process.env.PORT) : 3004;
 
 app.listen(port, () => {
     console.log(`API listening on ${port}`);
@@ -745,6 +746,33 @@ app.listen(port, () => {
 }
 
 
+===== deploy\docker-compose.yml =====
+
+services:
+  api:
+    image: zukzuk/playnite-viewer-api:latest
+    environment:
+      NODE_ENV: production
+    volumes:
+      - ./backups:/input
+      - ./data:/data
+      - ./extension:/extension:ro
+    ports:
+      - "3004:3004"
+    restart: unless-stopped
+
+  web:
+    image: zukzuk/playnite-viewer-web:latest
+    ports:
+      - "3003:3003"
+    depends_on:
+      - api
+    volumes:
+      - ./data:/usr/share/nginx/html/data:ro
+      - ./extension:/usr/share/nginx/html/extension:ro
+    restart: unless-stopped
+
+
 ===== docker-compose.yml =====
 
 services:
@@ -760,14 +788,14 @@ services:
     tmpfs:
       - /work
     ports:
-      - "3000:3000"
+      - "3004:3004"
 
   web:
     build:
       context: .
       dockerfile: web/Dockerfile
     ports:
-      - "3001:80"
+      - "3003:3003"
     volumes:
       - ./data:/usr/share/nginx/html/data:ro 
     depends_on:
@@ -804,21 +832,21 @@ volumes:
 }
 
 
-===== playnite\PlayniteImport\PlayniteImport.cs =====
+===== playnite\PlayniteBackupImport\PlayniteBackupImport.cs =====
 
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using LiteDB;
 
-namespace PlayniteImport;
+namespace PlayniteBackupImport;
 
-public static class PlayniteImport
+public static class PlayniteBackupImport
 {
     public static int Main(string[] args)
     {
         if (args.Length < 2)
         {
-            Console.Error.WriteLine("Usage: PlayniteImport <root-folder> <output-folder>");
+            Console.Error.WriteLine("Usage: PlayniteBackupImport <root-folder> <output-folder>");
             return 1;
         }
 
@@ -831,9 +859,10 @@ public static class PlayniteImport
         List<string> dbFiles;
         try
         {
-            dbFiles = Directory.EnumerateFiles(rootDir, "*.db", SearchOption.AllDirectories)
-                               .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
-                               .ToList();
+            dbFiles = Directory
+                .EnumerateFiles(rootDir, "*.db", SearchOption.AllDirectories)
+                .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
+                .ToList();
         }
         catch (Exception e)
         {
@@ -849,18 +878,22 @@ public static class PlayniteImport
 
         Console.WriteLine($"Found {dbFiles.Count} .db files:");
 
-        int dumped = 0, skipped = 0;
+        int dumped = 0,
+            skipped = 0;
 
         string SanitizeRel(string rel)
         {
             var noExt = Path.ChangeExtension(rel, null) ?? rel;
-            return noExt.Replace(Path.DirectorySeparatorChar, '.')
-                        .Replace(Path.AltDirectorySeparatorChar, '.');
+            return noExt
+                .Replace(Path.DirectorySeparatorChar, '.')
+                .Replace(Path.AltDirectorySeparatorChar, '.');
         }
 
         void DumpDb(string dbPath, string rel, string? pwd)
         {
-            var cs = $"Filename={dbPath};ReadOnly=true" + (string.IsNullOrEmpty(pwd) ? "" : $";Password={pwd}");
+            var cs =
+                $"Filename={dbPath};ReadOnly=true"
+                + (string.IsNullOrEmpty(pwd) ? "" : $";Password={pwd}");
             using var db = new LiteDatabase(cs);
 
             foreach (var name in db.GetCollectionNames())
@@ -874,11 +907,14 @@ public static class PlayniteImport
                 }
 
                 using var stream = File.Create(outFile);
-                using var writer = new Utf8JsonWriter(stream, new JsonWriterOptions
-                {
-                    Indented = true,
-                    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-                });
+                using var writer = new Utf8JsonWriter(
+                    stream,
+                    new JsonWriterOptions
+                    {
+                        Indented = true,
+                        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+                    }
+                );
 
                 writer.WriteStartArray();
                 foreach (var doc in col.FindAll())
@@ -927,14 +963,18 @@ public static class PlayniteImport
             catch (Exception ex)
             {
                 skipped++;
-                Console.Error.WriteLine($"SKIP (other): {rel} :: {ex.GetType().Name}: {ex.Message}");
+                Console.Error.WriteLine(
+                    $"SKIP (other): {rel} :: {ex.GetType().Name}: {ex.Message}"
+                );
             }
         }
 
         Console.WriteLine($"Done. Dumped: {dumped}, Skipped: {skipped}");
         if (dumped == 0)
         {
-            Console.Error.WriteLine("No valid LiteDB files were dumped. If your library is encrypted, set LITEDB_PASSWORD.");
+            Console.Error.WriteLine(
+                "No valid LiteDB files were dumped. If your library is encrypted, set LITEDB_PASSWORD."
+            );
             return 3;
         }
 
@@ -943,7 +983,7 @@ public static class PlayniteImport
 }
 
 
-===== playnite\PlayniteImport\PlayniteImport.csproj =====
+===== playnite\PlayniteBackupImport\PlayniteBackupImport.csproj =====
 
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -951,7 +991,7 @@ public static class PlayniteImport
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <StartupObject>PlayniteImport.PlayniteImport</StartupObject>
+    <StartupObject>PlayniteBackupImport.PlayniteBackupImport</StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="LiteDB" Version="4.1.4" />
@@ -972,8 +1012,6 @@ PlayniteApiVersion: 6.12.0
 
 ===== playnite\PlayniteViewerBridge\PlayniteViewerBridge.cs =====
 
-using Playnite.SDK;
-using Playnite.SDK.Plugins;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -981,6 +1019,8 @@ using System.Linq;
 using System.Net; // WebClient (net462)
 using System.Text;
 using System.Timers;
+using Playnite.SDK;
+using Playnite.SDK.Plugins;
 
 namespace PlayniteViewerBridge
 {
@@ -995,7 +1035,8 @@ namespace PlayniteViewerBridge
         private readonly string configPath;
         private readonly Timer startupKick; // delayed initial push (no OnApplicationStarted in SDK 6.x)
 
-        public PlayniteViewerBridge(IPlayniteAPI api) : base(api)
+        public PlayniteViewerBridge(IPlayniteAPI api)
+            : base(api)
         {
             // Load / create config
             configPath = Path.Combine(GetPluginUserDataPath(), "config.json");
@@ -1006,7 +1047,14 @@ namespace PlayniteViewerBridge
 
             // Kick an initial push a few seconds after startup
             startupKick = new Timer(3000) { AutoReset = false };
-            startupKick.Elapsed += (s, e) => { try { pusher.Trigger(); } catch { } };
+            startupKick.Elapsed += (s, e) =>
+            {
+                try
+                {
+                    pusher.Trigger();
+                }
+                catch { }
+            };
             startupKick.Start();
 
             Properties = new GenericPluginProperties { HasSettings = false };
@@ -1014,7 +1062,9 @@ namespace PlayniteViewerBridge
 
         // No OnApplicationStarted override in Playnite 6.x
 
-        public override System.Collections.Generic.IEnumerable<MainMenuItem> GetMainMenuItems(GetMainMenuItemsArgs args)
+        public override System.Collections.Generic.IEnumerable<MainMenuItem> GetMainMenuItems(
+            GetMainMenuItemsArgs args
+        )
         {
             return new[]
             {
@@ -1031,10 +1081,18 @@ namespace PlayniteViewerBridge
                                 {
                                     config.Endpoint = newEp;
                                     BridgeConfig.Save(configPath, config);
-                                    if (pusher != null) pusher.UpdateEndpoint(newEp);
+                                    if (pusher != null)
+                                        pusher.UpdateEndpoint(newEp);
                                     logger.Info("ViewerBridge: endpoint updated to " + newEp);
                                 },
-                                onPush: () => { try { pusher?.PushNow(); } catch { } }
+                                onPush: () =>
+                                {
+                                    try
+                                    {
+                                        pusher?.PushNow();
+                                    }
+                                    catch { }
+                                }
                             );
                             win.Owner = null; // Playnite host window not exposed in SDK 6; modeless OK
                             win.Show();
@@ -1043,16 +1101,24 @@ namespace PlayniteViewerBridge
                         {
                             logger.Error(ex, "ViewerBridge: failed to open settings window");
                         }
-                    }
-                }
+                    },
+                },
             };
         }
 
         public override void Dispose()
         {
             base.Dispose();
-            try { startupKick?.Dispose(); } catch { }
-            try { pusher?.Dispose(); } catch { }
+            try
+            {
+                startupKick?.Dispose();
+            }
+            catch { }
+            try
+            {
+                pusher?.Dispose();
+            }
+            catch { }
         }
 
         // ----------------- Single-file inner types -----------------
@@ -1061,7 +1127,7 @@ namespace PlayniteViewerBridge
         private sealed class InstalledPusher : IDisposable
         {
             private readonly IPlayniteAPI api;
-            private string endpoint; // e.g. http://localhost:3000/api/playnitelive/push
+            private string endpoint; // e.g. http://localhost:3003/api/playnitelive/push
             private readonly Timer debounce;
             private readonly ILogger log = LogManager.GetLogger();
 
@@ -1086,20 +1152,29 @@ namespace PlayniteViewerBridge
 
             public void Trigger()
             {
-                try { debounce.Stop(); debounce.Start(); } catch { }
+                try
+                {
+                    debounce.Stop();
+                    debounce.Start();
+                }
+                catch { }
             }
 
             public void PushNow()
             {
-                try { debounce.Stop(); } catch { }
+                try
+                {
+                    debounce.Stop();
+                }
+                catch { }
                 PushInstalledSafe();
             }
 
             private string BuildPayload()
             {
                 // Minimal JSON (no System.Text.Json on net462)
-                var installed = api.Database.Games
-                    .Where(g => g.IsInstalled)
+                var installed = api
+                    .Database.Games.Where(g => g.IsInstalled)
                     .Select(g => g.Id.ToString())
                     .ToArray();
 
@@ -1107,7 +1182,8 @@ namespace PlayniteViewerBridge
                 sb.Append("{\"installed\":[");
                 for (int i = 0; i < installed.Length; i++)
                 {
-                    if (i > 0) sb.Append(',');
+                    if (i > 0)
+                        sb.Append(',');
                     sb.Append('\"').Append(installed[i]).Append('\"');
                 }
                 sb.Append("]}");
@@ -1142,7 +1218,11 @@ namespace PlayniteViewerBridge
 
             public void Dispose()
             {
-                try { debounce.Dispose(); } catch { }
+                try
+                {
+                    debounce.Dispose();
+                }
+                catch { }
                 // Lambdas attached; safe on plugin unload in SDK 6.x
             }
         }
@@ -1150,7 +1230,7 @@ namespace PlayniteViewerBridge
         /// <summary>Tiny JSON config stored in the plugin data folder.</summary>
         private sealed class BridgeConfig
         {
-            public string Endpoint = "http://localhost:3000/api/playnitelive/push";
+            public string Endpoint = "http://localhost:3003/api/playnitelive/push";
 
             public static BridgeConfig Load(string path)
             {
@@ -1166,12 +1246,15 @@ namespace PlayniteViewerBridge
                     var txt = File.ReadAllText(path, Encoding.UTF8).Trim();
                     var ep = TryExtractValue(txt, "endpoint");
                     var cfg2 = new BridgeConfig();
-                    if (!string.IsNullOrWhiteSpace(ep)) cfg2.Endpoint = ep;
+                    if (!string.IsNullOrWhiteSpace(ep))
+                        cfg2.Endpoint = ep;
                     return cfg2;
                 }
                 catch (Exception ex)
                 {
-                    LogManager.GetLogger().Error(ex, "ViewerBridge: failed reading config, using defaults");
+                    LogManager
+                        .GetLogger()
+                        .Error(ex, "ViewerBridge: failed reading config, using defaults");
                     return new BridgeConfig();
                 }
             }
@@ -1194,12 +1277,16 @@ namespace PlayniteViewerBridge
             {
                 var needle = "\"" + key + "\"";
                 int i = json.IndexOf(needle, StringComparison.OrdinalIgnoreCase);
-                if (i < 0) return null;
+                if (i < 0)
+                    return null;
                 i = json.IndexOf(':', i);
-                if (i < 0) return null;
+                if (i < 0)
+                    return null;
                 i++;
-                while (i < json.Length && char.IsWhiteSpace(json[i])) i++;
-                if (i >= json.Length || json[i] != '\"') return null;
+                while (i < json.Length && char.IsWhiteSpace(json[i]))
+                    i++;
+                if (i >= json.Length || json[i] != '\"')
+                    return null;
                 i++;
                 var sb = new StringBuilder();
                 while (i < json.Length && json[i] != '\"')
@@ -1208,10 +1295,15 @@ namespace PlayniteViewerBridge
                     if (ch == '\\' && i < json.Length)
                     {
                         char n = json[i++];
-                        if (n == '\"' || n == '\\') sb.Append(n);
-                        else { sb.Append('\\').Append(n); }
+                        if (n == '\"' || n == '\\')
+                            sb.Append(n);
+                        else
+                        {
+                            sb.Append('\\').Append(n);
+                        }
                     }
-                    else sb.Append(ch);
+                    else
+                        sb.Append(ch);
                 }
                 return sb.ToString();
             }
@@ -1241,17 +1333,32 @@ namespace PlayniteViewerBridge
 
             var root = new System.Windows.Controls.Grid
             {
-                Margin = new System.Windows.Thickness(12)
+                Margin = new System.Windows.Thickness(12),
             };
-            root.RowDefinitions.Add(new System.Windows.Controls.RowDefinition { Height = new System.Windows.GridLength(1, System.Windows.GridUnitType.Auto) });
-            root.RowDefinitions.Add(new System.Windows.Controls.RowDefinition { Height = new System.Windows.GridLength(1, System.Windows.GridUnitType.Auto) });
-            root.RowDefinitions.Add(new System.Windows.Controls.RowDefinition { Height = new System.Windows.GridLength(1, System.Windows.GridUnitType.Star) });
+            root.RowDefinitions.Add(
+                new System.Windows.Controls.RowDefinition
+                {
+                    Height = new System.Windows.GridLength(1, System.Windows.GridUnitType.Auto),
+                }
+            );
+            root.RowDefinitions.Add(
+                new System.Windows.Controls.RowDefinition
+                {
+                    Height = new System.Windows.GridLength(1, System.Windows.GridUnitType.Auto),
+                }
+            );
+            root.RowDefinitions.Add(
+                new System.Windows.Controls.RowDefinition
+                {
+                    Height = new System.Windows.GridLength(1, System.Windows.GridUnitType.Star),
+                }
+            );
 
             // Endpoint label
             var lbl = new System.Windows.Controls.TextBlock
             {
                 Text = "API endpoint (POST /api/playnitelive/push):",
-                Margin = new System.Windows.Thickness(0, 0, 0, 6)
+                Margin = new System.Windows.Thickness(0, 0, 0, 6),
             };
             System.Windows.Controls.Grid.SetRow(lbl, 0);
             root.Children.Add(lbl);
@@ -1260,7 +1367,7 @@ namespace PlayniteViewerBridge
             txtEndpoint = new System.Windows.Controls.TextBox
             {
                 Text = initialEndpoint ?? "",
-                Margin = new System.Windows.Thickness(0, 0, 0, 12)
+                Margin = new System.Windows.Thickness(0, 0, 0, 12),
             };
             System.Windows.Controls.Grid.SetRow(txtEndpoint, 1);
             root.Children.Add(txtEndpoint);
@@ -1269,31 +1376,36 @@ namespace PlayniteViewerBridge
             var buttons = new System.Windows.Controls.StackPanel
             {
                 Orientation = System.Windows.Controls.Orientation.Horizontal,
-                HorizontalAlignment = System.Windows.HorizontalAlignment.Right
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Right,
             };
 
             var btnSave = new System.Windows.Controls.Button
             {
                 Content = "Save",
                 Width = 90,
-                Margin = new System.Windows.Thickness(0, 0, 8, 0)
+                Margin = new System.Windows.Thickness(0, 0, 8, 0),
             };
-            btnSave.Click += (s, e) => { TrySave(); };
+            btnSave.Click += (s, e) =>
+            {
+                TrySave();
+            };
 
             var btnPush = new System.Windows.Controls.Button
             {
                 Content = "Push now",
                 Width = 90,
-                Margin = new System.Windows.Thickness(0, 0, 8, 0)
+                Margin = new System.Windows.Thickness(0, 0, 8, 0),
             };
-            btnPush.Click += (s, e) => { TryPush(); };
-
-            var btnClose = new System.Windows.Controls.Button
+            btnPush.Click += (s, e) =>
             {
-                Content = "Close",
-                Width = 90
+                TryPush();
             };
-            btnClose.Click += (s, e) => { Close(); };
+
+            var btnClose = new System.Windows.Controls.Button { Content = "Close", Width = 90 };
+            btnClose.Click += (s, e) =>
+            {
+                Close();
+            };
 
             buttons.Children.Add(btnSave);
             buttons.Children.Add(btnPush);
@@ -1310,16 +1422,24 @@ namespace PlayniteViewerBridge
             try
             {
                 var val = (txtEndpoint.Text ?? "").Trim();
-                if (string.IsNullOrEmpty(val)) return;
+                if (string.IsNullOrEmpty(val))
+                    return;
                 onSave?.Invoke(val);
             }
-            catch { /* ignore */ }
+            catch
+            { /* ignore */
+            }
         }
 
         private void TryPush()
         {
-            try { onPush?.Invoke(); }
-            catch { /* ignore */ }
+            try
+            {
+                onPush?.Invoke();
+            }
+            catch
+            { /* ignore */
+            }
         }
     }
 }
@@ -1335,16 +1455,13 @@ namespace PlayniteViewerBridge
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="PlayniteSDK" Version="6.12.0" />
   </ItemGroup>
-
   <ItemGroup>
     <Reference Include="PresentationFramework" />
     <Reference Include="System.Web" />
   </ItemGroup>
-
   <ItemGroup>
     <Reference Include="PresentationFramework" />
     <Reference Include="PresentationCore" />
@@ -1398,7 +1515,7 @@ COPY --from=build /app/web/dist/ /usr/share/nginx/html/
 
 # /etc/nginx/conf.d/default.conf  (or the site config you copy in your web image)
 server {
-  listen 80;
+  listen 3003;
 
   # allow huge uploads
   client_max_body_size 20G;
@@ -1413,8 +1530,14 @@ server {
     add_header Cache-Control "no-cache";
   }
 
+  location ^~ /extension/ {
+    root /usr/share/nginx/html;
+    try_files $uri =404;
+    add_header Cache-Control "no-cache";
+  }
+
   location /api/ {
-    proxy_pass         http://api:3000;
+    proxy_pass         http://api:3004;
     proxy_http_version 1.1;
     proxy_set_header   Connection "";
     proxy_read_timeout 3600s;
@@ -4477,7 +4600,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "http://localhost:3000",
+        target: "http://localhost:3004",
         changeOrigin: true,
       },
     },
