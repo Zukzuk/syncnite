@@ -6,8 +6,9 @@ services:
     environment:
       NODE_ENV: production
     volumes:
-      - ./backups:/input
-      - ./data:/data 
+      - ./backups:/input                  # where you drop/import stuff
+      - ./data:/data                      # where API writes exports/media
+      - ./extension:/extension:ro         # API serves /api/extension/download from here
     tmpfs:
       - /work
     ports:
@@ -20,9 +21,7 @@ services:
     ports:
       - "3003:3003"
     volumes:
-      - ./data:/usr/share/nginx/html/data:ro 
+      - ./data:/usr/share/nginx/html/data:ro        # static /data/** directly
+      - ./extension:/usr/share/nginx/html/extension:ro  # static /extension/latest.pext
     depends_on:
       - api
-
-volumes:
-  data:
