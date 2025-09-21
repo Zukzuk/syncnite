@@ -17,10 +17,31 @@ async function tryLoadMany<T>(candidates: string[], fallback: T): Promise<T> {
   return fallback;
 }
 
+async function tryFetchJson(url: string): Promise<any | null> {
+  try {
+    const r = await fetch(url, { cache: "no-cache" });
+    if (!r.ok) return null;
+    const ct = (r.headers.get("content-type") || "").toLowerCase();
+    const text = await r.text();
+
+    // If nginx gave us index.html instead of JSON, bail.
+    const looksHtml = ct.includes("text/html") || text.trim().startsWith("<");
+    if (looksHtml) return null;
+
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
 export async function loadLibrary(): Promise<Loaded> {
   const games = await tryLoadMany<GameDoc[]>(FILES.games, []);
   const tags = await tryLoadMany<NamedDoc[]>(FILES.tags, []);
   const sources = await tryLoadMany<NamedDoc[]>(FILES.sources, []);
+  const live = await tryFetchJson(FILES.liveInstalled);
+  const liveSet = Array.isArray(live?.installed)
+    ? new Set(live.installed.map((s: string) => String(s).toLowerCase()))
+    : null;
 
   const normNamed = (x: NamedDoc) => ({
     id: asGuid(x.Id) ?? asGuid(x._id),
@@ -50,7 +71,7 @@ export async function loadLibrary(): Promise<Loaded> {
     const iconRel = normalizePath((g as any).Icon);
     const iconId = asGuid((g as any).IconId);
     const iconUrl = buildIconUrl(iconRel, iconId);
-    const installed = (g as any).IsInstalled === true;
+    const installed = liveSet ? liveSet.has(id.toLowerCase()) : false; // only if new JSON exists
 
     return {
       id,

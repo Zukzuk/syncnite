@@ -8,18 +8,42 @@ import {
     copyLibraryFilesWithProgress,
 } from "../helpers";
 
-const playniteDumpRouter = express.Router();
+const router = express.Router();
 
 /**
  * @openapi
  * /api/playnitedump/zips:
  *   get:
- *     summary: List uploaded ZIP files.
+ *     summary: List uploaded ZIP files available for import
+ *     tags: [Playnite Dump]
  *     responses:
  *       200:
- *         description: A list of ZIP files with metadata.
+ *         description: A list of ZIP files with basic metadata.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   name:
+ *                     type: string
+ *                     description: File name of the uploaded ZIP.
+ *                     example: "2025-09-20-23-10.zip"
+ *                   size:
+ *                     type: integer
+ *                     format: int64
+ *                     description: File size in bytes.
+ *                     example: 12345678
+ *                   mtime:
+ *                     type: number
+ *                     format: double
+ *                     description: Last modified time in milliseconds since Unix epoch.
+ *                     example: 1695238745123
+ *       500:
+ *         description: Server error while reading the upload directory.
  */
-playniteDumpRouter.get("/zips", async (_req, res) => {
+router.get("/zips", async (_req, res) => {
     const files = await fs.readdir(INPUT_DIR, { withFileTypes: true });
     const zips: Array<{ name: string; size: number; mtime: number }> = [];
     for (const f of files) {
@@ -36,13 +60,56 @@ playniteDumpRouter.get("/zips", async (_req, res) => {
  * @openapi
  * /api/playnitedump/upload:
  *   post:
- *     summary: Upload a ZIP file containing a Playnite library.
+ *     summary: Upload a ZIP file containing a Playnite library
+ *     tags: [Playnite Dump]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - file
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: ZIP file produced from a Playnite backup or exported folder.
  *     responses:
  *       200:
- *         description: Upload result
+ *         description: Upload result.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                   example: true
+ *                 file:
+ *                   type: string
+ *                   description: Sanitized file name stored on the server.
+ *                   example: "2025-09-20-23-10.zip"
+ *       400:
+ *         description: No file was provided in the request.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "no file"
+ *       413:
+ *         description: The uploaded file is too large.
+ *       500:
+ *         description: Server error while saving the uploaded file.
  */
 const upload = multer({ dest: INPUT_DIR });
-playniteDumpRouter.post("/upload", upload.single("file"), async (req, res) => {
+router.post("/upload", upload.single("file"), async (req, res) => {
     if (!req.file) return res.status(400).json({ ok: false, error: "no file" });
     const safe = req.file.originalname.replace(/[^A-Za-z0-9._ -]/g, "_");
     await fs.rename(req.file.path, join(INPUT_DIR, safe));
@@ -53,12 +120,79 @@ playniteDumpRouter.post("/upload", upload.single("file"), async (req, res) => {
  * @openapi
  * /api/playnitedump/process-stream:
  *   get:
- *     summary: Stream the processing of a ZIP file containing a Playnite library.
+ *     summary: Stream the processing of an uploaded Playnite ZIP (unzip → dump LiteDB to JSON → copy media)
+ *     description: |
+ *       Server-Sent Events (SSE) endpoint that emits progress while processing a ZIP.
+ *       Events emitted:
+ *
+ *       - `log`: free-form text messages
+ *       - `progress`: JSON payload `{ phase: "unzip" | "copy", percent: number, ... }`
+ *       - `done`: the string `"ok"` when finished
+ *       - `error`: error message (string)
+ *
+ *       **Content-Type:** `text/event-stream`
+ *     tags: [Playnite Dump]
+ *     parameters:
+ *       - in: query
+ *         name: filename
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ZIP file name previously returned by `/api/playnitedump/upload`.
+ *         example: "2025-09-20-23-10.zip"
+ *       - in: query
+ *         name: password
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Optional LiteDB password if the Playnite databases are encrypted.
  *     responses:
  *       200:
- *         description: Streaming result
+ *         description: Server-Sent Events stream with progress updates.
+ *         headers:
+ *           Content-Type:
+ *             schema:
+ *               type: string
+ *             example: text/event-stream
+ *         content:
+ *           text/event-stream:
+ *             schema:
+ *               type: string
+ *             examples:
+ *               log:
+ *                 summary: Log message event
+ *                 value: |
+ *                   event: log
+ *                   data: Extracting ZIP with 7z…
+ *
+ *
+ *               progress:
+ *                 summary: Progress event example
+ *                 value: |
+ *                   event: progress
+ *                   data: {"phase":"unzip","percent":42}
+ *
+ *
+ *               done:
+ *                 summary: Completion event
+ *                 value: |
+ *                   event: done
+ *                   data: ok
+ *
+ *
+ *               error:
+ *                 summary: Error event
+ *                 value: |
+ *                   event: error
+ *                   data: filename missing or not .zip
+ *       400:
+ *         description: Missing or invalid query parameters (e.g., filename not provided).
+ *       404:
+ *         description: The specified ZIP file could not be found on the server.
+ *       500:
+ *         description: Server error while processing the ZIP.
  */
-playniteDumpRouter.get("/process-stream", async (req, res) => {
+router.get("/process-stream", async (req, res) => {
     const filename = String(req.query.filename ?? "");
     const password = String(req.query.password ?? "");
 
@@ -140,4 +274,4 @@ playniteDumpRouter.get("/process-stream", async (req, res) => {
     }
 });
 
-export default playniteDumpRouter;
+export default router;

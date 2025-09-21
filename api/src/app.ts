@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import playniteLiveRouter from "./routes/playnitelive";
 import playniteDumpRouter from "./routes/playnitedump";
 import extensionRouter from "./routes/extension";
 import swaggerUi from "swagger-ui-express";
@@ -28,6 +29,7 @@ export function createApp() {
     app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
     app.use(express.json({ limit: "50mb" }));
+    app.use("/api/playnitelive", playniteLiveRouter);
     app.use("/api/playnitedump", playniteDumpRouter);
     app.use("/api/extension", extensionRouter);
     return app;

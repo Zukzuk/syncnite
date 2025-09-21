@@ -15,4 +15,10 @@
     <Reference Include="PresentationFramework" />
     <Reference Include="System.Web" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="PresentationFramework" />
+    <Reference Include="PresentationCore" />
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
 </Project>

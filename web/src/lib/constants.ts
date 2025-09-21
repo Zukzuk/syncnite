@@ -14,6 +14,7 @@ export const Z_INDEX = {
 export const BASE = "/data";
 
 export const FILES = {
+  liveInstalled: `${BASE}/local.playnite.installed.json`,
   games: [
     `${BASE}/games.Game.json`,
   ],

@@ -1,10 +1,10 @@
 // Detects newer local zips and delegates the actual upload to UploadRunner.
 // Still persists the selected folder and exposes UI state.
 
-import { UploadRunner } from "./uploader";
-import { LogBus } from "../services/logBus";
 import { BackupListener, BackupWatcherState, ZipMeta } from "../lib/types";
 import { DB_KEY, IDB_DB, IDB_STORE } from "../lib/constants";
+import { UploadRunner } from "./backupUploader";
+import { LogBus } from "./logBus";
 
 let dirHandle: FileSystemDirectoryHandle | null = null;
 let timer: number | null = null;

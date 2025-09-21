@@ -2,7 +2,7 @@ import { spawn, type SpawnOptionsWithoutStdio } from "node:child_process";
 import { join, dirname } from "node:path";
 import { promises as fs } from "node:fs";
 import * as fsSync from "node:fs";
-import {  } from "node:child_process";
+import { } from "node:child_process";
 
 export type RunOpts = SpawnOptionsWithoutStdio & {
     onStdout?: (line: string) => void;
@@ -65,25 +65,31 @@ export async function normalizeBackslashPaths(root: string): Promise<void> {
 
 export async function findLibraryDir(root: string): Promise<string | null> {
     const stack = [root];
-    const candidates = new Map<string, { count: number; hasGameDb: boolean }>();
     while (stack.length) {
-        const d = stack.pop()!;
-        const list = await fs.readdir(d, { withFileTypes: true });
-        for (const ent of list) {
-            const p = join(d, ent.name);
-            if (ent.isDirectory()) stack.push(p);
-            else if (ent.isFile() && ent.name.toLowerCase().endsWith(".db")) {
-                const dir = dirname(p);
-                const rec = candidates.get(dir) || { count: 0, hasGameDb: false };
-                rec.count += 1;
-                if (["games.db", "game.db"].includes(ent.name.toLowerCase())) rec.hasGameDb = true;
-                candidates.set(dir, rec);
-            }
+        const dir = stack.pop()!;
+        let entries: import("node:fs").Dirent[];
+        try {
+            entries = await fs.readdir(dir, { withFileTypes: true });
+        } catch { continue; }
+
+        // direct hit: dir contains a games.db
+        const hasGamesDb = entries.some(e => e.isFile() && /^(games|game)\.db$/i.test(e.name));
+        if (hasGamesDb) return dir;
+
+        // nested Playnite /library folder
+        const libEntry = entries.find(e => e.isDirectory() && e.name.toLowerCase() === "library");
+        if (libEntry) {
+            const lib = join(dir, libEntry.name);
+            try {
+                const libEntries = await fs.readdir(lib);
+                if (libEntries.some(n => /^(games|game)\.db$/i.test(n))) return lib;
+            } catch { /* ignore */ }
         }
+
+        // DFS
+        for (const e of entries) if (e.isDirectory()) stack.push(join(dir, e.name));
     }
-    if (!candidates.size) return null;
-    for (const [dir, rec] of candidates.entries()) if (rec.hasGameDb) return dir;
-    return [...candidates.entries()].sort((a, b) => b[1].count - a[1].count)[0][0];
+    return null;
 }
 
 /** Copy library media (usually sibling to /library) with live byte-level progress. */

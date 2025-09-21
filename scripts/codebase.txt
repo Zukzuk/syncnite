@@ -88,6 +88,7 @@ CMD ["node", "dist/server.js"]
 
 import express from "express";
 import path from "path";
+import playniteLiveRouter from "./routes/playnitelive";
 import playniteDumpRouter from "./routes/playnitedump";
 import extensionRouter from "./routes/extension";
 import swaggerUi from "swagger-ui-express";
@@ -116,6 +117,7 @@ export function createApp() {
     app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
     app.use(express.json({ limit: "50mb" }));
+    app.use("/api/playnitelive", playniteLiveRouter);
     app.use("/api/playnitedump", playniteDumpRouter);
     app.use("/api/extension", extensionRouter);
     return app;
@@ -128,7 +130,7 @@ import { spawn, type SpawnOptionsWithoutStdio } from "node:child_process";
 import { join, dirname } from "node:path";
 import { promises as fs } from "node:fs";
 import * as fsSync from "node:fs";
-import {  } from "node:child_process";
+import { } from "node:child_process";
 
 export type RunOpts = SpawnOptionsWithoutStdio & {
     onStdout?: (line: string) => void;
@@ -191,25 +193,31 @@ export async function normalizeBackslashPaths(root: string): Promise<void> {
 
 export async function findLibraryDir(root: string): Promise<string | null> {
     const stack = [root];
-    const candidates = new Map<string, { count: number; hasGameDb: boolean }>();
     while (stack.length) {
-        const d = stack.pop()!;
-        const list = await fs.readdir(d, { withFileTypes: true });
-        for (const ent of list) {
-            const p = join(d, ent.name);
-            if (ent.isDirectory()) stack.push(p);
-            else if (ent.isFile() && ent.name.toLowerCase().endsWith(".db")) {
-                const dir = dirname(p);
-                const rec = candidates.get(dir) || { count: 0, hasGameDb: false };
-                rec.count += 1;
-                if (["games.db", "game.db"].includes(ent.name.toLowerCase())) rec.hasGameDb = true;
-                candidates.set(dir, rec);
-            }
+        const dir = stack.pop()!;
+        let entries: import("node:fs").Dirent[];
+        try {
+            entries = await fs.readdir(dir, { withFileTypes: true });
+        } catch { continue; }
+
+        // direct hit: dir contains a games.db
+        const hasGamesDb = entries.some(e => e.isFile() && /^(games|game)\.db$/i.test(e.name));
+        if (hasGamesDb) return dir;
+
+        // nested Playnite /library folder
+        const libEntry = entries.find(e => e.isDirectory() && e.name.toLowerCase() === "library");
+        if (libEntry) {
+            const lib = join(dir, libEntry.name);
+            try {
+                const libEntries = await fs.readdir(lib);
+                if (libEntries.some(n => /^(games|game)\.db$/i.test(n))) return lib;
+            } catch { /* ignore */ }
         }
+
+        // DFS
+        for (const e of entries) if (e.isDirectory()) stack.push(join(dir, e.name));
     }
-    if (!candidates.size) return null;
-    for (const [dir, rec] of candidates.entries()) if (rec.hasGameDb) return dir;
-    return [...candidates.entries()].sort((a, b) => b[1].count - a[1].count)[0][0];
+    return null;
 }
 
 /** Copy library media (usually sibling to /library) with live byte-level progress. */
@@ -326,23 +334,38 @@ export async function copyLibraryFilesWithProgress(opts: {
 import express from "express";
 import path from "path";
 
-const extensionRouter = express.Router();
+const router = express.Router();
 
 /**
  * @openapi
  * /api/extension/download:
  *   get:
- *     summary: Download the latest Playnite extension.
+ *     summary: Download the latest Playnite Viewer Bridge extension (.pext)
+ *     tags: [Extension]
  *     responses:
  *       200:
- *         description: The extension file
+ *         description: The extension package.
+ *         headers:
+ *           Content-Disposition:
+ *             schema:
+ *               type: string
+ *             example: attachment; filename="playnite-viewer-bridge.pext"
+ *         content:
+ *           application/octet-stream:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       404:
+ *         description: Extension package not found on the server.
+ *       500:
+ *         description: Server error while reading the extension package.
  */
-extensionRouter.get("/download", (_req, res) => {
+router.get("/download", (_req, res) => {
   const file = path.resolve(__dirname, "../../playnite/PlayniteViewerBridge/playnite-viewer-bridge-1.0.0.pext");
   res.download(file, "playnite-viewer-bridge.pext");
 });
 
-export default extensionRouter;
+export default router;
 
 
 ===== api\src\routes\playnitedump.ts =====
@@ -357,18 +380,42 @@ import {
     copyLibraryFilesWithProgress,
 } from "../helpers";
 
-const playniteDumpRouter = express.Router();
+const router = express.Router();
 
 /**
  * @openapi
  * /api/playnitedump/zips:
  *   get:
- *     summary: List uploaded ZIP files.
+ *     summary: List uploaded ZIP files available for import
+ *     tags: [Playnite Dump]
  *     responses:
  *       200:
- *         description: A list of ZIP files with metadata.
+ *         description: A list of ZIP files with basic metadata.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   name:
+ *                     type: string
+ *                     description: File name of the uploaded ZIP.
+ *                     example: "2025-09-20-23-10.zip"
+ *                   size:
+ *                     type: integer
+ *                     format: int64
+ *                     description: File size in bytes.
+ *                     example: 12345678
+ *                   mtime:
+ *                     type: number
+ *                     format: double
+ *                     description: Last modified time in milliseconds since Unix epoch.
+ *                     example: 1695238745123
+ *       500:
+ *         description: Server error while reading the upload directory.
  */
-playniteDumpRouter.get("/zips", async (_req, res) => {
+router.get("/zips", async (_req, res) => {
     const files = await fs.readdir(INPUT_DIR, { withFileTypes: true });
     const zips: Array<{ name: string; size: number; mtime: number }> = [];
     for (const f of files) {
@@ -385,13 +432,56 @@ playniteDumpRouter.get("/zips", async (_req, res) => {
  * @openapi
  * /api/playnitedump/upload:
  *   post:
- *     summary: Upload a ZIP file containing a Playnite library.
+ *     summary: Upload a ZIP file containing a Playnite library
+ *     tags: [Playnite Dump]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - file
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: ZIP file produced from a Playnite backup or exported folder.
  *     responses:
  *       200:
- *         description: Upload result
+ *         description: Upload result.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                   example: true
+ *                 file:
+ *                   type: string
+ *                   description: Sanitized file name stored on the server.
+ *                   example: "2025-09-20-23-10.zip"
+ *       400:
+ *         description: No file was provided in the request.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "no file"
+ *       413:
+ *         description: The uploaded file is too large.
+ *       500:
+ *         description: Server error while saving the uploaded file.
  */
 const upload = multer({ dest: INPUT_DIR });
-playniteDumpRouter.post("/upload", upload.single("file"), async (req, res) => {
+router.post("/upload", upload.single("file"), async (req, res) => {
     if (!req.file) return res.status(400).json({ ok: false, error: "no file" });
     const safe = req.file.originalname.replace(/[^A-Za-z0-9._ -]/g, "_");
     await fs.rename(req.file.path, join(INPUT_DIR, safe));
@@ -402,12 +492,79 @@ playniteDumpRouter.post("/upload", upload.single("file"), async (req, res) => {
  * @openapi
  * /api/playnitedump/process-stream:
  *   get:
- *     summary: Stream the processing of a ZIP file containing a Playnite library.
+ *     summary: Stream the processing of an uploaded Playnite ZIP (unzip → dump LiteDB to JSON → copy media)
+ *     description: |
+ *       Server-Sent Events (SSE) endpoint that emits progress while processing a ZIP.
+ *       Events emitted:
+ *
+ *       - `log`: free-form text messages
+ *       - `progress`: JSON payload `{ phase: "unzip" | "copy", percent: number, ... }`
+ *       - `done`: the string `"ok"` when finished
+ *       - `error`: error message (string)
+ *
+ *       **Content-Type:** `text/event-stream`
+ *     tags: [Playnite Dump]
+ *     parameters:
+ *       - in: query
+ *         name: filename
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ZIP file name previously returned by `/api/playnitedump/upload`.
+ *         example: "2025-09-20-23-10.zip"
+ *       - in: query
+ *         name: password
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Optional LiteDB password if the Playnite databases are encrypted.
  *     responses:
  *       200:
- *         description: Streaming result
+ *         description: Server-Sent Events stream with progress updates.
+ *         headers:
+ *           Content-Type:
+ *             schema:
+ *               type: string
+ *             example: text/event-stream
+ *         content:
+ *           text/event-stream:
+ *             schema:
+ *               type: string
+ *             examples:
+ *               log:
+ *                 summary: Log message event
+ *                 value: |
+ *                   event: log
+ *                   data: Extracting ZIP with 7z…
+ *
+ *
+ *               progress:
+ *                 summary: Progress event example
+ *                 value: |
+ *                   event: progress
+ *                   data: {"phase":"unzip","percent":42}
+ *
+ *
+ *               done:
+ *                 summary: Completion event
+ *                 value: |
+ *                   event: done
+ *                   data: ok
+ *
+ *
+ *               error:
+ *                 summary: Error event
+ *                 value: |
+ *                   event: error
+ *                   data: filename missing or not .zip
+ *       400:
+ *         description: Missing or invalid query parameters (e.g., filename not provided).
+ *       404:
+ *         description: The specified ZIP file could not be found on the server.
+ *       500:
+ *         description: Server error while processing the ZIP.
  */
-playniteDumpRouter.get("/process-stream", async (req, res) => {
+router.get("/process-stream", async (req, res) => {
     const filename = String(req.query.filename ?? "");
     const password = String(req.query.password ?? "");
 
@@ -489,7 +646,71 @@ playniteDumpRouter.get("/process-stream", async (req, res) => {
     }
 });
 
-export default playniteDumpRouter;
+export default router;
+
+
+===== api\src\routes\playnitelive.ts =====
+
+import express from "express";
+import multer from "multer";
+import { promises as fs } from "node:fs";
+import { join } from "node:path";
+import { INPUT_DIR, DATA_DIR } from "../helpers";
+
+const router = express.Router();
+
+/**
+ * @openapi
+ * /api/playnitelive/push:
+ *   post:
+ *     summary: Push the current list of installed Playnite games (GUIDs).
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [installed]
+ *             properties:
+ *               installed:
+ *                 type: array
+ *                 description: Array of Playnite Game IDs that are currently installed.
+ *                 items:
+ *                   type: string
+ *                   format: uuid
+ *     responses:
+ *       200:
+ *         description: Write result.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                 count:
+ *                   type: integer
+ *       400:
+ *         description: Invalid payload.
+ *       500:
+ *         description: Server error.
+ */
+router.post("/push", async (req, res) => {
+    try {
+        const payload = req.body;
+        if (!payload || !Array.isArray(payload.installed)) {
+            return res.status(400).json({ ok: false, error: "Body must be { installed: string[] }" });
+        }
+        const uniq = Array.from(new Set(payload.installed.map((s: string) => String(s))));
+        const out = { installed: uniq, updatedAt: new Date().toISOString(), source: "playnite-extension" };
+        await fs.writeFile(join(DATA_DIR, "local.playnite.installed.json"), JSON.stringify(out, null, 2), "utf8");
+        return res.json({ ok: true, count: uniq.length });
+    } catch (e: any) {
+        return res.status(500).json({ ok: false, error: String(e?.message || e) });
+    }
+});
+
+export default router;
 
 
 ===== api\src\server.ts =====
@@ -589,126 +810,136 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using LiteDB;
 
-if (args.Length < 2)
+namespace PlayniteImport;
+
+public static class PlayniteImport
 {
-    Console.Error.WriteLine("Usage: PlayniteImport <root-folder> <output-folder>");
-    Environment.Exit(1);
-}
-
-var rootDir = args[0];
-var outDir = args[1];
-
-Directory.CreateDirectory(outDir);
-
-var password = Environment.GetEnvironmentVariable("LITEDB_PASSWORD");
-
-List<string> dbFiles;
-try
-{
-    dbFiles = Directory.EnumerateFiles(rootDir, "*.db", SearchOption.AllDirectories)
-                       .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
-                       .ToList();
-}
-catch (Exception e)
-{
-    Console.Error.WriteLine($"Failed to enumerate DB files under {rootDir}: {e.Message}");
-    Environment.Exit(2);
-    return;
-}
-
-if (!dbFiles.Any())
-{
-    Console.Error.WriteLine($"No *.db files found under {rootDir}");
-    Environment.Exit(2);
-}
-
-Console.WriteLine($"Found {dbFiles.Count} .db files:");
-
-int dumped = 0, skipped = 0;
-
-string SanitizeRel(string rel)
-{
-    var noExt = Path.ChangeExtension(rel, null) ?? rel;
-    return noExt.Replace(Path.DirectorySeparatorChar, '.')
-                .Replace(Path.AltDirectorySeparatorChar, '.');
-}
-
-void DumpDb(string dbPath, string rel, string? pwd)
-{
-    var cs = $"Filename={dbPath};ReadOnly=true" + (string.IsNullOrEmpty(pwd) ? "" : $";Password={pwd}");
-    using var db = new LiteDatabase(cs);
-
-    foreach (var name in db.GetCollectionNames())
+    public static int Main(string[] args)
     {
-        var col = db.GetCollection(name);
-        var outFile = Path.Combine(outDir, $"{SanitizeRel(rel)}.{name}.json");
-        var outParent = Path.GetDirectoryName(outFile);
-        if (!string.IsNullOrEmpty(outParent))
+        if (args.Length < 2)
         {
-            Directory.CreateDirectory(outParent);
+            Console.Error.WriteLine("Usage: PlayniteImport <root-folder> <output-folder>");
+            return 1;
         }
 
-        using var stream = File.Create(outFile);
-        using var writer = new Utf8JsonWriter(stream, new JsonWriterOptions
-        {
-            Indented = true,
-            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-        });
+        var rootDir = args[0];
+        var outDir = args[1];
+        Directory.CreateDirectory(outDir);
 
-        writer.WriteStartArray();
-        foreach (var doc in col.FindAll())
-        {
-            using var jd = JsonDocument.Parse(doc.ToString());
-            jd.RootElement.WriteTo(writer);
-        }
-        writer.WriteEndArray();
-    }
-}
+        var password = Environment.GetEnvironmentVariable("LITEDB_PASSWORD");
 
-foreach (var dbPath in dbFiles)
-{
-    var rel = Path.GetRelativePath(rootDir, dbPath);
-
-    try
-    {
+        List<string> dbFiles;
         try
         {
-            DumpDb(dbPath, rel, null);
-            dumped++;
-            Console.WriteLine($"OK (no password): {rel}");
-            continue;
+            dbFiles = Directory.EnumerateFiles(rootDir, "*.db", SearchOption.AllDirectories)
+                               .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
+                               .ToList();
         }
-        catch (LiteException ex1)
+        catch (Exception e)
         {
-            var msg = ex1.Message?.ToLowerInvariant() ?? "";
-            var looksEncrypted = msg.Contains("password") || msg.Contains("encrypted");
-            if (!looksEncrypted || string.IsNullOrEmpty(password))
+            Console.Error.WriteLine($"Failed to enumerate DB files under {rootDir}: {e.Message}");
+            return 2;
+        }
+
+        if (!dbFiles.Any())
+        {
+            Console.Error.WriteLine($"No *.db files found under {rootDir}");
+            return 2;
+        }
+
+        Console.WriteLine($"Found {dbFiles.Count} .db files:");
+
+        int dumped = 0, skipped = 0;
+
+        string SanitizeRel(string rel)
+        {
+            var noExt = Path.ChangeExtension(rel, null) ?? rel;
+            return noExt.Replace(Path.DirectorySeparatorChar, '.')
+                        .Replace(Path.AltDirectorySeparatorChar, '.');
+        }
+
+        void DumpDb(string dbPath, string rel, string? pwd)
+        {
+            var cs = $"Filename={dbPath};ReadOnly=true" + (string.IsNullOrEmpty(pwd) ? "" : $";Password={pwd}");
+            using var db = new LiteDatabase(cs);
+
+            foreach (var name in db.GetCollectionNames())
             {
-                throw;
+                var col = db.GetCollection(name);
+                var outFile = Path.Combine(outDir, $"{SanitizeRel(rel)}.{name}.json");
+                var outParent = Path.GetDirectoryName(outFile);
+                if (!string.IsNullOrEmpty(outParent))
+                {
+                    Directory.CreateDirectory(outParent);
+                }
+
+                using var stream = File.Create(outFile);
+                using var writer = new Utf8JsonWriter(stream, new JsonWriterOptions
+                {
+                    Indented = true,
+                    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                });
+
+                writer.WriteStartArray();
+                foreach (var doc in col.FindAll())
+                {
+                    using var jd = JsonDocument.Parse(doc.ToString());
+                    jd.RootElement.WriteTo(writer);
+                }
+                writer.WriteEndArray();
             }
         }
 
-        DumpDb(dbPath, rel, password);
-        dumped++;
-        Console.WriteLine($"OK (with password): {rel}");
-    }
-    catch (LiteException ex)
-    {
-        skipped++;
-        Console.Error.WriteLine($"SKIP (LiteDB): {rel} :: {ex.Message}");
-    }
-    catch (Exception ex)
-    {
-        skipped++;
-        Console.Error.WriteLine($"SKIP (other): {rel} :: {ex.GetType().Name}: {ex.Message}");
-    }
-}
+        foreach (var dbPath in dbFiles)
+        {
+            var rel = Path.GetRelativePath(rootDir, dbPath);
 
-Console.WriteLine($"Done. Dumped: {dumped}, Skipped: {skipped}");
-if (dumped == 0)
-{
-    Console.Error.WriteLine("No valid LiteDB files were dumped. If your library is encrypted, set LITEDB_PASSWORD.");
-    Environment.Exit(3);
+            try
+            {
+                try
+                {
+                    // First try without password
+                    DumpDb(dbPath, rel, null);
+                    dumped++;
+                    Console.WriteLine($"OK (no password): {rel}");
+                    continue;
+                }
+                catch (LiteException ex1)
+                {
+                    var msg = ex1.Message?.ToLowerInvariant() ?? "";
+                    var looksEncrypted = msg.Contains("password") || msg.Contains("encrypted");
+                    if (!looksEncrypted || string.IsNullOrEmpty(password))
+                    {
+                        throw;
+                    }
+                }
+
+                // Retry with password from env if it looked encrypted
+                DumpDb(dbPath, rel, password);
+                dumped++;
+                Console.WriteLine($"OK (with password): {rel}");
+            }
+            catch (LiteException ex)
+            {
+                skipped++;
+                Console.Error.WriteLine($"SKIP (LiteDB): {rel} :: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                skipped++;
+                Console.Error.WriteLine($"SKIP (other): {rel} :: {ex.GetType().Name}: {ex.Message}");
+            }
+        }
+
+        Console.WriteLine($"Done. Dumped: {dumped}, Skipped: {skipped}");
+        if (dumped == 0)
+        {
+            Console.Error.WriteLine("No valid LiteDB files were dumped. If your library is encrypted, set LITEDB_PASSWORD.");
+            return 3;
+        }
+
+        return 0;
+    }
 }
 
 
@@ -718,14 +949,10 @@ if (dumped == 0)
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
-    <AssemblyName>PlayniteImport</AssemblyName>
-    <RootNamespace>PlayniteImport</RootNamespace>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <StartupObject>PlayniteImport.PlayniteImport</StartupObject>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="LiteDB" Version="4.1.4" />
   </ItemGroup>
@@ -747,101 +974,352 @@ PlayniteApiVersion: 6.12.0
 
 using Playnite.SDK;
 using Playnite.SDK.Plugins;
-using Playnite.SDK.Events;
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net;
-using System.Web;
+using System.Net; // WebClient (net462)
+using System.Text;
+using System.Timers;
 
 namespace PlayniteViewerBridge
 {
     public class PlayniteViewerBridge : GenericPlugin
     {
-        private static readonly ILogger logger = LogManager.GetLogger();
-        private readonly IPlayniteAPI api;
-
+        // Must match extension.yaml Id
         public override Guid Id { get; } = Guid.Parse("a85f0db8-39f4-40ea-9e03-bc5be2298c89");
+
+        private readonly ILogger logger = LogManager.GetLogger();
+        private InstalledPusher pusher;
+        private BridgeConfig config;
+        private readonly string configPath;
+        private readonly Timer startupKick; // delayed initial push (no OnApplicationStarted in SDK 6.x)
 
         public PlayniteViewerBridge(IPlayniteAPI api) : base(api)
         {
-            this.api = api;
+            // Load / create config
+            configPath = Path.Combine(GetPluginUserDataPath(), "config.json");
+            config = BridgeConfig.Load(configPath);
 
-            api.UriHandler.RegisterSource("viewer", args =>
+            // Start the installed pusher
+            pusher = new InstalledPusher(api, config.Endpoint);
+
+            // Kick an initial push a few seconds after startup
+            startupKick = new Timer(3000) { AutoReset = false };
+            startupKick.Elapsed += (s, e) => { try { pusher.Trigger(); } catch { } };
+            startupKick.Start();
+
+            Properties = new GenericPluginProperties { HasSettings = false };
+        }
+
+        // No OnApplicationStarted override in Playnite 6.x
+
+        public override System.Collections.Generic.IEnumerable<MainMenuItem> GetMainMenuItems(GetMainMenuItemsArgs args)
+        {
+            return new[]
+            {
+                new MainMenuItem
+                {
+                    Description = "ViewerBridge",
+                    Action = _ =>
+                    {
+                        try
+                        {
+                            var win = new SettingsWindow(
+                                initialEndpoint: config.Endpoint,
+                                onSave: newEp =>
+                                {
+                                    config.Endpoint = newEp;
+                                    BridgeConfig.Save(configPath, config);
+                                    if (pusher != null) pusher.UpdateEndpoint(newEp);
+                                    logger.Info("ViewerBridge: endpoint updated to " + newEp);
+                                },
+                                onPush: () => { try { pusher?.PushNow(); } catch { } }
+                            );
+                            win.Owner = null; // Playnite host window not exposed in SDK 6; modeless OK
+                            win.Show();
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.Error(ex, "ViewerBridge: failed to open settings window");
+                        }
+                    }
+                }
+            };
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            try { startupKick?.Dispose(); } catch { }
+            try { pusher?.Dispose(); } catch { }
+        }
+
+        // ----------------- Single-file inner types -----------------
+
+        /// <summary>Watches Playnite DB and pushes the installed GUID list to your API (net462 + SDK 6.x safe).</summary>
+        private sealed class InstalledPusher : IDisposable
+        {
+            private readonly IPlayniteAPI api;
+            private string endpoint; // e.g. http://localhost:3000/api/playnitelive/push
+            private readonly Timer debounce;
+            private readonly ILogger log = LogManager.GetLogger();
+
+            public void UpdateEndpoint(string endpoint)
+            {
+                this.endpoint = (endpoint ?? "").TrimEnd('/');
+            }
+
+            public InstalledPusher(IPlayniteAPI api, string endpoint)
+            {
+                this.api = api;
+                this.endpoint = (endpoint ?? "").TrimEnd('/');
+
+                // Debounce rapid changes
+                this.debounce = new Timer(1500) { AutoReset = false };
+                this.debounce.Elapsed += (s, e) => PushInstalledSafe();
+
+                // Playnite 6.x: use ItemCollectionChanged + ItemUpdated
+                api.Database.Games.ItemCollectionChanged += (s, e) => Trigger();
+                api.Database.Games.ItemUpdated += (s, e) => Trigger();
+            }
+
+            public void Trigger()
+            {
+                try { debounce.Stop(); debounce.Start(); } catch { }
+            }
+
+            public void PushNow()
+            {
+                try { debounce.Stop(); } catch { }
+                PushInstalledSafe();
+            }
+
+            private string BuildPayload()
+            {
+                // Minimal JSON (no System.Text.Json on net462)
+                var installed = api.Database.Games
+                    .Where(g => g.IsInstalled)
+                    .Select(g => g.Id.ToString())
+                    .ToArray();
+
+                var sb = new StringBuilder();
+                sb.Append("{\"installed\":[");
+                for (int i = 0; i < installed.Length; i++)
+                {
+                    if (i > 0) sb.Append(',');
+                    sb.Append('\"').Append(installed[i]).Append('\"');
+                }
+                sb.Append("]}");
+                return sb.ToString();
+            }
+
+            private async void PushInstalledSafe()
             {
                 try
                 {
-                    if (args?.Arguments?.Length > 0 && string.Equals(args.Arguments[0], "restore", StringComparison.OrdinalIgnoreCase))
+                    var payload = BuildPayload();
+                    var url = endpoint;
+
+                    using (var wc = new WebClient())
                     {
-                        HandleRestore(args.Arguments.Skip(1).ToArray());
+                        wc.Headers[HttpRequestHeader.ContentType] = "application/json";
+                        string resp = await wc.UploadStringTaskAsync(new Uri(url), "POST", payload);
+                        int count = api.Database.Games.Count(g => g.IsInstalled);
+
+                        log.Info("ViewerBridge pushed installed list (" + count + ") → " + url);
                     }
+                }
+                catch (WebException wex)
+                {
+                    log.Error(wex, "ViewerBridge push error (WebException)");
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(ex, "Restore handler error");
-                    api.Dialogs.ShowErrorMessage(ex.Message, "Restore");
+                    log.Error(ex, "ViewerBridge push error");
                 }
-            });
+            }
+
+            public void Dispose()
+            {
+                try { debounce.Dispose(); } catch { }
+                // Lambdas attached; safe on plugin unload in SDK 6.x
+            }
         }
 
-        private void HandleRestore(string[] tail)
+        /// <summary>Tiny JSON config stored in the plugin data folder.</summary>
+        private sealed class BridgeConfig
         {
-            var q = string.Join("/", tail ?? Array.Empty<string>());
-            var uri = new Uri("playnite://viewer/restore" + (q.StartsWith("?") ? q : "?" + q));
-            var qs = HttpUtility.ParseQueryString(uri.Query);
+            public string Endpoint = "http://localhost:3000/api/playnitelive/push";
 
-            var fileParam = qs["file"];
-            var urlParam = qs["url"];
-            var items = qs["items"]; // "0,1,2,3,4,5" default
-
-            string backupZip;
-            if (!string.IsNullOrWhiteSpace(fileParam) && File.Exists(fileParam))
+            public static BridgeConfig Load(string path)
             {
-                backupZip = fileParam;
-            }
-            else if (!string.IsNullOrWhiteSpace(urlParam))
-            {
-                var temp = Path.Combine(Path.GetTempPath(), "PlayniteBackup-" + Guid.NewGuid() + ".zip");
-                using (var wc = new WebClient())
+                try
                 {
-                    wc.DownloadFile(urlParam, temp);
+                    if (!File.Exists(path))
+                    {
+                        var cfg = new BridgeConfig();
+                        Save(path, cfg);
+                        return cfg;
+                    }
+
+                    var txt = File.ReadAllText(path, Encoding.UTF8).Trim();
+                    var ep = TryExtractValue(txt, "endpoint");
+                    var cfg2 = new BridgeConfig();
+                    if (!string.IsNullOrWhiteSpace(ep)) cfg2.Endpoint = ep;
+                    return cfg2;
                 }
-                backupZip = temp;
+                catch (Exception ex)
+                {
+                    LogManager.GetLogger().Error(ex, "ViewerBridge: failed reading config, using defaults");
+                    return new BridgeConfig();
+                }
             }
-            else
+
+            public static void Save(string path, BridgeConfig cfg)
             {
-                throw new InvalidOperationException("No backup specified (need ?file=... or ?url=...).");
+                try
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(path) ?? ".");
+                    var json = "{\n  \"endpoint\": \"" + Escape(cfg.Endpoint) + "\"\n}\n";
+                    File.WriteAllText(path, json, Encoding.UTF8);
+                }
+                catch (Exception ex)
+                {
+                    LogManager.GetLogger().Error(ex, "ViewerBridge: failed writing config");
+                }
             }
 
-            var dataDir = api.Paths.ConfigurationPath;
-            var libraryDir = Path.Combine(dataDir, "library");
-            var itemsJson = string.IsNullOrWhiteSpace(items) ? "0,1,2,3,4,5" : items;
-
-            var cfgPath = Path.Combine(Path.GetTempPath(), "restore_config.json");
-            var json = $@"{{
-  ""BackupFile"": ""{backupZip.Replace("\\", "\\\\")}"",
-  ""DataDir"": ""{dataDir.Replace("\\", "\\\\")}"",
-  ""LibraryDir"": ""{libraryDir.Replace("\\", "\\\\")}"",
-  ""RestoreItems"": [{itemsJson}],
-  ""ClosedWhenDone"": false,
-  ""CancelIfGameRunning"": true
-}}";
-            File.WriteAllText(cfgPath, json);
-
-            api.Dialogs.ShowMessage("Playnite will restart to restore the selected backup.", "Restore");
-
-            var exe = Process.GetCurrentProcess().MainModule?.FileName
-                      ?? throw new InvalidOperationException("Cannot locate Playnite executable.");
-
-            Process.Start(new ProcessStartInfo
+            private static string TryExtractValue(string json, string key)
             {
-                FileName = exe,
-                Arguments = $"--restorebackup \"{cfgPath}\"",
-                UseShellExecute = false
-            });
+                var needle = "\"" + key + "\"";
+                int i = json.IndexOf(needle, StringComparison.OrdinalIgnoreCase);
+                if (i < 0) return null;
+                i = json.IndexOf(':', i);
+                if (i < 0) return null;
+                i++;
+                while (i < json.Length && char.IsWhiteSpace(json[i])) i++;
+                if (i >= json.Length || json[i] != '\"') return null;
+                i++;
+                var sb = new StringBuilder();
+                while (i < json.Length && json[i] != '\"')
+                {
+                    char ch = json[i++];
+                    if (ch == '\\' && i < json.Length)
+                    {
+                        char n = json[i++];
+                        if (n == '\"' || n == '\\') sb.Append(n);
+                        else { sb.Append('\\').Append(n); }
+                    }
+                    else sb.Append(ch);
+                }
+                return sb.ToString();
+            }
 
-            Environment.Exit(0); // ✅ Replaces api.Application.Quit()
+            private static string Escape(string s) => s.Replace("\\", "\\\\").Replace("\"", "\\\"");
+        }
+    }
+
+    // Simple in-code settings window (no XAML) for SDK 6.x/net462
+    internal sealed class SettingsWindow : System.Windows.Window
+    {
+        private readonly System.Windows.Controls.TextBox txtEndpoint;
+        private readonly Action<string> onSave;
+        private readonly Action onPush;
+
+        public SettingsWindow(string initialEndpoint, Action<string> onSave, Action onPush)
+        {
+            this.onSave = onSave;
+            this.onPush = onPush;
+
+            Title = "Playnite Viewer Bridge";
+            Width = 560;
+            Height = 180;
+            WindowStartupLocation = System.Windows.WindowStartupLocation.CenterScreen;
+            ResizeMode = System.Windows.ResizeMode.NoResize;
+            ShowInTaskbar = true;
+
+            var root = new System.Windows.Controls.Grid
+            {
+                Margin = new System.Windows.Thickness(12)
+            };
+            root.RowDefinitions.Add(new System.Windows.Controls.RowDefinition { Height = new System.Windows.GridLength(1, System.Windows.GridUnitType.Auto) });
+            root.RowDefinitions.Add(new System.Windows.Controls.RowDefinition { Height = new System.Windows.GridLength(1, System.Windows.GridUnitType.Auto) });
+            root.RowDefinitions.Add(new System.Windows.Controls.RowDefinition { Height = new System.Windows.GridLength(1, System.Windows.GridUnitType.Star) });
+
+            // Endpoint label
+            var lbl = new System.Windows.Controls.TextBlock
+            {
+                Text = "API endpoint (POST /api/playnitelive/push):",
+                Margin = new System.Windows.Thickness(0, 0, 0, 6)
+            };
+            System.Windows.Controls.Grid.SetRow(lbl, 0);
+            root.Children.Add(lbl);
+
+            // Endpoint textbox
+            txtEndpoint = new System.Windows.Controls.TextBox
+            {
+                Text = initialEndpoint ?? "",
+                Margin = new System.Windows.Thickness(0, 0, 0, 12)
+            };
+            System.Windows.Controls.Grid.SetRow(txtEndpoint, 1);
+            root.Children.Add(txtEndpoint);
+
+            // Buttons
+            var buttons = new System.Windows.Controls.StackPanel
+            {
+                Orientation = System.Windows.Controls.Orientation.Horizontal,
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Right
+            };
+
+            var btnSave = new System.Windows.Controls.Button
+            {
+                Content = "Save",
+                Width = 90,
+                Margin = new System.Windows.Thickness(0, 0, 8, 0)
+            };
+            btnSave.Click += (s, e) => { TrySave(); };
+
+            var btnPush = new System.Windows.Controls.Button
+            {
+                Content = "Push now",
+                Width = 90,
+                Margin = new System.Windows.Thickness(0, 0, 8, 0)
+            };
+            btnPush.Click += (s, e) => { TryPush(); };
+
+            var btnClose = new System.Windows.Controls.Button
+            {
+                Content = "Close",
+                Width = 90
+            };
+            btnClose.Click += (s, e) => { Close(); };
+
+            buttons.Children.Add(btnSave);
+            buttons.Children.Add(btnPush);
+            buttons.Children.Add(btnClose);
+
+            System.Windows.Controls.Grid.SetRow(buttons, 2);
+            root.Children.Add(buttons);
+
+            Content = root;
+        }
+
+        private void TrySave()
+        {
+            try
+            {
+                var val = (txtEndpoint.Text ?? "").Trim();
+                if (string.IsNullOrEmpty(val)) return;
+                onSave?.Invoke(val);
+            }
+            catch { /* ignore */ }
+        }
+
+        private void TryPush()
+        {
+            try { onPush?.Invoke(); }
+            catch { /* ignore */ }
         }
     }
 }
@@ -865,6 +1343,12 @@ namespace PlayniteViewerBridge
   <ItemGroup>
     <Reference Include="PresentationFramework" />
     <Reference Include="System.Web" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="PresentationFramework" />
+    <Reference Include="PresentationCore" />
+    <Reference Include="WindowsBase" />
   </ItemGroup>
 </Project>
 
@@ -897,7 +1381,6 @@ COPY --from=build /app/web/dist/ /usr/share/nginx/html/
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Playnite Library Viewer</title>
-  <link rel="stylesheet" href="/src/index.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -924,9 +1407,10 @@ server {
   client_body_timeout 3600s;
   proxy_request_buffering off;
 
-  location / {
-    root   /usr/share/nginx/html;
-    try_files $uri /index.html;
+  location ^~ /data/ {
+    root /usr/share/nginx/html;
+    try_files $uri =404;
+    add_header Cache-Control "no-cache";
   }
 
   location /api/ {
@@ -939,6 +1423,11 @@ server {
     # large streaming bodies: don't buffer in nginx
     proxy_request_buffering off;
     proxy_buffering        off;
+  }
+
+  location / {
+    root   /usr/share/nginx/html;
+    try_files $uri /index.html;
   }
 }
 
@@ -2241,6 +2730,7 @@ export const Z_INDEX = {
 export const BASE = "/data";
 
 export const FILES = {
+  liveInstalled: `${BASE}/local.playnite.installed.json`,
   games: [
     `${BASE}/games.Game.json`,
   ],
@@ -2343,10 +2833,31 @@ async function tryLoadMany<T>(candidates: string[], fallback: T): Promise<T> {
   return fallback;
 }
 
+async function tryFetchJson(url: string): Promise<any | null> {
+  try {
+    const r = await fetch(url, { cache: "no-cache" });
+    if (!r.ok) return null;
+    const ct = (r.headers.get("content-type") || "").toLowerCase();
+    const text = await r.text();
+
+    // If nginx gave us index.html instead of JSON, bail.
+    const looksHtml = ct.includes("text/html") || text.trim().startsWith("<");
+    if (looksHtml) return null;
+
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
 export async function loadLibrary(): Promise<Loaded> {
   const games = await tryLoadMany<GameDoc[]>(FILES.games, []);
   const tags = await tryLoadMany<NamedDoc[]>(FILES.tags, []);
   const sources = await tryLoadMany<NamedDoc[]>(FILES.sources, []);
+  const live = await tryFetchJson(FILES.liveInstalled);
+  const liveSet = Array.isArray(live?.installed)
+    ? new Set(live.installed.map((s: string) => String(s).toLowerCase()))
+    : null;
 
   const normNamed = (x: NamedDoc) => ({
     id: asGuid(x.Id) ?? asGuid(x._id),
@@ -2376,7 +2887,7 @@ export async function loadLibrary(): Promise<Loaded> {
     const iconRel = normalizePath((g as any).Icon);
     const iconId = asGuid((g as any).IconId);
     const iconUrl = buildIconUrl(iconRel, iconId);
-    const installed = (g as any).IsInstalled === true;
+    const installed = liveSet ? liveSet.has(id.toLowerCase()) : false; // only if new JSON exists
 
     return {
       id,
@@ -2865,7 +3376,7 @@ export function letterBucket(s: string | undefined | null): Letter {
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
-import { BackupWatcher } from "./services/watcher";
+import { BackupWatcher } from "./services/backupWatcher";
 import { AppProviders } from "./theme";
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
@@ -3143,10 +3654,10 @@ import SectionCard from "../components/ui/SectionCard";
 import { LoadingBar } from "../components/ui/LoadingBar";
 import { listZips } from "../lib/api";
 import type { BackupWatcherState, ZipInfo } from "../lib/types";
-import { BackupWatcher } from "../services/watcher";
-import { ImportRunner } from "../services/importer";
 import { LogBus } from "../services/logBus";
-import { UploadRunner } from "../services/uploader";
+import { BackupWatcher } from "../services/backupWatcher";
+import { ImportRunner } from "../services/backupIimporter";
+import { UploadRunner } from "../services/backupUploader";
 
 export default function SyncPage() {
     const [zips, setZips] = React.useState<ZipInfo[]>([]);
@@ -3364,6 +3875,20 @@ export default function SyncPage() {
                 <LoadingBar label={exportPhaseLabel} percent={exportPercent} subtext={exportSubtext} />
             </SectionCard>
 
+            <SectionCard title="Local Playnite installation (via Bridge)">
+                <Group gap="sm" align="center">
+                    <Button component="a" href="/api/extension/download" variant="light">
+                        Install/Update Playnite Bridge
+                    </Button>
+                    <Text size="sm" c="dimmed">
+                        The bridge pushes the installed list directly (no folder access needed).
+                    </Text>
+                </Group>
+                <Text size="xs" c="dimmed" mt="xs">
+                    When the bridge runs, it updates <code>/data/local.playnite.installed.json</code> automatically.
+                </Text>
+            </SectionCard>
+
             <SectionCard title="Logs">
                 <Textarea
                     value={logs}
@@ -3397,7 +3922,7 @@ export const router = createBrowserRouter([
 ]);
 
 
-===== web\src\services\importer.ts =====
+===== web\src\services\backupIimporter.ts =====
 
 // Centralized "Run import" controller that survives route changes.
 // Emits:
@@ -3409,7 +3934,7 @@ import { notifications } from "@mantine/notifications";
 import { processZipStream } from "../lib/api";
 import type { ImportState, Phase, StreamProgress } from "../lib/types";
 import { NOTIF_IMPORT_ID } from "../lib/constants";
-import { LogBus } from "../services/logBus";
+import { LogBus } from "./logBus";
 
 let current: ImportState = {
     running: false,
@@ -3524,64 +4049,7 @@ export const ImportRunner = {
 };
 
 
-===== web\src\services\logBus.ts =====
-
-// Global log buffer that survives route changes AND page reloads (via sessionStorage).
-// Newest-first order. Keeps up to MAX lines.
-
-import { KEY, MAX_LINES } from "../lib/constants";
-import { LogListener } from "../lib/types";
-
-let lines: string[] = restore();
-
-const listeners = new Set<LogListener>();
-
-function store() {
-    try {
-        sessionStorage.setItem(KEY, JSON.stringify(lines));
-    } catch { }
-}
-
-function restore(): string[] {
-    try {
-        const raw = sessionStorage.getItem(KEY);
-        if (!raw) return [];
-        const arr = JSON.parse(raw);
-        return Array.isArray(arr) ? arr : [];
-    } catch {
-        return [];
-    }
-}
-
-function emit() {
-    const snapshot = [...lines];
-    listeners.forEach((fn) => fn(snapshot));
-}
-
-export const LogBus = {
-    append(line: string) {
-        if (!line) return;
-        lines = [line, ...lines].slice(0, MAX_LINES);
-        store();
-        emit();
-    },
-    clear() {
-        lines = [];
-        store();
-        emit();
-    },
-    get(): string[] {
-        return [...lines];
-    },
-    subscribe(fn: LogListener) {
-        listeners.add(fn);
-        fn([...lines]); // immediate hydration
-        return () => { listeners.delete(fn); };
-    },
-};
-
-
-===== web\src\services\uploader.ts =====
+===== web\src\services\backupUploader.ts =====
 
 // Single source of truth for ALL uploads (manual or watcher-initiated).
 // Persists state across navigation, emits progress events, logs to LogBus,
@@ -3713,15 +4181,15 @@ export const UploadRunner = {
 };
 
 
-===== web\src\services\watcher.ts =====
+===== web\src\services\backupWatcher.ts =====
 
 // Detects newer local zips and delegates the actual upload to UploadRunner.
 // Still persists the selected folder and exposes UI state.
 
-import { UploadRunner } from "./uploader";
-import { LogBus } from "../services/logBus";
 import { BackupListener, BackupWatcherState, ZipMeta } from "../lib/types";
 import { DB_KEY, IDB_DB, IDB_STORE } from "../lib/constants";
+import { UploadRunner } from "./backupUploader";
+import { LogBus } from "./logBus";
 
 let dirHandle: FileSystemDirectoryHandle | null = null;
 let timer: number | null = null;
@@ -3883,6 +4351,63 @@ function stop() {
     if (timer != null) { clearInterval(timer); timer = null; }
     state.running = false; emit();
 }
+
+
+===== web\src\services\logBus.ts =====
+
+// Global log buffer that survives route changes AND page reloads (via sessionStorage).
+// Newest-first order. Keeps up to MAX lines.
+
+import { KEY, MAX_LINES } from "../lib/constants";
+import { LogListener } from "../lib/types";
+
+let lines: string[] = restore();
+
+const listeners = new Set<LogListener>();
+
+function store() {
+    try {
+        sessionStorage.setItem(KEY, JSON.stringify(lines));
+    } catch { }
+}
+
+function restore(): string[] {
+    try {
+        const raw = sessionStorage.getItem(KEY);
+        if (!raw) return [];
+        const arr = JSON.parse(raw);
+        return Array.isArray(arr) ? arr : [];
+    } catch {
+        return [];
+    }
+}
+
+function emit() {
+    const snapshot = [...lines];
+    listeners.forEach((fn) => fn(snapshot));
+}
+
+export const LogBus = {
+    append(line: string) {
+        if (!line) return;
+        lines = [line, ...lines].slice(0, MAX_LINES);
+        store();
+        emit();
+    },
+    clear() {
+        lines = [];
+        store();
+        emit();
+    },
+    get(): string[] {
+        return [...lines];
+    },
+    subscribe(fn: LogListener) {
+        listeners.add(fn);
+        fn([...lines]); // immediate hydration
+        return () => { listeners.delete(fn); };
+    },
+};
 
 
 ===== web\src\theme.tsx =====

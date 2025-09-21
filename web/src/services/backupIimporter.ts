@@ -8,7 +8,7 @@ import { notifications } from "@mantine/notifications";
 import { processZipStream } from "../lib/api";
 import type { ImportState, Phase, StreamProgress } from "../lib/types";
 import { NOTIF_IMPORT_ID } from "../lib/constants";
-import { LogBus } from "../services/logBus";
+import { LogBus } from "./logBus";
 
 let current: ImportState = {
     running: false,
