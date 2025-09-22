@@ -21,7 +21,7 @@ services:
     ports:
       - "3003:3003"
     volumes:
-      - ./data:/usr/share/nginx/html/data:ro        # static /data/** directly
+      - ./data:/usr/share/nginx/html/data:ro            # static /data/** directly
       - ./extension:/usr/share/nginx/html/extension:ro  # static /extension/latest.pext
     depends_on:
       - api

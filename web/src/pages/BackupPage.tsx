@@ -9,7 +9,7 @@ import { BackupWatcher } from "../services/backupWatcher";
 import { ImportRunner } from "../services/backupIimporter";
 import { UploadRunner } from "../services/backupUploader";
 
-export default function SyncPage() {
+export default function BackupPage() {
     const [zips, setZips] = React.useState<ZipInfo[]>([]);
     const [selected, setSelected] = React.useState<string | null>(null);
     const [password, setPassword] = React.useState("");
@@ -223,20 +223,6 @@ export default function SyncPage() {
                     </Button>
                 </Group>
                 <LoadingBar label={exportPhaseLabel} percent={exportPercent} subtext={exportSubtext} />
-            </SectionCard>
-
-            <SectionCard title="Local Playnite installation (via Bridge)">
-                <Group gap="sm" align="center">
-                    <Button component="a" href="/api/extension/download" variant="light">
-                        Install/Update Playnite Bridge
-                    </Button>
-                    <Text size="sm" c="dimmed">
-                        The bridge pushes the installed list directly (no folder access needed).
-                    </Text>
-                </Group>
-                <Text size="xs" c="dimmed" mt="xs">
-                    When the bridge runs, it updates <code>/data/local.playnite.installed.json</code> automatically.
-                </Text>
             </SectionCard>
 
             <SectionCard title="Logs">

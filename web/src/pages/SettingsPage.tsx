@@ -77,7 +77,7 @@ export default function SettingsPage() {
       </Alert>
 
       {!data ? (
-        <Group><Loader size="sm" /><Text className="is-dim">Loading data…</Text></Group>
+        <Loader size="sm" />
       ) : (
         <>
           <Card withBorder>
