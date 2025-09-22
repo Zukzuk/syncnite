@@ -29,10 +29,10 @@ export function AppNavbar() {
             />
             <NavLink
                 component={Link}
-                to="/sync"
-                label="Sync"
+                to="/shared"
+                label="Shared"
                 leftSection={<IconAB2 size={18} />}
-                active={location.pathname.startsWith("/sync")}
+                active={location.pathname.startsWith("/shared")}
             />
             <NavLink
                 component={Link}

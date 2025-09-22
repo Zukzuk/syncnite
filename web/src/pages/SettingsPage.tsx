@@ -68,7 +68,7 @@ export default function SettingsPage() {
 
   return (
     <Stack gap="lg" p="md">
-      <Text fz={28} fw={700}>Settings</Text>
+      <Text fz={24} fw={700}>Settings</Text>
 
       <Alert variant="light" color="gray" title="About this page">
         This page reflects the exact <em>normalized</em> data shape the app uses—the

@@ -1,5 +1,5 @@
 import React from "react";
-import { Stack, Loader } from "@mantine/core";
+import { Stack, Loader, Box } from "@mantine/core";
 import { loadLibrary } from "../lib/data";
 import type { Loaded } from "../lib/types";
 import { LibraryList } from "../components/library/LibraryList";
@@ -29,14 +29,14 @@ export default function LibraryPage() {
     return (
         <Stack gap="lg" style={{ height: "100%", minHeight: 0 }}>
             {data ? (
-                <div style={{ height: "calc(100vh - 70px)", minHeight: 400 }}>
+                <Box style={{ height: "calc(100vh - 70px)", minHeight: 400 }}>
                     <LibraryList
                         data={data}
                         onCountsChange={(f, t) => { setFiltered(f); setTotal(t); }}
                         filteredCount={filtered}
                         totalCount={total}
                     />
-                </div>
+                </Box>
             ) : (
                 <Loader size="sm" />
             )}

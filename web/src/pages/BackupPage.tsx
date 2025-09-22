@@ -160,6 +160,8 @@ export default function BackupPage() {
 
     return (
         <Stack gap="lg" p="md">
+            <Text fz={24} fw={700}>Shared</Text>
+
             <SectionCard title="Shared library location">
                 <Group gap="sm" wrap="wrap" align="center">
                     <FileButton onChange={onUpload} accept=".zip">

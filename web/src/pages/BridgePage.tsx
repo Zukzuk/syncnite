@@ -4,7 +4,7 @@ export default function BridgePage() {
 
     return (
         <Stack gap="lg" p="md">
-            <Text fz={28} fw={700}>Bridge</Text>
+            <Text fz={24} fw={700}>Bridge</Text>
 
             <Alert variant="light" color="gray" title="About this page">
                 Connect Playnite with the ViewerBridge extension. The extension will sync your local installed games list to the web viewer.
