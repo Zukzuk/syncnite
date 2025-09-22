@@ -1,141 +1,89 @@
-# Playnite Viewer (Web + API + Extension)
+# Playnite Viewer
 
-A small stack to **view** your Playnite library in the browser, and to **ingest** Playnite backup ZIPs into static JSON + media that the web UI can browse.
+A self-hosted web viewer for your [Playnite](https://playnite.link) library with an optional Playnite extension that can live-update the “installed games” list.
 
-- **Web UI** (React + Mantine + Vite). Upload backups, watch a folder, import with progress, and browse your library.
-- **API** (Node/Express) for uploads, streaming import, and the Playnite extension download.
-- **Importer** (self-contained .NET 8 tool) that reads Playnite LiteDB files and dumps them to JSON (with optional password).
+## Overview
 
----
+| Component | Description |
+|-----------|------------|
+| **`web/`** | React + Vite single-page app to browse the exported Playnite library (`/data`). |
+| **`api/`** | Node/Express API with OpenAPI 3 docs. Handles: <ul><li>uploading & processing Playnite backup ZIPs (unzips, dumps LiteDB to JSON, copies media)</li><li>serving the processed JSON/media files</li><li>receiving live “installed games” pushes from the Playnite extension</li><li>serving the packaged Playnite extension (.pext)</li></ul> |
+| **`playnite/PlayniteViewerBridge`** | Playnite extension (“Viewer Bridge”) that pushes the list of installed games to the API endpoint. |
+| **`playnite/PlayniteBackupImport`** | .NET 8.0 tool that converts Playnite’s LiteDB `.db` files to JSON (used by the API). |
 
-## Features
-
-- **Upload** Playnite backup ZIPs (large files supported). Uploads show a live bar and survive navigation.
-- **Watch a backup folder** via the browser’s directory picker (Chromium). Detects newer ZIPs and offers to upload & import.
-- **Import with logs & progress**: server streams “unzip” and “copy” progress; UI shows phase + percent; logs persist across page changes.
-- **Browse your library**: fast search, filters, tags, alphabetical rail, and quick actions.
-- **Swagger** docs at `/api/docs`.
-- **Playnite extension** download endpoint at `/api/extension/download`.
-
----
-
-## Quick Start (Docker)
-
-**Prereqs:** Docker + Docker Compose.
+## Quick start (Docker)
 
 ```bash
-# From the repo root
-docker compose up --build -d
-# or
+# build and start API + web with local volumes
+npm install
 npm run up
 ```
 
-- Web UI: http://localhost:3001  
-- API:    http://localhost:3000
+This uses [`docker-compose.yml`](docker-compose.yml) to:
 
-**Notes**
+* **API** → <http://localhost:3004>  
+  * Swagger / OpenAPI docs: <http://localhost:3004/api/docs>
+* **Web UI** → <http://localhost:3003>
 
-- Nginx is configured for large uploads and long-lived connections.
-- `/data` is served as static content by Nginx; the frontend reads JSON from there.
+Volumes:
 
----
+| Host folder   | Container path | Purpose |
+|---------------|---------------|--------|
+| `./backups`   | `/input`      | drop Playnite ZIP backups here for import |
+| `./data`      | `/data`       | JSON + media output |
+| `./extension` | `/extension`  | the built Playnite extension package |
+
+## Processing a Playnite backup
+
+1. Upload a ZIP via **POST `/api/playnitedump/upload`** or drop it in `./backups`.
+2. Start processing with **GET `/api/playnitedump/process-stream?filename=your.zip`**.  
+   This is a Server-Sent Events (SSE) stream that emits:
+   * `log` – text messages
+   * `progress` – `{ phase: "unzip" | "copy", percent, … }`
+   * `done` – `"ok"` when finished
+3. The resulting JSON and media appear in `./data` and are served by the web app.
+
+## Live “installed” updates (optional)
+
+Install the **Playnite Viewer Bridge** extension:
+
+* Download from <http://localhost:3004/api/extension/download>
+* In Playnite, add the `.pext` and configure the API endpoint (defaults to `http://localhost:3003/api/playnitelive/push`).
+
+The extension watches Playnite’s database and pushes the list of currently installed games to the API, which writes it to `data/local.playnite.installed.json`.  
+The web UI automatically reflects these updates.
 
 ## Development
 
-### 1) Install & run dev servers
+### API
 
 ```bash
-# install workspaces
-npm i --workspaces --include-workspace-root
-
-# API (http://localhost:3000)
-npm run -w api dev
-
-# Web (http://localhost:5173)
-npm run -w web dev
+cd api
+npm install
+npm run dev      # ts-node-dev
 ```
 
-Vite is configured to proxy `/api` → `http://localhost:3000` in development.
+* Express + TypeScript
+* Swagger docs auto-generated from JSDoc comments.
 
-### 2) Importer binary for local API dev
-
-When running the API outside Docker, the server expects a platform-appropriate **PlayniteImport** binary alongside `api` (invoked as `./PlayniteImport`). Build it with .NET 8, self-contained for your OS/arch, then copy the output next to the API (name it `PlayniteImport` or `PlayniteImport.exe`).
-
-Example:
+### Web
 
 ```bash
-# from repo root
-dotnet publish playnite/PlayniteImport/PlayniteImport.csproj \
-  -c Release -r win-x64 --self-contained true \
-  /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true
-
-# copy the produced binary to ./api/PlayniteImport(.exe)
+cd web
+npm install
+npm run dev      # Vite dev server on :5173
 ```
 
-The API runs it as `./PlayniteImport <libDir> <dataDir>` and forwards `LITEDB_PASSWORD` if provided.
+### Extension
+
+The extension is built into `./extension/latest.pext` by:
+
+```bash
+npm run build:ext
+```
+
+(`scripts/build-ext.js` handles packaging the Playnite plugin.)
 
 ---
 
-## How It Works
-
-### Data flow
-
-1. **Upload** → `POST /api/playnitedump/upload` (multer saves ZIP to `/input`).
-2. **Import (SSE)** → `GET /api/playnitedump/process-stream?filename=...&password=...`  
-   - Extracts the archive and streams progress & logs.  
-   - Locates the library folder and runs `PlayniteImport` to dump LiteDB → JSON.  
-   - Copies `libraryfiles` (icons/media) with byte-level progress.
-3. **Web UI** reads processed JSON & media from `/data` and renders the library.
-
-### Key endpoints
-
-- `GET /api/playnitedump/zips` — list uploaded ZIPs  
-- `POST /api/playnitedump/upload` — upload ZIP file  
-- `GET /api/playnitedump/process-stream` — **SSE** progress/logs for import  
-- `GET /api/extension/download` — download the Playnite extension  
-- `GET /api/docs` — Swagger UI
-
----
-
-## Using the Web UI
-
-1. Open **Sync**:
-   - **Select manually** to choose a ZIP, or
-   - **Watch location** to pick a backup folder (Chromium browsers). When a newer ZIP appears, you’ll be prompted to upload & import.
-2. Click **Run import** on the selected ZIP. You’ll see “Unzipping…” then “Copying media…”, with logs updating live.
-3. Open **Library** to browse games (search, filter by source/tags, installed/hidden toggles, alphabetical rail).
-
-> **Encrypted libraries**: provide the **DB Password** in the Import section — the server forwards it as `LITEDB_PASSWORD` to the importer.
-
----
-
-## Playnite Extension (optional)
-
-- Download from the API: `/api/extension/download` (the packaged `.pext` is served directly).
-- The plugin registers a custom URI handler and can restart Playnite to run a restore with a given ZIP (`playnite://viewer/restore?...`).
-
----
-
-## Project Layout
-
-- `web/` — React app (Vite + Mantine). Production served by Nginx; dev proxy for `/api`.
-- `api/` — Express server, SSE import pipeline, Swagger docs.
-- `playnite/PlayniteImport` — .NET 8 console app (LiteDB → JSON).
-- `playnite/PlayniteViewerBridge` — Playnite plugin.
-- `docker-compose.yml` — two services (`api`, `web`) + volumes for `/input` and `/data`.
-- Root scripts: `npm run up`, `npm run build`, `npm run clean`, etc.
-
----
-
-## Troubleshooting
-
-- **Uploads time out or fail**: if you’re behind another proxy, mirror Nginx’s large body size and long timeout settings.
-- **No `/api` in dev**: ensure the API is on `:3000` and Vite dev server is running — the proxy is preconfigured.
-- **Encrypted DBs**: wrong/empty password → importer may skip those DBs; supply the correct password in the UI.
-- **Windows paths inside ZIPs**: handled during extraction (path normalization).
-
----
-
-## License
-
-TBD
+**License:** MIT (adjust as appropriate)

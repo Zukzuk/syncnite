@@ -25,7 +25,7 @@ export function AppHeader({ opened, onToggleNav }: AppHeaderProps) {
                 <Tooltip label="Download ViewerBridge extension (.pext)">
                     <Button
                         component="a"
-                        href="/api/viewerbridge/download/latest"
+                        href="/api/extension/download"
                         size="sm"
                         radius="xl"
                         leftSection={<IconDownload size={16} />}
