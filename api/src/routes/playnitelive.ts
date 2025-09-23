@@ -1,10 +1,13 @@
 import express from "express";
-import multer from "multer";
 import { promises as fs } from "node:fs";
 import { join } from "node:path";
-import { INPUT_DIR, DATA_DIR } from "../helpers";
+import { DATA_DIR } from "../helpers";
 
 const router = express.Router();
+
+router.get("/ping", (_req, res) => {
+  res.sendStatus(200);        // 200 OK, empty body
+});
 
 /**
  * @openapi
