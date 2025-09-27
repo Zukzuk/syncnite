@@ -2,12 +2,12 @@ import { spawn, type SpawnOptionsWithoutStdio } from "node:child_process";
 import { join, dirname } from "node:path";
 import { promises as fs } from "node:fs";
 import * as fsSync from "node:fs";
-import { } from "node:child_process";
 
 export type RunOpts = SpawnOptionsWithoutStdio & {
     onStdout?: (line: string) => void;
     onStderr?: (line: string) => void;
 };
+
 export const INPUT_DIR = "/input";
 export const WORK_DIR = "/work";
 export const DATA_DIR = "/data";
@@ -35,7 +35,6 @@ export function run(
 }
 
 export async function cleanDir(dir: string) {
-    // Clear mount contents (works for tmpfs/bind mounts)
     try {
         const entries = await fs.readdir(dir, { withFileTypes: true });
         await Promise.all(entries.map((e) => fs.rm(join(dir, e.name), { recursive: true, force: true })));
@@ -58,7 +57,7 @@ export async function normalizeBackslashPaths(root: string): Promise<void> {
             const parts = e.name.split("\\");
             const dest = join(root, ...parts);
             await fs.mkdir(dirname(dest), { recursive: true });
-            await fs.rename(p, dest);
+            try { await fs.rename(p, dest); } catch { /* ignore racing*/ }
         }
     }
 }
@@ -72,11 +71,9 @@ export async function findLibraryDir(root: string): Promise<string | null> {
             entries = await fs.readdir(dir, { withFileTypes: true });
         } catch { continue; }
 
-        // direct hit: dir contains a games.db
         const hasGamesDb = entries.some(e => e.isFile() && /^(games|game)\.db$/i.test(e.name));
         if (hasGamesDb) return dir;
 
-        // nested Playnite /library folder
         const libEntry = entries.find(e => e.isDirectory() && e.name.toLowerCase() === "library");
         if (libEntry) {
             const lib = join(dir, libEntry.name);
@@ -86,22 +83,21 @@ export async function findLibraryDir(root: string): Promise<string | null> {
             } catch { /* ignore */ }
         }
 
-        // DFS
         for (const e of entries) if (e.isDirectory()) stack.push(join(dir, e.name));
     }
     return null;
 }
 
-/** Copy library media (usually sibling to /library) with live byte-level progress. */
+/** Copy library media with live byte-level progress. Returns stats. */
 export async function copyLibraryFilesWithProgress(opts: {
-    libDir: string;          // e.g. /work/PlayniteBackup/library
-    workRoot: string;        // e.g. /work
-    dataRoot: string;        // e.g. /data
+    libDir: string;
+    workRoot: string;
+    dataRoot: string;
     log: (m: string) => void;
     progress?: (p: { phase: "copy"; percent: number; copiedBytes: number; totalBytes: number; deltaBytes: number }) => void;
     concurrency?: number;
     tickMs?: number;
-}) {
+}): Promise<{ copiedFiles: number; failures: number; totalBytes: number }> {
     const { libDir, workRoot, dataRoot, log, progress, concurrency = 8, tickMs = 500 } = opts;
 
     // Prefer sibling of libDir: ../libraryfiles
@@ -109,7 +105,6 @@ export async function copyLibraryFilesWithProgress(opts: {
 
     // Resolve source folder: sibling first, else try common tops within extraction
     const candidates: string[] = [sib];
-    // common layouts: /work/PlayniteBackup/libraryfiles, /work/libraryfiles
     const entries = await fs.readdir(workRoot, { withFileTypes: true });
     for (const e of entries) {
         if (e.isDirectory()) {
@@ -124,7 +119,7 @@ export async function copyLibraryFilesWithProgress(opts: {
     for (const c of candidates) {
         if (await isDir(c)) { src = c; break; }
     }
-    if (!src) { log("No libraryfiles folder found."); return; }
+    if (!src) { log("No libraryfiles folder found."); return { copiedFiles: 0, failures: 0, totalBytes: 0 }; }
 
     const destRoot = join(dataRoot, "libraryfiles");
     await fs.mkdir(destRoot, { recursive: true });
@@ -149,7 +144,7 @@ export async function copyLibraryFilesWithProgress(opts: {
     }
     await indexDir(src);
 
-    if (!items.length) { log("No media files to copy."); return; }
+    if (!items.length) { log("No media files to copy."); return { copiedFiles: 0, failures: 0, totalBytes }; }
 
     log(`Copying media from ${src} → ${destRoot}`);
 
@@ -194,8 +189,42 @@ export async function copyLibraryFilesWithProgress(opts: {
     await Promise.all(workers);
     clearInterval(timer);
 
-    // final progress
     const pct = totalBytes ? (copiedBytes / totalBytes) * 100 : 100;
     progress?.({ phase: "copy", percent: pct, copiedBytes, totalBytes, deltaBytes: 0 });
     log(`Copy complete: ${copiedFiles} files, ${pct.toFixed(1)}%, ${failures} errors`);
+
+    return { copiedFiles, failures, totalBytes };
+}
+
+export async function copyDir(src: string, dest: string) {
+    await fs.mkdir(dest, { recursive: true });
+    const entries = await fs.readdir(src, { withFileTypes: true });
+    for (const e of entries) {
+        const s = join(src, e.name);
+        const d = join(dest, e.name);
+        if (e.isDirectory()) await copyDir(s, d);
+        else await fs.copyFile(s, d);
+    }
+}
+
+// Find export directory containing games.game.json or games.json
+export async function findExportDir(root: string): Promise<string | null> {
+    const stack = [root];
+    while (stack.length) {
+        const dir = stack.pop()!;
+        let entries: import("node:fs").Dirent[];
+        try { entries = await fs.readdir(dir, { withFileTypes: true }); } catch { continue; }
+        for (const e of entries) {
+            if (e.isDirectory() && e.name.toLowerCase() === "export") {
+                const exp = join(dir, e.name);
+                try {
+                    const names = (await fs.readdir(exp)).map(n => n.toLowerCase());
+                    // shaped preferred; legacy allowed if you ever send it
+                    if (names.includes("games.game.json") || names.includes("games.json")) return exp;
+                } catch { /* ignore */ }
+            }
+            if (e.isDirectory()) stack.push(join(dir, e.name));
+        }
+    }
+    return null;
 }

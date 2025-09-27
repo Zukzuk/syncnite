@@ -23,7 +23,7 @@ pids
 lib-cov
 
 # Coverage directory used by tools like istanbul
-backups
+uploads
 data
 coverage
 diagram/.structurizr

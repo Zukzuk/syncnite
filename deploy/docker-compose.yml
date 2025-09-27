@@ -4,7 +4,7 @@ services:
     environment:
       NODE_ENV: production
     volumes:
-      - ./backups:/input
+      - ./uploads:/input
       - ./data:/data
       - ./extension:/extension:ro
     ports:

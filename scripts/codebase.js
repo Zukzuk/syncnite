@@ -50,7 +50,7 @@ const ignoreDirs = new Set([
   ".git",
   "scripts",
   "data",
-  "backups",
+  "uploads",
   ".temp",
   "bin",
   "obj",

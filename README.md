@@ -29,14 +29,14 @@ Volumes:
 
 | Host folder   | Container path | Purpose |
 |---------------|---------------|--------|
-| `./backups`   | `/input`      | drop Playnite ZIP backups here for import |
+| `./uploads`   | `/input`      | drop Playnite ZIP uploads here for import |
 | `./data`      | `/data`       | JSON + media output |
 | `./extension` | `/extension`  | the built Playnite extension package |
 
 ## Processing a Playnite backup
 
-1. Upload a ZIP via **POST `/api/playnitedump/upload`** or drop it in `./backups`.
-2. Start processing with **GET `/api/playnitedump/process-stream?filename=your.zip`**.  
+1. Upload a ZIP via **POST `/api/playnite/backup/upload`** or drop it in `./uploads`.
+2. Start processing with **GET `/api/playnite/backup/process-stream?filename=your.zip`**.  
    This is a Server-Sent Events (SSE) stream that emits:
    * `log` – text messages
    * `progress` – `{ phase: "unzip" | "copy", percent, … }`
@@ -48,7 +48,7 @@ Volumes:
 Install the **Playnite Viewer Bridge** extension:
 
 * Download from <http://localhost:3004/api/extension/download>
-* In Playnite, add the `.pext` and configure the API endpoint (defaults to `http://localhost:3003/api/playnitelive/push`).
+* In Playnite, add the `.pext` and configure the API endpoint (defaults to `http://localhost:3003/api/playnite/live/push`).
 
 The extension watches Playnite’s database and pushes the list of currently installed games to the API, which writes it to `data/local.playnite.installed.json`.  
 The web UI automatically reflects these updates.

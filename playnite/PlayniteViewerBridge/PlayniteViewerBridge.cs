@@ -1,48 +1,132 @@
 using System;
 using System.IO;
-using System.Timers;
+using System.Windows.Controls;
 using Playnite.SDK;
 using Playnite.SDK.Plugins;
+using PlayniteViewerBridge.Constants;
+using PlayniteViewerBridge.Helpers;
+using PlayniteViewerBridge.LiveSync;
 
 namespace PlayniteViewerBridge
 {
     public class PlayniteViewerBridge : GenericPlugin
     {
-        // Must match extension.yaml Id
-        public override Guid Id { get; } = Guid.Parse("a85f0db8-39f4-40ea-9e03-bc5be2298c89");
+        public override Guid Id { get; } = Guid.Parse(AppConstants.GUID);
 
         private readonly ILogger logger = LogManager.GetLogger();
-        private InstalledPusher pusher;
+        private readonly RemoteLogClient rlog;
+        private PushInstalledService pusher;
         private BridgeConfig config;
         private readonly string configPath;
-        private readonly System.Timers.Timer startupKick; // delayed initial push (no OnApplicationStarted in SDK 6.x)
+
+        private LiveDeltaSyncService liveSync;
+        private HealthcheckService health;
 
         public PlayniteViewerBridge(IPlayniteAPI api)
             : base(api)
         {
-            // Load / create config
-            configPath = Path.Combine(GetPluginUserDataPath(), "config.json");
+            configPath = Path.Combine(GetPluginUserDataPath(), AppConstants.ConfigFileName);
             config = BridgeConfig.Load(configPath);
 
-            // Start the installed pusher
-            pusher = new InstalledPusher(api, config.Endpoint);
+            var logUrl = Combine(config.ApiBase, AppConstants.Path_PlayniteLive_Log);
+            rlog = new RemoteLogClient(logUrl);
+            var playniteVer = PlayniteApi?.ApplicationInfo?.ApplicationVersion?.ToString();
+            rlog.Enqueue(
+                RemoteLog.Build(
+                    "info",
+                    "startup",
+                    "ViewerBridge loaded",
+                    data: new
+                    {
+                        plugin = "PlayniteViewerBridge",
+                        version = "1.0.0",
+                        playnite = playniteVer,
+                    }
+                )
+            );
 
-            // Kick an initial push a few seconds after startup
-            startupKick = new System.Timers.Timer(3000) { AutoReset = false };
-            startupKick.Elapsed += (s, e) =>
+            // Health first (source of truth)
+            var pingUrl = Combine(config.ApiBase, AppConstants.Path_PlayniteLive_Ping);
+            health = new HealthcheckService(api, pingUrl, rlog);
+            health.Start();
+
+            // Pusher + LiveSync (gated by health)
+            pusher = new PushInstalledService(
+                api,
+                Combine(config.ApiBase, AppConstants.Path_PlayniteLive_Push),
+                rlog
+            );
+
+            var syncUrl = Combine(config.ApiBase, AppConstants.Path_PlayniteLive_Sync);
+            var indexUrl = Combine(config.ApiBase, AppConstants.Path_PlayniteLive_Index);
+
+            liveSync = new LiveDeltaSyncService(api, syncUrl, GetDefaultPlayniteDataRoot(), rlog);
+            liveSync.UpdateEndpoints(syncUrl, indexUrl);
+
+            // Gate both services on health
+            pusher.SetHealthProvider(() => health.IsHealthy);
+            liveSync.SetHealthProvider(() => health.IsHealthy);
+
+            liveSync.Start();
+
+            // When we flip to healthy (or first time becomes healthy), push & sync once
+            health.StatusChanged += ok =>
             {
-                try
+                if (ok)
                 {
-                    pusher.Trigger();
+                    try
+                    {
+                        rlog.Enqueue(
+                            RemoteLog.Build(
+                                "info",
+                                "startup",
+                                "Health became healthy → triggering push+sync"
+                            )
+                        );
+                        pusher.PushNow();
+                        liveSync.Trigger();
+                    }
+                    catch { }
                 }
-                catch { }
+                else
+                {
+                    rlog.Enqueue(
+                        RemoteLog.Build(
+                            "warn",
+                            "startup",
+                            "Health became unhealthy → suspend push/sync"
+                        )
+                    );
+                }
             };
-            startupKick.Start();
 
-            Properties = new GenericPluginProperties { HasSettings = false };
+            Properties = new GenericPluginProperties { HasSettings = true };
         }
 
-        // No OnApplicationStarted override in Playnite 6.x
+        private static string Combine(string baseUrl, string path)
+        {
+            baseUrl = (baseUrl ?? string.Empty).TrimEnd('/');
+            path = (path ?? string.Empty).TrimStart('/');
+            return baseUrl + "/" + path;
+        }
+
+        private static string GetDefaultPlayniteDataRoot()
+        {
+            try
+            {
+                var roaming = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                var candidate = Path.Combine(roaming, "Playnite");
+                if (Directory.Exists(candidate))
+                    return candidate;
+            }
+            catch { }
+            return string.Empty;
+        }
+
+        public override ISettings GetSettings(bool firstRunSettings) => null;
+
+        public override UserControl GetSettingsView(bool firstRunSettings) => null;
+
         public override System.Collections.Generic.IEnumerable<MainMenuItem> GetMainMenuItems(
             GetMainMenuItemsArgs args
         )
@@ -58,19 +142,88 @@ namespace PlayniteViewerBridge
                         {
                             SettingsWindowFactory.BuildAndShow(
                                 PlayniteApi,
-                                initialEndpoint: config.Endpoint,
-                                onSave: newEp =>
+                                initialApiBase: config.ApiBase,
+                                getHealthText: () => health?.StatusText ?? "unknown",
+                                onSaveApiBase: newBase =>
                                 {
-                                    config.Endpoint = newEp;
+                                    // Normalize /api/ base
+                                    var nb = string.IsNullOrWhiteSpace(newBase)
+                                        ? config.ApiBase
+                                        : newBase.Trim();
+                                    if (!string.IsNullOrEmpty(nb))
+                                    {
+                                        if (!nb.EndsWith("/"))
+                                            nb += "/";
+                                        if (!nb.EndsWith("api/"))
+                                            nb += "api/";
+                                    }
+                                    config.ApiBase = nb;
                                     BridgeConfig.Save(configPath, config);
-                                    pusher?.UpdateEndpoint(newEp);
-                                    logger.Info("ViewerBridge: endpoint updated to " + newEp);
+
+                                    var syncUrl = Combine(
+                                        config.ApiBase,
+                                        AppConstants.Path_PlayniteLive_Sync
+                                    );
+                                    var indexUrl = Combine(
+                                        config.ApiBase,
+                                        AppConstants.Path_PlayniteLive_Index
+                                    );
+                                    var pushUrl = Combine(
+                                        config.ApiBase,
+                                        AppConstants.Path_PlayniteLive_Push
+                                    );
+                                    var pingUrl = Combine(
+                                        config.ApiBase,
+                                        AppConstants.Path_PlayniteLive_Ping
+                                    );
+                                    var logUrl = Combine(
+                                        config.ApiBase,
+                                        AppConstants.Path_PlayniteLive_Log
+                                    );
+
+                                    pusher?.UpdateEndpoint(pushUrl);
+                                    liveSync?.UpdateEndpoints(syncUrl, indexUrl);
+                                    health?.UpdateEndpoint(pingUrl);
+                                    rlog?.UpdateEndpoint(logUrl);
+
+                                    logger.Info(
+                                        $"ViewerBridge: ApiBase updated -> {config.ApiBase}"
+                                    );
+                                    rlog.Enqueue(
+                                        RemoteLog.Build(
+                                            "info",
+                                            "config",
+                                            "ApiBase updated",
+                                            data: new { apiBase = config.ApiBase }
+                                        )
+                                    );
+
+                                    // If healthy after update, kick once
+                                    if (health.IsHealthy)
+                                    {
+                                        pusher?.PushNow();
+                                        liveSync?.Trigger();
+                                    }
                                 },
-                                onPush: () =>
+                                onPushInstalled: () =>
                                 {
                                     try
                                     {
                                         pusher?.PushNow();
+                                        rlog.Enqueue(
+                                            RemoteLog.Build("info", "push", "Manual push requested")
+                                        );
+                                    }
+                                    catch { }
+                                },
+                                onSyncLibrary: () =>
+                                {
+                                    try
+                                    {
+                                        liveSync?.Trigger();
+                                        rlog.Enqueue(
+                                            RemoteLog.Build("info", "sync", "Manual sync requested")
+                                        );
                                     }
                                     catch { }
                                 }
@@ -79,6 +232,14 @@ namespace PlayniteViewerBridge
                         catch (Exception ex)
                         {
                             logger.Error(ex, "ViewerBridge: failed to open settings window");
+                            rlog.Enqueue(
+                                RemoteLog.Build(
+                                    "error",
+                                    "ui",
+                                    "Failed to open settings window",
+                                    err: ex.Message
+                                )
+                            );
                         }
                     },
                 },
@@ -90,12 +251,23 @@ namespace PlayniteViewerBridge
             base.Dispose();
             try
             {
-                startupKick?.Dispose();
+                pusher?.Dispose();
             }
             catch { }
             try
             {
-                pusher?.Dispose();
+                liveSync?.Dispose();
+            }
+            catch { }
+            try
+            {
+                health?.Dispose();
+            }
+            catch { }
+            try
+            {
+                rlog?.Enqueue(RemoteLog.Build("info", "shutdown", "ViewerBridge disposing"));
+                rlog?.Dispose();
             }
             catch { }
         }

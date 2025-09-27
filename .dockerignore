@@ -1,5 +1,5 @@
 data
-backups/**
+uploads/**
 PlayniteBackup*.zip
 *.zip
 *.7z

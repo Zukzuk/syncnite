@@ -8,7 +8,7 @@ export const api = axios.create({
 });
 
 export async function listZips(): Promise<ZipInfo[]> {
-  const r = await fetch("/api/playnitedump/zips");
+  const r = await fetch("/api/playnite/backup/zips");
   return r.json();
 }
 
@@ -18,7 +18,7 @@ export async function uploadZip(
 ): Promise<{ ok: boolean; file?: string; error?: string }> {
   const form = new FormData();
   form.append("file", file);
-  const r = await axios.post("/api/playnitedump/upload", form, {
+  const r = await axios.post("/api/playnite/backup/upload", form, {
     headers: { "Content-Type": "multipart/form-data" },
     onUploadProgress: (e) => {
       if (e.total) onProgress?.(Math.round((e.loaded * 100) / e.total));
@@ -44,7 +44,7 @@ export function processZipStream({
   onDone?: () => void;
   onError?: (msg: string) => void;
 }) {
-  const url = new URL("/api/playnitedump/process-stream", window.location.origin);
+  const url = new URL("/api/playnite/backup/process-stream", window.location.origin);
   url.searchParams.set("filename", filename);
   if (password) url.searchParams.set("password", password);
 

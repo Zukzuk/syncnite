@@ -2,7 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
-namespace PlayniteViewerBridge
+namespace PlayniteViewerBridge.Helpers
 {
     internal static class ThemeHelpers
     {
@@ -81,7 +81,6 @@ namespace PlayniteViewerBridge
                 }
                 catch { }
             }
-            // else inherit
         }
 
         public static bool TrySetDynamicBrush(
@@ -94,7 +93,7 @@ namespace PlayniteViewerBridge
             {
                 var brush = el.TryFindResource(key) as Brush;
                 if (brush == null)
-                    return false; // don't override if key doesn't exist
+                    return false;
                 el.SetResourceReference(prop, key);
                 return true;
             }

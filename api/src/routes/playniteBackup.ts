@@ -12,10 +12,10 @@ const router = express.Router();
 
 /**
  * @openapi
- * /api/playnitedump/zips:
+ * /api/playnite/zips:
  *   get:
  *     summary: List uploaded ZIP files available for import
- *     tags: [Playnite Dump]
+ *     tags: [Playnite Backup]
  *     responses:
  *       200:
  *         description: A list of ZIP files with basic metadata.
@@ -44,24 +44,28 @@ const router = express.Router();
  *         description: Server error while reading the upload directory.
  */
 router.get("/zips", async (_req, res) => {
-    const files = await fs.readdir(INPUT_DIR, { withFileTypes: true });
-    const zips: Array<{ name: string; size: number; mtime: number }> = [];
-    for (const f of files) {
-        if (f.isFile() && /\.zip$/i.test(f.name)) {
-            const st = await fs.stat(join(INPUT_DIR, f.name));
-            zips.push({ name: f.name, size: st.size, mtime: st.mtimeMs });
+    try {
+        const files = await fs.readdir(INPUT_DIR, { withFileTypes: true });
+        const zips: Array<{ name: string; size: number; mtime: number }> = [];
+        for (const f of files) {
+            if (f.isFile() && /\.zip$/i.test(f.name)) {
+                const st = await fs.stat(join(INPUT_DIR, f.name));
+                zips.push({ name: f.name, size: st.size, mtime: st.mtimeMs });
+            }
         }
+        zips.sort((a, b) => b.mtime - a.mtime);
+        res.json(zips);
+    } catch (e: any) {
+        res.status(500).json({ ok: false, error: String(e?.message || e) });
     }
-    zips.sort((a, b) => b.mtime - a.mtime);
-    res.json(zips);
 });
 
 /**
  * @openapi
- * /api/playnitedump/upload:
+ * /api/playnite/backup/upload:
  *   post:
  *     summary: Upload a ZIP file containing a Playnite library
- *     tags: [Playnite Dump]
+ *     tags: [Playnite Backup]
  *     requestBody:
  *       required: true
  *       content:
@@ -118,7 +122,7 @@ router.post("/upload", upload.single("file"), async (req, res) => {
 
 /**
  * @openapi
- * /api/playnitedump/process-stream:
+ * /api/playnite/backup/process-stream:
  *   get:
  *     summary: Stream the processing of an uploaded Playnite ZIP (unzip → dump LiteDB to JSON → copy media)
  *     description: |
@@ -131,14 +135,14 @@ router.post("/upload", upload.single("file"), async (req, res) => {
  *       - `error`: error message (string)
  *
  *       **Content-Type:** `text/event-stream`
- *     tags: [Playnite Dump]
+ *     tags: [Playnite Backup]
  *     parameters:
  *       - in: query
  *         name: filename
  *         required: true
  *         schema:
  *           type: string
- *         description: The ZIP file name previously returned by `/api/playnitedump/upload`.
+ *         description: The ZIP file name previously returned by `/api/playnite/backup/upload`.
  *         example: "2025-09-20-23-10.zip"
  *       - in: query
  *         name: password
@@ -246,7 +250,8 @@ router.get("/process-stream", async (req, res) => {
         if (!libDir) throw new Error("No library directory with *.db");
 
         log("Clearing /data…");
-        await cleanDir(DATA_DIR);
+        // merge-only strategy: ensure /data exists, do not wipe it
+        await fs.mkdir(DATA_DIR, { recursive: true });
 
         log("Dumping LiteDB to JSON…");
         const env = { ...process.env };

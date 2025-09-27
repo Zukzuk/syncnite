@@ -6,7 +6,7 @@ services:
     environment:
       NODE_ENV: production
     volumes:
-      - ./backups:/input                  # where you drop/import stuff
+      - ./uploads:/input                  # where you drop/import stuff
       - ./data:/data                      # where API writes exports/media
       - ./extension:/extension:ro         # API serves /api/extension/download from here
     tmpfs:
