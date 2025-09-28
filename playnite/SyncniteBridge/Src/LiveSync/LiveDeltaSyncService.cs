@@ -6,10 +6,10 @@ using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 using Playnite.SDK;
-using PlayniteViewerBridge.Constants;
-using PlayniteViewerBridge.Helpers;
+using SyncniteBridge.Constants;
+using SyncniteBridge.Helpers;
 
-namespace PlayniteViewerBridge.LiveSync
+namespace SyncniteBridge.LiveSync
 {
     internal sealed class LiveDeltaSyncService : IDisposable
     {
@@ -80,7 +80,7 @@ namespace PlayniteViewerBridge.LiveSync
         {
             if (string.IsNullOrWhiteSpace(dataRoot) || !Directory.Exists(dataRoot))
             {
-                api.Dialogs.ShowMessage("ViewerBridge Live Sync: Playnite data folder not found.");
+                api.Dialogs.ShowMessage("Live Sync: Playnite data folder not found.");
                 rlog?.Enqueue(
                     RemoteLog.Build(
                         "error",
@@ -97,7 +97,7 @@ namespace PlayniteViewerBridge.LiveSync
             if (!Directory.Exists(libraryDir) || !Directory.Exists(mediaDir))
             {
                 api.Dialogs.ShowMessage(
-                    "ViewerBridge Live Sync: expected 'library' and 'libraryfiles' under Playnite data root."
+                    "Live Sync: expected 'library' and 'libraryfiles' under Playnite data root."
                 );
                 rlog?.Enqueue(
                     RemoteLog.Build(
@@ -127,7 +127,7 @@ namespace PlayniteViewerBridge.LiveSync
             );
 
             CleanupTempOld();
-            // Do not auto-trigger; PlayniteViewerBridge will trigger on health=healthy
+            // Do not auto-trigger; SyncniteBridge will trigger on health=healthy
         }
 
         private FileSystemWatcher MakeWatcher(string path, string filter, bool includeSubdirs)
@@ -372,9 +372,10 @@ namespace PlayniteViewerBridge.LiveSync
                         string seedZip = null;
                         try
                         {
+                            var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd-HH-mm-ss");
                             seedZip = Path.Combine(
                                 tempDir,
-                                $"delta_{DateTime.UtcNow:yyyyMMdd_HHmmssfff}_jsononly.zip"
+                                $"PlayniteSync-{timestamp}-jsononly.zip"
                             );
                             var swZip = Stopwatch.StartNew();
                             using (var zb = new ZipBuilder(seedZip))
@@ -452,10 +453,8 @@ namespace PlayniteViewerBridge.LiveSync
                 string zipPath = null;
                 try
                 {
-                    zipPath = Path.Combine(
-                        tempDir,
-                        $"delta_{DateTime.UtcNow:yyyyMMdd_HHmmssfff}.zip"
-                    );
+                    var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd-HH-mm-ss");
+                    zipPath = Path.Combine(tempDir, $"PlayniteSync-{timestamp}.zip");
                     var swZip = Stopwatch.StartNew();
                     using (var zb = new ZipBuilder(zipPath))
                     {
@@ -492,7 +491,7 @@ namespace PlayniteViewerBridge.LiveSync
                     // success → clear db-dirty flag
                     libraryDirty = false;
 
-                    log.Info($"ViewerBridge Live Sync: uploaded delta with {changed.Count} files.");
+                    log.Info($"Live Sync: uploaded delta with {changed.Count} files.");
                     rlog?.Enqueue(
                         RemoteLog.Build(
                             "info",
@@ -520,7 +519,7 @@ namespace PlayniteViewerBridge.LiveSync
             }
             catch (Exception ex)
             {
-                log.Error(ex, "ViewerBridge Live Sync: upload failed");
+                log.Error(ex, "Live Sync: upload failed");
                 rlog?.Enqueue(
                     RemoteLog.Build(
                         "error",
@@ -634,7 +633,7 @@ namespace PlayniteViewerBridge.LiveSync
             var meta = new
             {
                 exportedAt = DateTime.UtcNow.ToString("o"),
-                exporter = "PlayniteViewerBridge",
+                exporter = "SyncniteBridge",
                 playnite = api?.ApplicationInfo?.ApplicationVersion?.ToString(),
             };
             zb.AddText("export/meta.json", Playnite.SDK.Data.Serialization.ToJson(meta));

@@ -3,13 +3,13 @@ using System.IO;
 using System.Windows.Controls;
 using Playnite.SDK;
 using Playnite.SDK.Plugins;
-using PlayniteViewerBridge.Constants;
-using PlayniteViewerBridge.Helpers;
-using PlayniteViewerBridge.LiveSync;
+using SyncniteBridge.Constants;
+using SyncniteBridge.Helpers;
+using SyncniteBridge.LiveSync;
 
-namespace PlayniteViewerBridge
+namespace SyncniteBridge
 {
-    public class PlayniteViewerBridge : GenericPlugin
+    public class SyncniteBridge : GenericPlugin
     {
         public override Guid Id { get; } = Guid.Parse(AppConstants.GUID);
 
@@ -22,13 +22,13 @@ namespace PlayniteViewerBridge
         private LiveDeltaSyncService liveSync;
         private HealthcheckService health;
 
-        public PlayniteViewerBridge(IPlayniteAPI api)
+        public SyncniteBridge(IPlayniteAPI api)
             : base(api)
         {
             configPath = Path.Combine(GetPluginUserDataPath(), AppConstants.ConfigFileName);
             config = BridgeConfig.Load(configPath);
 
-            var logUrl = Combine(config.ApiBase, AppConstants.Path_PlayniteLive_Log);
+            var logUrl = Combine(config.ApiBase, AppConstants.Path_Syncnite_Log);
             rlog = new RemoteLogClient(logUrl);
             var playniteVer = PlayniteApi?.ApplicationInfo?.ApplicationVersion?.ToString();
             rlog.Enqueue(
@@ -38,7 +38,7 @@ namespace PlayniteViewerBridge
                     "ViewerBridge loaded",
                     data: new
                     {
-                        plugin = "PlayniteViewerBridge",
+                        plugin = "SyncniteBridge",
                         version = "1.0.0",
                         playnite = playniteVer,
                     }
@@ -46,19 +46,19 @@ namespace PlayniteViewerBridge
             );
 
             // Health first (source of truth)
-            var pingUrl = Combine(config.ApiBase, AppConstants.Path_PlayniteLive_Ping);
+            var pingUrl = Combine(config.ApiBase, AppConstants.Path_Syncnite_Ping);
             health = new HealthcheckService(api, pingUrl, rlog);
             health.Start();
 
             // Pusher + LiveSync (gated by health)
             pusher = new PushInstalledService(
                 api,
-                Combine(config.ApiBase, AppConstants.Path_PlayniteLive_Push),
+                Combine(config.ApiBase, AppConstants.Path_Syncnite_Push),
                 rlog
             );
 
-            var syncUrl = Combine(config.ApiBase, AppConstants.Path_PlayniteLive_Sync);
-            var indexUrl = Combine(config.ApiBase, AppConstants.Path_PlayniteLive_Index);
+            var syncUrl = Combine(config.ApiBase, AppConstants.Path_Syncnite_Sync);
+            var indexUrl = Combine(config.ApiBase, AppConstants.Path_Syncnite_Index);
 
             liveSync = new LiveDeltaSyncService(api, syncUrl, GetDefaultPlayniteDataRoot(), rlog);
             liveSync.UpdateEndpoints(syncUrl, indexUrl);
@@ -162,23 +162,23 @@ namespace PlayniteViewerBridge
 
                                     var syncUrl = Combine(
                                         config.ApiBase,
-                                        AppConstants.Path_PlayniteLive_Sync
+                                        AppConstants.Path_Syncnite_Sync
                                     );
                                     var indexUrl = Combine(
                                         config.ApiBase,
-                                        AppConstants.Path_PlayniteLive_Index
+                                        AppConstants.Path_Syncnite_Index
                                     );
                                     var pushUrl = Combine(
                                         config.ApiBase,
-                                        AppConstants.Path_PlayniteLive_Push
+                                        AppConstants.Path_Syncnite_Push
                                     );
                                     var pingUrl = Combine(
                                         config.ApiBase,
-                                        AppConstants.Path_PlayniteLive_Ping
+                                        AppConstants.Path_Syncnite_Ping
                                     );
                                     var logUrl = Combine(
                                         config.ApiBase,
-                                        AppConstants.Path_PlayniteLive_Log
+                                        AppConstants.Path_Syncnite_Log
                                     );
 
                                     pusher?.UpdateEndpoint(pushUrl);

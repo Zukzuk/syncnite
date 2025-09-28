@@ -6,7 +6,7 @@ const router = express.Router();
  * @openapi
  * /api/extension/download:
  *   get:
- *     summary: Download the latest Playnite Viewer Bridge extension (.pext)
+ *     summary: Download the latest Syncnite Bridge extension (.pext)
  *     tags: [Extension]
  *     responses:
  *       200:
@@ -15,7 +15,7 @@ const router = express.Router();
  *           Content-Disposition:
  *             schema:
  *               type: string
- *             example: attachment; filename="playnite-viewer-bridge.pext"
+ *             example: attachment; filename="syncnite-bridge.pext"
  *         content:
  *           application/octet-stream:
  *             schema:
@@ -28,7 +28,7 @@ const router = express.Router();
  */
 router.get("/download", (_req, res) => {
   const file = "/extension/latest.pext";
-  res.download(file, "playnite-viewer-bridge.pext");
+  res.download(file, "syncnite-bridge.pext");
 });
 
 export default router;

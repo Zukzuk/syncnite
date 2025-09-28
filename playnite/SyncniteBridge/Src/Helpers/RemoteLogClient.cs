@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace PlayniteViewerBridge.Helpers
+namespace SyncniteBridge.Helpers
 {
     internal sealed class RemoteLogClient : IDisposable
     {

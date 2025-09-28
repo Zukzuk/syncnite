@@ -2,7 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
-namespace PlayniteViewerBridge.Helpers
+namespace SyncniteBridge.Helpers
 {
     internal static class ThemeHelpers
     {

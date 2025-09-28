@@ -4,12 +4,12 @@ const AdmZip = require("adm-zip");
 const { execSync } = require("child_process");
 
 // Config
-const extName = "playnite-viewer-bridge";
+const extName = "syncnite-bridge";
 const version = "1.0.0";
-const dllName = "PlayniteViewerBridge.dll";
-const root = "playnite/PlayniteViewerBridge";
+const dllName = "SyncniteBridge.dll";
+const root = "playnite/SyncniteBridge";
 const dist = "extension";
-const projectPath = `${root}/PlayniteViewerBridge.csproj`;
+const projectPath = `${root}/SyncniteBridge.csproj`;
 const buildOutput = `${root}/bin/Release/net462`;
 const yamlPath = `${root}/extension.yaml`;
 

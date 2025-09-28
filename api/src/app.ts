@@ -1,10 +1,10 @@
 import express from "express";
 import path from "path";
-import playniteLiveRouter from "./routes/playniteLive";
-import playniteBackupRouter from "./routes/playniteBackup";
-import extensionRouter from "./routes/extension";
 import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
+import syncRouter from "./routes/sync";
+import backupRouter from "./routes/backup";
+import extensionRouter from "./routes/extension";
 import { errorHandler, notFoundHandler } from "./middleware/errors";
 import { requestLogger } from "./middleware/requestLogger";
 
@@ -21,9 +21,9 @@ export function createApp() {
         definition: {
             openapi: "3.0.0",
             info: {
-                title: "Playnite Web API",
+                title: "Syncnite Web API",
                 version: "1.0.0",
-                description: "API for Playnite web viewer and extension integration",
+                description: "API for Syncnite and extension integration",
             },
             components: {
                 schemas: {
@@ -54,8 +54,8 @@ export function createApp() {
     app.use(express.json({ limit: "50mb" }));
 
     // routes
-    app.use("/api/playnite/live", playniteLiveRouter);
-    app.use("/api/playnite/backup", playniteBackupRouter);
+    app.use("/api/syncnite/live", syncRouter);
+    app.use("/api/syncnite/backup", backupRouter);
     app.use("/api/extension", extensionRouter);
 
     // 404 + error handler

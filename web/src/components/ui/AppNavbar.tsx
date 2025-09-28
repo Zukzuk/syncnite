@@ -29,16 +29,9 @@ export function AppNavbar() {
             />
             <NavLink
                 component={Link}
-                to="/shared"
-                label="Shared"
-                leftSection={<IconAB2 size={18} />}
-                active={location.pathname.startsWith("/shared")}
-            />
-            <NavLink
-                component={Link}
                 to="/bridge"
                 label="Bridge"
-                leftSection={<IconBuildingBridge2 size={18} />}
+                leftSection={<IconAB2 size={18} />}
                 active={location.pathname.startsWith("/bridge")}
             />
             <NavLink

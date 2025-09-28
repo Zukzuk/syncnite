@@ -2,8 +2,8 @@
   <PropertyGroup>
     <TargetFramework>net462</TargetFramework>
     <OutputType>Library</OutputType>
-    <AssemblyName>PlayniteViewerBridge</AssemblyName>
-    <RootNamespace>PlayniteViewerBridge</RootNamespace>
+    <AssemblyName>SyncniteBridge</AssemblyName>
+    <RootNamespace>SyncniteBridge</RootNamespace>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>

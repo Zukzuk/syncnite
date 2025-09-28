@@ -8,7 +8,7 @@ A self-hosted web viewer for your [Playnite](https://playnite.link) library with
 |-----------|------------|
 | **`web/`** | React + Vite single-page app to browse the exported Playnite library (`/data`). |
 | **`api/`** | Node/Express API with OpenAPI 3 docs. Handles: <ul><li>uploading & processing Playnite backup ZIPs (unzips, dumps LiteDB to JSON, copies media)</li><li>serving the processed JSON/media files</li><li>receiving live “installed games” pushes from the Playnite extension</li><li>serving the packaged Playnite extension (.pext)</li></ul> |
-| **`playnite/PlayniteViewerBridge`** | Playnite extension (“Viewer Bridge”) that pushes the list of installed games to the API endpoint. |
+| **`playnite/SyncniteBridge`** | Playnite extension (Syncnite Bridge”) that pushes the list of installed games to the API endpoint. |
 | **`playnite/PlayniteBackupImport`** | .NET 8.0 tool that converts Playnite’s LiteDB `.db` files to JSON (used by the API). |
 
 ## Quick start (Docker)
@@ -35,8 +35,8 @@ Volumes:
 
 ## Processing a Playnite backup
 
-1. Upload a ZIP via **POST `/api/playnite/backup/upload`** or drop it in `./uploads`.
-2. Start processing with **GET `/api/playnite/backup/process-stream?filename=your.zip`**.  
+1. Upload a ZIP via **POST `/api/syncnite/backup/upload`** or drop it in `./uploads`.
+2. Start processing with **GET `/api/syncnite/backup/process-stream?filename=your.zip`**.  
    This is a Server-Sent Events (SSE) stream that emits:
    * `log` – text messages
    * `progress` – `{ phase: "unzip" | "copy", percent, … }`
@@ -45,10 +45,10 @@ Volumes:
 
 ## Live “installed” updates (optional)
 
-Install the **Playnite Viewer Bridge** extension:
+Install the **Syncnite Bridge** extension:
 
 * Download from <http://localhost:3004/api/extension/download>
-* In Playnite, add the `.pext` and configure the API endpoint (defaults to `http://localhost:3003/api/playnite/live/push`).
+* In Playnite, add the `.pext` and configure the API endpoint (defaults to `http://localhost:3003/api/syncnite/live/push`).
 
 The extension watches Playnite’s database and pushes the list of currently installed games to the API, which writes it to `data/local.playnite.installed.json`.  
 The web UI automatically reflects these updates.

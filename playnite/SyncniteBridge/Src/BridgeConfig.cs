@@ -1,8 +1,8 @@
 using System.IO;
 using Playnite.SDK.Data;
-using PlayniteViewerBridge.Constants;
+using SyncniteBridge.Constants;
 
-namespace PlayniteViewerBridge
+namespace SyncniteBridge
 {
     internal sealed class BridgeConfig
     {

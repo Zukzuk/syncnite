@@ -1,5 +1,5 @@
 {
-    "name": "playnite-api",
+    "name": "syncnite-api",
     "private": true,
     "scripts": {
         "build": "tsc -p tsconfig.json",

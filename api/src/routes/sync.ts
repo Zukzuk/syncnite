@@ -9,16 +9,14 @@ import {
 
 const router = express.Router();
 const syncUpload = multer({ dest: INPUT_DIR });
-
-// --- module-scoped lock flag ---
 let isSyncing = false;
 
 /**
  * @openapi
- * /api/playnite/live/ping:
+ * /api/syncnite/live/ping:
  *   get:
  *     summary: Ping the Playnite Live API
- *     tags: [Playnite Live]
+ *     tags: [Syncnite Live]
  *     responses:
  *       200:
  *         description: Pong
@@ -37,10 +35,10 @@ router.get("/ping", (_req, res) => {
 
 /**
  * @openapi
- * /api/playnite/live/log:
+ * /api/syncnite/live/log:
  *   post:
- *     summary: Ingest log events from the Playnite Viewer Bridge extension
- *     tags: [Playnite Live]
+ *     summary: Ingest log events from the Syncnite Bridge extension
+ *     tags: [Syncnite Live]
  *     requestBody:
  *       required: true
  *       content:
@@ -83,7 +81,7 @@ router.post("/log", async (req, res) => {
 
   for (const ev of sanitized) {
     console.log(
-      `[playnite/live/log] ${ev.level.toUpperCase()} ${ev.kind}: ${ev.msg}`,
+      `[syncnite/live/log] ${ev.level.toUpperCase()} ${ev.kind}: ${ev.msg}`,
       ev.err ? `\n  err: ${ev.err}` : "",
       ev.data ? `\n  data: ${JSON.stringify(ev.data).slice(0, 400)}` : ""
     );
@@ -94,10 +92,10 @@ router.post("/log", async (req, res) => {
 
 /**
  * @openapi
- * /api/playnite/live/push:
+ * /api/syncnite/live/push:
  *   post:
  *     summary: Push the current list of installed Playnite games (GUIDs).
- *     tags: [Playnite Live]
+ *     tags: [Syncnite Live]
  *     requestBody:
  *       required: true
  *       content:
@@ -146,10 +144,10 @@ router.post("/push", async (req, res) => {
 
 /**
  * @openapi
- * /api/playnite/live/sync:
+ * /api/syncnite/live/sync:
  *   post:
  *     summary: Sync SDK-exported JSON + media from the extension (single ZIP)
- *     tags: [Playnite Live]
+ *     tags: [Syncnite Live]
  *     requestBody:
  *       required: true
  *       content:
@@ -195,28 +193,28 @@ router.post("/sync", syncUpload.single("file"), async (req, res) => {
     // merge-only strategy
     await fs.mkdir(DATA_DIR, { recursive: true });
 
-    console.log(`[playnite/live/sync] Validating ZIP ${basename(zipPath)}…`);
+    console.log(`[syncnite/live/sync] Validating ZIP ${basename(zipPath)}…`);
     await run("7z", ["t", zipPath]);
 
-    console.log("[playnite/live/sync] Extracting ZIP…");
+    console.log("[syncnite/live/sync] Extracting ZIP…");
     await run("7z", ["x", "-y", `-o${WORK_DIR}`, zipPath, "-bsp1", "-bso1"]);
 
-    console.log("[playnite/live/sync] Normalizing backslash paths…");
+    console.log("[syncnite/live/sync] Normalizing backslash paths…");
     await normalizeBackslashPaths(WORK_DIR);
 
-    console.log("[playnite/live/sync] Locating /export/*.json…");
+    console.log("[syncnite/live/sync] Locating /export/*.json…");
     const exportDir = await findExportDir(WORK_DIR);
     if (!exportDir) return res.status(400).json({ ok: false, error: "no /export/*.json found in ZIP" });
 
-    console.log("[playnite/live/sync] Copying JSON export to /data…");
+    console.log("[syncnite/live/sync] Copying JSON export to /data…");
     await copyDir(exportDir, DATA_DIR); // overwrite/add only
 
-    console.log("[playnite/live/sync] Copying media (libraryfiles)…");
+    console.log("[syncnite/live/sync] Copying media (libraryfiles)…");
     const { copiedFiles: mediaFiles } = await copyLibraryFilesWithProgress({
       libDir: join(exportDir, ".."),
       workRoot: WORK_DIR,
       dataRoot: DATA_DIR,
-      log: (m: string) => console.log(`[playnite/live/sync] ${m}`),
+      log: (m: string) => console.log(`[syncnite/live/sync] ${m}`),
       progress: () => { },
       concurrency: 8,
       tickMs: 500,
@@ -225,6 +223,10 @@ router.post("/sync", syncUpload.single("file"), async (req, res) => {
     const names = await fs.readdir(DATA_DIR);
     const jsonFiles = names.filter((n) => n.toLowerCase().endsWith(".json")).length;
 
+    const mf = join(WORK_DIR, "export", "manifest.json");
+    const s = await fs.readFile(mf, "utf8");
+    await fs.writeFile(join(DATA_DIR, ".manifest.json"), s, "utf8");
+    
     return res.json({ ok: true, jsonFiles, mediaFiles });
   } catch (e: any) {
     return res.status(500).json({ ok: false, error: String(e?.message || e) });
@@ -236,13 +238,13 @@ router.post("/sync", syncUpload.single("file"), async (req, res) => {
 
 /**
  * @openapi
- * /api/playnite/live/index:
+ * /api/syncnite/live/index:
  *   get:
  *     summary: Get the current server-side file index
  *     description: >
  *       Returns a list of files currently present under the server's `/data` directory.
  *       If `/data` does not exist yet (first run), this returns `{ ok: true, files: [] }`.
- *     tags: [Playnite Live]
+ *     tags: [Syncnite Live]
  *     responses:
  *       200:
  *         description: Index retrieved.
@@ -297,47 +299,50 @@ router.post("/sync", syncUpload.single("file"), async (req, res) => {
  */
 router.get("/index", async (_req, res) => {
   try {
-    const files: Array<{ rel: string; size: number; mtimeMs: number }> = [];
-
-    // If /data doesn't exist yet, return an empty index (first run)
-    let dataExists = false;
+    // If we already have a persisted manifest (written after last successful /sync), return it
     try {
-      const st = await fs.stat(DATA_DIR);
-      dataExists = st.isDirectory();
-    } catch { /* not found */ }
-    if (!dataExists) {
-      return res.json({ ok: true, generatedAt: new Date().toISOString(), files });
-    }
+      const disk = await fs.readFile(join(DATA_DIR, ".manifest.json"), "utf8");
+      const obj = JSON.parse(disk);
+      return res.json({ ok: true, generatedAt: new Date().toISOString(), manifest: obj });
+    } catch { /* fall through to live-scan */ }
 
-    // Top-level shaped JSON files in /data
-    const tops = await fs.readdir(DATA_DIR, { withFileTypes: true });
-    for (const e of tops) {
-      if (e.isFile() && e.name.toLowerCase().endsWith(".json")) {
-        const p = join(DATA_DIR, e.name);
-        const st = await fs.stat(p);
-        files.push({ rel: e.name, size: st.size, mtimeMs: st.mtimeMs });
+    // Fallback (first run / no manifest yet): build a coarse manifest
+    const out: any = { json: {}, mediaFolders: [], installed: { count: 0, hash: "" } };
+
+    // JSON presence & mtimes/sizes (gives client something to compare if needed)
+    let dataExists = false;
+    try { dataExists = (await fs.stat(DATA_DIR)).isDirectory(); } catch { }
+    if (dataExists) {
+      const names = await fs.readdir(DATA_DIR);
+      for (const n of names) {
+        if (!n.toLowerCase().endsWith(".json")) continue;
+        const st = await fs.stat(join(DATA_DIR, n));
+        out.json[n] = { size: st.size, mtimeMs: Math.floor(st.mtimeMs) };
       }
+
+      // Top-level subfolders inside /data/libraryfiles
+      const lfRoot = join(DATA_DIR, "libraryfiles");
+      try {
+        const ents = await fs.readdir(lfRoot, { withFileTypes: true });
+        out.mediaFolders = ents.filter(e => e.isDirectory()).map(e => e.name).sort();
+      } catch { /* none yet */ }
+
+      // Installed list summary (if previously pushed)
+      try {
+        const raw = await fs.readFile(join(DATA_DIR, "local.Installed.json"), "utf8");
+        const obj = JSON.parse(raw);
+        const list = Array.isArray(obj?.installed) ? obj.installed : [];
+        out.installed = {
+          count: list.length,
+          // cheap deterministic hash
+          hash: require("node:crypto").createHash("sha1").update(JSON.stringify(list)).digest("hex"),
+        };
+      } catch { }
     }
 
-    // Recursively include /data/libraryfiles/**
-    async function walk(dir: string, relBase = "libraryfiles") {
-      let entries: import("node:fs").Dirent[];
-      try { entries = await fs.readdir(dir, { withFileTypes: true }); } catch { return; }
-      for (const e of entries) {
-        const abs = join(dir, e.name);
-        const rel = join(relBase, e.name).replace(/\\/g, "/");
-        if (e.isDirectory()) await walk(abs, rel);
-        else {
-          const st = await fs.stat(abs);
-          files.push({ rel, size: st.size, mtimeMs: st.mtimeMs });
-        }
-      }
-    }
-    await walk(join(DATA_DIR, "libraryfiles"));
-
-    res.json({ ok: true, generatedAt: new Date().toISOString(), files });
+    return res.json({ ok: true, generatedAt: new Date().toISOString(), manifest: out });
   } catch (e: any) {
-    res.status(500).json({ ok: false, error: String(e?.message || e) });
+    return res.status(500).json({ ok: false, error: String(e?.message || e) });
   }
 });
 

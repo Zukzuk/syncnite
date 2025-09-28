@@ -1,7 +1,7 @@
 using System.IO;
 using System.IO.Compression;
 
-namespace PlayniteViewerBridge.Helpers
+namespace SyncniteBridge.Helpers
 {
     internal sealed class ZipBuilder : System.IDisposable
     {
@@ -25,11 +25,22 @@ namespace PlayniteViewerBridge.Helpers
             zip = new ZipArchive(stream, ZipArchiveMode.Create, leaveOpen: true);
         }
 
-        public void AddFile(string absoluteSource, string relPathInZip, CompressionLevel level = CompressionLevel.Optimal)
+        public void AddFile(
+            string absoluteSource,
+            string relPathInZip,
+            CompressionLevel level = CompressionLevel.Optimal
+        )
         {
             var entry = zip.CreateEntry(relPathInZip.Replace('\\', '/'), level);
             using (var zs = entry.Open())
-            using (var src = new FileStream(absoluteSource, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+            using (
+                var src = new FileStream(
+                    absoluteSource,
+                    FileMode.Open,
+                    FileAccess.Read,
+                    FileShare.ReadWrite | FileShare.Delete
+                )
+            )
             {
                 src.CopyTo(zs);
             }
@@ -47,10 +58,18 @@ namespace PlayniteViewerBridge.Helpers
 
         public void Dispose()
         {
-            try { zip?.Dispose(); } catch { }
+            try
+            {
+                zip?.Dispose();
+            }
+            catch { }
             if (ownsStream)
             {
-                try { stream?.Dispose(); } catch { }
+                try
+                {
+                    stream?.Dispose();
+                }
+                catch { }
             }
         }
     }

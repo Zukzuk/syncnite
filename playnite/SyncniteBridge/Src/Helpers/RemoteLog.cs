@@ -1,4 +1,4 @@
-namespace PlayniteViewerBridge.Helpers
+namespace SyncniteBridge.Helpers
 {
     internal static class RemoteLog
     {

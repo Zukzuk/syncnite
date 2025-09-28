@@ -9,10 +9,11 @@ import {
 } from "../helpers";
 
 const router = express.Router();
+const upload = multer({ dest: INPUT_DIR });
 
 /**
  * @openapi
- * /api/playnite/zips:
+ * /api/syncnite/zips:
  *   get:
  *     summary: List uploaded ZIP files available for import
  *     tags: [Playnite Backup]
@@ -62,7 +63,7 @@ router.get("/zips", async (_req, res) => {
 
 /**
  * @openapi
- * /api/playnite/backup/upload:
+ * /api/syncnite/backup/upload:
  *   post:
  *     summary: Upload a ZIP file containing a Playnite library
  *     tags: [Playnite Backup]
@@ -112,7 +113,6 @@ router.get("/zips", async (_req, res) => {
  *       500:
  *         description: Server error while saving the uploaded file.
  */
-const upload = multer({ dest: INPUT_DIR });
 router.post("/upload", upload.single("file"), async (req, res) => {
     if (!req.file) return res.status(400).json({ ok: false, error: "no file" });
     const safe = req.file.originalname.replace(/[^A-Za-z0-9._ -]/g, "_");
@@ -122,7 +122,7 @@ router.post("/upload", upload.single("file"), async (req, res) => {
 
 /**
  * @openapi
- * /api/playnite/backup/process-stream:
+ * /api/syncnite/backup/process-stream:
  *   get:
  *     summary: Stream the processing of an uploaded Playnite ZIP (unzip → dump LiteDB to JSON → copy media)
  *     description: |
@@ -142,7 +142,7 @@ router.post("/upload", upload.single("file"), async (req, res) => {
  *         required: true
  *         schema:
  *           type: string
- *         description: The ZIP file name previously returned by `/api/playnite/backup/upload`.
+ *         description: The ZIP file name previously returned by `/api/syncnite/backup/upload`.
  *         example: "2025-09-20-23-10.zip"
  *       - in: query
  *         name: password

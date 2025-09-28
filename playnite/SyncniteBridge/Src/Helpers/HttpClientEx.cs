@@ -6,7 +6,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
-namespace PlayniteViewerBridge.Helpers
+namespace SyncniteBridge.Helpers
 {
     internal sealed class HttpClientEx
     {

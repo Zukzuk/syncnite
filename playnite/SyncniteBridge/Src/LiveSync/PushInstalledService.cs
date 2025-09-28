@@ -6,10 +6,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using Playnite.SDK;
-using PlayniteViewerBridge.Constants;
-using PlayniteViewerBridge.Helpers;
+using SyncniteBridge.Constants;
+using SyncniteBridge.Helpers;
 
-namespace PlayniteViewerBridge.LiveSync
+namespace SyncniteBridge.LiveSync
 {
     internal sealed class PushInstalledService : IDisposable
     {

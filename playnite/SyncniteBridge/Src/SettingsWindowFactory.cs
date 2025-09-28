@@ -2,9 +2,9 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 using Playnite.SDK;
-using PlayniteViewerBridge.Helpers;
+using SyncniteBridge.Helpers;
 
-namespace PlayniteViewerBridge
+namespace SyncniteBridge
 {
     public static class SettingsWindowFactory
     {
@@ -39,24 +39,24 @@ namespace PlayniteViewerBridge
                 Margin = new Thickness(0, 0, 0, 8),
             };
 
-            var healthText = new TextBlock 
-            { 
-                Text = "Health:", 
-                VerticalAlignment = VerticalAlignment.Center 
+            var healthText = new TextBlock
+            {
+                Text = "Health:",
+                VerticalAlignment = VerticalAlignment.Center,
             };
             healthPanel.Children.Add(healthText);
 
             var healthStatus = new TextBlock
             {
                 Text = getHealthText(),
-                Margin = new Thickness(6, 0, 0, 0), 
+                Margin = new Thickness(6, 0, 0, 0),
                 VerticalAlignment = VerticalAlignment.Center,
             };
             healthPanel.Children.Add(healthStatus);
-            
+
             ThemeHelpers.SetThemeTextBrush(healthText);
             ThemeHelpers.SetThemeTextBrush(healthStatus);
-            
+
             Grid.SetRow(healthPanel, 0);
             root.Children.Add(healthPanel);
 
@@ -65,7 +65,7 @@ namespace PlayniteViewerBridge
                 Orientation = Orientation.Vertical,
                 Margin = new Thickness(0, 0, 0, 8),
             };
-            
+
             var apiHeader = new TextBlock
             {
                 Text = "API Base [http(s)://host:port/api/]",
@@ -73,16 +73,12 @@ namespace PlayniteViewerBridge
             };
             apiPanel.Children.Add(apiHeader);
 
-            var tbApi = new TextBox 
-            { 
-                Text = initialApiBase,
-                MinWidth = 420 
-            };
-            
+            var tbApi = new TextBox { Text = initialApiBase, MinWidth = 420 };
+
             ThemeHelpers.SetThemeTextBrush(apiHeader);
             ThemeHelpers.SetThemeTextBrush(tbApi);
             apiPanel.Children.Add(tbApi);
-            
+
             Grid.SetRow(apiPanel, 1);
             root.Children.Add(apiPanel);
 
@@ -91,7 +87,12 @@ namespace PlayniteViewerBridge
                 Orientation = Orientation.Horizontal,
                 Margin = new Thickness(0, 4, 0, 8),
             };
-            var btnPush = new Button { Content = "Sync Installed", Width = 120, Margin = new Thickness(0, 0, 8, 0), };
+            var btnPush = new Button
+            {
+                Content = "Sync Installed",
+                Width = 120,
+                Margin = new Thickness(0, 0, 8, 0),
+            };
             var btnSync = new Button { Content = "Sync Library", Width = 120 };
             btnPush.Click += (s, e) => onPushInstalled();
             btnSync.Click += (s, e) => onSyncLibrary();
@@ -111,11 +112,7 @@ namespace PlayniteViewerBridge
                 Width = 80,
                 Margin = new Thickness(0, 0, 8, 0),
             };
-            var btnClose = new Button
-            {
-                Content = "Close",
-                Width = 100,
-            };
+            var btnClose = new Button { Content = "Close", Width = 100 };
             btnSave.Click += (s, e) =>
             {
                 onSaveApiBase(tbApi.Text?.Trim());

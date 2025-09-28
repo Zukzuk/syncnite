@@ -2,10 +2,10 @@ using System;
 using System.Threading.Tasks;
 using System.Timers;
 using Playnite.SDK;
-using PlayniteViewerBridge.Constants;
-using PlayniteViewerBridge.Helpers;
+using SyncniteBridge.Constants;
+using SyncniteBridge.Helpers;
 
-namespace PlayniteViewerBridge.LiveSync
+namespace SyncniteBridge.LiveSync
 {
     internal sealed class HealthcheckService : IDisposable
     {
@@ -56,7 +56,9 @@ namespace PlayniteViewerBridge.LiveSync
             if (ok != lastOk)
             {
                 lastOk = ok;
-                var msg = ok ? "ViewerBridge: server healthy" : "ViewerBridge: server unreachable";
+                var msg = ok
+                    ? "SyncniteBridge: server healthy"
+                    : "SyncniteBridge: server unreachable";
                 var type = ok ? NotificationType.Info : NotificationType.Error;
                 api.Notifications.Add(AppConstants.Notif_Health, msg, type);
                 log.Info($"Healthcheck: {msg} ({pingUrl})");
