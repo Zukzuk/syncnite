@@ -1,0 +1,7 @@
+Id: a85f0db8-39f4-40ea-9e03-bc5be2298c89
+Name: SyncniteBridge
+Author: Dave Timmerman
+Version: ${VERSION}
+Module: SyncniteBridge.dll
+Type: GenericPlugin
+PlayniteApiVersion: 6.12.0

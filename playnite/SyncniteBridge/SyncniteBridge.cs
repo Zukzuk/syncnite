@@ -31,6 +31,7 @@ namespace SyncniteBridge
             var logUrl = Combine(config.ApiBase, AppConstants.Path_Syncnite_Log);
             rlog = new RemoteLogClient(logUrl);
             var playniteVer = PlayniteApi?.ApplicationInfo?.ApplicationVersion?.ToString();
+            var appVer = BridgeVersion.Current;
             rlog.Enqueue(
                 RemoteLog.Build(
                     "info",
@@ -39,7 +40,7 @@ namespace SyncniteBridge
                     data: new
                     {
                         plugin = "SyncniteBridge",
-                        version = "1.0.0",
+                        version = appVer,
                         playnite = playniteVer,
                     }
                 )

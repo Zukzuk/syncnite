@@ -1,23 +1,42 @@
+version: "3.9"
+
 services:
   api:
-    image: zukzuk/playnite-viewer-api:latest
+    image: zukzuk/syncnite-api:latest
+    container_name: syncnite-api
+    restart: unless-stopped
     environment:
       NODE_ENV: production
-    volumes:
-      - ./uploads:/input
-      - ./data:/data
-      - ./extension:/extension:ro
     ports:
       - "3004:3004"
-    restart: unless-stopped
+    volumes:
+      # host → container
+      - /volume1/docker/syncnite/uploads:/input
+      - /volume1/docker/syncnite/data:/data
+      - /volume1/docker/syncnite/extension:/extension:ro
+    tmpfs:
+      - /work
+    healthcheck:
+      # busybox wget exists in alpine images; returns 0 on 200 OK
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://localhost:3004/api/syncnite/live/ping >/dev/null 2>&1 || exit 1",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
 
   web:
-    image: zukzuk/playnite-viewer-web:latest
+    image: zukzuk/syncnite-web:latest
+    container_name: syncnite-web
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
     ports:
       - "3003:3003"
-    depends_on:
-      - api
     volumes:
-      - ./data:/usr/share/nginx/html/data:ro
-      - ./extension:/usr/share/nginx/html/extension:ro
-    restart: unless-stopped
+      # Nginx serves /data and /extension as static (see nginx.conf)
+      - /volume1/docker/syncnite/data:/usr/share/nginx/html/data:ro
+      - /volume1/docker/syncnite/extension:/usr/share/nginx/html/extension:ro

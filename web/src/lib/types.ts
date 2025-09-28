@@ -98,7 +98,7 @@ export type AlphaGroup = { title: string; rows: Row[] };
 
 export type AlphabeticalRailCounts = Record<string, number>;
 
-export const LETTERS = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ", "#"] as const;
+export const LETTERS = ["#",..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"] as const;
 export type Letter = typeof LETTERS[number];
 
 export type SortKey = "title" | "source" | "tags" | "year";

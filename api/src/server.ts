@@ -1,6 +1,8 @@
 import { createApp } from "./app";
 
-const app = createApp();
+const APP_VERSION = process.env.APP_VERSION ?? 'dev';
+
+const app = createApp(APP_VERSION);
 const port = process.env.PORT ? Number(process.env.PORT) : 3004;
 
 const server = app.listen(port, () => {

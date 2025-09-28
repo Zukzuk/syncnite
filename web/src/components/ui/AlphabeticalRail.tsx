@@ -1,7 +1,7 @@
 import { Paper, Stack, Tooltip, UnstyledButton } from "@mantine/core";
 import { AlphabeticalRailCounts } from "../../lib/types";
 
-export const DEFAULT_LETTERS = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ", "#"];
+export const DEFAULT_LETTERS = ["#",..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
 
 export function AlphabeticalRail({
     letters = DEFAULT_LETTERS,

@@ -3,12 +3,15 @@ services:
     build:
       context: .
       dockerfile: api/Dockerfile
+      args:
+        APP_VERSION: ${VERSION} # ← build-time! bakes into image
     environment:
       NODE_ENV: production
+      APP_VERSION: ${VERSION} # ← runtime env (API reads it)
     volumes:
-      - ./uploads:/input                  # where you drop/import stuff
-      - ./data:/data                      # where API writes exports/media
-      - ./extension:/extension:ro         # API serves /api/extension/download from here
+      - ./uploads:/input
+      - ./data:/data
+      - ./extension:/extension:ro
     tmpfs:
       - /work
     ports:
@@ -18,10 +21,14 @@ services:
     build:
       context: .
       dockerfile: web/Dockerfile
+      args:
+        APP_VERSION: ${VERSION} # ← build-time! used by entrypoint/env.js
     ports:
       - "3003:3003"
     volumes:
-      - ./data:/usr/share/nginx/html/data:ro            # static /data/** directly
-      - ./extension:/usr/share/nginx/html/extension:ro  # static /extension/latest.pext
+      - ./data:/usr/share/nginx/html/data:ro
+      - ./extension:/usr/share/nginx/html/extension:ro
     depends_on:
       - api
+    environment:
+      APP_VERSION: ${VERSION}

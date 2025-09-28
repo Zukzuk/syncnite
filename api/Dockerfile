@@ -46,6 +46,9 @@ COPY --from=api-build /app/api/dist ./api/dist
 COPY --from=dump-build /out/PlayniteBackupImport ./api/PlayniteBackupImport
 RUN chmod +x ./api/PlayniteBackupImport
 
+ARG APP_VERSION=dev
+ENV APP_VERSION=$APP_VERSION
+
 ENV NODE_ENV=production
 EXPOSE 3004
 WORKDIR /app/api

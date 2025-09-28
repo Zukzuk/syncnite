@@ -14,7 +14,7 @@ export function isIcoPath(url: string): boolean {
 export function bucketLetter(title: string, sortingName: string) {
   const s = (sortingName || title || "").trim();
   const ch = s.charAt(0).toUpperCase();
-  return /[A-Z]/.test(ch) ? ch : "@";
+  return /[A-Z]/.test(ch) ? ch : "#";
 }
 
 export async function icoToPngDataUrl(icoUrl: string): Promise<string | null> {

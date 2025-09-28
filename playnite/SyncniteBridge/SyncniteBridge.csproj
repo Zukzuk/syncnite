@@ -25,4 +25,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <Compile Update="Version.g.cs">
+      <AutoGen>true</AutoGen>
+    </Compile>
+  </ItemGroup>
 </Project>

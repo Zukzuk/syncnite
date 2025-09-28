@@ -5,8 +5,9 @@ import {
     IconBooks,
     IconAB2,
     IconSettings,
-    IconBuildingBridge2,
 } from "../../lib/icons";
+
+const appVersion = (window as any).__APP_VERSION__ ?? 'dev';
 
 export function AppNavbar() {
     const location = useLocation();
@@ -42,7 +43,7 @@ export function AppNavbar() {
                 active={location.pathname.startsWith("/settings")}
             />
             <Text className="is-dim" size="xs" pl={rem(12)} pt="md">
-                v1.0
+                v{appVersion}
             </Text>
         </ScrollArea>
     );

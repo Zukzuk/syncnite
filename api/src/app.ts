@@ -8,7 +8,7 @@ import extensionRouter from "./routes/extension";
 import { errorHandler, notFoundHandler } from "./middleware/errors";
 import { requestLogger } from "./middleware/requestLogger";
 
-export function createApp() {
+export function createApp(APP_VERSION: string) {
     const app = express();
 
     // trust proxy if running behind nginx
@@ -22,7 +22,7 @@ export function createApp() {
             openapi: "3.0.0",
             info: {
                 title: "Syncnite Web API",
-                version: "1.0.0",
+                version: APP_VERSION,
                 description: "API for Syncnite and extension integration",
             },
             components: {

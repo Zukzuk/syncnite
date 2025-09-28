@@ -9,15 +9,24 @@
   ],
   "scripts": {
     "install:all": "npm i --workspaces --include-workspace-root",
-    "build": "npm -ws --if-present run build && npm run codebase && npm run build:ext",
+    "build": "npm run version:set && npm -ws --if-present run build && npm run codebase && npm run build:ext",
     "lint": "npm -ws --if-present run lint",
     "test": "npm -ws --if-present run test",
-    "up": "docker compose -f docker-compose.yml up --build -d",
+    "up": "node scripts/up.js",
     "clean": "node scripts/clean.js",
     "codebase": "node scripts/codebase.js",
-    "build:ext": "node scripts/build-ext.js"
+    "build:ext": "node scripts/build-ext.js",
+    "commit": "cz",
+    "push": "node scripts/git-push.js",
+    "release": "npm run version:set && node scripts/docker-release.js",
+    "version:set": "node scripts/set-version.js"
   },
   "devDependencies": {
-    "@types/node": "^20.19.13"
+    "@types/node": "^20.19.13",
+    "standard-version": "^9.5.0",
+    "cz-conventional-changelog": "^3.3.0"
+  },
+  "config": {
+    "commitizen": { "path": "cz-conventional-changelog" }
   }
 }
