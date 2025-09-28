@@ -18,6 +18,7 @@
     "build:ext": "node scripts/build-ext.js",
     "commit": "cz",
     "push": "node scripts/git-push.js",
+    "postbump": "node scripts/set-version.js",
     "release": "npm run version:set && node scripts/docker-release.js",
     "version:set": "node scripts/set-version.js"
   },
