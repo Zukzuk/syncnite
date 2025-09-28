@@ -8,22 +8,26 @@ try {
   run('git fetch origin main');
 
   const ahead = parseInt(out('git rev-list --count origin/main..HEAD'), 10);
+
   if (ahead === 0) {
     console.log('No new commits to push');
-    // Keep dev in sync anyway (idempotent)
+    // still regenerate and (re)build the extension so dev matches package.json
     run('node scripts/set-version.js');
-    run('npm run up');
+    run('node scripts/build-ext.js');   // ← build .pext from current version
+    run('npm run up');                  // ← bring dev up with fresh latest.pext
     process.exit(0);
   }
 
-  // Bump & create release commit+tag; postbump hook generates files,
-  // --commit-all makes standard-version include them in the release commit.
+  // Bump + tag (postbump runs set-version.js)
   run('npx standard-version --commit-all');
 
-  // Push commit and tag
+  // Push commit + tag
   run('git push --follow-tags origin main');
 
-  // Refresh local dev
+  // Build the Playnite extension (.pext -> extension/latest.pext)
+  run('node scripts/build-ext.js');     // ← always build a fresh package
+
+  // Refresh local dev stack (bind-mount serves new latest.pext)
   run('npm run up');
 } catch (e) {
   console.error(e?.message || e);
