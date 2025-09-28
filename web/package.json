@@ -1,5 +1,5 @@
 {
-  "name": "playnite-web",
+  "name": "syncnite-web",
   "private": true,
   "scripts": {
     "dev": "vite",

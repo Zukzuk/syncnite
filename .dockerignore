@@ -1,6 +1,7 @@
 data
-uploads/**
-PlayniteBackup*.zip
+extensions
+uploads
+*.zip
 *.zip
 *.7z
 *.tar

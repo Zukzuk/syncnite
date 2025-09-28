@@ -1,6 +1,7 @@
 import express from "express";
 
 const router = express.Router();
+const APP_VERSION = process.env.APP_VERSION ?? 'dev';
 
 /**
  * @openapi
@@ -28,7 +29,7 @@ const router = express.Router();
  */
 router.get("/download", (_req, res) => {
   const file = "/extension/latest.pext";
-  res.download(file, "syncnite-bridge.pext");
+  res.download(file, `syncnite-bridge-${APP_VERSION}.pext`);
 });
 
 export default router;

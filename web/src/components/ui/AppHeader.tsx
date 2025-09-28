@@ -10,6 +10,8 @@ import {
 import { IconSun, IconMoon, IconDownload } from "../../lib/icons";
 import { AppHeaderProps } from "../../lib/types";
 
+const appVersion = (window as any).__APP_VERSION__ ?? 'dev';
+
 export function AppHeader({ opened, onToggleNav }: AppHeaderProps) {
     const { colorScheme, setColorScheme } = useMantineColorScheme();
 
@@ -17,12 +19,12 @@ export function AppHeader({ opened, onToggleNav }: AppHeaderProps) {
         <Group h="100%" px="md" justify="space-between">
             <Group>
                 <Burger opened={opened} onClick={onToggleNav} hiddenFrom="sm" size="sm" />
-                <Title order={3}>Playnite Viewer</Title>
+                <Title order={3}>Syncnite</Title>
             </Group>
 
             <Group gap="sm">
                 {/* Download button */}
-                <Tooltip label="Download SyncniteBridge extension (.pext)">
+                <Tooltip label={`Download Syncnite v${appVersion} (.pext)`}>
                     <Button
                         component="a"
                         href="/api/extension/download"

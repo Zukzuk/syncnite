@@ -8,8 +8,9 @@ import extensionRouter from "./routes/extension";
 import { errorHandler, notFoundHandler } from "./middleware/errors";
 import { requestLogger } from "./middleware/requestLogger";
 
-export function createApp(APP_VERSION: string) {
+export function createApp() {
     const app = express();
+    const APP_VERSION = process.env.APP_VERSION ?? 'dev';
 
     // trust proxy if running behind nginx
     app.set("trust proxy", true);
