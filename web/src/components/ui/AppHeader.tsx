@@ -22,7 +22,7 @@ export function AppHeader({ opened, onToggleNav }: AppHeaderProps) {
 
             <Group gap="sm">
                 {/* Download button */}
-                <Tooltip label="Download ViewerBridge extension (.pext)">
+                <Tooltip label="Download SyncniteBridge extension (.pext)">
                     <Button
                         component="a"
                         href="/api/extension/download"

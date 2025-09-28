@@ -48,6 +48,7 @@ namespace SyncniteBridge.LiveSync
             rlog?.Enqueue(
                 RemoteLog.Build("debug", "health", "Ping endpoint updated", data: new { pingUrl })
             );
+            _ = TickAsync();
         }
 
         private async Task TickAsync()

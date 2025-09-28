@@ -35,7 +35,7 @@ namespace SyncniteBridge
                 RemoteLog.Build(
                     "info",
                     "startup",
-                    "ViewerBridge loaded",
+                    "SyncniteBridge loaded",
                     data: new
                     {
                         plugin = "SyncniteBridge",
@@ -135,7 +135,7 @@ namespace SyncniteBridge
             {
                 new MainMenuItem
                 {
-                    Description = "ViewerBridge",
+                    Description = "SyncniteBridge",
                     Action = _ =>
                     {
                         try
@@ -144,18 +144,24 @@ namespace SyncniteBridge
                                 PlayniteApi,
                                 initialApiBase: config.ApiBase,
                                 getHealthText: () => health?.StatusText ?? "unknown",
+                                subscribeHealth: cb =>
+                                {
+                                    if (health != null)
+                                        health.StatusChanged += cb;
+                                },
+                                unsubscribeHealth: cb =>
+                                {
+                                    if (health != null)
+                                        health.StatusChanged -= cb;
+                                },
                                 onSaveApiBase: newBase =>
                                 {
-                                    // Normalize /api/ base
                                     var nb = string.IsNullOrWhiteSpace(newBase)
                                         ? config.ApiBase
                                         : newBase.Trim();
-                                    if (!string.IsNullOrEmpty(nb))
+                                    if (!string.IsNullOrEmpty(nb) && !nb.EndsWith("/"))
                                     {
-                                        if (!nb.EndsWith("/"))
-                                            nb += "/";
-                                        if (!nb.EndsWith("api/"))
-                                            nb += "api/";
+                                        nb += "/";
                                     }
                                     config.ApiBase = nb;
                                     BridgeConfig.Save(configPath, config);
@@ -187,7 +193,7 @@ namespace SyncniteBridge
                                     rlog?.UpdateEndpoint(logUrl);
 
                                     logger.Info(
-                                        $"ViewerBridge: ApiBase updated -> {config.ApiBase}"
+                                        $"SyncniteBridge: ApiBase updated -> {config.ApiBase}"
                                     );
                                     rlog.Enqueue(
                                         RemoteLog.Build(
@@ -231,7 +237,7 @@ namespace SyncniteBridge
                         }
                         catch (Exception ex)
                         {
-                            logger.Error(ex, "ViewerBridge: failed to open settings window");
+                            logger.Error(ex, "SyncniteBridge: failed to open settings window");
                             rlog.Enqueue(
                                 RemoteLog.Build(
                                     "error",
@@ -266,7 +272,7 @@ namespace SyncniteBridge
             catch { }
             try
             {
-                rlog?.Enqueue(RemoteLog.Build("info", "shutdown", "ViewerBridge disposing"));
+                rlog?.Enqueue(RemoteLog.Build("info", "shutdown", "SyncniteBridge disposing"));
                 rlog?.Dispose();
             }
             catch { }

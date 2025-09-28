@@ -26,8 +26,8 @@ namespace SyncniteBridge.LiveSync
 
         private volatile bool pending;
         private volatile bool isUploading;
-        private volatile bool dirty;
-        private volatile bool libraryDirty; // set when *.db changed
+        private volatile bool dbDirty; // set when *.db changed (used to decide JSON delta)
+        private volatile bool dirty; // run again after current upload finishes
 
         private FileSystemWatcher libWatcher;
         private FileSystemWatcher mediaWatcher;
@@ -127,7 +127,7 @@ namespace SyncniteBridge.LiveSync
             );
 
             CleanupTempOld();
-            // Do not auto-trigger; SyncniteBridge will trigger on health=healthy
+            // Do not auto-run here; SyncniteBridge triggers on health flip → healthy.
         }
 
         private FileSystemWatcher MakeWatcher(string path, string filter, bool includeSubdirs)
@@ -179,7 +179,8 @@ namespace SyncniteBridge.LiveSync
                 e?.FullPath != null
                 && e.FullPath.EndsWith(".db", StringComparison.OrdinalIgnoreCase)
             )
-                libraryDirty = true;
+                dbDirty = true;
+
             try
             {
                 debounce.Stop();
@@ -190,6 +191,7 @@ namespace SyncniteBridge.LiveSync
                 debounce.Start();
             }
             catch { }
+
             rlog?.Enqueue(
                 RemoteLog.Build(
                     "debug",
@@ -205,7 +207,7 @@ namespace SyncniteBridge.LiveSync
             if (!isHealthy())
             {
                 rlog?.Enqueue(RemoteLog.Build("debug", "sync", "Skipped trigger: unhealthy"));
-                pending = true; // keep pending so a flip-to-healthy can process
+                pending = true; // keep pending for flip-to-healthy
                 return;
             }
             pending = true;
@@ -229,7 +231,7 @@ namespace SyncniteBridge.LiveSync
             if (!isHealthy())
             {
                 rlog?.Enqueue(
-                    RemoteLog.Build("debug", "sync", "Abort run: unhealthy; keeping pending")
+                    RemoteLog.Build("debug", "sync", "Abort run: unhealthy; keep pending")
                 );
                 return;
             }
@@ -238,283 +240,270 @@ namespace SyncniteBridge.LiveSync
 
             if (isUploading)
             {
-                dirty = true;
-                rlog?.Enqueue(
-                    RemoteLog.Build(
-                        "debug",
-                        "sync",
-                        "Upload in progress; marked dirty for another run"
-                    )
-                );
+                dirty = true; // remember to re-run
+                rlog?.Enqueue(RemoteLog.Build("debug", "sync", "Upload in progress; marked dirty"));
                 return;
             }
 
-            await DoUploadAsync().ConfigureAwait(false);
-
-            if (dirty)
-            {
-                dirty = false;
-                rlog?.Enqueue(RemoteLog.Build("debug", "sync", "Processing dirty re-run"));
-                await DoUploadAsync().ConfigureAwait(false);
-            }
+            await DoUploadIfNeededAsync().ConfigureAwait(false);
         }
 
-        private struct RemoteEntry
+        // -------------------- Manifest & Delta logic --------------------
+
+        private sealed class LocalManifest
         {
-            public long Size;
-            public long MTimeMs;
-
-            public RemoteEntry(long size, long mtimeMs)
-            {
-                Size = size;
-                MTimeMs = mtimeMs;
-            }
+            public Dictionary<string, (long size, long mtimeMs)> Json { get; } =
+                new Dictionary<string, (long, long)>(StringComparer.OrdinalIgnoreCase);
+            public HashSet<string> MediaFolders { get; } =
+                new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            public (int count, string hash) Installed { get; set; }
         }
 
-        private sealed class LocalFile
+        private LocalManifest BuildLocalManifest()
         {
-            public string Abs { get; set; }
-            public string RelDisk { get; set; } // e.g., "library/files/..."
-            public string RelZip { get; set; } // e.g., "libraryfiles/..."
-            public long Size { get; set; }
-            public long MTimeMs { get; set; }
+            var m = new LocalManifest();
+
+            // JSON state driven by Playnite DB files: *.db under dataRoot/library
+            var libDir = Path.Combine(dataRoot, AppConstants.LibraryDirName);
+            foreach (
+                var f in Directory.EnumerateFiles(libDir, "*.db", SearchOption.TopDirectoryOnly)
+            )
+            {
+                var fi = new FileInfo(f);
+                var ms = (long)
+                    (
+                        fi.LastWriteTimeUtc - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                    ).TotalMilliseconds;
+
+                // Map DB → shaped JSON export name (stable):
+                // We export all JSONs together; we use the canonical filenames expected by the server.
+                // Track the DB by a representative export JSON name (coarse, but sufficient).
+                var name = Path.GetFileNameWithoutExtension(f).ToLowerInvariant();
+                // simple mapping table:
+                // games.db → games.Game.json, platforms.db → platforms.Platform.json, etc.
+                string jsonName = name switch
+                {
+                    "games" => "games.Game.json",
+                    "platforms" => "platforms.Platform.json",
+                    "sources" => "sources.GameSource.json",
+                    "companies" => "companies.Company.json",
+                    "tags" => "tags.Tag.json",
+                    "genres" => "genres.Genre.json",
+                    "categories" => "categories.Category.json",
+                    "emulators" => "emulators.Emulator.json",
+                    _ => $"{name}.json",
+                };
+
+                m.Json[jsonName] = (fi.Length, ms);
+            }
+
+            // Top-level media folders under dataRoot/library/files/
+            var lfRoot = Path.Combine(dataRoot, AppConstants.LibraryFilesDirName);
+            if (Directory.Exists(lfRoot))
+            {
+                foreach (
+                    var d in Directory.EnumerateDirectories(
+                        lfRoot,
+                        "*",
+                        SearchOption.TopDirectoryOnly
+                    )
+                )
+                {
+                    var folder = Path.GetFileName(d);
+                    if (!string.IsNullOrEmpty(folder))
+                        m.MediaFolders.Add(folder);
+                }
+            }
+
+            // Installed summary (count + cheap deterministic hash)
+            var installedIds = api
+                .Database.Games.Where(g => g.IsInstalled)
+                .Select(g => g.Id.ToString())
+                .OrderBy(x => x, StringComparer.Ordinal)
+                .ToArray();
+            var count = installedIds.Length;
+            var bytes = System.Text.Encoding.UTF8.GetBytes(string.Join(",", installedIds));
+            string hashHex;
+            using (var sha1 = System.Security.Cryptography.SHA1.Create())
+            {
+                var hash = sha1.ComputeHash(bytes);
+                hashHex = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+            }
+            m.Installed = (count, hashHex);
+
+            return m;
         }
 
-        private async Task DoUploadAsync()
+        private static bool JsonStateDiffers(
+            LocalManifest local,
+            HttpClientEx.RemoteManifest remote
+        )
+        {
+            // If any tracked JSON name missing remotely, or size/mtime mismatch → differs
+            foreach (var kv in local.Json)
+            {
+                if (!remote.json.TryGetValue(kv.Key, out var r))
+                    return true;
+                if (r.size != kv.Value.size || r.mtimeMs != kv.Value.mtimeMs)
+                    return true;
+            }
+            return false;
+        }
+
+        private static List<string> MediaFoldersToUpload(
+            LocalManifest local,
+            HttpClientEx.RemoteManifest remote
+        )
+        {
+            var remoteSet = new HashSet<string>(
+                remote.mediaFolders ?? new List<string>(),
+                StringComparer.OrdinalIgnoreCase
+            );
+            // Upload only new top-level folders (per requirement)
+            return local
+                .MediaFolders.Where(f => !remoteSet.Contains(f))
+                .OrderBy(s => s, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        private async Task DoUploadIfNeededAsync()
         {
             isUploading = true;
             var swTotal = Stopwatch.StartNew();
 
             try
             {
-                if (string.IsNullOrWhiteSpace(syncUrl))
+                if (string.IsNullOrWhiteSpace(syncUrl) || string.IsNullOrWhiteSpace(indexUrl))
                 {
                     rlog?.Enqueue(
                         RemoteLog.Build(
                             "error",
                             "sync",
-                            "Upload aborted: missing sync endpoint",
+                            "Missing endpoints",
                             data: new { syncUrl, indexUrl }
                         )
                     );
                     return;
                 }
 
-                // 1) Local media index
-                var swLocal = Stopwatch.StartNew();
-                var localMedia = ListLocalMediaFiles();
-                swLocal.Stop();
+                // 1) Build local manifest
+                var local = BuildLocalManifest();
 
-                // 2) Remote index (empty list on first run)
-                var swRemote = Stopwatch.StartNew();
-                var remote = !string.IsNullOrWhiteSpace(indexUrl)
-                    ? await http.GetRemoteIndexAsync(indexUrl).ConfigureAwait(false)
-                    : null;
-                swRemote.Stop();
+                // 2) Fetch remote manifest
+                var remoteIdx = await http.GetRemoteManifestAsync(indexUrl).ConfigureAwait(false);
+                var remote = remoteIdx?.manifest ?? new HttpClientEx.RemoteManifest();
 
-                var remoteIndex = new Dictionary<string, RemoteEntry>(
-                    StringComparer.OrdinalIgnoreCase
-                );
-                if (remote?.files != null)
+                // 3) Decide deltas
+                var needJson = dbDirty || JsonStateDiffers(local, remote);
+                var mediaFolders = MediaFoldersToUpload(local, remote);
+                if (!needJson && mediaFolders.Count == 0)
                 {
-                    foreach (var f in remote.files)
-                    {
-                        var rp = (f.rel ?? "").Replace('\\', '/');
-                        remoteIndex[rp] = new RemoteEntry(f.size, f.mtimeMs);
-                    }
+                    rlog?.Enqueue(RemoteLog.Build("debug", "sync", "Up-to-date; no upload needed"));
+                    return;
                 }
 
-                // Does server already have the main SDK JSON?
-                bool remoteHasSdkJson =
-                    remote != null
-                    && remote.files != null
-                    && remote.files.Any(f =>
-                        string.Equals(f.rel, "games.Game.json", StringComparison.OrdinalIgnoreCase)
-                    );
-
-                // 3) Compute delta (media)
-                var changed = new List<LocalFile>();
-                long changedBytes = 0;
-                foreach (var lf in localMedia)
+                // 4) Build single ZIP with only needed stuff; keep only the latest temp zip
+                Directory.CreateDirectory(tempDir);
+                foreach (var f in Directory.EnumerateFiles(tempDir, "*.zip"))
                 {
-                    var relZip = MapToZipPath(lf.RelDisk); // -> libraryfiles/...
-                    var key = relZip.Replace('\\', '/');
-
-                    RemoteEntry r;
-                    if (remoteIndex.TryGetValue(key, out r))
-                    {
-                        if (r.Size == lf.Size && r.MTimeMs == lf.MTimeMs)
-                            continue; // identical
-                    }
-
-                    changed.Add(
-                        new LocalFile
-                        {
-                            Abs = lf.Abs,
-                            RelDisk = lf.RelDisk,
-                            RelZip = key,
-                            Size = lf.Size,
-                            MTimeMs = lf.MTimeMs,
-                        }
-                    );
-                    checked
-                    {
-                        changedBytes += lf.Size;
-                    }
-                }
-
-                // If no media changed, decide whether to seed JSON anyway
-                if (changed.Count == 0)
-                {
-                    if (!libraryDirty && !remoteHasSdkJson)
-                    {
-                        // Seed JSON-only on brand-new server (no games.Game.json yet)
-                        string seedZip = null;
-                        try
-                        {
-                            var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd-HH-mm-ss");
-                            seedZip = Path.Combine(
-                                tempDir,
-                                $"PlayniteSync-{timestamp}-jsononly.zip"
-                            );
-                            var swZip = Stopwatch.StartNew();
-                            using (var zb = new ZipBuilder(seedZip))
-                            {
-                                ExportSdkSnapshotToZip(zb);
-                            }
-                            swZip.Stop();
-
-                            rlog?.Enqueue(
-                                RemoteLog.Build(
-                                    "info",
-                                    "sync",
-                                    "Uploading JSON-only seed",
-                                    data: new
-                                    {
-                                        zipMs = swZip.ElapsedMilliseconds,
-                                        zipPath = seedZip,
-                                    }
-                                )
-                            );
-
-                            var swUpload = Stopwatch.StartNew();
-                            var ok = await http.SyncZipAsync(syncUrl, seedZip)
-                                .ConfigureAwait(false);
-                            swUpload.Stop();
-                            if (!ok)
-                                throw new Exception("sync endpoint returned non-OK");
-
-                            rlog?.Enqueue(
-                                RemoteLog.Build(
-                                    "info",
-                                    "sync",
-                                    "JSON seed complete",
-                                    data: new
-                                    {
-                                        uploadMs = swUpload.ElapsedMilliseconds,
-                                        totalMs = swTotal.ElapsedMilliseconds,
-                                    }
-                                )
-                            );
-                        }
-                        finally
-                        {
-                            try
-                            {
-                                if (!string.IsNullOrEmpty(seedZip) && File.Exists(seedZip))
-                                    File.Delete(seedZip);
-                            }
-                            catch { }
-                        }
-                        return;
-                    }
-
-                    if (!libraryDirty)
-                    {
-                        rlog?.Enqueue(
-                            RemoteLog.Build(
-                                "debug",
-                                "sync",
-                                "No media changes; skipping upload",
-                                data: new
-                                {
-                                    elapsedMs_local = swLocal.ElapsedMilliseconds,
-                                    elapsedMs_remote = swRemote.ElapsedMilliseconds,
-                                }
-                            )
-                        );
-                        return;
-                    }
-
-                    // libraryDirty == true → continue to build a JSON-only zip below
-                }
-
-                // 4) Build one ZIP on disk (always include SDK JSON on any upload)
-                string zipPath = null;
-                try
-                {
-                    var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd-HH-mm-ss");
-                    zipPath = Path.Combine(tempDir, $"PlayniteSync-{timestamp}.zip");
-                    var swZip = Stopwatch.StartNew();
-                    using (var zb = new ZipBuilder(zipPath))
-                    {
-                        ExportSdkSnapshotToZip(zb); // shaped filenames
-                        foreach (var f in changed)
-                        {
-                            zb.AddFile(f.Abs, f.RelZip);
-                        }
-                    }
-                    swZip.Stop();
-
-                    rlog?.Enqueue(
-                        RemoteLog.Build(
-                            "info",
-                            "sync",
-                            "Uploading full delta",
-                            data: new
-                            {
-                                files = changed.Count,
-                                bytes = changedBytes,
-                                zipMs = swZip.ElapsedMilliseconds,
-                                zipPath,
-                            }
-                        )
-                    );
-
-                    // 5) Upload
-                    var swUpload = Stopwatch.StartNew();
-                    var ok = await http.SyncZipAsync(syncUrl, zipPath).ConfigureAwait(false);
-                    swUpload.Stop();
-                    if (!ok)
-                        throw new Exception("sync endpoint returned non-OK");
-
-                    // success → clear db-dirty flag
-                    libraryDirty = false;
-
-                    log.Info($"Live Sync: uploaded delta with {changed.Count} files.");
-                    rlog?.Enqueue(
-                        RemoteLog.Build(
-                            "info",
-                            "sync",
-                            "Upload complete",
-                            data: new
-                            {
-                                files = changed.Count,
-                                uploadMs = swUpload.ElapsedMilliseconds,
-                                totalMs = swTotal.ElapsedMilliseconds,
-                            }
-                        )
-                    );
-                }
-                finally
-                {
-                    // Always clean temp
                     try
                     {
-                        if (!string.IsNullOrEmpty(zipPath) && File.Exists(zipPath))
-                            File.Delete(zipPath);
+                        File.Delete(f);
                     }
                     catch { }
+                }
+
+                var zipPath = Path.Combine(
+                    tempDir,
+                    $"PlayniteSync-{DateTime.UtcNow:yyyy-MM-dd-HH-mm-ss}.zip"
+                );
+                var swZip = Stopwatch.StartNew();
+                using (var zb = new ZipBuilder(zipPath))
+                {
+                    // 4a) Export manifest.json (what we think is current local state)
+                    var manifestObj = new
+                    {
+                        json = local.Json.ToDictionary(
+                            k => k.Key,
+                            v => new { size = v.Value.size, mtimeMs = v.Value.mtimeMs },
+                            StringComparer.OrdinalIgnoreCase
+                        ),
+                        mediaFolders = local
+                            .MediaFolders.OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+                            .ToArray(),
+                        installed = new
+                        {
+                            count = local.Installed.count,
+                            hash = local.Installed.hash,
+                        },
+                    };
+                    zb.AddText(
+                        "export/manifest.json",
+                        Playnite.SDK.Data.Serialization.ToJson(manifestObj)
+                    );
+
+                    // 4b) Export JSONs only when needed
+                    if (needJson)
+                    {
+                        ExportSdkSnapshotToZip(zb);
+                    }
+
+                    // 4c) Media: include entire top-level folders that server doesn't have yet
+                    foreach (var folder in mediaFolders)
+                    {
+                        AddMediaFolderRecursively(zb, folder);
+                    }
+                }
+                swZip.Stop();
+
+                rlog?.Enqueue(
+                    RemoteLog.Build(
+                        "info",
+                        "sync",
+                        "Uploading delta",
+                        data: new
+                        {
+                            needJson,
+                            mediaFolders = mediaFolders.Count,
+                            zipMs = swZip.ElapsedMilliseconds,
+                            zipPath,
+                        }
+                    )
+                );
+
+                // 5) Upload
+                var swUpload = Stopwatch.StartNew();
+                var ok = await http.SyncZipAsync(syncUrl, zipPath).ConfigureAwait(false);
+                swUpload.Stop();
+                if (!ok)
+                    throw new Exception("sync endpoint returned non-OK");
+
+                // 6) Success → clear db-dirty
+                dbDirty = false;
+
+                log.Info(
+                    $"Live Sync: uploaded delta (json={needJson}, newMediaFolders={mediaFolders.Count})."
+                );
+                rlog?.Enqueue(
+                    RemoteLog.Build(
+                        "info",
+                        "sync",
+                        "Upload complete",
+                        data: new
+                        {
+                            json = needJson,
+                            mediaFolders = mediaFolders,
+                            uploadMs = swUpload.ElapsedMilliseconds,
+                            totalMs = swTotal.ElapsedMilliseconds,
+                        }
+                    )
+                );
+
+                if (dirty)
+                {
+                    dirty = false;
+                    rlog?.Enqueue(RemoteLog.Build("debug", "sync", "Processing dirty re-run"));
+                    Trigger(); // will debounce and re-check manifest
                 }
             }
             catch (Exception ex)
@@ -530,7 +519,7 @@ namespace SyncniteBridge.LiveSync
                     )
                 );
                 api?.Notifications?.Add(
-                    AppConstants.Notif_LiveSync_Error,
+                    AppConstants.Notif_Sync_Error, // fixed id
                     "Live Sync upload failed",
                     NotificationType.Error
                 );
@@ -541,14 +530,20 @@ namespace SyncniteBridge.LiveSync
             }
         }
 
-        private void SafeDelete(string path)
+        // Helper: get relative path (net462-safe)
+        private static string GetRelativePath(string baseDir, string fullPath)
         {
-            try
-            {
-                if (!string.IsNullOrEmpty(path) && File.Exists(path))
-                    File.Delete(path);
-            }
-            catch { }
+            if (string.IsNullOrEmpty(baseDir))
+                return fullPath;
+            var baseUri = new Uri(AppendDirSep(baseDir));
+            var pathUri = new Uri(fullPath);
+            var rel = baseUri.MakeRelativeUri(pathUri).ToString();
+            return Uri.UnescapeDataString(rel).Replace('/', Path.DirectorySeparatorChar);
+
+            string AppendDirSep(string p) =>
+                p.EndsWith(Path.DirectorySeparatorChar.ToString())
+                    ? p
+                    : p + Path.DirectorySeparatorChar;
         }
 
         private void CleanupTempOld(int maxAgeMinutes = 60)
@@ -569,62 +564,23 @@ namespace SyncniteBridge.LiveSync
             catch { }
         }
 
-        private List<LocalFile> ListLocalMediaFiles()
+        // Recursively add a top-level media folder to the ZIP
+        private void AddMediaFolderRecursively(ZipBuilder zb, string topLevelFolder)
         {
-            var list = new List<LocalFile>();
-            var mediaDir = Path.Combine(dataRoot, AppConstants.LibraryFilesDirName);
-            if (!Directory.Exists(mediaDir))
-                return list;
+            var mediaRoot = Path.Combine(dataRoot, AppConstants.LibraryFilesDirName);
+            var folderAbs = Path.Combine(mediaRoot, topLevelFolder);
+            if (!Directory.Exists(folderAbs))
+                return;
 
-            foreach (var f in Directory.EnumerateFiles(mediaDir, "*", SearchOption.AllDirectories))
+            foreach (
+                var path in Directory.EnumerateFiles(folderAbs, "*", SearchOption.AllDirectories)
+            )
             {
-                var relDisk = GetRelativePath(dataRoot, f).Replace('\\', '/'); // "library/files/..."
-                var fi = new FileInfo(f);
-                var mtime = fi.LastWriteTimeUtc;
-                var ms = (long)
-                    (mtime - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
-                list.Add(
-                    new LocalFile
-                    {
-                        Abs = f,
-                        RelDisk = relDisk,
-                        Size = fi.Length,
-                        MTimeMs = ms,
-                    }
-                );
+                var rel = GetRelativePath(folderAbs, path);
+                var relInZip = Path.Combine(AppConstants.ZipFilesDirName, topLevelFolder, rel)
+                    .Replace('\\', '/');
+                zb.AddFile(path, relInZip, CompressionLevel.Optimal);
             }
-            return list;
-        }
-
-        private static string GetRelativePath(string baseDir, string fullPath)
-        {
-            if (string.IsNullOrEmpty(baseDir))
-                return fullPath;
-            var baseUri = new Uri(AppendDirSep(baseDir));
-            var pathUri = new Uri(fullPath);
-            var rel = baseUri.MakeRelativeUri(pathUri).ToString();
-            return Uri.UnescapeDataString(rel).Replace('/', Path.DirectorySeparatorChar);
-
-            string AppendDirSep(string p) =>
-                p.EndsWith(Path.DirectorySeparatorChar.ToString())
-                    ? p
-                    : p + Path.DirectorySeparatorChar;
-        }
-
-        // disk "library/files/*" → zip "libraryfiles/*"; disk "library/*" → zip "library/*"
-        private static string MapToZipPath(string relPath)
-        {
-            var p = (relPath ?? string.Empty).Replace('\\', '/');
-            var diskFiles = AppConstants.LibraryFilesDirName.Replace('\\', '/'); // "library/files"
-            var diskLib = AppConstants.LibraryDirName.Replace('\\', '/'); // "library"
-            var zipFiles = AppConstants.ZipFilesDirName; // "libraryfiles"
-            var zipLib = AppConstants.ZipDirName; // "library"
-
-            if (p.StartsWith(diskFiles, StringComparison.OrdinalIgnoreCase))
-                return zipFiles + p.Substring(diskFiles.Length);
-            if (p.StartsWith(diskLib, StringComparison.OrdinalIgnoreCase))
-                return zipLib + p.Substring(diskLib.Length);
-            return p;
         }
 
         // --- SDK export (shaped filenames) into the zip ---

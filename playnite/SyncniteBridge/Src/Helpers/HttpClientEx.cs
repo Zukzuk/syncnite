@@ -15,18 +15,37 @@ namespace SyncniteBridge.Helpers
             public bool ok { get; set; }
         }
 
-        public sealed class RemoteIndexFile
+        // ---- New manifest shape returned by /syncnite/live/index ----
+
+        public sealed class RemoteJsonFile
         {
-            public string rel { get; set; }
             public long size { get; set; }
             public long mtimeMs { get; set; }
+        }
+
+        public sealed class RemoteInstalled
+        {
+            public int count { get; set; }
+            public string hash { get; set; }
+        }
+
+        public sealed class RemoteManifest
+        {
+            // e.g. { "games.Game.json": { size, mtimeMs }, ... }
+            public Dictionary<string, RemoteJsonFile> json { get; set; } =
+                new Dictionary<string, RemoteJsonFile>(StringComparer.OrdinalIgnoreCase);
+
+            // top-level folder names under /data/libraryfiles
+            public List<string> mediaFolders { get; set; } = new List<string>();
+
+            public RemoteInstalled installed { get; set; } = new RemoteInstalled();
         }
 
         public sealed class RemoteIndex
         {
             public bool ok { get; set; }
-            public List<RemoteIndexFile> files { get; set; }
             public string generatedAt { get; set; }
+            public RemoteManifest manifest { get; set; }
         }
 
         private readonly HttpClient http;
@@ -49,7 +68,7 @@ namespace SyncniteBridge.Helpers
             }
         }
 
-        public async Task<RemoteIndex> GetRemoteIndexAsync(string indexUrl)
+        public async Task<RemoteIndex> GetRemoteManifestAsync(string indexUrl)
         {
             try
             {
@@ -59,12 +78,17 @@ namespace SyncniteBridge.Helpers
                     return new RemoteIndex
                     {
                         ok = true,
-                        files = new List<RemoteIndexFile>(),
                         generatedAt = DateTime.UtcNow.ToString("o"),
+                        manifest = new RemoteManifest(),
                     };
                 }
                 if (!resp.IsSuccessStatusCode)
-                    return null;
+                    return new RemoteIndex
+                    {
+                        ok = true,
+                        generatedAt = DateTime.UtcNow.ToString("o"),
+                        manifest = new RemoteManifest(),
+                    };
 
                 var body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
                 var parsed = Playnite.SDK.Data.Serialization.FromJson<RemoteIndex>(body);
@@ -72,18 +96,18 @@ namespace SyncniteBridge.Helpers
                     ?? new RemoteIndex
                     {
                         ok = true,
-                        files = new List<RemoteIndexFile>(),
                         generatedAt = DateTime.UtcNow.ToString("o"),
+                        manifest = new RemoteManifest(),
                     };
             }
             catch
             {
-                // treat as empty index so we can seed
+                // treat as empty
                 return new RemoteIndex
                 {
                     ok = true,
-                    files = new List<RemoteIndexFile>(),
                     generatedAt = DateTime.UtcNow.ToString("o"),
+                    manifest = new RemoteManifest(),
                 };
             }
         }
