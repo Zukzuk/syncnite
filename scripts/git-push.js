@@ -10,7 +10,7 @@ try {
 
   if (ahead === 0) {
     console.log('No new commits to push');
-    run('node run build');
+    run('npm run build');
     run('npm run up');
     process.exit(0);
   }

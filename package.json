@@ -20,7 +20,7 @@
     "commit": "cz",
     "build": "npm run version:set && npm -ws --if-present run build && npm run build:ext && npm run codebase",
     "push": "node scripts/git-push.js",
-    "release": "npm run version:set && node scripts/docker-release.js"
+    "release": "node scripts/docker-release.js"
   },
   "devDependencies": {
     "@types/node": "^20.19.13",
