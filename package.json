@@ -9,18 +9,18 @@
   ],
   "scripts": {
     "install:all": "npm i --workspaces --include-workspace-root",
-    "build": "npm run version:set && npm -ws --if-present run build && npm run codebase && npm run build:ext",
     "lint": "npm -ws --if-present run lint",
     "test": "npm -ws --if-present run test",
     "up": "node scripts/up.js",
     "clean": "node scripts/clean.js",
     "codebase": "node scripts/codebase.js",
     "build:ext": "node scripts/build-ext.js",
+    "version:set": "node scripts/set-version.js",
+    "postbump": "npm run build",
     "commit": "cz",
+    "build": "npm run version:set && npm -ws --if-present run build && npm run build:ext && npm run codebase",
     "push": "node scripts/git-push.js",
-    "postbump": "node scripts/set-version.js",
-    "release": "npm run version:set && node scripts/docker-release.js",
-    "version:set": "node scripts/set-version.js"
+    "release": "npm run version:set && node scripts/docker-release.js"
   },
   "devDependencies": {
     "@types/node": "^20.19.13",
