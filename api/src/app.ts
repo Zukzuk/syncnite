@@ -55,8 +55,8 @@ export function createApp() {
     app.use(express.json({ limit: "50mb" }));
 
     // routes
-    app.use("/api/syncnite/live", syncRouter);
-    app.use("/api/syncnite/backup", backupRouter);
+    app.use("/api/sync", syncRouter);
+    app.use("/api/backup", backupRouter);
     app.use("/api/extension", extensionRouter);
 
     // 404 + error handler

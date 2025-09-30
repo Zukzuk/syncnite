@@ -13,7 +13,7 @@ const upload = multer({ dest: INPUT_DIR });
 
 /**
  * @openapi
- * /api/syncnite/zips:
+ * /api/backup/zips:
  *   get:
  *     summary: List uploaded ZIP files available for import
  *     tags: [Playnite Backup]
@@ -45,25 +45,39 @@ const upload = multer({ dest: INPUT_DIR });
  *         description: Server error while reading the upload directory.
  */
 router.get("/zips", async (_req, res) => {
-    try {
-        const files = await fs.readdir(INPUT_DIR, { withFileTypes: true });
-        const zips: Array<{ name: string; size: number; mtime: number }> = [];
-        for (const f of files) {
-            if (f.isFile() && /\.zip$/i.test(f.name)) {
-                const st = await fs.stat(join(INPUT_DIR, f.name));
-                zips.push({ name: f.name, size: st.size, mtime: st.mtimeMs });
-            }
+  console.log("[backup/zips] Request received");
+
+  try {
+    const files = await fs.readdir(INPUT_DIR, { withFileTypes: true });
+    console.log(`[backup/zips] Found ${files.length} entries in INPUT_DIR`);
+
+    const zips: Array<{ name: string; size: number; mtime: number }> = [];
+
+    for (const f of files) {
+      if (f.isFile() && /\.zip$/i.test(f.name)) {
+        try {
+          const st = await fs.stat(join(INPUT_DIR, f.name));
+          zips.push({ name: f.name, size: st.size, mtime: st.mtimeMs });
+          console.log(`[backup/zips] ZIP file: ${f.name}, size=${st.size}, mtime=${st.mtime}`);
+        } catch (err: any) {
+          console.warn(`[backup/zips] Could not stat file "${f.name}": ${String(err?.message || err)}`);
         }
-        zips.sort((a, b) => b.mtime - a.mtime);
-        res.json(zips);
-    } catch (e: any) {
-        res.status(500).json({ ok: false, error: String(e?.message || e) });
+      }
     }
+
+    zips.sort((a, b) => b.mtime - a.mtime);
+    console.log(`[backup/zips] Returning ${zips.length} zip file(s), sorted by mtime desc`);
+
+    res.json(zips);
+  } catch (e: any) {
+    console.error("[backup/zips] ERROR:", String(e?.message || e));
+    res.status(500).json({ ok: false, error: String(e?.message || e) });
+  }
 });
 
 /**
  * @openapi
- * /api/syncnite/backup/upload:
+ * /api/backup/upload:
  *   post:
  *     summary: Upload a ZIP file containing a Playnite library
  *     tags: [Playnite Backup]
@@ -114,15 +128,39 @@ router.get("/zips", async (_req, res) => {
  *         description: Server error while saving the uploaded file.
  */
 router.post("/upload", upload.single("file"), async (req, res) => {
-    if (!req.file) return res.status(400).json({ ok: false, error: "no file" });
-    const safe = req.file.originalname.replace(/[^A-Za-z0-9._ -]/g, "_");
-    await fs.rename(req.file.path, join(INPUT_DIR, safe));
-    res.json({ ok: true, file: safe });
+  console.log("[backup/upload] Incoming request…");
+
+  try {
+    if (!req.file) {
+      console.warn("[backup/upload] No file field provided");
+      return res.status(400).json({ ok: false, error: "no file" });
+    }
+
+    const origName = req.file.originalname;
+    const tmpPath = req.file.path;
+    const size = req.file.size ?? 0;
+
+    console.log(`[backup/upload] Received file: "${origName}", size=${size} bytes, temp="${tmpPath}"`);
+
+    const safe = origName.replace(/[^A-Za-z0-9._ -]/g, "_");
+    const dest = join(INPUT_DIR, safe);
+
+    console.log(`[backup/upload] Sanitized filename → "${safe}"`);
+    console.log(`[backup/upload] Moving file to ${dest}`);
+
+    await fs.rename(tmpPath, dest);
+
+    console.log("[backup/upload] File stored successfully");
+    return res.json({ ok: true, file: safe });
+  } catch (e: any) {
+    console.error("[backup/upload] ERROR:", String(e?.message || e));
+    return res.status(500).json({ ok: false, error: String(e?.message || e) });
+  }
 });
 
 /**
  * @openapi
- * /api/syncnite/backup/process-stream:
+ * /api/backup/process-stream:
  *   get:
  *     summary: Stream the processing of an uploaded Playnite ZIP (unzip → dump LiteDB to JSON → copy media)
  *     description: |
@@ -197,86 +235,116 @@ router.post("/upload", upload.single("file"), async (req, res) => {
  *         description: Server error while processing the ZIP.
  */
 router.get("/process-stream", async (req, res) => {
-    const filename = String(req.query.filename ?? "");
-    const password = String(req.query.password ?? "");
+  const filename = String(req.query.filename ?? "");
+  const password = String(req.query.password ?? "");
 
-    if (!filename || !/\.zip$/i.test(filename)) {
-        res.setHeader("Content-Type", "text/event-stream");
-        return res.end("event: error\ndata: filename missing or not .zip\n\n");
-    }
+  console.log("[backup/process-stream] Request received", { filename, password: password ? "***" : "(none)" });
 
+  if (!filename || !/\.zip$/i.test(filename)) {
+    console.warn("[backup/process-stream] Invalid or missing filename");
     res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
+    return res.end("event: error\ndata: filename missing or not .zip\n\n");
+  }
 
-    const send = (type: string, data: any) => {
-        const payload = typeof data === "string" ? data : JSON.stringify(data);
-        res.write(`event: ${type}\n`);
-        res.write(`data: ${payload.replace ? payload.replace(/\n/g, "\\n") : payload}\n\n`);
-    };
-    const log = (m: string) => send("log", m);
-    const progress = (phase: "unzip" | "copy", percent: number, extra?: Record<string, any>) =>
-        send("progress", { phase, percent, ...(extra || {}) });
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
 
-    const zipPath = join(INPUT_DIR, basename(filename));
+  const send = (type: string, data: any) => {
+    const payload = typeof data === "string" ? data : JSON.stringify(data);
+    res.write(`event: ${type}\n`);
+    res.write(`data: ${payload.replace ? payload.replace(/\n/g, "\\n") : payload}\n\n`);
+  };
+  const log = (m: string) => {
+    console.log(`[backup/process-stream] ${m}`);
+    send("log", m);
+  };
+  const progress = (
+    phase: "unzip" | "copy",
+    percent: number,
+    extra?: Record<string, any>
+  ) => {
+    send("progress", { phase, percent, ...(extra || {}) });
+  };
 
-    try {
-        await fs.access(zipPath);
-        await cleanDir(WORK_DIR);
+  const zipPath = join(INPUT_DIR, basename(filename));
+  console.log(`[backup/process-stream] zipPath resolved to: ${zipPath}`);
 
-        log("Validating ZIP with 7z…");
-        await run("7z", ["t", zipPath], {
-            onStdout: (ln) => {
-                const m = /(\d{1,3})%/.exec(ln);
-                if (m) progress("unzip", Number(m[1])); // reuse unzip bar for test
-            },
-            onStderr: (ln) => /error/i.test(ln) && log(`7z: ${ln}`),
-        });
+  try {
+    await fs.access(zipPath);
+    console.log("[backup/process-stream] ZIP exists, continuing");
 
-        log("Extracting ZIP with 7z…");
-        await run("7z", ["x", "-y", `-o${WORK_DIR}`, zipPath, "-bsp1", "-bso1"], {
-            onStdout: (ln) => {
-                const m = /(\d{1,3})%/.exec(ln);
-                if (m) progress("unzip", Number(m[1]));
-            },
-            onStderr: (ln) => /error/i.test(ln) && log(`7z: ${ln}`),
-        });
+    await cleanDir(WORK_DIR);
+    console.log("[backup/process-stream] WORK_DIR cleaned");
 
-        log("Normalizing backslash paths…");
-        await normalizeBackslashPaths(WORK_DIR);
+    log("Validating ZIP with 7z…");
+    console.log("[backup/process-stream] Running 7z test");
+    await run("7z", ["t", zipPath], {
+      onStdout: (ln) => {
+        const m = /(\d{1,3})%/.exec(ln);
+        if (m) progress("unzip", Number(m[1])); // reuse unzip bar for test
+      },
+      onStderr: (ln) => /error/i.test(ln) && log(`7z: ${ln}`),
+    });
+    console.log("[backup/process-stream] ZIP validation complete");
 
-        log("Locating library dir…");
-        const libDir = await findLibraryDir(WORK_DIR);
-        if (!libDir) throw new Error("No library directory with *.db");
+    log("Extracting ZIP with 7z…");
+    console.log("[backup/process-stream] Running 7z extract");
+    await run("7z", ["x", "-y", `-o${WORK_DIR}`, zipPath, "-bsp1", "-bso1"], {
+      onStdout: (ln) => {
+        const m = /(\d{1,3})%/.exec(ln);
+        if (m) progress("unzip", Number(m[1]));
+      },
+      onStderr: (ln) => /error/i.test(ln) && log(`7z: ${ln}`),
+    });
+    console.log("[backup/process-stream] Extraction complete");
 
-        log("Clearing /data…");
-        // merge-only strategy: ensure /data exists, do not wipe it
-        await fs.mkdir(DATA_DIR, { recursive: true });
+    log("Normalizing backslash paths…");
+    await normalizeBackslashPaths(WORK_DIR);
+    console.log("[backup/process-stream] Backslash normalization complete");
 
-        log("Dumping LiteDB to JSON…");
-        const env = { ...process.env };
-        if (password) env.LITEDB_PASSWORD = password;
-        const { out, err } = await run("./PlayniteBackupImport", [libDir, DATA_DIR], { env });
-        if (out?.trim()) out.trim().split(/\r?\n/).forEach((l) => log(l));
-        if (err?.trim()) err.trim().split(/\r?\n/).forEach((l) => log(l));
-
-        await copyLibraryFilesWithProgress({
-            libDir,
-            workRoot: WORK_DIR,
-            dataRoot: DATA_DIR,
-            log,
-            progress: ({ percent, copiedBytes, totalBytes, deltaBytes }) =>
-                progress("copy", percent, { copiedBytes, totalBytes, deltaBytes }),
-            concurrency: 8,
-            tickMs: 500,
-        });
-
-        send("done", "ok");
-        res.end();
-    } catch (e: any) {
-        send("error", String(e?.message || e));
-        res.end();
+    log("Locating library dir…");
+    const libDir = await findLibraryDir(WORK_DIR);
+    if (!libDir) {
+      console.error("[backup/process-stream] No library directory with *.db found");
+      throw new Error("No library directory with *.db");
     }
+    console.log(`[backup/process-stream] Library dir found: ${libDir}`);
+
+    log("Clearing /data…");
+    await fs.mkdir(DATA_DIR, { recursive: true });
+    console.log("[backup/process-stream] DATA_DIR ensured");
+
+    log("Dumping LiteDB to JSON…");
+    const env = { ...process.env };
+    if (password) env.LITEDB_PASSWORD = password;
+    console.log("[backup/process-stream] Running PlayniteBackupImport");
+    const { out, err } = await run("./PlayniteBackupImport", [libDir, DATA_DIR], { env });
+    if (out?.trim()) out.trim().split(/\r?\n/).forEach((l) => log(l));
+    if (err?.trim()) err.trim().split(/\r?\n/).forEach((l) => log(l));
+    console.log("[backup/process-stream] PlayniteBackupImport finished");
+
+    console.log("[backup/process-stream] Starting media copy");
+    await copyLibraryFilesWithProgress({
+      libDir,
+      workRoot: WORK_DIR,
+      dataRoot: DATA_DIR,
+      log,
+      progress: ({ percent, copiedBytes, totalBytes, deltaBytes }) =>
+        progress("copy", percent, { copiedBytes, totalBytes, deltaBytes }),
+      concurrency: 8,
+      tickMs: 500,
+    });
+    console.log("[backup/process-stream] Media copy finished");
+
+    send("done", "ok");
+    console.log("[backup/process-stream] Process finished successfully");
+    res.end();
+  } catch (e: any) {
+    console.error("[backup/process-stream] ERROR:", String(e?.message || e));
+    send("error", String(e?.message || e));
+    res.end();
+  }
 });
 
 export default router;

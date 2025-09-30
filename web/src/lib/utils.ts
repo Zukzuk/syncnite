@@ -1,4 +1,4 @@
-import { FALLBACK_ICON } from "./constants";
+import { BASE, FALLBACK_ICON } from "./constants";
 import type { Guidish, Link, Letter } from "./types";
 import ICO from "icojs";
 
@@ -61,9 +61,9 @@ export function buildIconUrl(iconRel: string | null, iconId: string | null): str
   if (iconRel) {
     const rel = iconRel.replace(/\\/g, "/").replace(/^\.?\//, "");
     const path = rel.startsWith("libraryfiles/") ? rel : `libraryfiles/${rel}`;
-    return `/data/${path}`;
+    return `${BASE}/${path}`;
   }
-  if (iconId) return `/data/libraryfiles/${iconId}.png`;
+  if (iconId) return `${BASE}/libraryfiles/${iconId}.png`;
   return FALLBACK_ICON;
 }
 
@@ -152,8 +152,8 @@ export function myAbandonwareLink(title: string): string {
   return `https://www.myabandonware.com/search/q/${encodeURIComponent(title)}`;
 }
 
-export function playniteAction(id: string): string { 
-  return `playnite://playnite/start/${encodeURIComponent(id)}`; 
+export function playniteAction(id: string): string {
+  return `playnite://playnite/start/${encodeURIComponent(id)}`;
 }
 
 export function effectiveLink(
@@ -196,6 +196,8 @@ export function extractYear(val: unknown): number | null {
   if (typeof val === "string") return parseYearFromString(val);
   if (typeof val === "object") {
     const o = val as Record<string, unknown>;
+    // Sync style
+    if (typeof o["ReleaseDate"] === "string") return parseYearFromString(o["ReleaseDate"]);
     // LiteDB / BSON-style
     if (typeof o["$date"] === "string") return parseYearFromString(o["$date"]);
     if (typeof o["Date"] === "string") return parseYearFromString(o["Date"]);

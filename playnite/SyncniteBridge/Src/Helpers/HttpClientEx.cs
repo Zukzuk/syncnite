@@ -15,8 +15,6 @@ namespace SyncniteBridge.Helpers
             public bool ok { get; set; }
         }
 
-        // ---- New manifest shape returned by /syncnite/live/index ----
-
         public sealed class RemoteJsonFile
         {
             public long size { get; set; }

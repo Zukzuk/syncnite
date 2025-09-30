@@ -1,5 +1,6 @@
+
 import express from "express";
-import { promises as fs } from "node:fs";
+import { existsSync, promises as fs } from "node:fs";
 import { join, basename } from "node:path";
 import multer from "multer";
 import {
@@ -13,7 +14,7 @@ let isSyncing = false;
 
 /**
  * @openapi
- * /api/syncnite/live/ping:
+ * /api/sync/ping:
  *   get:
  *     summary: Ping the Playnite Live API
  *     tags: [Syncnite Live]
@@ -35,7 +36,7 @@ router.get("/ping", (_req, res) => {
 
 /**
  * @openapi
- * /api/syncnite/live/log:
+ * /api/sync/log:
  *   post:
  *     summary: Ingest log events from the Syncnite Bridge extension
  *     tags: [Syncnite Live]
@@ -81,7 +82,7 @@ router.post("/log", async (req, res) => {
 
   for (const ev of sanitized) {
     console.log(
-      `[syncnite/live/log] ${ev.level.toUpperCase()} ${ev.kind}: ${ev.msg}`,
+      `[sync/log] ${ev.level.toUpperCase()} ${ev.kind}: ${ev.msg}`,
       ev.err ? `\n  err: ${ev.err}` : "",
       ev.data ? `\n  data: ${JSON.stringify(ev.data).slice(0, 400)}` : ""
     );
@@ -92,7 +93,7 @@ router.post("/log", async (req, res) => {
 
 /**
  * @openapi
- * /api/syncnite/live/push:
+ * /api/sync/push:
  *   post:
  *     summary: Push the current list of installed Playnite games (GUIDs).
  *     tags: [Syncnite Live]
@@ -128,23 +129,50 @@ router.post("/log", async (req, res) => {
  *         description: Server error.
  */
 router.post("/push", async (req, res) => {
+  console.log("[sync/push] Incoming request…");
+
   try {
     const payload = req.body;
+    console.log("[sync/push] Raw body received:", payload);
+
     if (!payload || !Array.isArray(payload.installed)) {
-      return res.status(400).json({ ok: false, error: "Body must be { installed: string[] }" });
+      console.warn("[sync/push] Invalid payload, expected { installed: string[] }");
+      return res
+        .status(400)
+        .json({ ok: false, error: "Body must be { installed: string[] }" });
     }
+
+    console.log(`[sync/push] Received ${payload.installed.length} installed entries`);
+
+    // Normalize & dedupe
     const uniq = Array.from(new Set(payload.installed.map((s: string) => String(s))));
-    const out = { installed: uniq, updatedAt: new Date().toISOString(), source: "playnite-extension" };
-    await fs.writeFile(join(DATA_DIR, "local.Installed.json"), JSON.stringify(out, null, 2), "utf8");
+    console.log(`[sync/push] Normalized and deduped → ${uniq.length} unique entries`);
+
+    // Prepare output object
+    const out = {
+      installed: uniq,
+      updatedAt: new Date().toISOString(),
+      source: "playnite-extension",
+    };
+    const outPath = join(DATA_DIR, "local.Installed.json");
+
+    // Write to disk
+    console.log(`[sync/push] Writing Installed list to ${outPath}`);
+    await fs.writeFile(outPath, JSON.stringify(out, null, 2), "utf8");
+    console.log("[sync/push] Successfully wrote local.Installed.json");
+
+    console.log(`[sync/push] Push complete, ${uniq.length} unique games recorded`);
     return res.json({ ok: true, count: uniq.length });
   } catch (e: any) {
+    console.error("[sync/push] ERROR:", String(e?.message || e));
     return res.status(500).json({ ok: false, error: String(e?.message || e) });
   }
 });
 
+
 /**
  * @openapi
- * /api/syncnite/live/sync:
+ * /api/sync/up:
  *   post:
  *     summary: Sync SDK-exported JSON + media from the extension (single ZIP)
  *     tags: [Syncnite Live]
@@ -178,67 +206,143 @@ router.post("/push", async (req, res) => {
  *       500:
  *         description: Server error while applying the sync.
  */
-router.post("/sync", syncUpload.single("file"), async (req, res) => {
-  if (!req.file) return res.status(400).json({ ok: false, error: "no file" });
+router.post("/up", syncUpload.single("file"), async (req, res) => {
+  if (!req.file) {
+    console.warn("[sync/up] Request rejected: no file uploaded");
+    return res.status(400).json({ ok: false, error: "no file" });
+  }
 
   if (isSyncing) {
+    console.warn("[sync/up] Request rejected: sync already in progress");
     return res.status(423).json({ ok: false, error: "sync_in_progress" });
   }
   isSyncing = true;
 
-  const zipPath = req.file.path;
+  const zipPath = req.file.path;            // temp path from multer
+  const origName = req.file.originalname;   // already appropriately named
+  const size = req.file.size ?? 0;
+
+  if (!existsSync(INPUT_DIR)) {
+    await fs.mkdir(INPUT_DIR, { recursive: true });
+    console.log(`[sync/up] Created input dir at: ${INPUT_DIR}`);
+  }
+
+  console.log(`[sync/up] Incoming upload "${origName}" (${size} bytes), temp="${zipPath}"`);
+
+  let jsonFiles = 0;
+  let mediaFiles = 0;
+  let savedZipPath: string | null = null;
 
   try {
     await cleanDir(WORK_DIR);
-    // merge-only strategy
     await fs.mkdir(DATA_DIR, { recursive: true });
+    console.log("[sync/up] Cleaned WORK_DIR and prepared DATA_DIR");
 
-    console.log(`[syncnite/live/sync] Validating ZIP ${basename(zipPath)}…`);
+    console.log(`[sync/up] Validating ZIP ${basename(zipPath)}…`);
     await run("7z", ["t", zipPath]);
 
-    console.log("[syncnite/live/sync] Extracting ZIP…");
+    console.log("[sync/up] Extracting ZIP…");
     await run("7z", ["x", "-y", `-o${WORK_DIR}`, zipPath, "-bsp1", "-bso1"]);
 
-    console.log("[syncnite/live/sync] Normalizing backslash paths…");
+    console.log("[sync/up] Normalizing backslash paths…");
     await normalizeBackslashPaths(WORK_DIR);
 
-    console.log("[syncnite/live/sync] Locating /export/*.json…");
+    console.log("[sync/up] Locating /export/*.json…");
     const exportDir = await findExportDir(WORK_DIR);
-    if (!exportDir) return res.status(400).json({ ok: false, error: "no /export/*.json found in ZIP" });
+    if (!exportDir) {
+      console.warn("[sync/up] No /export/*.json found in ZIP");
+      return res.status(400).json({ ok: false, error: "no /export/*.json found in ZIP" });
+    }
 
-    console.log("[syncnite/live/sync] Copying JSON export to /data…");
-    await copyDir(exportDir, DATA_DIR); // overwrite/add only
+    console.log("[sync/up] Copying JSON export to /data…");
+    await copyDir(exportDir, DATA_DIR);
+    const names = await fs.readdir(DATA_DIR);
+    jsonFiles = names.filter((n) => n.toLowerCase().endsWith(".json")).length;
+    console.log(`[sync/up] JSON copy done, ${jsonFiles} JSON file(s) in DATA_DIR`);
 
-    console.log("[syncnite/live/sync] Copying media (libraryfiles)…");
-    const { copiedFiles: mediaFiles } = await copyLibraryFilesWithProgress({
+    console.log("[sync/up] Copying media (libraryfiles)…");
+    const mediaResult = await copyLibraryFilesWithProgress({
       libDir: join(exportDir, ".."),
       workRoot: WORK_DIR,
       dataRoot: DATA_DIR,
-      log: (m: string) => console.log(`[syncnite/live/sync] ${m}`),
-      progress: () => { },
+      log: (m: string) => console.log(`[sync/up] ${m}`),
+      progress: () => {},
       concurrency: 8,
       tickMs: 500,
     });
-
-    const names = await fs.readdir(DATA_DIR);
-    const jsonFiles = names.filter((n) => n.toLowerCase().endsWith(".json")).length;
+    mediaFiles = mediaResult?.copiedFiles ?? 0;
+    console.log(`[sync/up] Media copy done: ${mediaFiles} files`);
 
     const mf = join(WORK_DIR, "export", "manifest.json");
-    const s = await fs.readFile(mf, "utf8");
-    await fs.writeFile(join(DATA_DIR, ".manifest.json"), s, "utf8");
-    
-    return res.json({ ok: true, jsonFiles, mediaFiles });
+    try {
+      const s = await fs.readFile(mf, "utf8");
+      await fs.writeFile(join(DATA_DIR, "manifest.json"), s, "utf8");
+      console.log("[sync/up] manifest.json copied");
+    } catch {
+      console.warn("[sync/up] manifest.json not found or unreadable");
+    }
+
+    // --- Only now (success path) do we persist the uploaded ZIP ---
+    // Use the original filename; if it exists, add -1, -2, ...
+    const baseName = origName;
+    const tryPath = (suffix: number) =>
+      suffix === 0
+        ? join(INPUT_DIR, baseName)
+        : join(
+            INPUT_DIR,
+            baseName.replace(/(\.[^.]*)?$/, (m) => `-${suffix}${m || ""}`)
+          );
+
+    let attempt = 0;
+    while (attempt < 1000) {
+      const candidate = tryPath(attempt);
+      try {
+        await fs.access(candidate);
+        attempt += 1; // exists, try next
+      } catch {
+        // doesn't exist → move (rename) the temp file here
+        await fs.rename(zipPath, candidate);
+        savedZipPath = candidate;
+        console.log(`[sync/up] Saved uploaded ZIP → ${candidate}`);
+        break;
+      }
+    }
+    if (!savedZipPath) {
+      console.warn("[sync/up] Could not determine a unique filename for saved ZIP");
+    }
+
+    console.log("[sync/up] Upload & sync finished successfully");
+    return res.json({
+      ok: true,
+      jsonFiles,
+      mediaFiles,
+      upload: {
+        savedZip: savedZipPath,   // may be null if save name couldn’t be determined
+        originalName: origName,
+        sizeBytes: size,
+      },
+    });
   } catch (e: any) {
+    console.error(`[sync/up] ERROR: ${String(e?.message || e)}`);
     return res.status(500).json({ ok: false, error: String(e?.message || e) });
   } finally {
-    try { await fs.unlink(zipPath); } catch { }
+    // If we successfully moved the file (savedZipPath set), zipPath no longer exists.
+    if (!savedZipPath) {
+      try {
+        await fs.unlink(zipPath);
+        console.log(`[sync/up] Removed temp upload "${zipPath}"`);
+      } catch {
+        console.warn(`[sync/up] Could not remove temp upload "${zipPath}"`);
+      }
+    }
     isSyncing = false;
+    console.log("[sync/up] isSyncing reset to false");
   }
 });
 
 /**
  * @openapi
- * /api/syncnite/live/index:
+ * /api/sync/index:
  *   get:
  *     summary: Get the current server-side file index
  *     description: >
@@ -298,52 +402,79 @@ router.post("/sync", syncUpload.single("file"), async (req, res) => {
  *         description: Server error.
  */
 router.get("/index", async (_req, res) => {
-  try {
-    // If we already have a persisted manifest (written after last successful /sync), return it
-    try {
-      const disk = await fs.readFile(join(DATA_DIR, ".manifest.json"), "utf8");
-      const obj = JSON.parse(disk);
-      return res.json({ ok: true, generatedAt: new Date().toISOString(), manifest: obj });
-    } catch { /* fall through to live-scan */ }
+  console.log("[sync/index] Request received");
 
-    // Fallback (first run / no manifest yet): build a coarse manifest
+  try {
+    // Try persisted manifest first
+    try {
+      console.log("[sync/index] Checking for persisted manifest.json");
+      const disk = await fs.readFile(join(DATA_DIR, "manifest.json"), "utf8");
+      const obj = JSON.parse(disk);
+      console.log("[sync/index] Found persisted manifest.json, returning it");
+      return res.json({ ok: true, generatedAt: new Date().toISOString(), manifest: obj });
+    } catch {
+      console.warn("[sync/index] No persisted manifest.json found, falling back to live scan");
+    }
+
+    // Fallback: build coarse manifest
     const out: any = { json: {}, mediaFolders: [], installed: { count: 0, hash: "" } };
 
-    // JSON presence & mtimes/sizes (gives client something to compare if needed)
+    // JSON presence & mtimes/sizes
     let dataExists = false;
-    try { dataExists = (await fs.stat(DATA_DIR)).isDirectory(); } catch { }
+    try {
+      const st = await fs.stat(DATA_DIR);
+      dataExists = st.isDirectory();
+      console.log("[sync/index] DATA_DIR exists, scanning…");
+    } catch {
+      console.warn("[sync/index] DATA_DIR not found, manifest will be empty");
+    }
+
     if (dataExists) {
       const names = await fs.readdir(DATA_DIR);
+      console.log(`[sync/index] Found ${names.length} entries in DATA_DIR`);
+
       for (const n of names) {
         if (!n.toLowerCase().endsWith(".json")) continue;
         const st = await fs.stat(join(DATA_DIR, n));
         out.json[n] = { size: st.size, mtimeMs: Math.floor(st.mtimeMs) };
+        console.log(`[sync/index] JSON file: ${n}, size=${st.size}, mtimeMs=${Math.floor(st.mtimeMs)}`);
       }
 
-      // Top-level subfolders inside /data/libraryfiles
+      // Media folders inside /data/libraryfiles
       const lfRoot = join(DATA_DIR, "libraryfiles");
       try {
         const ents = await fs.readdir(lfRoot, { withFileTypes: true });
         out.mediaFolders = ents.filter(e => e.isDirectory()).map(e => e.name).sort();
-      } catch { /* none yet */ }
+        console.log(`[sync/index] Found ${out.mediaFolders.length} media folder(s) in libraryfiles`);
+      } catch {
+        console.warn("[sync/index] No libraryfiles folder yet");
+      }
 
-      // Installed list summary (if previously pushed)
+      // Installed list summary
       try {
         const raw = await fs.readFile(join(DATA_DIR, "local.Installed.json"), "utf8");
         const obj = JSON.parse(raw);
         const list = Array.isArray(obj?.installed) ? obj.installed : [];
         out.installed = {
           count: list.length,
-          // cheap deterministic hash
-          hash: require("node:crypto").createHash("sha1").update(JSON.stringify(list)).digest("hex"),
+          hash: require("node:crypto")
+            .createHash("sha1")
+            .update(JSON.stringify(list))
+            .digest("hex"),
         };
-      } catch { }
+        console.log(`[sync/index] Installed list found: ${list.length} entries, hash=${out.installed.hash}`);
+      } catch {
+        console.warn("[sync/index] No local.Installed.json found");
+      }
     }
 
+    console.log("[sync/index] Manifest generated, returning response");
     return res.json({ ok: true, generatedAt: new Date().toISOString(), manifest: out });
   } catch (e: any) {
+    console.error("[sync/index] ERROR:", String(e?.message || e));
     return res.status(500).json({ ok: false, error: String(e?.message || e) });
   }
 });
+
 
 export default router;

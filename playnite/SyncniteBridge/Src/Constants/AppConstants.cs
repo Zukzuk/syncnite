@@ -9,11 +9,11 @@ namespace SyncniteBridge.Constants
         public const string DefaultApiBase = "http://localhost:3003/api/";
 
         // Endpoints (match server)
-        public const string Path_Syncnite_Index = "syncnite/live/index"; // manifest
-        public const string Path_Syncnite_Push = "syncnite/live/push"; // installed games
-        public const string Path_Syncnite_Sync = "syncnite/live/sync"; // sync zip upload
-        public const string Path_Syncnite_Ping = "syncnite/live/ping"; // healthcheck
-        public const string Path_Syncnite_Log = "syncnite/live/log"; // log to server
+        public const string Path_Syncnite_Index = "sync/index"; // manifest
+        public const string Path_Syncnite_Push = "sync/push"; // installed games
+        public const string Path_Syncnite_Sync = "sync/up"; // sync zip upload
+        public const string Path_Syncnite_Ping = "sync/ping"; // healthcheck
+        public const string Path_Syncnite_Log = "sync/log"; // log to server
 
         // Folders / zip mapping
         public const string LibraryDirName = "library";

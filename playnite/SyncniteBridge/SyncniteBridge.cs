@@ -75,19 +75,16 @@ namespace SyncniteBridge
             {
                 if (ok)
                 {
-                    try
-                    {
-                        rlog.Enqueue(
-                            RemoteLog.Build(
-                                "info",
-                                "startup",
-                                "Health became healthy → triggering push+sync"
-                            )
-                        );
-                        pusher.PushNow();
-                        liveSync.Trigger();
-                    }
-                    catch { }
+                    rlog.Enqueue(
+                        RemoteLog.Build(
+                            "info",
+                            "startup",
+                            "Health became healthy → triggering push+sync"
+                        )
+                    );
+                    // Use debounce so we don't read a partial DB on startup
+                    pusher.Trigger();
+                    liveSync.Trigger();
                 }
                 else
                 {

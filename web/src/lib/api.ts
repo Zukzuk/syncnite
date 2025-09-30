@@ -8,7 +8,7 @@ export const api = axios.create({
 });
 
 export async function listZips(): Promise<ZipInfo[]> {
-  const r = await fetch("/api/syncnite/backup/zips");
+  const r = await fetch("/api/backup/zips");
   return r.json();
 }
 
@@ -18,7 +18,7 @@ export async function uploadZip(
 ): Promise<{ ok: boolean; file?: string; error?: string }> {
   const form = new FormData();
   form.append("file", file);
-  const r = await axios.post("/api/syncnite/backup/upload", form, {
+  const r = await axios.post("/api/backup/upload", form, {
     headers: { "Content-Type": "multipart/form-data" },
     onUploadProgress: (e) => {
       if (e.total) onProgress?.(Math.round((e.loaded * 100) / e.total));
@@ -44,7 +44,7 @@ export function processZipStream({
   onDone?: () => void;
   onError?: (msg: string) => void;
 }) {
-  const url = new URL("/api/syncnite/backup/process-stream", window.location.origin);
+  const url = new URL("/api/backup/process-stream", window.location.origin);
   url.searchParams.set("filename", filename);
   if (password) url.searchParams.set("password", password);
 
