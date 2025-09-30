@@ -5,7 +5,7 @@ using Playnite.SDK;
 using Playnite.SDK.Plugins;
 using SyncniteBridge.Constants;
 using SyncniteBridge.Helpers;
-using SyncniteBridge.LiveSync;
+using SyncniteBridge.Services;
 
 namespace SyncniteBridge
 {
@@ -19,7 +19,7 @@ namespace SyncniteBridge
         private BridgeConfig config;
         private readonly string configPath;
 
-        private LiveDeltaSyncService liveSync;
+        private DeltaSyncService deltaSync;
         private HealthcheckService health;
 
         public SyncniteBridge(IPlayniteAPI api)
@@ -32,7 +32,7 @@ namespace SyncniteBridge
             rlog = new RemoteLogClient(logUrl);
             var playniteVer = PlayniteApi?.ApplicationInfo?.ApplicationVersion?.ToString();
             var appVer = BridgeVersion.Current;
-            rlog.Enqueue(
+            rlog?.Enqueue(
                 RemoteLog.Build(
                     "info",
                     "startup",
@@ -51,7 +51,7 @@ namespace SyncniteBridge
             health = new HealthcheckService(api, pingUrl, rlog);
             health.Start();
 
-            // Pusher + LiveSync (gated by health)
+            // Pusher + Sync (gated by health)
             pusher = new PushInstalledService(
                 api,
                 Combine(config.ApiBase, AppConstants.Path_Syncnite_Push),
@@ -59,23 +59,23 @@ namespace SyncniteBridge
             );
 
             var syncUrl = Combine(config.ApiBase, AppConstants.Path_Syncnite_Sync);
-            var indexUrl = Combine(config.ApiBase, AppConstants.Path_Syncnite_Index);
+            var manifestUrl = Combine(config.ApiBase, AppConstants.Path_Syncnite_Manifest);
 
-            liveSync = new LiveDeltaSyncService(api, syncUrl, GetDefaultPlayniteDataRoot(), rlog);
-            liveSync.UpdateEndpoints(syncUrl, indexUrl);
+            deltaSync = new DeltaSyncService(api, syncUrl, GetDefaultPlayniteDataRoot(), rlog);
+            deltaSync.UpdateEndpoints(syncUrl, manifestUrl);
 
             // Gate both services on health
             pusher.SetHealthProvider(() => health.IsHealthy);
-            liveSync.SetHealthProvider(() => health.IsHealthy);
+            deltaSync.SetHealthProvider(() => health.IsHealthy);
 
-            liveSync.Start();
+            deltaSync.Start();
 
             // When we flip to healthy (or first time becomes healthy), push & sync once
             health.StatusChanged += ok =>
             {
                 if (ok)
                 {
-                    rlog.Enqueue(
+                    rlog?.Enqueue(
                         RemoteLog.Build(
                             "info",
                             "startup",
@@ -84,11 +84,11 @@ namespace SyncniteBridge
                     );
                     // Use debounce so we don't read a partial DB on startup
                     pusher.Trigger();
-                    liveSync.Trigger();
+                    deltaSync.Trigger();
                 }
                 else
                 {
-                    rlog.Enqueue(
+                    rlog?.Enqueue(
                         RemoteLog.Build(
                             "warn",
                             "startup",
@@ -168,9 +168,9 @@ namespace SyncniteBridge
                                         config.ApiBase,
                                         AppConstants.Path_Syncnite_Sync
                                     );
-                                    var indexUrl = Combine(
+                                    var manifestUrl = Combine(
                                         config.ApiBase,
-                                        AppConstants.Path_Syncnite_Index
+                                        AppConstants.Path_Syncnite_Manifest
                                     );
                                     var pushUrl = Combine(
                                         config.ApiBase,
@@ -186,14 +186,10 @@ namespace SyncniteBridge
                                     );
 
                                     pusher?.UpdateEndpoint(pushUrl);
-                                    liveSync?.UpdateEndpoints(syncUrl, indexUrl);
+                                    deltaSync?.UpdateEndpoints(syncUrl, manifestUrl);
                                     health?.UpdateEndpoint(pingUrl);
                                     rlog?.UpdateEndpoint(logUrl);
-
-                                    logger.Info(
-                                        $"SyncniteBridge: ApiBase updated -> {config.ApiBase}"
-                                    );
-                                    rlog.Enqueue(
+                                    rlog?.Enqueue(
                                         RemoteLog.Build(
                                             "info",
                                             "config",
@@ -206,7 +202,7 @@ namespace SyncniteBridge
                                     if (health.IsHealthy)
                                     {
                                         pusher?.PushNow();
-                                        liveSync?.Trigger();
+                                        deltaSync?.Trigger();
                                     }
                                 },
                                 onPushInstalled: () =>
@@ -214,7 +210,7 @@ namespace SyncniteBridge
                                     try
                                     {
                                         pusher?.PushNow();
-                                        rlog.Enqueue(
+                                        rlog?.Enqueue(
                                             RemoteLog.Build("info", "push", "Manual push requested")
                                         );
                                     }
@@ -224,8 +220,8 @@ namespace SyncniteBridge
                                 {
                                     try
                                     {
-                                        liveSync?.Trigger();
-                                        rlog.Enqueue(
+                                        deltaSync?.Trigger();
+                                        rlog?.Enqueue(
                                             RemoteLog.Build("info", "sync", "Manual sync requested")
                                         );
                                     }
@@ -235,8 +231,7 @@ namespace SyncniteBridge
                         }
                         catch (Exception ex)
                         {
-                            logger.Error(ex, "SyncniteBridge: failed to open settings window");
-                            rlog.Enqueue(
+                            rlog?.Enqueue(
                                 RemoteLog.Build(
                                     "error",
                                     "ui",
@@ -260,7 +255,7 @@ namespace SyncniteBridge
             catch { }
             try
             {
-                liveSync?.Dispose();
+                deltaSync?.Dispose();
             }
             catch { }
             try

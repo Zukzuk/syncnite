@@ -16,8 +16,8 @@ let isSyncing = false;
  * @openapi
  * /api/sync/ping:
  *   get:
- *     summary: Ping the Playnite Live API
- *     tags: [Syncnite Live]
+ *     summary: Ping the Syncnite API
+ *     tags: [Sync]
  *     responses:
  *       200:
  *         description: Pong
@@ -39,7 +39,7 @@ router.get("/ping", (_req, res) => {
  * /api/sync/log:
  *   post:
  *     summary: Ingest log events from the Syncnite Bridge extension
- *     tags: [Syncnite Live]
+ *     tags: [Sync]
  *     requestBody:
  *       required: true
  *       content:
@@ -95,8 +95,8 @@ router.post("/log", async (req, res) => {
  * @openapi
  * /api/sync/push:
  *   post:
- *     summary: Push the current list of installed Playnite games (GUIDs).
- *     tags: [Syncnite Live]
+ *     summary: Push the current list of installed Playnite games
+ *     tags: [Sync]
  *     requestBody:
  *       required: true
  *       content:
@@ -174,8 +174,8 @@ router.post("/push", async (req, res) => {
  * @openapi
  * /api/sync/up:
  *   post:
- *     summary: Sync SDK-exported JSON + media from the extension (single ZIP)
- *     tags: [Syncnite Live]
+ *     summary: Sync from the Syncnite Bridge extension
+ *     tags: [Sync]
  *     requestBody:
  *       required: true
  *       content:
@@ -342,13 +342,13 @@ router.post("/up", syncUpload.single("file"), async (req, res) => {
 
 /**
  * @openapi
- * /api/sync/index:
+ * /api/sync/manifest:
  *   get:
- *     summary: Get the current server-side file index
+ *     summary: Get the current server-side manifest
  *     description: >
  *       Returns a list of files currently present under the server's `/data` directory.
  *       If `/data` does not exist yet (first run), this returns `{ ok: true, files: [] }`.
- *     tags: [Syncnite Live]
+ *     tags: [Sync]
  *     responses:
  *       200:
  *         description: Index retrieved.
@@ -401,19 +401,19 @@ router.post("/up", syncUpload.single("file"), async (req, res) => {
  *       500:
  *         description: Server error.
  */
-router.get("/index", async (_req, res) => {
-  console.log("[sync/index] Request received");
+router.get("/manifest", async (_req, res) => {
+  console.log("[sync/manifest] Request received");
 
   try {
     // Try persisted manifest first
     try {
-      console.log("[sync/index] Checking for persisted manifest.json");
+      console.log("[sync/manifest] Checking for persisted manifest.json");
       const disk = await fs.readFile(join(DATA_DIR, "manifest.json"), "utf8");
       const obj = JSON.parse(disk);
-      console.log("[sync/index] Found persisted manifest.json, returning it");
+      console.log("[sync/manifest] Found persisted manifest.json, returning it");
       return res.json({ ok: true, generatedAt: new Date().toISOString(), manifest: obj });
     } catch {
-      console.warn("[sync/index] No persisted manifest.json found, falling back to live scan");
+      console.warn("[sync/manifest] No persisted manifest.json found, falling back to scan");
     }
 
     // Fallback: build coarse manifest
@@ -424,20 +424,20 @@ router.get("/index", async (_req, res) => {
     try {
       const st = await fs.stat(DATA_DIR);
       dataExists = st.isDirectory();
-      console.log("[sync/index] DATA_DIR exists, scanning…");
+      console.log("[sync/manifest] DATA_DIR exists, scanning…");
     } catch {
-      console.warn("[sync/index] DATA_DIR not found, manifest will be empty");
+      console.warn("[sync/manifest] DATA_DIR not found, manifest will be empty");
     }
 
     if (dataExists) {
       const names = await fs.readdir(DATA_DIR);
-      console.log(`[sync/index] Found ${names.length} entries in DATA_DIR`);
+      console.log(`[sync/manifest] Found ${names.length} entries in DATA_DIR`);
 
       for (const n of names) {
         if (!n.toLowerCase().endsWith(".json")) continue;
         const st = await fs.stat(join(DATA_DIR, n));
         out.json[n] = { size: st.size, mtimeMs: Math.floor(st.mtimeMs) };
-        console.log(`[sync/index] JSON file: ${n}, size=${st.size}, mtimeMs=${Math.floor(st.mtimeMs)}`);
+        console.log(`[sync/manifest] JSON file: ${n}, size=${st.size}, mtimeMs=${Math.floor(st.mtimeMs)}`);
       }
 
       // Media folders inside /data/libraryfiles
@@ -445,9 +445,9 @@ router.get("/index", async (_req, res) => {
       try {
         const ents = await fs.readdir(lfRoot, { withFileTypes: true });
         out.mediaFolders = ents.filter(e => e.isDirectory()).map(e => e.name).sort();
-        console.log(`[sync/index] Found ${out.mediaFolders.length} media folder(s) in libraryfiles`);
+        console.log(`[sync/manifest] Found ${out.mediaFolders.length} media folder(s) in libraryfiles`);
       } catch {
-        console.warn("[sync/index] No libraryfiles folder yet");
+        console.warn("[sync/manifest] No libraryfiles folder yet");
       }
 
       // Installed list summary
@@ -462,16 +462,16 @@ router.get("/index", async (_req, res) => {
             .update(JSON.stringify(list))
             .digest("hex"),
         };
-        console.log(`[sync/index] Installed list found: ${list.length} entries, hash=${out.installed.hash}`);
+        console.log(`[sync/manifest] Installed list found: ${list.length} entries, hash=${out.installed.hash}`);
       } catch {
-        console.warn("[sync/index] No local.Installed.json found");
+        console.warn("[sync/manifest] No local.Installed.json found");
       }
     }
 
-    console.log("[sync/index] Manifest generated, returning response");
+    console.log("[sync/manifest] Manifest generated, returning response");
     return res.json({ ok: true, generatedAt: new Date().toISOString(), manifest: out });
   } catch (e: any) {
-    console.error("[sync/index] ERROR:", String(e?.message || e));
+    console.error("[sync/manifest] ERROR:", String(e?.message || e));
     return res.status(500).json({ ok: false, error: String(e?.message || e) });
   }
 });

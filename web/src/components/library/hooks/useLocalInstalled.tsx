@@ -1,10 +1,10 @@
 import * as React from "react";
 import { FILES } from "../../../lib/constants";
 
-type LiveInstalled = { set: Set<string> | null; updatedAt: string | null };
+type LocalInstalled = { set: Set<string> | null; updatedAt: string | null };
 
-export function useLiveInstalled(pollMs = 4000): LiveInstalled {
-    const [state, setState] = React.useState<LiveInstalled>({ set: null, updatedAt: null });
+export function useLocalInstalled(pollMs = 4000): LocalInstalled {
+    const [state, setState] = React.useState<LocalInstalled>({ set: null, updatedAt: null });
 
     React.useEffect(() => {
         let stop = false;
@@ -12,7 +12,7 @@ export function useLiveInstalled(pollMs = 4000): LiveInstalled {
         async function tick() {
             try {
                 // cache-bust
-                const url = `${FILES.liveInstalled}?v=${Date.now()}`;
+                const url = `${FILES.localInstalled}?v=${Date.now()}`;
                 const r = await fetch(url, { cache: "no-cache" });
                 if (!r.ok) return;
 

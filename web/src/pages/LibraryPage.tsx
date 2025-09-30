@@ -3,13 +3,13 @@ import { Stack, Loader, Box } from "@mantine/core";
 import { loadLibrary } from "../lib/data";
 import type { Loaded } from "../lib/types";
 import { LibraryList } from "../components/library/LibraryList";
-import { useLiveInstalled } from "../components/library/hooks/useLiveInstalled";
+import { useLocalInstalled } from "../components/library/hooks/useLocalInstalled";
 
 export default function LibraryPage() {
     const [data, setData] = React.useState<Loaded | null>(null);
     const [filtered, setFiltered] = React.useState(0);
     const [total, setTotal] = React.useState(0);
-    const live = useLiveInstalled(4000);
+    const localInstalled = useLocalInstalled(4000);
 
     React.useEffect(() => {
         (async () => setData(await loadLibrary()))();
@@ -17,13 +17,13 @@ export default function LibraryPage() {
 
     // When the *.Installed.json changes, re-mark installed flags without reloading the big JSON files.
     React.useEffect(() => {
-        if (!data || !live.set) return;
+        if (!data || !localInstalled.set) return;
         setData(prev => {
             if (!prev) return prev;
-            const rows = prev.rows.map(r => ({ ...r, installed: live.set!.has(r.id.toLowerCase()) }));
+            const rows = prev.rows.map(r => ({ ...r, installed: localInstalled.set!.has(r.id.toLowerCase()) }));
             return { ...prev, rows };
         });
-    }, [live.updatedAt]);
+    }, [localInstalled.updatedAt]);
 
     // When we get a "library changed" event, reload everything.
     React.useEffect(() => {

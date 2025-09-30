@@ -5,7 +5,7 @@ using Playnite.SDK;
 using SyncniteBridge.Constants;
 using SyncniteBridge.Helpers;
 
-namespace SyncniteBridge.LiveSync
+namespace SyncniteBridge.Services
 {
     internal sealed class HealthcheckService : IDisposable
     {
@@ -62,7 +62,6 @@ namespace SyncniteBridge.LiveSync
                     : "SyncniteBridge: server unreachable";
                 var type = ok ? NotificationType.Info : NotificationType.Error;
                 api.Notifications.Add(AppConstants.Notif_Health, msg, type);
-                log.Info($"Healthcheck: {msg} ({pingUrl})");
                 rlog?.Enqueue(
                     RemoteLog.Build(
                         ok ? "info" : "warn",

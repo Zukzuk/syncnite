@@ -21,7 +21,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "wget -qO- http://localhost:3004/api/syncnite/live/ping >/dev/null 2>&1 || exit 1",
+          "wget -qO- http://localhost:3004/api/sync/ping >/dev/null 2>&1 || exit 1",
         ]
       interval: 30s
       timeout: 5s

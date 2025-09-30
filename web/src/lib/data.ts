@@ -38,9 +38,9 @@ export async function loadLibrary(): Promise<Loaded> {
   const games = await tryLoadMany<GameDoc[]>(FILES.games, []);
   const tags = await tryLoadMany<NamedDoc[]>(FILES.tags, []);
   const sources = await tryLoadMany<NamedDoc[]>(FILES.sources, []);
-  const live = await tryFetchJson(FILES.liveInstalled);
-  const liveSet = Array.isArray(live?.installed)
-    ? new Set(live.installed.map((s: string) => String(s).toLowerCase()))
+  const localInstalled = await tryFetchJson(FILES.localInstalled);
+  const localInstalledSet = Array.isArray(localInstalled?.installed)
+    ? new Set(localInstalled.installed.map((s: string) => String(s).toLowerCase()))
     : null;
 
   const normNamed = (x: NamedDoc) => ({
@@ -71,7 +71,7 @@ export async function loadLibrary(): Promise<Loaded> {
     const iconRel = normalizePath((g as any).Icon);
     const iconId = asGuid((g as any).IconId);
     const iconUrl = buildIconUrl(iconRel, iconId);
-    const installed = liveSet ? liveSet.has(id.toLowerCase()) : false; // only if new JSON exists
+    const installed = localInstalledSet ? localInstalledSet.has(id.toLowerCase()) : false; // only if new JSON exists
 
     return {
       id,

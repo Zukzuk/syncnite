@@ -9,16 +9,16 @@ using Playnite.SDK;
 using SyncniteBridge.Constants;
 using SyncniteBridge.Helpers;
 
-namespace SyncniteBridge.LiveSync
+namespace SyncniteBridge.Services
 {
-    internal sealed class LiveDeltaSyncService : IDisposable
+    internal sealed class DeltaSyncService : IDisposable
     {
         private readonly IPlayniteAPI api;
         private readonly ILogger log = LogManager.GetLogger();
         private readonly RemoteLogClient rlog;
 
         private string syncUrl;
-        private string indexUrl;
+        private string manifestUrl;
         private readonly string dataRoot;
 
         private readonly HttpClientEx http;
@@ -36,7 +36,7 @@ namespace SyncniteBridge.LiveSync
 
         private Func<bool> isHealthy = () => true; // injected
 
-        public LiveDeltaSyncService(
+        public DeltaSyncService(
             IPlayniteAPI api,
             string syncUrl,
             string dataRoot,
@@ -50,10 +50,7 @@ namespace SyncniteBridge.LiveSync
 
             http = new HttpClientEx();
 
-            debounce = new System.Timers.Timer(AppConstants.DebounceMs_LiveSync)
-            {
-                AutoReset = false,
-            };
+            debounce = new System.Timers.Timer(AppConstants.DebounceMs_Sync) { AutoReset = false };
             debounce.Elapsed += async (s, e) => await OnDebouncedAsync().ConfigureAwait(false);
 
             tempDir = Path.Combine(Path.GetTempPath(), AppConstants.TempDirName, "sync");
@@ -62,16 +59,16 @@ namespace SyncniteBridge.LiveSync
 
         public void SetHealthProvider(Func<bool> provider) => isHealthy = provider ?? (() => true);
 
-        public void UpdateEndpoints(string newSync, string newIndex)
+        public void UpdateEndpoints(string newSync, string newManifestUrl)
         {
             syncUrl = newSync?.Trim();
-            indexUrl = newIndex?.Trim();
+            manifestUrl = newManifestUrl?.Trim();
             rlog?.Enqueue(
                 RemoteLog.Build(
                     "debug",
                     "sync",
                     "Endpoints updated",
-                    data: new { syncUrl, indexUrl }
+                    data: new { syncUrl, manifestUrl }
                 )
             );
         }
@@ -80,7 +77,7 @@ namespace SyncniteBridge.LiveSync
         {
             if (string.IsNullOrWhiteSpace(dataRoot) || !Directory.Exists(dataRoot))
             {
-                api.Dialogs.ShowMessage("Live Sync: Playnite data folder not found.");
+                api.Dialogs.ShowMessage("Delta Sync: Playnite data folder not found.");
                 rlog?.Enqueue(
                     RemoteLog.Build(
                         "error",
@@ -97,7 +94,7 @@ namespace SyncniteBridge.LiveSync
             if (!Directory.Exists(libraryDir) || !Directory.Exists(mediaDir))
             {
                 api.Dialogs.ShowMessage(
-                    "Live Sync: expected 'library' and 'libraryfiles' under Playnite data root."
+                    "Delta Sync: expected 'library' and 'libraryfiles' under Playnite data root."
                 );
                 rlog?.Enqueue(
                     RemoteLog.Build(
@@ -116,12 +113,12 @@ namespace SyncniteBridge.LiveSync
                 RemoteLog.Build(
                     "info",
                     "sync",
-                    "Live sync started and watchers attached",
+                    "Delta sync started and watchers attached",
                     data: new
                     {
                         libraryDir,
                         mediaDir,
-                        debounceMs = AppConstants.DebounceMs_LiveSync,
+                        debounceMs = AppConstants.DebounceMs_Sync,
                     }
                 )
             );
@@ -373,14 +370,14 @@ namespace SyncniteBridge.LiveSync
 
             try
             {
-                if (string.IsNullOrWhiteSpace(syncUrl) || string.IsNullOrWhiteSpace(indexUrl))
+                if (string.IsNullOrWhiteSpace(syncUrl) || string.IsNullOrWhiteSpace(manifestUrl))
                 {
                     rlog?.Enqueue(
                         RemoteLog.Build(
                             "error",
                             "sync",
                             "Missing endpoints",
-                            data: new { syncUrl, indexUrl }
+                            data: new { syncUrl, manifestUrl }
                         )
                     );
                     return;
@@ -390,7 +387,8 @@ namespace SyncniteBridge.LiveSync
                 var local = BuildLocalManifest();
 
                 // 2) Fetch remote manifest
-                var remoteIdx = await http.GetRemoteManifestAsync(indexUrl).ConfigureAwait(false);
+                var remoteIdx = await http.GetRemoteManifestAsync(manifestUrl)
+                    .ConfigureAwait(false);
                 var remote = remoteIdx?.manifest ?? new HttpClientEx.RemoteManifest();
 
                 // 3) Decide deltas
@@ -480,10 +478,6 @@ namespace SyncniteBridge.LiveSync
 
                 // 6) Success → clear db-dirty
                 dbDirty = false;
-
-                log.Info(
-                    $"Live Sync: uploaded delta (json={needJson}, newMediaFolders={mediaFolders.Count})."
-                );
                 rlog?.Enqueue(
                     RemoteLog.Build(
                         "info",
@@ -508,7 +502,6 @@ namespace SyncniteBridge.LiveSync
             }
             catch (Exception ex)
             {
-                log.Error(ex, "Live Sync: upload failed");
                 rlog?.Enqueue(
                     RemoteLog.Build(
                         "error",
@@ -520,7 +513,7 @@ namespace SyncniteBridge.LiveSync
                 );
                 api?.Notifications?.Add(
                     AppConstants.Notif_Sync_Error, // fixed id
-                    "Live Sync upload failed",
+                    "Delta Sync upload failed",
                     NotificationType.Error
                 );
             }

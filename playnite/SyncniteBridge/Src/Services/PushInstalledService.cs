@@ -9,7 +9,7 @@ using Playnite.SDK;
 using SyncniteBridge.Constants;
 using SyncniteBridge.Helpers;
 
-namespace SyncniteBridge.LiveSync
+namespace SyncniteBridge.Services
 {
     internal sealed class PushInstalledService : IDisposable
     {
@@ -140,7 +140,6 @@ namespace SyncniteBridge.LiveSync
                         cts.Cancel();
                     }
                     catch { }
-                    log.Warn("SyncniteBridge push timed out.");
                     rlog?.Enqueue(
                         RemoteLog.Build(
                             "warn",
@@ -156,20 +155,17 @@ namespace SyncniteBridge.LiveSync
                 resp.EnsureSuccessStatusCode();
 
                 int count = api.Database.Games.Count(g => g.IsInstalled);
-                log.Info($"SyncniteBridge pushed installed list ({count}) → {endpoint}");
                 rlog?.Enqueue(RemoteLog.Build("info", "push", "Push OK", data: new { count }));
             }
             catch (OperationCanceledException) { }
             catch (HttpRequestException hex)
             {
-                log.Error(hex, "SyncniteBridge push error (HttpRequestException)");
                 rlog?.Enqueue(
                     RemoteLog.Build("warn", "push", "Push HttpRequestException", err: hex.Message)
                 );
             }
             catch (Exception ex)
             {
-                log.Error(ex, "SyncniteBridge push error");
                 rlog?.Enqueue(RemoteLog.Build("error", "push", "Push error", err: ex.Message));
             }
         }

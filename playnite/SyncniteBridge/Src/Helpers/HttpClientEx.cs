@@ -39,7 +39,7 @@ namespace SyncniteBridge.Helpers
             public RemoteInstalled installed { get; set; } = new RemoteInstalled();
         }
 
-        public sealed class RemoteIndex
+        public sealed class RemoteManifestWrapper
         {
             public bool ok { get; set; }
             public string generatedAt { get; set; }
@@ -66,14 +66,14 @@ namespace SyncniteBridge.Helpers
             }
         }
 
-        public async Task<RemoteIndex> GetRemoteManifestAsync(string indexUrl)
+        public async Task<RemoteManifestWrapper> GetRemoteManifestAsync(string manifestUrl)
         {
             try
             {
-                var resp = await http.GetAsync(indexUrl).ConfigureAwait(false);
+                var resp = await http.GetAsync(manifestUrl).ConfigureAwait(false);
                 if (resp.StatusCode == HttpStatusCode.NotFound)
                 {
-                    return new RemoteIndex
+                    return new RemoteManifestWrapper
                     {
                         ok = true,
                         generatedAt = DateTime.UtcNow.ToString("o"),
@@ -81,7 +81,7 @@ namespace SyncniteBridge.Helpers
                     };
                 }
                 if (!resp.IsSuccessStatusCode)
-                    return new RemoteIndex
+                    return new RemoteManifestWrapper
                     {
                         ok = true,
                         generatedAt = DateTime.UtcNow.ToString("o"),
@@ -89,9 +89,9 @@ namespace SyncniteBridge.Helpers
                     };
 
                 var body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
-                var parsed = Playnite.SDK.Data.Serialization.FromJson<RemoteIndex>(body);
+                var parsed = Playnite.SDK.Data.Serialization.FromJson<RemoteManifestWrapper>(body);
                 return parsed
-                    ?? new RemoteIndex
+                    ?? new RemoteManifestWrapper
                     {
                         ok = true,
                         generatedAt = DateTime.UtcNow.ToString("o"),
@@ -101,7 +101,7 @@ namespace SyncniteBridge.Helpers
             catch
             {
                 // treat as empty
-                return new RemoteIndex
+                return new RemoteManifestWrapper
                 {
                     ok = true,
                     generatedAt = DateTime.UtcNow.ToString("o"),

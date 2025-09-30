@@ -9,7 +9,7 @@ namespace SyncniteBridge.Constants
         public const string DefaultApiBase = "http://localhost:3003/api/";
 
         // Endpoints (match server)
-        public const string Path_Syncnite_Index = "sync/index"; // manifest
+        public const string Path_Syncnite_Manifest = "sync/manifest"; // manifest
         public const string Path_Syncnite_Push = "sync/push"; // installed games
         public const string Path_Syncnite_Sync = "sync/up"; // sync zip upload
         public const string Path_Syncnite_Ping = "sync/ping"; // healthcheck
@@ -22,7 +22,7 @@ namespace SyncniteBridge.Constants
         public const string ZipFilesDirName = "libraryfiles";
 
         // Timing
-        public const int DebounceMs_LiveSync = 1200;
+        public const int DebounceMs_Sync = 1200;
         public const int DebounceMs_Pusher = 1200;
         public const int HealthcheckIntervalMs = 60_000;
         public const int PushTimeoutMs = 20_000;
