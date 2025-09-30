@@ -1,11 +1,11 @@
 import express from "express";
 import multer from "multer";
 import { promises as fs } from "node:fs";
-import { join, basename, dirname } from "node:path";
+import { join, basename } from "node:path";
 import {
-    INPUT_DIR, WORK_DIR, DATA_DIR,
-    run, cleanDir, normalizeBackslashPaths, findLibraryDir,
-    copyLibraryFilesWithProgress,
+  INPUT_DIR, WORK_DIR, DATA_DIR,
+  run, cleanDir, normalizeBackslashPaths, findLibraryDir,
+  copyLibraryFilesWithProgress,
 } from "../helpers";
 
 const router = express.Router();
@@ -13,74 +13,80 @@ const upload = multer({ dest: INPUT_DIR });
 
 /**
  * @openapi
- * /api/backup/zips:
- *   get:
- *     summary: List uploaded ZIP files available for import
- *     tags: [Playnite Backup]
- *     responses:
- *       200:
- *         description: A list of ZIP files with basic metadata.
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   name:
- *                     type: string
- *                     description: File name of the uploaded ZIP.
- *                     example: "2025-09-20-23-10.zip"
- *                   size:
- *                     type: integer
- *                     format: int64
- *                     description: File size in bytes.
- *                     example: 12345678
- *                   mtime:
- *                     type: number
- *                     format: double
- *                     description: Last modified time in milliseconds since Unix epoch.
- *                     example: 1695238745123
- *       500:
- *         description: Server error while reading the upload directory.
+ * tags:
+ *   - name: Backup
+ *     description: Upload and process Playnite library backups.
  */
-router.get("/zips", async (_req, res) => {
-  console.log("[backup/zips] Request received");
 
-  try {
-    const files = await fs.readdir(INPUT_DIR, { withFileTypes: true });
-    console.log(`[backup/zips] Found ${files.length} entries in INPUT_DIR`);
-
-    const zips: Array<{ name: string; size: number; mtime: number }> = [];
-
-    for (const f of files) {
-      if (f.isFile() && /\.zip$/i.test(f.name)) {
-        try {
-          const st = await fs.stat(join(INPUT_DIR, f.name));
-          zips.push({ name: f.name, size: st.size, mtime: st.mtimeMs });
-          console.log(`[backup/zips] ZIP file: ${f.name}, size=${st.size}, mtime=${st.mtime}`);
-        } catch (err: any) {
-          console.warn(`[backup/zips] Could not stat file "${f.name}": ${String(err?.message || err)}`);
-        }
-      }
-    }
-
-    zips.sort((a, b) => b.mtime - a.mtime);
-    console.log(`[backup/zips] Returning ${zips.length} zip file(s), sorted by mtime desc`);
-
-    res.json(zips);
-  } catch (e: any) {
-    console.error("[backup/zips] ERROR:", String(e?.message || e));
-    res.status(500).json({ ok: false, error: String(e?.message || e) });
-  }
-});
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     UploadResult:
+ *       type: object
+ *       properties:
+ *         ok:
+ *           type: boolean
+ *           example: true
+ *         file:
+ *           type: string
+ *           description: Sanitized file name stored on the server.
+ *           example: "2025-09-20-23-10.zip"
+ *     ErrorResponse:
+ *       type: object
+ *       properties:
+ *         ok:
+ *           type: boolean
+ *           example: false
+ *         error:
+ *           type: string
+ *           example: "Reason for failure"
+ *     SseExample:
+ *       type: string
+ *       description: Server-Sent Events stream payload (newline-delimited).
+ *       example: |-
+ *         event: log
+ *         data: Extracting ZIP with 7z…
+ *
+ *         event: progress
+ *         data: {"phase":"unzip","percent":42}
+ *
+ *         event: done
+ *         data: ok
+ *   responses:
+ *     Error400:
+ *       description: Bad request.
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ErrorResponse'
+ *     Error404:
+ *       description: Not found.
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ErrorResponse'
+ *     Error413:
+ *       description: Payload too large.
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ErrorResponse'
+ *     Error500:
+ *       description: Server error.
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ErrorResponse'
+ */
 
 /**
  * @openapi
  * /api/backup/upload:
  *   post:
+ *     operationId: uploadBackupZip
  *     summary: Upload a ZIP file containing a Playnite library
- *     tags: [Playnite Backup]
+ *     tags: [Backup]
  *     requestBody:
  *       required: true
  *       content:
@@ -100,33 +106,15 @@ router.get("/zips", async (_req, res) => {
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 ok:
- *                   type: boolean
- *                   example: true
- *                 file:
- *                   type: string
- *                   description: Sanitized file name stored on the server.
- *                   example: "2025-09-20-23-10.zip"
+ *               $ref: '#/components/schemas/UploadResult'
  *       400:
- *         description: No file was provided in the request.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 ok:
- *                   type: boolean
- *                   example: false
- *                 error:
- *                   type: string
- *                   example: "no file"
+ *         $ref: '#/components/responses/Error400'
  *       413:
- *         description: The uploaded file is too large.
+ *         $ref: '#/components/responses/Error413'
  *       500:
- *         description: Server error while saving the uploaded file.
+ *         $ref: '#/components/responses/Error500'
  */
+
 router.post("/upload", upload.single("file"), async (req, res) => {
   console.log("[backup/upload] Incoming request…");
 
@@ -162,25 +150,27 @@ router.post("/upload", upload.single("file"), async (req, res) => {
  * @openapi
  * /api/backup/process-stream:
  *   get:
+ *     operationId: processBackupZipStream
  *     summary: Stream the processing of an uploaded Playnite ZIP (unzip → dump LiteDB to JSON → copy media)
  *     description: |
  *       Server-Sent Events (SSE) endpoint that emits progress while processing a ZIP.
+ *
  *       Events emitted:
  *
  *       - `log`: free-form text messages
- *       - `progress`: JSON payload `{ phase: "unzip" | "copy", percent: number, ... }`
+ *       - `progress`: JSON payload `{ "phase": "unzip" | "copy", "percent": number, ... }`
  *       - `done`: the string `"ok"` when finished
  *       - `error`: error message (string)
  *
  *       **Content-Type:** `text/event-stream`
- *     tags: [Playnite Backup]
+ *     tags: [Backup]
  *     parameters:
  *       - in: query
  *         name: filename
  *         required: true
  *         schema:
  *           type: string
- *         description: The ZIP file name previously returned by `/api/syncnite/backup/upload`.
+ *         description: The ZIP file name previously returned by `/api/backup/upload`.
  *         example: "2025-09-20-23-10.zip"
  *       - in: query
  *         name: password
@@ -199,40 +189,13 @@ router.post("/upload", upload.single("file"), async (req, res) => {
  *         content:
  *           text/event-stream:
  *             schema:
- *               type: string
- *             examples:
- *               log:
- *                 summary: Log message event
- *                 value: |
- *                   event: log
- *                   data: Extracting ZIP with 7z…
- *
- *
- *               progress:
- *                 summary: Progress event example
- *                 value: |
- *                   event: progress
- *                   data: {"phase":"unzip","percent":42}
- *
- *
- *               done:
- *                 summary: Completion event
- *                 value: |
- *                   event: done
- *                   data: ok
- *
- *
- *               error:
- *                 summary: Error event
- *                 value: |
- *                   event: error
- *                   data: filename missing or not .zip
+ *               $ref: '#/components/schemas/SseExample'
  *       400:
- *         description: Missing or invalid query parameters (e.g., filename not provided).
+ *         $ref: '#/components/responses/Error400'
  *       404:
- *         description: The specified ZIP file could not be found on the server.
+ *         $ref: '#/components/responses/Error404'
  *       500:
- *         description: Server error while processing the ZIP.
+ *         $ref: '#/components/responses/Error500'
  */
 router.get("/process-stream", async (req, res) => {
   const filename = String(req.query.filename ?? "");

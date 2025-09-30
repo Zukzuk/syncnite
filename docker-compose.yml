@@ -4,10 +4,10 @@ services:
       context: .
       dockerfile: api/Dockerfile
       args:
-        APP_VERSION: ${VERSION} # ← build-time! bakes into image
+        APP_VERSION: ${VERSION} # bakes into image, used by entrypoint/env.js
     environment:
       NODE_ENV: production
-      APP_VERSION: ${VERSION} # ← runtime env (API reads it)
+      APP_VERSION: ${VERSION} # ← runtime env, used by /api/version
     volumes:
       - ./uploads:/input
       - ./data:/data
@@ -22,7 +22,7 @@ services:
       context: .
       dockerfile: web/Dockerfile
       args:
-        APP_VERSION: ${VERSION} # ← build-time! used by entrypoint/env.js
+        APP_VERSION: ${VERSION} # ← bakes into image, used by entrypoint/env.js
     ports:
       - "3003:3003"
     volumes:

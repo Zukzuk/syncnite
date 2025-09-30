@@ -8,7 +8,7 @@ export const api = axios.create({
 });
 
 export async function listZips(): Promise<ZipInfo[]> {
-  const r = await fetch("/api/backup/zips");
+  const r = await fetch("/api/zips");
   return r.json();
 }
 

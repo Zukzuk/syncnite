@@ -3,6 +3,7 @@ import path from "path";
 import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
 import syncRouter from "./routes/sync";
+import generalRouter from "./routes/general";
 import backupRouter from "./routes/backup";
 import extensionRouter from "./routes/extension";
 import { errorHandler, notFoundHandler } from "./middleware/errors";
@@ -55,6 +56,7 @@ export function createApp() {
     app.use(express.json({ limit: "50mb" }));
 
     // routes
+    app.use("/api", generalRouter);
     app.use("/api/sync", syncRouter);
     app.use("/api/backup", backupRouter);
     app.use("/api/extension", extensionRouter);
