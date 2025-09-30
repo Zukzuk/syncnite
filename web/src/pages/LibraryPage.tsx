@@ -15,8 +15,7 @@ export default function LibraryPage() {
         (async () => setData(await loadLibrary()))();
     }, []);
 
-    // When the installed.json changes, re-mark installed flags without
-    // reloading the big JSON files.
+    // When the *.Installed.json changes, re-mark installed flags without reloading the big JSON files.
     React.useEffect(() => {
         if (!data || !live.set) return;
         setData(prev => {
@@ -24,7 +23,16 @@ export default function LibraryPage() {
             const rows = prev.rows.map(r => ({ ...r, installed: live.set!.has(r.id.toLowerCase()) }));
             return { ...prev, rows };
         });
-    }, [live.updatedAt]); // only when updatedAt changes
+    }, [live.updatedAt]);
+
+    // When we get a "library changed" event, reload everything.
+    React.useEffect(() => {
+        const onLibraryChanged = async () => {
+            setData(await loadLibrary());     // cache-busted loads already
+        };
+        window.addEventListener("pn:library-changed", onLibraryChanged);
+        return () => window.removeEventListener("pn:library-changed", onLibraryChanged);
+    }, []);
 
     return (
         <Stack gap="lg" style={{ height: "100%", minHeight: 0 }}>

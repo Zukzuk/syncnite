@@ -6,7 +6,7 @@ import { listZips } from "../lib/api";
 import type { BackupWatcherState, ZipInfo } from "../lib/types";
 import { LogBus } from "../services/logBus";
 import { BackupWatcher } from "../services/backupWatcher";
-import { ImportRunner } from "../services/backupIimporter";
+import { ImportRunner } from "../services/backupImporter";
 import { UploadRunner } from "../services/backupUploader";
 
 export default function BackupPage() {

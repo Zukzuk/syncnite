@@ -104,6 +104,7 @@ export const ImportRunner = {
                     message: "Your library has been processed.",
                     autoClose: 2500,
                 });
+                window.dispatchEvent(new Event("pn:library-changed"));
                 reset();
             },
             onError: (msg: string) => {
