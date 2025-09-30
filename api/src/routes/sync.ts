@@ -73,13 +73,6 @@ router.post("/log", async (req, res) => {
 
   if (!sanitized.length) return res.status(400).json({ ok: false, error: "invalid payload" });
 
-  const day = new Date().toISOString().slice(0, 10);
-  const logDir = join(DATA_DIR, "logs");
-  const logFile = join(logDir, `${day}.jsonl`);
-  await fs.mkdir(logDir, { recursive: true });
-  const lines = sanitized.map(o => JSON.stringify(o)).join("\n") + "\n";
-  await fs.appendFile(logFile, lines, "utf8");
-
   for (const ev of sanitized) {
     console.log(
       `[sync/log] ${ev.level.toUpperCase()} ${ev.kind}: ${ev.msg}`,
