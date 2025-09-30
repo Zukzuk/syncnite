@@ -147,7 +147,7 @@ router.post("/push", async (req, res) => {
       updatedAt: new Date().toISOString(),
       source: "playnite-extension",
     };
-    const outPath = join(DATA_DIR, "local.Installed.json");
+    const outPath = join(DATA_DIR, "local/local.Installed.json");
 
     // Write to disk
     console.log(`[sync/push] Writing Installed list to ${outPath}`);
@@ -445,7 +445,7 @@ router.get("/manifest", async (_req, res) => {
 
       // Installed list summary
       try {
-        const raw = await fs.readFile(join(DATA_DIR, "local.Installed.json"), "utf8");
+        const raw = await fs.readFile(join(DATA_DIR, "local/local.Installed.json"), "utf8");
         const obj = JSON.parse(raw);
         const list = Array.isArray(obj?.installed) ? obj.installed : [];
         out.installed = {
