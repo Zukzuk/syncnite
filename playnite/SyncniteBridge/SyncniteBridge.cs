@@ -133,7 +133,7 @@ namespace SyncniteBridge
             {
                 new MainMenuItem
                 {
-                    Description = "SyncniteBridge",
+                    Description = "Syncnite Bridge",
                     Action = _ =>
                     {
                         try

@@ -32,7 +32,8 @@ namespace SyncniteBridge
             );
 
             // Title (exact text as requested)
-            win.Title = "Syncnite settings";
+            var appVer = BridgeVersion.Current;
+            win.Title = "Syncnite Bridge Settings (v" + appVer + ")";
 
             // Hook Playnite theme background/foreground
             ThemeHelpers.HookThemeBackground(win);
