@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.4.0](https://github.com/Zukzuk/playnite-viewer/compare/v1.3.0...v1.4.0) (2025-09-30)
+
+
+### Features
+
+* better bridge ui ([3e9cecd](https://github.com/Zukzuk/playnite-viewer/commit/3e9cecdda932342b802210041f427db8c273047e))
+
 ### [1.3.1](https://github.com/Zukzuk/playnite-viewer/compare/v1.2.3...v1.3.1) (2025-09-30)
 
 
