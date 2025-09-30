@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.3.0](https://github.com/Zukzuk/playnite-viewer/compare/v1.2.2...v1.3.0) (2025-09-30)
+
+
+### Features
+
+* removed server log file ([c06e3b9](https://github.com/Zukzuk/playnite-viewer/commit/c06e3b927a98dfa4e174026162673675fce7f820))
+
 ### [1.2.3](https://github.com/Zukzuk/playnite-viewer/compare/v1.2.1...v1.2.3) (2025-09-30)
 
 
