@@ -169,11 +169,8 @@ export function GameRow(props: Row & ControlledProps) {
       {/* Collapse content — cover fixed; only description scrolls; cap height 500 */}
       <Collapse in={isOpen} transitionDuration={140}>
         <Paper
-          p="md"
-          pr={6}
-          pb={0}
-          m="md"
-          mr={52}
+          pl="md" pt="md" pr={6} pb={0}
+          ml={0} mt={0} mr={48} mb="lg"
           onClick={(e) => e.stopPropagation()}
         >
           <Group align="start" gap="md" wrap="nowrap" pb={0}>
@@ -184,21 +181,17 @@ export function GameRow(props: Row & ControlledProps) {
                 alt={`${title} cover`}
                 w={220}
                 pb="sm"
-                radius="sm"
+                radius="md"
                 fit="cover"
                 loading="lazy"
               />
             ) : null}
-
-            {/* Scrollable description only */}
             <Box
               role="region"
               aria-label={`${title} description`}
               pr="lg"
               pb="sm"
               style={{
-                maxHeight: 500,
-                overflowY: "auto",
                 scrollbarGutter: "stable right-edge",
                 flex: 1,
               }}
@@ -206,7 +199,10 @@ export function GameRow(props: Row & ControlledProps) {
               {everOpened ? (
                 descriptionHtml ? (
                   <div
-                    style={{ opacity: 0.9 }}
+                    style={{
+                      opacity: 0.9,
+                      fontSize: "var(--mantine-font-size-sm)",
+                    }}
                     dangerouslySetInnerHTML={{ __html: descriptionHtml }}
                   />
                 ) : (
