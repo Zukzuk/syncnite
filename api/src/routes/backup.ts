@@ -1,15 +1,11 @@
 import express from "express";
 import multer from "multer";
-import { promises as fs } from "node:fs";
-import { join, basename } from "node:path";
-import {
-  INPUT_DIR, WORK_DIR, DATA_DIR,
-  run, cleanDir, normalizeBackslashPaths, findLibraryDir,
-  copyLibraryFilesWithProgress,
-} from "../helpers";
+import { BackupService } from "../services/BackupService";
+import { INPUT_DIR } from "../helpers";
 
 const router = express.Router();
 const upload = multer({ dest: INPUT_DIR });
+const backupService = new BackupService();
 
 /**
  * @openapi
@@ -114,7 +110,6 @@ const upload = multer({ dest: INPUT_DIR });
  *       500:
  *         $ref: '#/components/responses/Error500'
  */
-
 router.post("/upload", upload.single("file"), async (req, res) => {
   console.log("[backup/upload] Incoming request…");
 
@@ -130,15 +125,7 @@ router.post("/upload", upload.single("file"), async (req, res) => {
 
     console.log(`[backup/upload] Received file: "${origName}", size=${size} bytes, temp="${tmpPath}"`);
 
-    const safe = origName.replace(/[^A-Za-z0-9._ -]/g, "_");
-    const dest = join(INPUT_DIR, safe);
-
-    console.log(`[backup/upload] Sanitized filename → "${safe}"`);
-    console.log(`[backup/upload] Moving file to ${dest}`);
-
-    await fs.rename(tmpPath, dest);
-
-    console.log("[backup/upload] File stored successfully");
+    const safe = await backupService.storeUploadedFile(tmpPath, origName);
     return res.json({ ok: true, file: safe });
   } catch (e: any) {
     console.error("[backup/upload] ERROR:", String(e?.message || e));
@@ -213,99 +200,19 @@ router.get("/process-stream", async (req, res) => {
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
 
+  // Router-level SSE sender (service will call this)
   const send = (type: string, data: any) => {
     const payload = typeof data === "string" ? data : JSON.stringify(data);
     res.write(`event: ${type}\n`);
     res.write(`data: ${payload.replace ? payload.replace(/\n/g, "\\n") : payload}\n\n`);
   };
-  const log = (m: string) => {
-    console.log(`[backup/process-stream] ${m}`);
-    send("log", m);
-  };
-  const progress = (
-    phase: "unzip" | "copy",
-    percent: number,
-    extra?: Record<string, any>
-  ) => {
-    send("progress", { phase, percent, ...(extra || {}) });
-  };
-
-  const zipPath = join(INPUT_DIR, basename(filename));
-  console.log(`[backup/process-stream] zipPath resolved to: ${zipPath}`);
 
   try {
-    await fs.access(zipPath);
-    console.log("[backup/process-stream] ZIP exists, continuing");
-
-    await cleanDir(WORK_DIR);
-    console.log("[backup/process-stream] WORK_DIR cleaned");
-
-    log("Validating ZIP with 7z…");
-    console.log("[backup/process-stream] Running 7z test");
-    await run("7z", ["t", zipPath], {
-      onStdout: (ln) => {
-        const m = /(\d{1,3})%/.exec(ln);
-        if (m) progress("unzip", Number(m[1])); // reuse unzip bar for test
-      },
-      onStderr: (ln) => /error/i.test(ln) && log(`7z: ${ln}`),
-    });
-    console.log("[backup/process-stream] ZIP validation complete");
-
-    log("Extracting ZIP with 7z…");
-    console.log("[backup/process-stream] Running 7z extract");
-    await run("7z", ["x", "-y", `-o${WORK_DIR}`, zipPath, "-bsp1", "-bso1"], {
-      onStdout: (ln) => {
-        const m = /(\d{1,3})%/.exec(ln);
-        if (m) progress("unzip", Number(m[1]));
-      },
-      onStderr: (ln) => /error/i.test(ln) && log(`7z: ${ln}`),
-    });
-    console.log("[backup/process-stream] Extraction complete");
-
-    log("Normalizing backslash paths…");
-    await normalizeBackslashPaths(WORK_DIR);
-    console.log("[backup/process-stream] Backslash normalization complete");
-
-    log("Locating library dir…");
-    const libDir = await findLibraryDir(WORK_DIR);
-    if (!libDir) {
-      console.error("[backup/process-stream] No library directory with *.db found");
-      throw new Error("No library directory with *.db");
-    }
-    console.log(`[backup/process-stream] Library dir found: ${libDir}`);
-
-    log("Clearing /data…");
-    await fs.mkdir(DATA_DIR, { recursive: true });
-    console.log("[backup/process-stream] DATA_DIR ensured");
-
-    log("Dumping LiteDB to JSON…");
-    const env = { ...process.env };
-    if (password) env.LITEDB_PASSWORD = password;
-    console.log("[backup/process-stream] Running PlayniteBackupImport");
-    const { out, err } = await run("./PlayniteBackupImport", [libDir, DATA_DIR], { env });
-    if (out?.trim()) out.trim().split(/\r?\n/).forEach((l) => log(l));
-    if (err?.trim()) err.trim().split(/\r?\n/).forEach((l) => log(l));
-    console.log("[backup/process-stream] PlayniteBackupImport finished");
-
-    console.log("[backup/process-stream] Starting media copy");
-    await copyLibraryFilesWithProgress({
-      libDir,
-      workRoot: WORK_DIR,
-      dataRoot: DATA_DIR,
-      log,
-      progress: ({ percent, copiedBytes, totalBytes, deltaBytes }) =>
-        progress("copy", percent, { copiedBytes, totalBytes, deltaBytes }),
-      concurrency: 8,
-      tickMs: 500,
-    });
-    console.log("[backup/process-stream] Media copy finished");
-
-    send("done", "ok");
-    console.log("[backup/process-stream] Process finished successfully");
+    await backupService.processZipStream({ filename, password, send });
     res.end();
   } catch (e: any) {
+    // Service already logged and sent "error", router still logs lifecycle error and closes.
     console.error("[backup/process-stream] ERROR:", String(e?.message || e));
-    send("error", String(e?.message || e));
     res.end();
   }
 });
