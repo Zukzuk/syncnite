@@ -3,12 +3,15 @@ import { Persisted } from "./types";
 export const GRID = {
   cols: "56px minmax(0, 40%) 60px 120px minmax(200px, 1fr)",
   rowHeight: 56,
-  headerHeight: 40,
+  smallBox: 40,
 };
 
 export const Z_INDEX = {
-  stickyHeader: 10,
-  overlay: 20,
+  seperatorRow: 1,
+  stickyHeader: 15,
+  iconOverlay: 20,
+  controls: 30,
+  rail: 100,
 };
 
 export const BASE = "/data";

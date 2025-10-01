@@ -6,6 +6,7 @@ import {
     IconAB2,
     IconSettings,
 } from "../../lib/icons";
+import { GRID } from "../../lib/constants";
 
 const appVersion = (window as any).__APP_VERSION__ ?? 'dev';
 
@@ -13,7 +14,7 @@ export function AppNavbar() {
     const location = useLocation();
 
     return (
-        <ScrollArea style={{ height: "calc(100vh - 56px)" }}>
+        <ScrollArea style={{ height: `calc(100vh - ${GRID.rowHeight}px)` }}>
             <NavLink
                 component={Link}
                 to="/"

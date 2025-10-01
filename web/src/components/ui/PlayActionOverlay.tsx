@@ -1,6 +1,6 @@
 import React from "react";
 import { IconPlayerPlayFilled, IconDownload } from "../../lib/icons";
-import { Z_INDEX } from "../../lib/constants";
+import { GRID, Z_INDEX } from "../../lib/constants";
 
 export function PlayActionOverlay({
     installed,
@@ -16,7 +16,7 @@ export function PlayActionOverlay({
     const label = installed ? `Play ${title}` : `Install ${title}`;
 
     return (
-        <div style={{ position: "relative", width: 40, height: 40 }}>
+        <div style={{ position: "relative", width: GRID.smallBox, height: GRID.smallBox }}>
             {children}
             <a
                 href={href}
@@ -30,7 +30,7 @@ export function PlayActionOverlay({
                     alignItems: "center",
                     justifyContent: "center",
                     textDecoration: "none",
-                    zIndex: Z_INDEX.overlay,
+                    zIndex: Z_INDEX.iconOverlay,
                     borderRadius: 6,
                     background: "transparent",
                 }}

@@ -1,11 +1,12 @@
 import { Box } from '@mantine/core';
+import { Z_INDEX } from '../../lib/constants';
 
 export function AlphabeticalSeparatorRow({ bucket, top }: { bucket: string; top: number }) {
   return (
     <Box
       style={{
         position: 'sticky',
-        zIndex: 1,
+        zIndex: Z_INDEX.seperatorRow,
         fontWeight: 700,
         padding: '6px 12px 6px 80px',
         background: 'var(--mantine-color-body)',

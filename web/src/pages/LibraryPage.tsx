@@ -4,6 +4,7 @@ import { loadLibrary } from "../lib/data";
 import type { Loaded } from "../lib/types";
 import { LibraryList } from "../components/library/LibraryList";
 import { useLocalInstalled } from "../components/library/hooks/useLocalInstalled";
+import { GRID } from "../lib/constants";
 
 export default function LibraryPage() {
     const [data, setData] = React.useState<Loaded | null>(null);
@@ -37,7 +38,7 @@ export default function LibraryPage() {
     return (
         <Stack gap="lg" style={{ height: "100%", minHeight: 0 }}>
             {data ? (
-                <Box style={{ height: "calc(100vh - 70px)", minHeight: 400 }}>
+                <Box style={{ height: `calc(100vh - ${GRID.rowHeight}px)` }}>
                     <LibraryList
                         data={data}
                         onCountsChange={(f, t) => { setFiltered(f); setTotal(t); }}

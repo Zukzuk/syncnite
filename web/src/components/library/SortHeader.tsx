@@ -24,7 +24,7 @@ export function SortHeader(props: {
         style={{
           display: "grid",
           gridTemplateColumns: GRID.cols,
-          height: GRID.headerHeight,
+          height: GRID.smallBox,
           alignItems: "center",
           gap: 12,
           fontWeight: 600,

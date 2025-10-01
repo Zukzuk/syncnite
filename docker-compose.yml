@@ -4,11 +4,12 @@ services:
       context: .
       dockerfile: api/Dockerfile
       args:
-        APP_VERSION: ${VERSION} # bakes into image, used by entrypoint/env.js
+        APP_VERSION: ${VERSION} # bakes into image
     environment:
       NODE_ENV: production
-      APP_VERSION: ${VERSION} # ← runtime env, used by /api/version
+      APP_VERSION: ${VERSION} # runtime env
     volumes:
+      # Docker creates the directories as your current user; the container process may still need correct ownership/permissions on the host.
       - ./uploads:/input
       - ./data:/data
       - ./extension:/extension:ro
@@ -22,7 +23,7 @@ services:
       context: .
       dockerfile: web/Dockerfile
       args:
-        APP_VERSION: ${VERSION} # ← bakes into image, used by entrypoint/env.js
+        APP_VERSION: ${VERSION} # bakes into image
     ports:
       - "3003:3003"
     volumes:
@@ -31,4 +32,4 @@ services:
     depends_on:
       - api
     environment:
-      APP_VERSION: ${VERSION}
+      APP_VERSION: ${VERSION} # runtime env

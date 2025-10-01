@@ -1,5 +1,6 @@
 import { Paper, Stack, Tooltip, UnstyledButton } from "@mantine/core";
 import { AlphabeticalRailCounts } from "../../lib/types";
+import { Z_INDEX } from "../../lib/constants";
 
 export const DEFAULT_LETTERS = ["#",..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
 
@@ -36,7 +37,7 @@ export function AlphabeticalRail({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                zIndex: 100,
+                zIndex: Z_INDEX.rail,
             }}
         >
             <Stack gap={2} align="center" justify="center">

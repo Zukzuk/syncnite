@@ -11,6 +11,7 @@ import { AlphabeticalSeparatorRow } from "../ui/AlphabeticalSeparatorRow";
 import { useAlphabetGroups } from "./hooks/useAlphabetGroups";
 import { useAlphabetRail } from "./hooks/useAlphabetRail";
 import { useLibraryState } from "./hooks/useLibraryState";
+import { Z_INDEX } from "../../lib/constants";
 
 const Scroller = React.forwardRef<HTMLDivElement, React.HTMLProps<HTMLDivElement>>(
   (props, ref) => (
@@ -43,7 +44,10 @@ export function LibraryList({
   const { ref: headerRef, height: headerH } = useElementSize();
 
   const virtuosoRef = React.useRef<VirtuosoHandle>(null);
+  const overscan = { top: 600, bottom: 800 } as const;
+  const stickyOffset = controlsH;
 
+  // Inform parent of counts changes
   React.useEffect(() => {
     onCountsChange?.(derived.filteredCount, derived.totalCount);
   }, [derived.filteredCount, derived.totalCount, onCountsChange]);
@@ -61,18 +65,33 @@ export function LibraryList({
     virtuosoRef
   );
 
-  const overscan = { top: 600, bottom: 800 } as const;
-  const stickyOffset = controlsH;
-
   // remount keys
   const dataSig = `${derived.filteredCount}|${ui.q}|${ui.sources.join(",")}|${ui.tags.join(",")}|${ui.showHidden}|${ui.installedOnly}`;
   const groupedKey = `grp:${dataSig}|${ui.sortKey}|${ui.sortDir}`;
   const flatKey = `flt:${dataSig}|${ui.sortKey}|${ui.sortDir}`;
 
+  // Mantine Collapser Open state management
+  const [openIds, setOpenIds] = React.useState<Set<string>>(new Set());
+  const [everOpenedIds, setEverOpenedIds] = React.useState<Set<string>>(new Set());
+  const toggleOpen = React.useCallback((id: string) => {
+    setOpenIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+    setEverOpenedIds((prev) => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+  }, []);
+
   return (
     <Flex direction="column" h="100%" style={{ minHeight: 0 }}>
 
-      <Box ref={controlsRef} p="md" style={{ position: "sticky", top: 0, zIndex: 20, background: "var(--mantine-color-body)" }}>
+      <Box ref={controlsRef} p="md" style={{ position: "sticky", top: 0, zIndex: Z_INDEX.controls, background: "var(--mantine-color-body)" }}>
         <ControlsHeader
           q={ui.q}
           setQ={ui.setQ}
@@ -91,7 +110,7 @@ export function LibraryList({
         />
       </Box>
 
-      <Box style={{ position: "sticky", top: stickyOffset, zIndex: 15 }}>
+      <Box style={{ position: "sticky", top: stickyOffset, zIndex: Z_INDEX.stickyHeader }}>
         <SortHeader
           headerRef={headerRef as unknown as (el: HTMLElement | null) => void}
           sortKey={ui.sortKey}
@@ -131,6 +150,9 @@ export function LibraryList({
                       url={r.url}
                       raw={r.raw}
                       sortingName={r.sortingName}
+                      isOpen={openIds.has(r.id)}
+                      everOpened={everOpenedIds.has(r.id)}
+                      onToggle={() => toggleOpen(r.id)}
                     />
                   );
                 }
@@ -164,6 +186,9 @@ export function LibraryList({
                   url={r.url}
                   raw={r.raw}
                   sortingName={r.sortingName}
+                  isOpen={openIds.has(r.id)}
+                  everOpened={everOpenedIds.has(r.id)}
+                  onToggle={() => toggleOpen(r.id)}
                 />
               );
             }}

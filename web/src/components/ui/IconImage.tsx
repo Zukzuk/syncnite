@@ -1,5 +1,6 @@
 import React from "react";
 import { isIcoPath, icoToPngDataUrl } from "../../lib/utils";
+import { GRID } from "../../lib/constants";
 
 export function IconImage({ src, alt }: { src: string; alt?: string }) {
   const [url, setUrl] = React.useState(src);
@@ -23,9 +24,9 @@ export function IconImage({ src, alt }: { src: string; alt?: string }) {
       className="icon"
       src={url}
       alt={alt ?? ""}
-      width={40}
-      height={40}
-      style={{ width: 40, height: 40, objectFit: "contain", borderRadius: 6, background: "var(--mantine-color-default)" }}
+      width={GRID.smallBox}
+      height={GRID.smallBox}
+      style={{ width: GRID.smallBox, height: GRID.smallBox, objectFit: "contain", borderRadius: 6, background: "var(--mantine-color-default)" }}
       onError={async (e) => {
         // fallback if the src fails to load
         if (isIcoPath(src)) {
