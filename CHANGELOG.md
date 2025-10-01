@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.5.0](https://github.com/zukzuk/playnite-viewer/compare/v1.4.0...v1.5.0) (2025-10-01)
+
+
+### Features
+
+* added collapser ([4da1178](https://github.com/zukzuk/playnite-viewer/commit/4da1178f63ddf9dc4e074deb040306a93adb7fe4))
+
 ### [1.4.1](https://github.com/Zukzuk/playnite-viewer/compare/v1.3.1...v1.4.1) (2025-09-30)
 
 
