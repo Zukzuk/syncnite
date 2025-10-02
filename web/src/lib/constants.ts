@@ -4,7 +4,7 @@ export const GRID = {
   cols: "56px minmax(0, 40%) 60px 120px minmax(200px, 1fr)",
   rowHeight: 56,
   smallBox: 40,
-};
+} as const;
 
 export const Z_INDEX = {
   seperatorRow: 1,
@@ -12,7 +12,18 @@ export const Z_INDEX = {
   iconOverlay: 20,
   controls: 30,
   rail: 100,
-};
+} as const;
+
+export const ANIM = {
+  wallpaperDelayMs: 140,          // when to start fading bg after collapse starts
+  wallpaperFadeMs: 220,           // bg opacity fade
+  wallpaperScaleMs: 360,          // bg subtle scale
+  collapseMs: 140,                // Mantine Collapse duration
+  collapseContentDelayMs: 140,    // show paper after bg begins
+  paperFadeMs: 200,
+  paperSlideMs: 260,
+  paperSlidePx: 6,
+} as const;
 
 export const BASE = "/data";
 

@@ -7,15 +7,14 @@ import {
   Collapse,
   Image,
   Paper,
-  ActionIcon,
   Anchor,
   Flex,
-  useMantineTheme,
+  useMantineTheme, useComputedColorScheme,
+  AspectRatio
 } from "@mantine/core";
-import { IconChevronDown } from "@tabler/icons-react";
 import { IconImage } from "../ui/IconImage";
 import { PlayActionOverlay } from "../ui/PlayActionOverlay";
-import { GRID, sourceTrim, BASE } from "../../lib/constants";
+import { GRID, sourceTrim, BASE, ANIM } from "../../lib/constants";
 import {
   effectiveLink,
   playniteAction,
@@ -48,14 +47,23 @@ export function GameRow(props: Row & ControlledProps) {
   const dim = hidden;
 
   const theme = useMantineTheme();
-  const mrPx =
-    typeof theme.spacing.md === "number"
-      ? theme.spacing.md * 2
-      : `calc(${theme.spacing.md} * 2)`;
+  const scheme = useComputedColorScheme("light", { getInitialValueInEffect: true });
 
-  // Cover + description from raw
+  // Background image state
+  const [bgOn, setBgOn] = React.useState(false);
+  React.useEffect(() => {
+    if (isOpen) {
+      const t = window.setTimeout(() => setBgOn(true), ANIM.wallpaperDelayMs);
+      return () => window.clearTimeout(t);
+    }
+    setBgOn(false);
+  }, [isOpen]);
+
+  // Contents
   const coverRel = (raw as any)?.CoverImage ?? (raw as any)?.BackgroundImage ?? null;
   const coverUrl = buildAssetUrl(coverRel);
+  const bgRel = (raw as any)?.BackgroundImage ?? null;
+  const bgUrl = buildAssetUrl(bgRel);
   const descriptionHtml: string | null =
     typeof (raw as any)?.Description === "string" ? (raw as any).Description : null;
 
@@ -70,151 +78,201 @@ export function GameRow(props: Row & ControlledProps) {
         cursor: "pointer",
         userSelect: "none",
         paddingLeft: 12,
+        position: "relative",
+        overflow: "hidden",
+        isolation: "isolate",
       }}
       onClick={onToggle}
     >
-      {/* Header row (fixed height for column alignment) */}
-      <Box
-        style={{
-          display: "grid",
-          gridTemplateColumns: GRID.cols,
-          alignItems: "center",
-          gap: 12,
-          height: GRID.rowHeight,
-        }}
-      >
-        {/* First column: chevron + icon */}
-        <Flex align="center" gap={8} style={{ width: GRID.rowHeight }} className={dim ? " is-dim" : ""}>
-          <Box className="icon-wrap" style={{ position: "relative", width: GRID.smallBox, height: GRID.smallBox }}>
-            <PlayActionOverlay installed={installed} href={playniteAction(id)} title={title}>
-              <Box className="icon-base">
-                <IconImage src={iconUrl} />
-              </Box>
-            </PlayActionOverlay>
-          </Box>
-        </Flex>
+      {isOpen && everOpened && bgUrl && (
+        <>
+          <Box
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundImage: `url(${bgUrl})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              pointerEvents: "none",
+              zIndex: 0,
+              transform: bgOn ? "scale(1.03)" : "scale(1.01)",
+              opacity: bgOn ? 0.5 : 0,
+              willChange: "opacity, transform",
+              transitionProperty: "opacity, transform",
+              transitionDuration: "220ms, 220ms",
+              transitionTimingFunction: "ease, ease",
+            }}
+          />
+          <Box
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: 0,
+              opacity: bgOn ? 1 : 0,
+              pointerEvents: "none",
+              zIndex: 0,
+              transition: `opacity 220ms ease`,
+            }}
+          />
+        </>
+      )}
 
-        {/* Title + external link */}
-        <Flex align="center" gap={8} className={dim ? " is-dim" : ""} style={{ minWidth: 0 }}>
-          <Text
-            fw={500}
-            title={title}
-            className="game-title"
-            style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
-          >
-            {title}
-          </Text>
-
-          {href && (
-            <Anchor
-              href={href}
-              target="_blank"
-              rel="noopener"
-              aria-label={`Open link for ${title} in a new tab`}
-              title={`Open ${title}`}
-              onClick={(e) => e.stopPropagation()}
-              style={{ marginLeft: "auto", lineHeight: 0 }}
-            >
-              <IconExternalLink size={16} stroke={2} />
-            </Anchor>
-          )}
-        </Flex>
-
-        {/* Year */}
-        <Box className={dim ? " is-dim" : ""} ta="center">
-          {year ? <Text>{year}</Text> : ""}
-        </Box>
-
-        {/* Source */}
-        <Box className={dim ? " is-dim" : ""} ta="center">
-          {source &&
-            (() => {
-              const proto = sourceProtocolLink(source, raw.GameId ? raw.GameId.toString() : "");
-              return proto ? (
-                <Badge
-                  variant="outline"
-                  component="a"
-                  href={proto}
-                  rel="noopener"
-                  title={`Open ${source}${id ? ` — ${title}` : ""}`}
-                  onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                  style={{
-                    boxShadow: "0 2px 0 0 rgb(0 0 0 / 30%)",
-                    textDecoration: "none",
-                    cursor: "pointer",
-                  }}
-                >
-                  {sourceTrim[source]}
-                </Badge>
-              ) : (
-                <Badge variant="outline" size="sm" style={{ boxShadow: "0 2px 0 0 rgb(0 0 0 / 30%)" }}>
-                  {sourceTrim[source]}
-                </Badge>
-              );
-            })()}
-        </Box>
-
-        {/* Tags */}
-        <Box className={dim ? " is-dim" : ""}>
-          <Group gap={6} align="center" wrap="wrap" style={{ maxHeight: "100%" }}>
-            {(tags ?? []).map((t) => (
-              <Badge key={t} variant="dark" size="sm" style={{ boxShadow: "0 2px 0 0 rgb(0 0 0 / 30%)" }}>
-                {t}
-              </Badge>
-            ))}
-          </Group>
-        </Box>
-      </Box>
-
-      {/* Collapse content — cover fixed; only description scrolls; cap height 500 */}
-      <Collapse in={isOpen} transitionDuration={140}>
-        <Paper
-          pl="md" pt="md" pr={6} pb={0}
-          ml={0} mt={0} mr={48} mb="lg"
-          onClick={(e) => e.stopPropagation()}
+      {/* foreground */}
+      <Box style={{ position: "relative", zIndex: 1 }}>
+        {/* Header row */}
+        <Box
+          style={{
+            display: "grid",
+            gridTemplateColumns: GRID.cols,
+            alignItems: "center",
+            gap: 12,
+            height: GRID.rowHeight,
+          }}
         >
-          <Group align="start" gap="md" wrap="nowrap" pb={0}>
-            {/* Cover image (fixed) */}
-            {everOpened && coverUrl ? (
-              <Image
-                src={coverUrl}
-                alt={`${title} cover`}
-                w={220}
-                pb="sm"
-                radius="md"
-                fit="cover"
-                loading="lazy"
-              />
-            ) : null}
-            <Box
-              role="region"
-              aria-label={`${title} description`}
-              pr="lg"
-              pb="sm"
-              style={{
-                scrollbarGutter: "stable right-edge",
-                flex: 1,
-              }}
-            >
-              {everOpened ? (
-                descriptionHtml ? (
-                  <div
-                    style={{
-                      opacity: 0.9,
-                      fontSize: "var(--mantine-font-size-sm)",
-                    }}
-                    dangerouslySetInnerHTML={{ __html: descriptionHtml }}
-                  />
-                ) : (
-                  <Text className="is-dim" size="sm">
-                    (No description)
-                  </Text>
-                )
-              ) : null}
+          {/* First column: icon */}
+          <Flex align="center" gap={8} style={{ width: GRID.rowHeight }} className={dim ? " is-dim" : ""}>
+            <Box className="icon-wrap" style={{ position: "relative", width: GRID.smallBox, height: GRID.smallBox }}>
+              <PlayActionOverlay installed={installed} href={playniteAction(id)} title={title}>
+                <Box className="icon-base">
+                  <IconImage src={iconUrl} />
+                </Box>
+              </PlayActionOverlay>
             </Box>
-          </Group>
-        </Paper>
-      </Collapse>
+          </Flex>
+
+          {/* Title + external link */}
+          <Flex align="center" gap={8} className={dim ? " is-dim" : ""} style={{ minWidth: 0 }}>
+            <Text
+              fw={500}
+              title={title}
+              className="game-title"
+              style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+            >
+              {title}
+            </Text>
+
+            {href && (
+              <Anchor
+                href={href}
+                target="_blank"
+                rel="noopener"
+                aria-label={`Open link for ${title} in a new tab`}
+                title={`Open ${title}`}
+                onClick={(e) => e.stopPropagation()}
+                style={{ marginLeft: "auto", lineHeight: 0 }}
+              >
+                <IconExternalLink size={16} stroke={2} />
+              </Anchor>
+            )}
+          </Flex>
+
+          {/* Year */}
+          <Box className={dim ? " is-dim" : ""} ta="center">
+            {year ? <Text>{year}</Text> : ""}
+          </Box>
+
+          {/* Source */}
+          <Box className={dim ? " is-dim" : ""} ta="center">
+            {source &&
+              (() => {
+                const proto = sourceProtocolLink(source, raw.GameId ? raw.GameId.toString() : "");
+                return proto ? (
+                  <Badge
+                    variant="outline"
+                    component="a"
+                    href={proto}
+                    rel="noopener"
+                    title={`Open ${source}${id ? ` — ${title}` : ""}`}
+                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                    style={{
+                      boxShadow: "0 2px 0 0 rgb(0 0 0 / 30%)",
+                      textDecoration: "none",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {sourceTrim[source]}
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" size="sm" style={{ boxShadow: "0 2px 0 0 rgb(0 0 0 / 30%)" }}>
+                    {sourceTrim[source]}
+                  </Badge>
+                );
+              })()}
+          </Box>
+
+          {/* Tags */}
+          <Box className={dim ? " is-dim" : ""}>
+            <Group gap={6} align="center" wrap="wrap" style={{ maxHeight: "100%" }}>
+              {(tags ?? []).map((t) => (
+                <Badge key={t} variant="dark" size="sm" style={{ boxShadow: "0 2px 0 0 rgb(0 0 0 / 30%)" }}>
+                  {t}
+                </Badge>
+              ))}
+            </Group>
+          </Box>
+        </Box>
+
+        {/* Collapse (remove the old bg code from inside) */}
+        <Collapse in={isOpen} transitionDuration={ANIM.collapseMs}>
+          <Paper
+            pl="md" pt="md" pr={6} pb={0}
+            ml={0} mt={0} mr={48} mb="lg"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: "transparent",
+              opacity: bgOn ? 1 : 0,
+              transform: bgOn ? "translateY(0)" : "translateY(6px)",
+              willChange: "opacity, transform",
+              transitionProperty: "opacity, transform",
+              transitionDuration: "200ms, 260ms",
+              transitionTimingFunction: "ease, ease",
+              transitionDelay: bgOn ? `${ANIM.collapseContentDelayMs}ms, ${ANIM.collapseContentDelayMs}ms` : "0ms, 0ms",
+            }}
+          >
+            <Group align="start" gap="md" wrap="nowrap" pb={0}>
+              {everOpened && coverUrl ? (
+                <Image
+                  src={coverUrl}
+                  alt={`${title} cover`}
+                  w={220}
+                  mb="md"
+                  radius="md"
+                  fit="cover"
+                  loading="lazy"
+                />
+              ) : null}
+
+              <AspectRatio ratio={16 / 9} w="100%">
+                <Box />
+              </AspectRatio>
+
+              {/* <Box
+                role="region"
+                aria-label={`${title} description`}
+                p="sm"
+                pr="lg"
+                style={{
+                  position: "relative",
+                  overflow: "hidden",
+                  flex: 1,
+                }}
+              >
+                {everOpened ? (
+                  descriptionHtml ? (
+                    <div
+                      style={{ opacity: 0.9, fontSize: "var(--mantine-font-size-sm)" }}
+                      dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+                    />
+                  ) : (
+                    <Text className="is-dim" size="sm">(No description)</Text>
+                  )
+                ) : null}
+              </Box> */}
+            </Group>
+          </Paper>
+        </Collapse>
+      </Box>
     </Box>
   );
 }

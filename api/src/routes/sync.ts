@@ -20,17 +20,6 @@ let isSyncing = false;
  * @openapi
  * components:
  *   schemas:
- *     PingResponse:
- *       type: object
- *       properties:
- *         message:
- *           type: string
- *           example: ok
- */
-/**
- * @openapi
- * components:
- *   schemas:
  *     LogEvent:
  *       type: object
  *       description: A log/event record emitted by the Syncnite Bridge extension.
@@ -201,27 +190,6 @@ let isSyncing = false;
  *               additionalProperties: true
  *               description: Persisted manifest.json read from disk (arbitrary structure).
  */
-
-/**
- * @openapi
- * /api/sync/ping:
- *   get:
- *     operationId: pingSync
- *     summary: Ping the Syncnite API
- *     tags: [Sync]
- *     responses:
- *       200:
- *         description: Pong response.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/PingResponse'
- *       500:
- *         $ref: '#/components/responses/Error500'
- */
-router.get("/ping", (_req, res) => {
-  res.json({ message: "ok" });
-});
 
 /**
  * @openapi
