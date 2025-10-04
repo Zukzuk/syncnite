@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.8.0](https://github.com/Zukzuk/playnite-viewer/compare/v1.7.0...v1.8.0) (2025-10-04)
+
+
+### Features
+
+* fixed scroill pos when updateing installed list ([57fd738](https://github.com/Zukzuk/playnite-viewer/commit/57fd738c773e4cbf3632d9aff1ae004de512b2ee))
+
 ### [1.7.1](https://github.com/Zukzuk/playnite-viewer/compare/v1.6.0...v1.7.1) (2025-10-04)
 
 
