@@ -18,7 +18,6 @@ namespace SyncniteBridge.Services
         private readonly RemoteLogClient rlog;
 
         private string syncUrl;
-        private string manifestUrl;
         private readonly string dataRoot;
 
         private readonly HttpClientEx http;
@@ -63,17 +62,11 @@ namespace SyncniteBridge.Services
 
         public void SetHealthProvider(Func<bool> provider) => isHealthy = provider ?? (() => true);
 
-        public void UpdateEndpoints(string newSync, string newManifestUrl)
+        public void UpdateEndpoints(string newSync)
         {
             syncUrl = newSync?.Trim();
-            manifestUrl = newManifestUrl?.Trim();
             rlog?.Enqueue(
-                RemoteLog.Build(
-                    "debug",
-                    "sync",
-                    "Endpoints updated",
-                    data: new { syncUrl, manifestUrl }
-                )
+                RemoteLog.Build("debug", "sync", "Endpoints updated", data: new { syncUrl })
             );
         }
 
@@ -111,8 +104,10 @@ namespace SyncniteBridge.Services
                 return;
             }
 
+            // Attach watchers
             libWatcher = MakeWatcher(libraryDir, "*.db", includeSubdirs: false);
             mediaWatcher = MakeWatcher(mediaDir, "*", includeSubdirs: true);
+
             rlog?.Enqueue(
                 RemoteLog.Build(
                     "info",
@@ -127,8 +122,41 @@ namespace SyncniteBridge.Services
                 )
             );
 
+            // --- Seed initial run so first health-trigger performs a full push ---
+            // 1) Force JSON upload on first run
+            dbDirty = true;
+
+            // 2) Pre-load all existing top-level media folders so first run uploads media too
+            try
+            {
+                var seed = Directory
+                    .EnumerateDirectories(mediaDir, "*", SearchOption.TopDirectoryOnly)
+                    .Select(Path.GetFileName)
+                    .Where(n => !string.IsNullOrEmpty(n))
+                    .ToArray();
+                lock (dirtyMediaLock)
+                {
+                    foreach (var folder in seed)
+                        dirtyMediaFolders.Add(folder);
+                }
+                rlog?.Enqueue(
+                    RemoteLog.Build(
+                        "debug",
+                        "sync",
+                        "Initial seed prepared",
+                        data: new { json = true, mediaFolders = seed.Length }
+                    )
+                );
+            }
+            catch (Exception ex)
+            {
+                rlog?.Enqueue(
+                    RemoteLog.Build("warn", "sync", "Initial seed failed (media)", err: ex.Message)
+                );
+            }
+
             CleanupTempOld();
-            // Do not auto-run here; SyncniteBridge triggers on health flip → healthy.
+            // Do not trigger here; SyncniteBridge triggers on health flip → healthy.
         }
 
         private FileSystemWatcher MakeWatcher(string path, string filter, bool includeSubdirs)
@@ -402,29 +430,19 @@ namespace SyncniteBridge.Services
 
             try
             {
-                if (string.IsNullOrWhiteSpace(syncUrl) || string.IsNullOrWhiteSpace(manifestUrl))
+                if (string.IsNullOrWhiteSpace(syncUrl))
                 {
                     rlog?.Enqueue(
-                        RemoteLog.Build(
-                            "error",
-                            "sync",
-                            "Missing endpoints",
-                            data: new { syncUrl, manifestUrl }
-                        )
+                        RemoteLog.Build("error", "sync", "Missing endpoints", data: new { syncUrl })
                     );
                     return;
                 }
 
-                // 1) Build local manifest
-                var local = BuildLocalManifest();
+                // 1) Build local manifest (needed for manifest.json we ship)
+                var local = BuildLocalManifest(); // <-- this was missing
 
-                // 2) Fetch remote manifest
-                var remoteIdx = await http.GetRemoteManifestAsync(manifestUrl)
-                    .ConfigureAwait(false);
-                var remote = remoteIdx?.manifest ?? new HttpClientEx.RemoteManifest();
-
-                // 3) Decide deltas
-                var needJson = dbDirty || JsonStateDiffers(local, remote);
+                // 2) Decide deltas (no remote manifest; JSON only when DB changed)
+                var needJson = dbDirty;
 
                 // Start with any folders we already know changed (from watcher events)
                 List<string> mediaFolders;
@@ -432,14 +450,6 @@ namespace SyncniteBridge.Services
                 {
                     mediaFolders = dirtyMediaFolders.ToList();
                 }
-
-                // Also include folders that exist locally but don't exist remotely yet
-                var newOnServer = MediaFoldersToUpload(local, remote);
-                if (newOnServer.Count > 0)
-                {
-                    mediaFolders.AddRange(newOnServer);
-                }
-
                 // Remove duplicates, keep stable order
                 mediaFolders = mediaFolders.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
 
@@ -449,7 +459,7 @@ namespace SyncniteBridge.Services
                     return;
                 }
 
-                // 4) Build single ZIP with only needed stuff; keep only the latest temp zip
+                // 3) Build single ZIP with only needed stuff; keep only the latest temp zip
                 Directory.CreateDirectory(tempDir);
                 foreach (var f in Directory.EnumerateFiles(tempDir, "*.zip"))
                 {
@@ -467,7 +477,7 @@ namespace SyncniteBridge.Services
                 var swZip = Stopwatch.StartNew();
                 using (var zb = new ZipBuilder(zipPath))
                 {
-                    // 4a) Export manifest.json (what we think is current local state)
+                    // 3a) Export manifest.json (library manifest; NO installed info)
                     var manifestObj = new
                     {
                         json = local.Json.ToDictionary(
@@ -478,24 +488,19 @@ namespace SyncniteBridge.Services
                         mediaFolders = local
                             .MediaFolders.OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
                             .ToArray(),
-                        installed = new
-                        {
-                            count = local.Installed.count,
-                            hash = local.Installed.hash,
-                        },
                     };
                     zb.AddText(
                         "export/manifest.json",
                         Playnite.SDK.Data.Serialization.ToJson(manifestObj)
                     );
 
-                    // 4b) Export JSONs only when needed
+                    // 3b) Export JSONs only when needed
                     if (needJson)
                     {
                         ExportSdkSnapshotToZip(zb);
                     }
 
-                    // 4c) Media: include entire top-level folders that server doesn't have yet
+                    // 3c) Media: include top-level folders marked dirty
                     foreach (var folder in mediaFolders)
                     {
                         AddMediaFolderRecursively(zb, folder);
@@ -518,14 +523,14 @@ namespace SyncniteBridge.Services
                     )
                 );
 
-                // 5) Upload
+                // 4) Upload
                 var swUpload = Stopwatch.StartNew();
                 var ok = await http.SyncZipAsync(syncUrl, zipPath).ConfigureAwait(false);
                 swUpload.Stop();
                 if (!ok)
                     throw new Exception("sync endpoint returned non-OK");
 
-                // 6) Success → clear db-dirty and consumed dirty media markers
+                // 5) Success → clear dirty flags
                 dbDirty = false;
                 lock (dirtyMediaLock)
                 {
@@ -540,7 +545,7 @@ namespace SyncniteBridge.Services
                         data: new
                         {
                             json = needJson,
-                            mediaFolders = mediaFolders,
+                            mediaFolders,
                             uploadMs = swUpload.ElapsedMilliseconds,
                             totalMs = swTotal.ElapsedMilliseconds,
                         }
@@ -551,7 +556,7 @@ namespace SyncniteBridge.Services
                 {
                     dirty = false;
                     rlog?.Enqueue(RemoteLog.Build("debug", "sync", "Processing dirty re-run"));
-                    Trigger(); // will debounce and re-check manifest
+                    Trigger(); // will debounce and rerun
                 }
             }
             catch (Exception ex)
@@ -566,7 +571,7 @@ namespace SyncniteBridge.Services
                     )
                 );
                 api?.Notifications?.Add(
-                    AppConstants.Notif_Sync_Error, // fixed id
+                    AppConstants.Notif_Sync_Error,
                     "Delta Sync upload failed",
                     NotificationType.Error
                 );

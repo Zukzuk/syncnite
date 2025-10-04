@@ -15,11 +15,12 @@ type Props = {
   everOpenedIds: Set<string>;
   onToggle: (id: string, index: number) => void;
   remountKey: string;
+  rowVersion?: string;
 };
 
 export function FlatList({
   virtuosoRef, scrollerRef, rows, overscan, rangeChanged,
-  openIds, everOpenedIds, onToggle, remountKey
+  openIds, everOpenedIds, onToggle, remountKey, rowVersion,
 }: Props) {
   return (
     <Virtuoso
@@ -31,7 +32,7 @@ export function FlatList({
       data={rows}
       increaseViewportBy={overscan}
       rangeChanged={rangeChanged}
-      computeItemKey={(index, r: any) => r.id}
+      computeItemKey={(_index, r: any) => `${r.id}|${rowVersion ?? ""}`} 
       itemContent={(index) => {
         const r = rows[index];
         return (

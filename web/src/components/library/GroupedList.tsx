@@ -18,11 +18,12 @@ type Props = {
   everOpenedIds: Set<string>;
   onToggle: (id: string, globalIndex: number) => void;
   remountKey: string;
+  rowVersion?: string; // ← NEW
 };
 
 export function GroupedList({
   virtuosoRef, scrollerRef, groups, controlsH, headerH, overscan, rangeChanged,
-  openIds, everOpenedIds, onToggle, remountKey
+  openIds, everOpenedIds, onToggle, remountKey, rowVersion,
 }: Props) {
   return (
     <GroupedVirtuoso
@@ -46,6 +47,7 @@ export function GroupedList({
             const globalIndex = offset + i;
             return (
               <GameRow
+                key={`${r.id}|${rowVersion ?? ""}`}
                 id={r.id}
                 hidden={r.hidden}
                 installed={r.installed}

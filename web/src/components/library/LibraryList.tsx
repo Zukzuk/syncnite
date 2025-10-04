@@ -19,6 +19,7 @@ type Props = {
   onCountsChange?: (filtered: number, total: number) => void;
   filteredCount: number;
   totalCount: number;
+  installedVersion?: string | null;
 };
 
 export function LibraryList({
@@ -26,6 +27,7 @@ export function LibraryList({
   onCountsChange,
   filteredCount,
   totalCount,
+  installedVersion,
 }: Props) {
   const overscan = { top: 600, bottom: 800 } as const;
   const { ui, derived } = useLibraryState(data);
@@ -33,19 +35,25 @@ export function LibraryList({
   const { ref: headerRef, height: headerH } = useElementSize();
   const stickyOffset = controlsH;
   const { openIds, everOpenedIds, toggleOpen } = useCollapseOpenToggle();
-  const { virtuosoRef, setScrollerEl, scrollRowIntoView } = useJumpToScroll(headerH);
+  const { virtuosoRef, setScrollerEl: _setScrollerEl, scrollRowIntoView } = useJumpToScroll(headerH);
 
   React.useEffect(() => {
     onCountsChange?.(derived.filteredCount, derived.totalCount);
   }, [derived.filteredCount, derived.totalCount, onCountsChange]);
 
-  const onToggleGrouped = React.useCallback((id: string, globalIndex: number) => {
-    toggleOpen(id, () => requestAnimationFrame(() => scrollRowIntoView(globalIndex, true)));
-  }, [toggleOpen, scrollRowIntoView]);
+  const onToggleGrouped = React.useCallback(
+    (id: string, globalIndex: number) => {
+      toggleOpen(id, () => requestAnimationFrame(() => scrollRowIntoView(globalIndex, true)));
+    },
+    [toggleOpen, scrollRowIntoView]
+  );
 
-  const onToggleFlat = React.useCallback((id: string, index: number) => {
-    toggleOpen(id, () => requestAnimationFrame(() => scrollRowIntoView(index, false)));
-  }, [toggleOpen, scrollRowIntoView]);
+  const onToggleFlat = React.useCallback(
+    (id: string, index: number) => {
+      toggleOpen(id, () => requestAnimationFrame(() => scrollRowIntoView(index, false)));
+    },
+    [toggleOpen, scrollRowIntoView]
+  );
 
   const { groups, isGrouped, flatItems } = useAlphabetGroups(
     ui.sortKey,
@@ -69,6 +77,10 @@ export function LibraryList({
     sortDir: ui.sortDir,
   });
 
+  // IMPORTANT: do NOT append installed to these keys (would remount & reset scroll)
+  const rowVersion = installedVersion ?? "";
+  const setScrollerEl = _setScrollerEl;
+
   return (
     <Flex direction="column" h="100%" style={{ minHeight: 0 }}>
       <StickyControls
@@ -76,11 +88,18 @@ export function LibraryList({
         filteredCount={filteredCount}
         totalCount={totalCount}
         ui={{
-          q: ui.q, setQ: ui.setQ,
-          sources: ui.sources, setSources: ui.setSources, allSources: data.allSources,
-          tags: ui.tags, setTags: ui.setTags, allTags: data.allTags,
-          showHidden: ui.showHidden, setShowHidden: ui.setShowHidden,
-          installedOnly: ui.installedOnly, setInstalledOnly: ui.setInstalledOnly,
+          q: ui.q,
+          setQ: ui.setQ,
+          sources: ui.sources,
+          setSources: ui.setSources,
+          allSources: data.allSources,
+          tags: ui.tags,
+          setTags: ui.setTags,
+          allTags: data.allTags,
+          showHidden: ui.showHidden,
+          setShowHidden: ui.setShowHidden,
+          installedOnly: ui.installedOnly,
+          setInstalledOnly: ui.setInstalledOnly,
         }}
       />
 
@@ -106,6 +125,7 @@ export function LibraryList({
             everOpenedIds={everOpenedIds}
             onToggle={onToggleGrouped}
             remountKey={groupedKey}
+            rowVersion={rowVersion} 
           />
         ) : (
           <FlatList
@@ -118,6 +138,7 @@ export function LibraryList({
             everOpenedIds={everOpenedIds}
             onToggle={onToggleFlat}
             remountKey={flatKey}
+            rowVersion={rowVersion}
           />
         )}
 

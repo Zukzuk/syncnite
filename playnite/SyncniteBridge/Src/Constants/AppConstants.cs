@@ -9,7 +9,6 @@ namespace SyncniteBridge.Constants
         public const string DefaultApiBase = "http://localhost:3003/api/";
 
         // Endpoints (match server)
-        public const string Path_Syncnite_Manifest = "sync/manifest"; // manifest
         public const string Path_Syncnite_Push = "sync/push"; // installed games
         public const string Path_Syncnite_Sync = "sync/up"; // sync zip upload
         public const string Path_Syncnite_Log = "sync/log"; // log to server

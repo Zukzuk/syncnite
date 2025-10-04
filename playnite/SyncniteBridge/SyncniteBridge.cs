@@ -59,10 +59,10 @@ namespace SyncniteBridge
             );
 
             var syncUrl = Combine(config.ApiBase, AppConstants.Path_Syncnite_Sync);
-            var manifestUrl = Combine(config.ApiBase, AppConstants.Path_Syncnite_Manifest);
 
             deltaSync = new DeltaSyncService(api, syncUrl, GetDefaultPlayniteDataRoot(), rlog);
-            deltaSync.UpdateEndpoints(syncUrl, manifestUrl);
+            // manifest endpoint no longer used
+            deltaSync.UpdateEndpoints(syncUrl);
 
             // Gate both services on health
             pusher.SetHealthProvider(() => health.IsHealthy);
@@ -168,10 +168,6 @@ namespace SyncniteBridge
                                         config.ApiBase,
                                         AppConstants.Path_Syncnite_Sync
                                     );
-                                    var manifestUrl = Combine(
-                                        config.ApiBase,
-                                        AppConstants.Path_Syncnite_Manifest
-                                    );
                                     var pushUrl = Combine(
                                         config.ApiBase,
                                         AppConstants.Path_Syncnite_Push
@@ -186,7 +182,7 @@ namespace SyncniteBridge
                                     );
 
                                     pusher?.UpdateEndpoint(pushUrl);
-                                    deltaSync?.UpdateEndpoints(syncUrl, manifestUrl);
+                                    deltaSync?.UpdateEndpoints(syncUrl);
                                     health?.UpdateEndpoint(pingUrl);
                                     rlog?.UpdateEndpoint(logUrl);
                                     rlog?.Enqueue(

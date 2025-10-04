@@ -139,6 +139,7 @@ export class SyncService {
             mediaFiles = mediaResult?.copiedFiles ?? 0;
             console.log(`[syncService] Media copy done: ${mediaFiles} files`);
 
+            // Copy client-exported manifest if present (we'll normalize it next)
             const mf = join(WORK_DIR, "export", "manifest.json");
             try {
                 const s = await fs.readFile(mf, "utf8");
@@ -146,6 +147,54 @@ export class SyncService {
                 console.log("[syncService] manifest.json copied");
             } catch {
                 console.warn("[syncService] manifest.json not found or unreadable");
+            }
+
+            // --- Normalize /data/manifest.json (authoritative from filesystem) ---
+            try {
+                const manifestPath = join(DATA_DIR, "manifest.json");
+
+                // Start from copied manifest if it exists
+                let base: any = {};
+                try {
+                    const raw = await fs.readFile(manifestPath, "utf8");
+                    base = JSON.parse(raw) || {};
+                } catch {
+                    base = {};
+                    console.warn("[syncService] /data/manifest.json missing; creating a minimal one");
+                }
+
+                // Scan /data/libraryfiles → derive mediaFolders + mediaVersions
+                const lfRoot = join(DATA_DIR, "libraryfiles");
+                let mediaFolders: string[] = [];
+                const mediaVersions: Record<string, number> = {};
+
+                try {
+                    const ents = await fs.readdir(lfRoot, { withFileTypes: true });
+                    mediaFolders = ents.filter(e => e.isDirectory()).map(e => e.name).sort();
+
+                    for (const e of ents) {
+                        if (!e.isDirectory()) continue;
+                        const st = await fs.stat(join(lfRoot, e.name));
+                        mediaVersions[e.name] = Math.floor(st.mtimeMs);
+                    }
+                } catch {
+                    // ok if there is no media yet
+                }
+
+                // Final manifest (no 'installed' here)
+                delete (base as any).installed;
+
+                const finalManifest = {
+                    updatedAt: new Date().toISOString(),
+                    json: base.json ?? {},
+                    mediaFolders,
+                    mediaVersions,
+                };
+
+                await fs.writeFile(manifestPath, JSON.stringify(finalManifest, null, 2), "utf8");
+                console.log("[syncService] normalized /data/manifest.json");
+            } catch (e) {
+                console.warn("[syncService] could not normalize /data/manifest.json", e);
             }
 
             // --- Only now (success path) do we persist the uploaded ZIP ---
@@ -198,68 +247,4 @@ export class SyncService {
         }
     }
 
-    async getManifest(): Promise<{ ok: true; generatedAt: string; manifest: any }> {
-        console.log("[syncService] Checking for persisted manifest.json");
-        try {
-            const disk = await fs.readFile(join(DATA_DIR, "manifest.json"), "utf8");
-            const obj = JSON.parse(disk);
-            console.log("[syncService] Found persisted manifest.json, returning it");
-            return { ok: true, generatedAt: new Date().toISOString(), manifest: obj };
-        } catch {
-            console.warn("[syncService] No persisted manifest.json found, falling back to scan");
-        }
-
-        // Fallback: build coarse manifest
-        const out: any = { json: {}, mediaFolders: [], installed: { count: 0, hash: "" } };
-
-        // JSON presence & mtimes/sizes
-        let dataExists = false;
-        try {
-            const st = await fs.stat(DATA_DIR);
-            dataExists = st.isDirectory();
-            console.log("[syncService] DATA_DIR exists, scanning…");
-        } catch {
-            console.warn("[syncService] DATA_DIR not found, manifest will be empty");
-        }
-
-        if (dataExists) {
-            const names = await fs.readdir(DATA_DIR);
-            console.log(`[syncService] Found ${names.length} entries in DATA_DIR`);
-
-            for (const n of names) {
-                if (!n.toLowerCase().endsWith(".json")) continue;
-                const st = await fs.stat(join(DATA_DIR, n));
-                out.json[n] = { size: st.size, mtimeMs: Math.floor(st.mtimeMs) };
-                console.log(`[syncService] JSON file: ${n}, size=${st.size}, mtimeMs=${Math.floor(st.mtimeMs)}`);
-            }
-
-            // Media folders inside /data/libraryfiles
-            const lfRoot = join(DATA_DIR, "libraryfiles");
-            try {
-                const ents = await fs.readdir(lfRoot, { withFileTypes: true });
-                out.mediaFolders = ents.filter((e) => e.isDirectory()).map((e) => e.name).sort();
-                console.log(`[syncService] Found ${out.mediaFolders.length} media folder(s) in libraryfiles`);
-            } catch {
-                console.warn("[syncService] No libraryfiles folder yet");
-            }
-
-            // Installed list summary
-            try {
-                const raw = await fs.readFile(join(DATA_DIR, "local/local.Installed.json"), "utf8");
-                const obj = JSON.parse(raw);
-                const list = Array.isArray(obj?.installed) ? obj.installed : [];
-                const crypto = await import("node:crypto");
-                out.installed = {
-                    count: list.length,
-                    hash: crypto.createHash("sha1").update(JSON.stringify(list)).digest("hex"),
-                };
-                console.log(`[syncService] Installed list found: ${list.length} entries, hash=${out.installed.hash}`);
-            } catch {
-                console.warn("[syncService] No local.Installed.json found");
-            }
-        }
-
-        console.log("[syncService] Manifest generated, returning response");
-        return { ok: true, generatedAt: new Date().toISOString(), manifest: out };
-    }
 }

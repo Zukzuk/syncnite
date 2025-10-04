@@ -59,7 +59,7 @@ export function GameRow(props: Row & ControlledProps) {
         overflow: "hidden",
         isolation: "isolate",
         transition: "background-color 140ms ease",
-        backgroundColor: installed ? "var(--mantine-primary-color-light) !important" : "auto",
+        backgroundColor: installed ? "var(--mantine-primary-color-light)" : "transparent",
       }}
       onClick={onToggle}
     >

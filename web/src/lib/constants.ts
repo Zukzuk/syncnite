@@ -17,6 +17,7 @@ export const Z_INDEX = {
 export const BASE = "/data";
 
 export const FILES = {
+  manifest: `${BASE}/manifest.json`,
   localInstalled: `${BASE}/local/local.Installed.json`,
   games: [
     `${BASE}/games.Game.json`,
