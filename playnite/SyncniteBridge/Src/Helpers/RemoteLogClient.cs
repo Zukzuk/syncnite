@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace SyncniteBridge.Helpers
 {
+    /// <summary>
+    /// Client for sending structured log events to a remote HTTP endpoint.
+    /// </summary>
     internal sealed class RemoteLogClient : IDisposable
     {
         private const int MaxBatch = 32;

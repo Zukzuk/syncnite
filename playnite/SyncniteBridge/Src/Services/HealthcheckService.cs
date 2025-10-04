@@ -7,6 +7,10 @@ using SyncniteBridge.Helpers;
 
 namespace SyncniteBridge.Services
 {
+    /// <summary>
+    /// Periodically pings a remote endpoint to check if the Syncnite server is reachable.
+    /// Raises events and notifications on status changes.
+    /// </summary>
     internal sealed class HealthcheckService : IDisposable
     {
         private readonly IPlayniteAPI api;
@@ -15,7 +19,8 @@ namespace SyncniteBridge.Services
         private readonly Timer timer;
         private string pingUrl;
         private bool lastOk;
-        public string StatusText => lastOk ? "healthy" : "unreachable";
+        public string StatusText =>
+            lastOk ? AppConstants.HealthStatusHealthy : AppConstants.HealthStatusUnreachable;
         public bool IsHealthy => lastOk;
         private readonly RemoteLogClient rlog;
 
@@ -57,9 +62,7 @@ namespace SyncniteBridge.Services
             if (ok != lastOk)
             {
                 lastOk = ok;
-                var msg = ok
-                    ? "SyncniteBridge: server healthy"
-                    : "SyncniteBridge: server unreachable";
+                var msg = ok ? AppConstants.HealthMsgHealthy : AppConstants.HealthMsgUnreachable;
                 var type = ok ? NotificationType.Info : NotificationType.Error;
                 api.Notifications.Add(AppConstants.Notif_Health, msg, type);
                 rlog?.Enqueue(

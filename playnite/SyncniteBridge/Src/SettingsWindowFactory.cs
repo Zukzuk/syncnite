@@ -5,10 +5,14 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using Playnite.SDK;
+using SyncniteBridge.Constants;
 using SyncniteBridge.Helpers;
 
 namespace SyncniteBridge
 {
+    /// <summary>
+    /// Builds and shows the settings window for the Syncnite Bridge extension.
+    /// </summary>
     public static class SettingsWindowFactory
     {
         public static void BuildAndShow(
@@ -33,7 +37,7 @@ namespace SyncniteBridge
 
             // Title (exact text as requested)
             var appVer = BridgeVersion.Current;
-            win.Title = "Syncnite Bridge Settings (v" + appVer + ")";
+            win.Title = AppConstants.SettingsTitle + " (v" + appVer + ")";
 
             // Hook Playnite theme background/foreground
             ThemeHelpers.HookThemeBackground(win);
@@ -158,7 +162,7 @@ namespace SyncniteBridge
             // initial paint
             var isHealthy = string.Equals(
                 getHealthText?.Invoke(),
-                "healthy",
+                AppConstants.HealthStatusHealthy,
                 StringComparison.OrdinalIgnoreCase
             );
             RenderStatus(isHealthy);

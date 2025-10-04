@@ -4,6 +4,9 @@ using SyncniteBridge.Constants;
 
 namespace SyncniteBridge
 {
+    /// <summary>
+    /// Configuration settings for the bridge, persisted under ExtensionsData/<GUID>/config.json.
+    /// </summary>
     internal sealed class BridgeConfig
     {
         public string ApiBase { get; set; } = AppConstants.DefaultApiBase;

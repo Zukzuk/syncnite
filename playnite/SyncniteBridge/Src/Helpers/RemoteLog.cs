@@ -1,5 +1,8 @@
 namespace SyncniteBridge.Helpers
 {
+    /// <summary>
+    /// Helper for building structured log event objects for remote logging.
+    /// </summary>
     internal static class RemoteLog
     {
         public static object Build(

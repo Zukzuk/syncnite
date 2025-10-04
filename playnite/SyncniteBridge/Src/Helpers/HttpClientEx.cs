@@ -8,6 +8,9 @@ using System.Threading.Tasks;
 
 namespace SyncniteBridge.Helpers
 {
+    /// <summary>
+    /// Helper class extending HttpClient for Syncnite-specific operations.
+    /// </summary>
     internal sealed class HttpClientEx
     {
         private sealed class SyncResp

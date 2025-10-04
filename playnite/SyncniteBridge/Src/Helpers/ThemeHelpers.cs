@@ -4,6 +4,9 @@ using System.Windows.Media;
 
 namespace SyncniteBridge.Helpers
 {
+    /// <summary>
+    /// Helper methods for applying Playnite themes to WPF elements.
+    /// </summary>
     internal static class ThemeHelpers
     {
         public static void TryStyle(FrameworkElement el, string styleKey)
