@@ -1,17 +1,14 @@
 import { ActionIcon, TextInput } from "@mantine/core";
-import { IconSearch, IconX } from "../../lib/icons";
+import { IconSearch, IconX } from "@tabler/icons-react";
 
-export function SearchInput({
-    value,
-    onChange,
-    placeholder = "Search…",
-    width = 475,
-}: {
+type Props = {
     value: string;
     onChange: (v: string) => void;
     placeholder?: string;
     width?: number | string;
-}) {
+}
+
+export function SearchInput({ value, onChange, placeholder = "Search…", width = 475 }: Props) {
     return (
         <TextInput
             placeholder={placeholder}

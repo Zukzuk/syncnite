@@ -1,7 +1,7 @@
 import * as React from "react";
-import type { SortKey, SortDir, Persisted, Loaded } from "../../../lib/types";
-import { bucketLetter } from "../../../lib/utils";
-import { loadStateFromCookie, saveStateToCookie } from "../../../lib/persist";
+import type { SortKey, SortDir, Persisted, Loaded } from "../../lib/types";
+import { bucketLetter } from "../../lib/utils";
+import { loadStateFromCookie, saveStateToCookie } from "../../lib/persist";
 
 export function useLibraryState(data: Loaded) {
   const persisted = React.useMemo(loadStateFromCookie, []);

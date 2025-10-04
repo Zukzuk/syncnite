@@ -1,18 +1,15 @@
 import React from "react";
-import { IconPlayerPlayFilled, IconDownload } from "../../lib/icons";
 import { GRID, Z_INDEX } from "../../lib/constants";
+import { IconDownload, IconPlayerPlayFilled } from "@tabler/icons-react";
 
-export function PlayActionOverlay({
-    installed,
-    href,
-    title,
-    children,
-}: {
+type Props = {
     installed: boolean;
     href: string;
     title: string;
     children: React.ReactNode;
-}) {
+}
+
+export function PlayActionOverlay({ installed, href, title, children }: Props) {
     const label = installed ? `Play ${title}` : `Install ${title}`;
 
     return (

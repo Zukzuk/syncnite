@@ -4,19 +4,15 @@ import { Z_INDEX } from "../../lib/constants";
 
 export const DEFAULT_LETTERS = ["#",..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
 
-export function AlphabeticalRail({
-    letters = DEFAULT_LETTERS,
-    counts,
-    active,
-    onJump,
-    title = "Jump to letter",
-}: {
+type Props = {
     letters?: string[];
     counts?: AlphabeticalRailCounts;
     active?: string | null;
     onJump: (letter: string) => void;
     title?: string;
-}) {
+}
+
+export function AlphabeticalRail({ letters = DEFAULT_LETTERS, counts, active, onJump, title = "Jump to letter" }: Props) {
     const usable = counts ? letters.filter((ch) => (counts[ch] ?? 0) > 0) : letters;
     if (usable.length === 0) return null;
 

@@ -1,8 +1,10 @@
 import { Stack, Progress, Text } from "@mantine/core";
 
-export function LoadingBar({ label, percent, subtext }: {
+type Props = {
   label: string; percent: number | null; subtext?: string
-}) {
+}
+
+export function LoadingBar({ label, percent, subtext }: Props) {
   if (percent == null) return null;
   return (
     <Stack gap={4}>

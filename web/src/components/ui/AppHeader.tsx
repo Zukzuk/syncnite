@@ -1,18 +1,14 @@
-import {
-    Group,
-    Title,
-    ActionIcon,
-    Button,
-    Tooltip,
-    Burger,
-    useMantineColorScheme
-} from "@mantine/core";
-import { IconSun, IconMoon, IconDownload } from "../../lib/icons";
-import { AppHeaderProps } from "../../lib/types";
+import { Group, Title, ActionIcon, Button, Tooltip, Burger, useMantineColorScheme } from "@mantine/core";
+import { IconDownload, IconMoon, IconSun } from "@tabler/icons-react";
 
 const appVersion = (window as any).__APP_VERSION__ ?? 'dev';
 
-export function AppHeader({ opened, onToggleNav }: AppHeaderProps) {
+type Props = {
+    opened: boolean;
+    onToggleNav: () => void;
+}
+
+export function AppHeader({ opened, onToggleNav }: Props) {
     const { colorScheme, setColorScheme } = useMantineColorScheme();
 
     return (

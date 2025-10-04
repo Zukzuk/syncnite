@@ -1,7 +1,7 @@
 import { Persisted } from "./types";
 
 export const GRID = {
-  cols: "56px minmax(0, 40%) 60px 120px minmax(200px, 1fr)",
+  cols: "56px minmax(0, 50%) 60px 70px minmax(200px, 1fr)",
   rowHeight: 56,
   smallBox: 40,
 } as const;

@@ -1,8 +1,3 @@
-export interface AppHeaderProps {
-    opened: boolean;
-    onToggleNav: () => void;
-}
-
 export type Guidish =
   | string
   | { $guid?: string }

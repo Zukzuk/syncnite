@@ -2,7 +2,9 @@ import React from "react";
 import { isIcoPath, icoToPngDataUrl } from "../../lib/utils";
 import { GRID } from "../../lib/constants";
 
-export function IconImage({ src, alt }: { src: string; alt?: string }) {
+type Props = { src: string; alt?: string };
+
+export function IconImage({ src, alt }: Props) {
   const [url, setUrl] = React.useState(src);
 
   React.useEffect(() => {

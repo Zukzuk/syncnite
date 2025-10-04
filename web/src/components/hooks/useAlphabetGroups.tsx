@@ -1,6 +1,6 @@
 import * as React from "react";
-import { letterBucket } from "../../../lib/utils";
-import { AlphaGroup, Row, WithBucket } from "../../../lib/types";
+import { letterBucket } from "../../lib/utils";
+import { AlphaGroup, Row, WithBucket } from "../../lib/types";
 
 export function useAlphabetGroups(
     sortKey: string | undefined,

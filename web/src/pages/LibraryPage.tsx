@@ -3,7 +3,7 @@ import { Stack, Loader, Box } from "@mantine/core";
 import { loadLibrary } from "../lib/data";
 import type { Loaded } from "../lib/types";
 import { LibraryList } from "../components/library/LibraryList";
-import { useLocalInstalled } from "../components/library/hooks/useLocalInstalled";
+import { useLocalInstalled } from "../components/hooks/useLocalInstalled";
 import { GRID } from "../lib/constants";
 
 export default function LibraryPage() {

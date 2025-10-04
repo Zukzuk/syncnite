@@ -1,7 +1,9 @@
 import { Box } from '@mantine/core';
 import { Z_INDEX } from '../../lib/constants';
 
-export function AlphabeticalSeparatorRow({ bucket, top }: { bucket: string; top: number }) {
+type Props = { bucket: string; top: number };
+
+export function AlphabeticalSeparatorRow({ bucket, top }: Props) {
   return (
     <Box
       style={{

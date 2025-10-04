@@ -1,12 +1,14 @@
-import type { SortKey } from "../../lib/types";
+import type { SortDir, SortKey } from "../../lib/types";
 import { GRID } from "../../lib/constants";
 
-export function SortHeader(props: {
+type Props = {
   headerRef: (el: HTMLElement | null) => void;
   sortKey: SortKey;
-  sortDir: "asc" | "desc";
+  sortDir: SortDir;
   onToggleSort: (k: SortKey) => void;
-}) {
+}
+
+export function SortHeader(props: Props) {
   const { headerRef, sortKey, sortDir, onToggleSort } = props;
   const label = (base: string, key: SortKey) => (sortKey === key ? `${base} ${sortDir === "asc" ? "▲" : "▼"}` : base);
 

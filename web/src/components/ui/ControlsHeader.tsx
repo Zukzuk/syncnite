@@ -1,9 +1,9 @@
 import React from "react";
 import { Group, MultiSelect, Switch, Text, Stack, Flex } from "@mantine/core";
-import { SearchInput } from "../ui/SearchInput";
+import { SearchInput } from "./SearchInput";
 import { sourceLabel } from "../../lib/constants";
 
-export function ControlsHeader(props: {
+type Props = {
   q: string; setQ: (v: string) => void;
   sources: string[]; setSources: (v: string[]) => void;
   tags: string[]; setTags: (v: string[]) => void;
@@ -13,7 +13,9 @@ export function ControlsHeader(props: {
   installedOnly: boolean; setInstalledOnly: (v: boolean) => void;
   filteredCount: number;
   totalCount: number;
-}) {
+};
+
+export function ControlsHeader(props: Props) {
   const {
     q, setQ,
     sources, setSources, allSources,

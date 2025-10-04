@@ -220,3 +220,12 @@ export function letterBucket(s: string | undefined | null): Letter {
   const c = s.trim().charAt(0).toUpperCase();
   return (c >= "A" && c <= "Z" ? c : "#") as Letter;
 }
+
+export function buildAssetUrl(rel?: string | null): string | null {
+  if (!rel) return null;
+  const norm = normalizePath(rel);
+  if (!norm) return null;
+  if (/^https?:\/\//i.test(norm)) return norm;
+  const path = norm.startsWith("libraryfiles/") ? norm : `libraryfiles/${norm}`;
+  return `${BASE}/${path}`;
+}

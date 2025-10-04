@@ -9,7 +9,7 @@ import { BackupWatcher } from "../services/backupWatcher";
 import { ImportRunner } from "../services/backupImporter";
 import { UploadRunner } from "../services/backupUploader";
 
-export default function BackupPage() {
+export default function BridgePage() {
     const [zips, setZips] = React.useState<ZipInfo[]>([]);
     const [selected, setSelected] = React.useState<string | null>(null);
     const [password, setPassword] = React.useState("");

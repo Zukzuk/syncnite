@@ -1,11 +1,6 @@
 import { ScrollArea, NavLink, Text, rem } from "@mantine/core";
 import { Link, useLocation } from "react-router-dom";
-import {
-    IconHome2,
-    IconBooks,
-    IconAB2,
-    IconSettings,
-} from "../../lib/icons";
+import { IconHome2, IconBooks, IconSettings, IconAB2 } from "@tabler/icons-react";
 import { GRID } from "../../lib/constants";
 
 const appVersion = (window as any).__APP_VERSION__ ?? 'dev';
