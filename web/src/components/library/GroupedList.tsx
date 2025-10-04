@@ -57,7 +57,7 @@ export function GroupedList({
                 url={r.url}
                 raw={r.raw}
                 sortingName={r.sortingName}
-                isOpen={openIds.has(r.id)}
+                collapseOpen={openIds.has(r.id)}
                 everOpened={everOpenedIds.has(r.id)}
                 onToggle={() => onToggle(r.id, globalIndex)}
               />

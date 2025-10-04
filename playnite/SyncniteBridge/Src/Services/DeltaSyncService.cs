@@ -33,6 +33,10 @@ namespace SyncniteBridge.Services
         private FileSystemWatcher mediaWatcher;
 
         private readonly string tempDir;
+        private readonly object dirtyMediaLock = new object();
+        private readonly HashSet<string> dirtyMediaFolders = new HashSet<string>(
+            StringComparer.OrdinalIgnoreCase
+        );
 
         private Func<bool> isHealthy = () => true; // injected
 
@@ -172,11 +176,39 @@ namespace SyncniteBridge.Services
         private void OnFsEvent(object sender, FileSystemEventArgs e)
         {
             pending = true;
+
             if (
                 e?.FullPath != null
                 && e.FullPath.EndsWith(".db", StringComparison.OrdinalIgnoreCase)
             )
+            {
                 dbDirty = true;
+            }
+            else if (e?.FullPath != null)
+            {
+                // Track changes under library/files → mark top-level media folder dirty
+                var top = GetTopLevelMediaFolderFromPath(e.FullPath);
+                if (!string.IsNullOrEmpty(top))
+                {
+                    lock (dirtyMediaLock)
+                    {
+                        dirtyMediaFolders.Add(top);
+                    }
+                }
+
+                // If it was a rename, also consider the old path
+                if (e is RenamedEventArgs re && !string.IsNullOrEmpty(re.OldFullPath))
+                {
+                    var oldTop = GetTopLevelMediaFolderFromPath(re.OldFullPath);
+                    if (!string.IsNullOrEmpty(oldTop))
+                    {
+                        lock (dirtyMediaLock)
+                        {
+                            dirtyMediaFolders.Add(oldTop);
+                        }
+                    }
+                }
+            }
 
             try
             {
@@ -393,7 +425,24 @@ namespace SyncniteBridge.Services
 
                 // 3) Decide deltas
                 var needJson = dbDirty || JsonStateDiffers(local, remote);
-                var mediaFolders = MediaFoldersToUpload(local, remote);
+
+                // Start with any folders we already know changed (from watcher events)
+                List<string> mediaFolders;
+                lock (dirtyMediaLock)
+                {
+                    mediaFolders = dirtyMediaFolders.ToList();
+                }
+
+                // Also include folders that exist locally but don't exist remotely yet
+                var newOnServer = MediaFoldersToUpload(local, remote);
+                if (newOnServer.Count > 0)
+                {
+                    mediaFolders.AddRange(newOnServer);
+                }
+
+                // Remove duplicates, keep stable order
+                mediaFolders = mediaFolders.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+
                 if (!needJson && mediaFolders.Count == 0)
                 {
                     rlog?.Enqueue(RemoteLog.Build("debug", "sync", "Up-to-date; no upload needed"));
@@ -476,8 +525,13 @@ namespace SyncniteBridge.Services
                 if (!ok)
                     throw new Exception("sync endpoint returned non-OK");
 
-                // 6) Success → clear db-dirty
+                // 6) Success → clear db-dirty and consumed dirty media markers
                 dbDirty = false;
+                lock (dirtyMediaLock)
+                {
+                    dirtyMediaFolders.Clear();
+                }
+
                 rlog?.Enqueue(
                     RemoteLog.Build(
                         "info",
@@ -537,6 +591,33 @@ namespace SyncniteBridge.Services
                 p.EndsWith(Path.DirectorySeparatorChar.ToString())
                     ? p
                     : p + Path.DirectorySeparatorChar;
+        }
+
+        private string GetTopLevelMediaFolderFromPath(string fullPath)
+        {
+            if (string.IsNullOrWhiteSpace(fullPath))
+                return null;
+
+            var mediaRoot = Path.Combine(dataRoot, AppConstants.LibraryFilesDirName); // "library/files"
+            // Normalize trailing directory separator for robust prefix checks
+            string AppendSep(string p) =>
+                p.EndsWith(Path.DirectorySeparatorChar.ToString())
+                    ? p
+                    : p + Path.DirectorySeparatorChar;
+            mediaRoot = AppendSep(mediaRoot);
+
+            // Ensure the path lies under the media root
+            if (!fullPath.StartsWith(mediaRoot, StringComparison.OrdinalIgnoreCase))
+                return null;
+
+            // Derive relative path under library/files
+            var rel = fullPath.Substring(mediaRoot.Length);
+            rel = rel.TrimStart(Path.DirectorySeparatorChar);
+
+            // First segment is the top-level folder we zip as a unit
+            var first = rel.Split(new[] { Path.DirectorySeparatorChar }, 2, StringSplitOptions.None)
+                .FirstOrDefault();
+            return string.IsNullOrWhiteSpace(first) ? null : first;
         }
 
         private void CleanupTempOld(int maxAgeMinutes = 60)

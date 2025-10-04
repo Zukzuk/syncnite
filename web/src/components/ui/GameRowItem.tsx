@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, Flex, Text, Anchor, Group, Badge, Tooltip, ActionIcon } from "@mantine/core";
+import { Box, Flex, Text, Group, Badge, Tooltip, ActionIcon, Grid } from "@mantine/core";
 import { PlayActionOverlay } from "./PlayActionOverlay";
 import { IconImage } from "./IconImage";
 import { GRID } from "../../lib/constants";
@@ -28,8 +28,6 @@ export function GameRowItem(props: Props) {
             // no-op: we could surface a toast if the host app has one
         }
     };
-
-    const hideNonEssential = !!collapseOpen;
 
     return (
         <Box
@@ -60,10 +58,16 @@ export function GameRowItem(props: Props) {
             {/* Title + copy + external link */}
             <Flex align="center" gap={8} className={dim ? " is-dim" : ""} style={{ minWidth: 0 }}>
                 <Text
-                    fw={500}
+                    fw={600}
                     title={title}
                     className="game-title"
-                    style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                    style={{
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        fontSize: collapseOpen ? 20 : undefined,
+                        transition: "font-size 140ms ease",
+                    }}
                 >
                     {title}
                 </Text>
@@ -120,8 +124,8 @@ export function GameRowItem(props: Props) {
             </Box>
 
             {/* Tags */}
-            <Box className={dim ? " is-dim" : ""} style={{ display: hideNonEssential ? "none" : undefined }}>
-                <Group gap={6} align="center" wrap="wrap" style={{ maxHeight: "100%" }}>
+            <Box className={dim ? " is-dim" : ""} style={{ display: collapseOpen ? "none" : undefined }}>
+                <Group gap={6} align="center" wrap="wrap" style={{ maxHeight: GRID.rowHeight, overflow: "hidden" }}>
                     {(tags ?? []).map((t) => (
                         <Badge key={t} variant="dark" size="sm" style={{ boxShadow: "0 2px 0 0 rgb(0 0 0 / 30%)" }}>
                             {t}

@@ -1,33 +1,31 @@
 import React from "react";
 import { Group, Image, Paper, AspectRatio, Box } from "@mantine/core";
-import { ANIM } from "../../lib/constants";
 
 type Props = {
     title: string;
     coverUrl: string | null;
-    bgOn: boolean;
+    collapseOpenDelayed: boolean;
     everOpened: boolean;
-    onInnerClick?: (e: React.MouseEvent) => void;
+    onToggle?: (e: React.MouseEvent) => void;
 };
 
-export function GameRowDetails({ title, coverUrl, bgOn, everOpened, onInnerClick }: Props) {
+export function GameRowDetails({ title, coverUrl, collapseOpenDelayed, everOpened, onToggle }: Props) {
     return (
         <Paper
-            pl="md" pt="md" pr={6} pb={0}
+            pl={0} pt="md" pr={6} pb={0}
             ml={0} mt={0} mr={48} mb="lg"
             onClick={(e) => {
                 e.stopPropagation();
-                onInnerClick?.(e);
+                onToggle?.(e);
             }}
             style={{
                 backgroundColor: "transparent",
-                opacity: bgOn ? 1 : 0,
-                transform: bgOn ? "translateY(0)" : "translateY(6px)",
+                opacity: collapseOpenDelayed ? 1 : 0,
+                transform: collapseOpenDelayed ? "translateY(0)" : "translateY(12px)",
                 willChange: "opacity, transform",
                 transitionProperty: "opacity, transform",
-                transitionDuration: "200ms, 260ms",
+                transitionDuration: "220ms, 260ms",
                 transitionTimingFunction: "ease, ease",
-                transitionDelay: bgOn ? `${ANIM.collapseContentDelayMs}ms, ${ANIM.collapseContentDelayMs}ms` : "0ms, 0ms",
             }}
         >
             <Group align="start" gap="md" wrap="nowrap" pb={0}>

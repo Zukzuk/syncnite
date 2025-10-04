@@ -20,7 +20,7 @@ export function AppHeader({ opened, onToggleNav }: Props) {
 
             <Group gap="sm">
                 {/* Download button */}
-                <Tooltip label={`Download Syncnite v${appVersion} (.pext)`}>
+                <Tooltip withArrow label={`Download Syncnite v${appVersion} (.pext)`}>
                     <Button
                         component="a"
                         href="/api/extension/download"

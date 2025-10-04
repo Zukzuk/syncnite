@@ -1,17 +1,14 @@
 import React, { useMemo, useCallback } from "react";
 import { Box, Collapse } from "@mantine/core";
 import { useMantineTheme, useComputedColorScheme } from "@mantine/core";
-import { ANIM } from "../../lib/constants";
 import { Row } from "../../lib/types";
 import { buildAssetUrl, effectiveLink } from "../../lib/utils";
 import { useDelayedFlag } from "../hooks/useDelayedFlag";
 import { GameRowItem } from "../ui/GameRowItem";
 import { GameRowDetails } from "../ui/GameRowDetails";
 
-import "./GameRow.scss";
-
 type ControlledProps = {
-  isOpen: boolean;
+  collapseOpen: boolean;
   everOpened: boolean;
   onToggle: () => void;
 };
@@ -19,7 +16,7 @@ type ControlledProps = {
 export function GameRow(props: Row & ControlledProps) {
   const {
     id, hidden, sortingName, installed, iconUrl, title, source, tags, year, url, raw,
-    isOpen, everOpened, onToggle,
+    collapseOpen, everOpened, onToggle,
   } = props;
 
   const theme = useMantineTheme();
@@ -35,7 +32,7 @@ export function GameRow(props: Row & ControlledProps) {
   const bg = (raw as any)?.BackgroundImage ?? null;
   const coverUrl = useMemo(() => buildAssetUrl(cover), [cover]);
   const bgUrl = useMemo(() => buildAssetUrl(bg), [bg]);
-  const bgOn = useDelayedFlag(isOpen, ANIM.wallpaperDelayMs);
+  const collapseOpenDelayed = useDelayedFlag(collapseOpen, 140);
 
   const onKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
@@ -50,7 +47,7 @@ export function GameRow(props: Row & ControlledProps) {
       className={`game-row${dim ? " is-dim" : ""}${installed ? " is-installed" : ""}`}
       role="button"
       tabIndex={0}
-      aria-expanded={isOpen}
+      aria-expanded={collapseOpen}
       aria-label={`${title} row`}
       onKeyDown={onKeyDown}
       style={{
@@ -61,46 +58,15 @@ export function GameRow(props: Row & ControlledProps) {
         position: "relative",
         overflow: "hidden",
         isolation: "isolate",
+        transition: "background-color 140ms ease",
+        backgroundColor: installed ? "var(--mantine-primary-color-light) !important" : "auto",
       }}
       onClick={onToggle}
     >
-      {/* Background */}
-      {isOpen && everOpened && bgUrl && (
-        <>
-          <Box
-            aria-hidden
-            style={{
-              position: "absolute",
-              inset: 0,
-              backgroundImage: `url(${bgUrl})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              pointerEvents: "none",
-              zIndex: 0,
-              transform: bgOn ? "scale(1.03)" : "scale(1.01)",
-              opacity: bgOn ? 0.5 : 0,
-              willChange: "opacity, transform",
-              transitionProperty: "opacity, transform",
-              transitionDuration: "220ms, 220ms",
-              transitionTimingFunction: "ease, ease",
-            }}
-          />
-          <Box
-            aria-hidden
-            style={{
-              position: "absolute",
-              inset: 0,
-              opacity: bgOn ? 1 : 0,
-              pointerEvents: "none",
-              zIndex: 0,
-              transition: `opacity 220ms ease`,
-            }}
-          />
-        </>
-      )}
-
       {/* Foreground */}
       <Box style={{ position: "relative", zIndex: 1 }}>
+
+        {/* Main item */}
         <GameRowItem
           id={id}
           installed={installed}
@@ -115,18 +81,43 @@ export function GameRow(props: Row & ControlledProps) {
           sortingName={sortingName}
           hidden={hidden}
           url={url}
-          collapseOpen={isOpen}
+          collapseOpen={collapseOpen}
         />
 
-        <Collapse in={isOpen} transitionDuration={ANIM.collapseMs}>
+        {/* Details */}
+        <Collapse in={collapseOpen} transitionDuration={140}>
           <GameRowDetails
             title={title}
             coverUrl={coverUrl}
-            bgOn={bgOn}
+            collapseOpenDelayed={collapseOpenDelayed}
             everOpened={everOpened}
+            onToggle={onToggle}
           />
         </Collapse>
       </Box>
+
+      {/* Background */}
+      {collapseOpen && everOpened && bgUrl && (
+        <Box
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage: `url(${bgUrl})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            pointerEvents: "none",
+            zIndex: 0,
+            transform: collapseOpenDelayed ? "scale(1.02)" : "scale(1.01)",
+            opacity: collapseOpenDelayed ? 0.4 : 0,
+            willChange: "opacity, transform",
+            transitionProperty: "opacity, transform",
+            transitionDuration: "220ms, 260ms",
+            transitionTimingFunction: "ease, ease",
+          }}
+        />
+      )}
+
     </Box>
   );
 }

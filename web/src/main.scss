@@ -1,27 +1,76 @@
-  body {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    overflow-x: hidden;
-  }
-  
-  img.icon {
-    image-rendering: -webkit-optimize-contrast;
-    -webkit-font-smoothing: antialiased;
-  }
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
 
-  .is-dim {
-    opacity: 0.5 !important;
-  }
+img.icon {
+  image-rendering: -webkit-optimize-contrast;
+  -webkit-font-smoothing: antialiased;
+}
 
-  /* Firefox: make it a normal-width visible bar */
-* { scrollbar-width: auto; scrollbar-color: var(--mantine-color-default-border) transparent; }
+.is-dim {
+  opacity: 0.5 !important;
+}
+
+/* Firefox: make it a normal-width visible bar */
+* {
+  scrollbar-width: auto;
+  scrollbar-color: var(--mantine-color-default-border) transparent;
+}
 
 /* WebKit (Chromium/Safari) */
-*::-webkit-scrollbar { width: 12px; }
-*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar {
+  width: 12px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 *::-webkit-scrollbar-thumb {
   background-color: var(--mantine-color-default-border);
   border-radius: 8px;
   border: 3px solid transparent;
   background-clip: content-box;
+}
+
+.game-row {
+  &:hover {
+    background: var(--mantine-color-default-hover);
+  }
+
+  &.is-installed:hover {
+    background: var(--mantine-primary-color-filled) !important;
+  }
+
+  /* Ensure the overlay uses white icons from Tabler (currentColor) */
+  .play-overlay__icon {
+    color: #fff;
+    opacity: 0;
+    transform: scale(0.94);
+    transition: opacity 140ms ease, transform 140ms ease;
+    pointer-events: none;
+  }
+
+  /* Fade in the overlay icon on hover */
+  .icon-wrap:hover .play-overlay__icon {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* Fade the base game icon to .4 on hover */
+  .icon-base {
+    transition: opacity 140ms ease;
+  }
+
+  .icon-wrap:hover .icon-base {
+    opacity: .3;
+  }
+
+  /* Optional: subtle hover tint to indicate interactivity */
+  .icon-wrap:hover .play-overlay {
+    background: radial-gradient(transparent 42%, rgba(0, 0, 0, .08));
+    border-radius: 6px;
+  }
 }
