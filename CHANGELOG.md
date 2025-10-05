@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.9.1](https://github.com/Zukzuk/playnite-viewer/compare/v1.8.0...v1.9.1) (2025-10-05)
+
+
+### Bug Fixes
+
+* fixed clean syncing ([4131968](https://github.com/Zukzuk/playnite-viewer/commit/41319681931919af2a2fc90404dce29949000ee6))
+
 ## [1.9.0](https://github.com/Zukzuk/playnite-viewer/compare/v1.7.1...v1.9.0) (2025-10-04)
 
 
