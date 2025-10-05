@@ -87,7 +87,7 @@ router.get("/zips", async (_req, res) => {
  *   get:
  *     operationId: pingSync
  *     summary: Ping the Syncnite API
- *     tags: [Sync]
+ *     tags: [App]
  *     responses:
  *       200:
  *         description: Pong response.

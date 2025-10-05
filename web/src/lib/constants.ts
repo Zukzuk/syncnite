@@ -19,16 +19,20 @@ export const BASE = "/data";
 export const FILES = {
   manifest: `${BASE}/manifest.json`,
   localInstalled: `${BASE}/local/local.Installed.json`,
-  games: [
-    `${BASE}/games.Game.json`,
-  ],
-  tags: [
-    `${BASE}/tags.Tag.json`,
-  ],
-  sources: [
-    `${BASE}/sources.GameSource.json`,
-    `${BASE}/sources.Source.json`,
-  ],
+  games: [`${BASE}/games.Game.json`],
+  tags: [`${BASE}/tags.Tag.json`],
+  sources: [`${BASE}/sources.GameSource.json`, `${BASE}/sources.Source.json`],
+  platforms: [`${BASE}/platforms.Platform.json`],
+  genres: [`${BASE}/genres.Genre.json`],
+  categories: [`${BASE}/categories.Category.json`],
+  features: [`${BASE}/features.Feature.json`],
+  series: [`${BASE}/series.Series.json`],
+  regions: [`${BASE}/regions.Region.json`],
+  ageRatings: [`${BASE}/ageratings.AgeRating.json`],
+  emulators: [`${BASE}/emulators.Emulator.json`],
+  completionStatuses: [`${BASE}/completionstatuses.CompletionStatus.json`],
+  filterPresets: [`${BASE}/filterpresets.FilterPreset.json`],
+  importExclusions: [`${BASE}/importexclusions.ImportExclusion.json`]
 };
 
 export const FALLBACK_ICON =

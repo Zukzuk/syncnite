@@ -37,6 +37,12 @@ namespace SyncniteBridge.Constants
         public const string Notif_Health = "SyncniteBridge_health";
         public const string Notif_Sync_Error = "SyncniteBridge_sync_error";
 
+        // Health / status text + messages
+        public const string HealthStatusHealthy = "healthy";
+        public const string HealthStatusUnreachable = "unreachable";
+        public const string HealthMsgHealthy = AppName + ": server healthy";
+        public const string HealthMsgUnreachable = AppName + ": server unreachable";
+
         // Temp
         public const string TempDirName = "SyncniteBridge_Temp";
 
@@ -47,9 +53,6 @@ namespace SyncniteBridge.Constants
         public const string AppName = "SyncniteBridge";
         public const string SettingsTitle = "Syncnite Bridge Settings";
 
-        // Snapshot / persistence
-        public const string SnapshotFileName = "lastManifest.json";
-
         // ZIP naming
         public const string ZipNamePrefix = "PlayniteSync-";
         public const string ZipTimestampFormat = "yyyy-MM-dd-HH-mm-ss";
@@ -59,23 +62,44 @@ namespace SyncniteBridge.Constants
         public const string ExportDir = "export";
         public const string ManifestFileName = "manifest.json";
         public const string ManifestPathInZip = ExportDir + "/" + ManifestFileName;
-
         public const string MetaFileName = "meta.json";
         public const string MetaPathInZip = ExportDir + "/" + MetaFileName;
+        public const string SnapshotFileName = "lastManifest.json";
 
+        // Keep your existing three:
         public const string GamesJsonFileName = "games.Game.json";
-        public const string GamesJsonPathInZip = ExportDir + "/" + GamesJsonFileName;
-
         public const string TagsJsonFileName = "tags.Tag.json";
-        public const string TagsJsonPathInZip = ExportDir + "/" + TagsJsonFileName;
-
         public const string SourcesJsonFileName = "sources.GameSource.json";
-        public const string SourcesJsonPathInZip = ExportDir + "/" + SourcesJsonFileName;
+        public const string PlatformsJsonFileName = "platforms.Platform.json";
+        public const string GenresJsonFileName = "genres.Genre.json";
+        public const string CategoriesJsonFileName = "categories.Category.json";
+        public const string FeaturesJsonFileName = "features.Feature.json";
+        public const string SeriesJsonFileName = "series.Series.json";
+        public const string RegionsJsonFileName = "regions.Region.json";
+        public const string AgeRatingsJsonFileName = "ageratings.AgeRating.json";
+        public const string EmulatorsJsonFileName = "emulators.Emulator.json";
+        public const string CompletionStatusesJsonFileName =
+            "completionstatuses.CompletionStatus.json";
+        public const string FilterPresetsJsonFileName = "filterpresets.FilterPreset.json";
+        public const string ImportExclusionsJsonFileName = "importexclusions.ImportExclusion.json";
 
-        // Health / status text + messages
-        public const string HealthStatusHealthy = "healthy";
-        public const string HealthStatusUnreachable = "unreachable";
-        public const string HealthMsgHealthy = AppName + ": server healthy";
-        public const string HealthMsgUnreachable = AppName + ": server unreachable";
+        // Paths within ZIP
+        public const string GamesJsonPathInZip = ExportDir + "/" + GamesJsonFileName;
+        public const string TagsJsonPathInZip = ExportDir + "/" + TagsJsonFileName;
+        public const string SourcesJsonPathInZip = ExportDir + "/" + SourcesJsonFileName;
+        public const string PlatformsJsonPathInZip = ExportDir + "/" + PlatformsJsonFileName;
+        public const string GenresJsonPathInZip = ExportDir + "/" + GenresJsonFileName;
+        public const string CategoriesJsonPathInZip = ExportDir + "/" + CategoriesJsonFileName;
+        public const string FeaturesJsonPathInZip = ExportDir + "/" + FeaturesJsonFileName;
+        public const string SeriesJsonPathInZip = ExportDir + "/" + SeriesJsonFileName;
+        public const string RegionsJsonPathInZip = ExportDir + "/" + RegionsJsonFileName;
+        public const string AgeRatingsJsonPathInZip = ExportDir + "/" + AgeRatingsJsonFileName;
+        public const string EmulatorsJsonPathInZip = ExportDir + "/" + EmulatorsJsonFileName;
+        public const string CompletionStatusesJsonPathInZip =
+            ExportDir + "/" + CompletionStatusesJsonFileName;
+        public const string FilterPresetsJsonPathInZip =
+            ExportDir + "/" + FilterPresetsJsonFileName;
+        public const string ImportExclusionsJsonPathInZip =
+            ExportDir + "/" + ImportExclusionsJsonFileName;
     }
 }

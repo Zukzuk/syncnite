@@ -7,6 +7,7 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
+  <!-- Framework/GAC references -->
   <ItemGroup>
     <Reference Include="PresentationFramework" />
     <Reference Include="PresentationCore" />
@@ -15,16 +16,20 @@
     <Reference Include="System.Net.Http" />
     <Reference Include="System.IO.Compression" />
     <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
+  <!-- NuGet packages -->
   <ItemGroup>
     <PackageReference Include="PlayniteSDK" Version="6.12.0" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
   </ItemGroup>
+  <!-- Loose files -->
   <ItemGroup>
     <None Include="extension.yaml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  <!-- Overrides/metadata for implicitly included items -->
   <ItemGroup>
     <Compile Update="Version.g.cs">
       <AutoGen>true</AutoGen>

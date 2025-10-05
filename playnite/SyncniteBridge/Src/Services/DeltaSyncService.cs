@@ -62,7 +62,10 @@ namespace SyncniteBridge.Services
             tempDir = Path.Combine(localApp, AppConstants.TempDirName, "sync");
             Directory.CreateDirectory(tempDir);
 
-            snapshot = new SnapshotStore(api.Paths.ExtensionsDataPath);
+            var myExtDataDir = Path.Combine(api.Paths.ExtensionsDataPath, AppConstants.GUID);
+            //var myExtDataDir = api.Paths.PluginUserDataPath; // Doesn't work...?
+            Directory.CreateDirectory(myExtDataDir);
+            snapshot = new SnapshotStore(myExtDataDir);
             scanner = new LocalStateScanner(api, this.dataRoot);
 
             var libDir = Path.Combine(this.dataRoot, AppConstants.LibraryDirName);
@@ -534,15 +537,26 @@ namespace SyncniteBridge.Services
 
         private void ExportSdkSnapshotToZip(ZipBuilder zb)
         {
-            var meta = new
-            {
-                exportedAt = DateTime.UtcNow.ToString("o"),
-                exporter = AppConstants.AppName,
-                playnite = api?.ApplicationInfo?.ApplicationVersion?.ToString(),
-            };
-            zb.AddText(AppConstants.MetaPathInZip, Playnite.SDK.Data.Serialization.ToJson(meta));
+            // meta
+            zb.AddText(
+                AppConstants.MetaPathInZip,
+                Playnite.SDK.Data.Serialization.ToJson(
+                    new
+                    {
+                        exportedAt = DateTime.UtcNow.ToString("o"),
+                        exporter = AppConstants.AppName,
+                    }
+                )
+            );
 
-            // Games → cast to object so List<object> matches on coalesce
+            // helpers
+            object MapNamed<T>(T x)
+            {
+                dynamic d = x;
+                return new { Id = d.Id, Name = d.Name };
+            }
+
+            // --- GAMES (ids for joins; PlatformIds supported in Playnite 10)
             var games =
                 api.Database.Games?.Select(g =>
                         (object)
@@ -553,14 +567,26 @@ namespace SyncniteBridge.Services
                                 g.SortingName,
                                 g.Hidden,
                                 g.InstallDirectory,
-                                Source = g.Source?.Name,
+
+                                // join ids
+                                SourceId = g.SourceId,
+                                TagIds = (g.TagIds ?? new List<Guid>()).ToList(),
+                                PlatformIds = (g.PlatformIds ?? new List<Guid>()).ToList(),
+                                PrimaryPlatformId = (
+                                    g.PlatformIds != null && g.PlatformIds.Count > 0
+                                )
+                                    ? (Guid?)g.PlatformIds[0]
+                                    : null,
+
+                                // dates + art
                                 g.ReleaseDate,
+                                ReleaseYear = (int?)g.ReleaseDate?.Year,
+                                g.Icon,
                                 g.CoverImage,
                                 g.BackgroundImage,
-                                Tags = (g.TagIds ?? new List<Guid>())
-                                    .Select(tid => api.Database.Tags?.Get(tid)?.Name)
-                                    .Where(n => !string.IsNullOrWhiteSpace(n))
-                                    .ToList(),
+
+                                // links
+                                g.Links,
                             }
                     )
                     .ToList() ?? new List<object>();
@@ -570,23 +596,88 @@ namespace SyncniteBridge.Services
                 Playnite.SDK.Data.Serialization.ToJson(games)
             );
 
-            // Tags
-            var tags =
-                api.Database.Tags?.Select(t => (object)new { t.Id, t.Name }).ToList()
-                ?? new List<object>();
-            zb.AddText(
-                AppConstants.TagsJsonPathInZip,
-                Playnite.SDK.Data.Serialization.ToJson(tags)
-            );
+            // --- Recipes: existing first, then the rest
+            var recipes = new (IEnumerable<object> Data, string Path)[]
+            {
+                // Existing
+                (
+                    api.Database.Tags?.Select(t => MapNamed(t)).Cast<object>()
+                        ?? Array.Empty<object>(),
+                    AppConstants.TagsJsonPathInZip
+                ),
+                (
+                    api.Database.Sources?.Select(s => MapNamed(s)).Cast<object>()
+                        ?? Array.Empty<object>(),
+                    AppConstants.SourcesJsonPathInZip
+                ),
+                // New (supported in Playnite 10)
+                (
+                    api.Database.Platforms?.Select(p =>
+                        (object)
+                            new
+                            {
+                                p.Id,
+                                p.Name,
+                                p.Icon,
+                            }
+                    ) ?? Array.Empty<object>(),
+                    AppConstants.PlatformsJsonPathInZip
+                ),
+                (
+                    api.Database.Genres?.Select(MapNamed).Cast<object>() ?? Array.Empty<object>(),
+                    AppConstants.GenresJsonPathInZip
+                ),
+                (
+                    api.Database.Categories?.Select(MapNamed).Cast<object>()
+                        ?? Array.Empty<object>(),
+                    AppConstants.CategoriesJsonPathInZip
+                ),
+                (
+                    api.Database.Features?.Select(MapNamed).Cast<object>() ?? Array.Empty<object>(),
+                    AppConstants.FeaturesJsonPathInZip
+                ),
+                (
+                    api.Database.Series?.Select(MapNamed).Cast<object>() ?? Array.Empty<object>(),
+                    AppConstants.SeriesJsonPathInZip
+                ),
+                (
+                    api.Database.Regions?.Select(MapNamed).Cast<object>() ?? Array.Empty<object>(),
+                    AppConstants.RegionsJsonPathInZip
+                ),
+                (
+                    api.Database.AgeRatings?.Select(MapNamed).Cast<object>()
+                        ?? Array.Empty<object>(),
+                    AppConstants.AgeRatingsJsonPathInZip
+                ),
+                (
+                    api.Database.Emulators?.Select(MapNamed).Cast<object>()
+                        ?? Array.Empty<object>(),
+                    AppConstants.EmulatorsJsonPathInZip
+                ),
+                (
+                    api.Database.CompletionStatuses?.Select(MapNamed).Cast<object>()
+                        ?? Array.Empty<object>(),
+                    AppConstants.CompletionStatusesJsonPathInZip
+                ),
+                (
+                    api.Database.FilterPresets?.Select(MapNamed).Cast<object>()
+                        ?? Array.Empty<object>(),
+                    AppConstants.FilterPresetsJsonPathInZip
+                ),
+                (
+                    api.Database.ImportExclusions?.Select(MapNamed).Cast<object>()
+                        ?? Array.Empty<object>(),
+                    AppConstants.ImportExclusionsJsonPathInZip
+                ),
 
-            // Sources
-            var sources =
-                api.Database.Sources?.Select(s => (object)new { s.Id, s.Name }).ToList()
-                ?? new List<object>();
-            zb.AddText(
-                AppConstants.SourcesJsonPathInZip,
-                Playnite.SDK.Data.Serialization.ToJson(sources)
-            );
+                // NOTE: Scanners/Tools removed: not present on IGameDatabaseAPI in this SDK
+            };
+
+            foreach (var (data, path) in recipes)
+            {
+                var list = data?.ToList() ?? new List<object>();
+                zb.AddText(path, Playnite.SDK.Data.Serialization.ToJson(list)); // always emit, even if empty
+            }
         }
     }
 }
