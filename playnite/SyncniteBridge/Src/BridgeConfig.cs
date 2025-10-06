@@ -11,13 +11,21 @@ namespace SyncniteBridge
     {
         public string ApiBase { get; set; } = AppConstants.DefaultApiBase;
 
+        // NEW: user-tunable log level for the extension logger
+        // Allowed: "error" | "warn" | "info" | "debug" | "trace"
+        public string LogLevel { get; set; } = "info";
+
         public static BridgeConfig Load(string path)
         {
             try
             {
                 if (File.Exists(path))
                 {
-                    return Serialization.FromJson<BridgeConfig>(File.ReadAllText(path));
+                    var cfg = Serialization.FromJson<BridgeConfig>(File.ReadAllText(path));
+                    // Backward compat for older files that didn't have LogLevel:
+                    if (cfg != null && string.IsNullOrWhiteSpace(cfg.LogLevel))
+                        cfg.LogLevel = "info";
+                    return cfg ?? new BridgeConfig();
                 }
             }
             catch

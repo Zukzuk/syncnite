@@ -21,16 +21,16 @@ namespace SyncniteBridge.Services
         private readonly System.Timers.Timer debounce;
         private readonly ILogger log = LogManager.GetLogger();
         private CancellationTokenSource pushCts;
-        private readonly RemoteLogClient rlog;
+        private readonly BridgeLogger blog;
         private readonly HttpClient http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
 
         private Func<bool> isHealthy = () => true; // injected
 
-        public PushInstalledService(IPlayniteAPI api, string endpoint, RemoteLogClient rlog = null)
+        public PushInstalledService(IPlayniteAPI api, string endpoint, BridgeLogger blog = null)
         {
             this.api = api;
             this.endpoint = (endpoint ?? "").TrimEnd('/');
-            this.rlog = rlog;
+            this.blog = blog;
 
             debounce = new System.Timers.Timer(AppConstants.DebounceMs_Pusher)
             {
@@ -47,21 +47,14 @@ namespace SyncniteBridge.Services
         public void UpdateEndpoint(string endpoint)
         {
             this.endpoint = (endpoint ?? "").TrimEnd('/');
-            rlog?.Enqueue(
-                RemoteLog.Build(
-                    "debug",
-                    "push",
-                    "Endpoint updated",
-                    data: new { endpoint = this.endpoint }
-                )
-            );
+            blog?.Debug("push", "Endpoint updated", new { endpoint = this.endpoint });
         }
 
         public void Trigger()
         {
             if (!isHealthy())
             {
-                rlog?.Enqueue(RemoteLog.Build("debug", "push", "Skipped trigger: unhealthy"));
+                blog?.Debug("push", "Skipped trigger: unhealthy");
                 return;
             }
             try
@@ -80,7 +73,7 @@ namespace SyncniteBridge.Services
         {
             if (!isHealthy())
             {
-                rlog?.Enqueue(RemoteLog.Build("debug", "push", "Skipped manual push: unhealthy"));
+                blog?.Debug("push", "Skipped manual push: unhealthy");
                 return;
             }
             try
@@ -107,13 +100,14 @@ namespace SyncniteBridge.Services
         {
             if (!isHealthy())
             {
-                rlog?.Enqueue(RemoteLog.Build("debug", "push", "Abort push: became unhealthy"));
+                blog?.Debug("push", "Abort push: became unhealthy");
                 return;
             }
 
             CancellationTokenSource cts = null;
             try
             {
+                // cancel/replace any in-flight push
                 try
                 {
                     pushCts?.Cancel();
@@ -127,7 +121,9 @@ namespace SyncniteBridge.Services
                 var payload = BuildPayload();
                 var content = new StringContent(payload, Encoding.UTF8, "application/json");
 
-                rlog?.Enqueue(RemoteLog.Build("info", "push", "Pushing installed list"));
+                // Milestone: starting push
+                blog?.Info("push", "Pushing installed list");
+
                 using var req = new HttpRequestMessage(HttpMethod.Post, endpoint)
                 {
                     Content = content,
@@ -143,13 +139,10 @@ namespace SyncniteBridge.Services
                         cts.Cancel();
                     }
                     catch { }
-                    rlog?.Enqueue(
-                        RemoteLog.Build(
-                            "warn",
-                            "push",
-                            "Push timed out",
-                            data: new { timeoutMs = AppConstants.PushTimeoutMs }
-                        )
+                    blog?.Warn(
+                        "push",
+                        "Push timed out",
+                        new { timeoutMs = AppConstants.PushTimeoutMs }
                     );
                     return;
                 }
@@ -158,18 +151,17 @@ namespace SyncniteBridge.Services
                 resp.EnsureSuccessStatusCode();
 
                 int count = api.Database.Games.Count(g => g.IsInstalled);
-                rlog?.Enqueue(RemoteLog.Build("info", "push", "Push OK", data: new { count }));
+                // Milestone: push ok
+                blog?.Info("push", "Push OK", new { count });
             }
             catch (OperationCanceledException) { }
             catch (HttpRequestException hex)
             {
-                rlog?.Enqueue(
-                    RemoteLog.Build("warn", "push", "Push HttpRequestException", err: hex.Message)
-                );
+                blog?.Warn("push", "Push HttpRequestException", new { err = hex.Message });
             }
             catch (Exception ex)
             {
-                rlog?.Enqueue(RemoteLog.Build("error", "push", "Push error", err: ex.Message));
+                blog?.Error("push", "Push error", err: ex.Message);
             }
         }
 

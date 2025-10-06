@@ -1,18 +1,24 @@
+import { rootLog } from "../logger";
+
+const log = rootLog.child("extensionService");
 const APP_VERSION = process.env.APP_VERSION ?? "dev";
 
 export class ExtensionService {
     private readonly extensionFile = "/extension/latest.pext";
 
     /**
-     * Returns the file path and download filename for the extension.
+     * Resolves the latest packaged extension (.pext) for download.
+     * @returns The file path and download name of the latest extension package.
      */
     getLatest(): { filePath: string; downloadName: string } {
-        console.log(`[extensionService] Resolving latest extension package`);
-        console.log(`[extensionService] File: ${this.extensionFile}, version: ${APP_VERSION}`);
+        // Milestone: resolve latest
+        log.info("Resolving latest extension package", { version: APP_VERSION });
 
-        return {
-            filePath: this.extensionFile,
-            downloadName: `syncnite-bridge-${APP_VERSION}.pext`,
-        };
+        const filePath = this.extensionFile;
+        const downloadName = `syncnite-bridge-${APP_VERSION}.pext`;
+
+        log.info("Resolved extension package", { filePath, downloadName });
+
+        return { filePath, downloadName };
     }
 }

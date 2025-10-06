@@ -11,7 +11,7 @@ export default function AppShellLayout({ children }: { children: React.ReactNode
     return (
         <AppShell
             header={{ height: GRID.rowHeight }}
-            navbar={{ width: 160, breakpoint: "sm", collapsed: { mobile: !opened } }}
+            navbar={{ width: GRID.menuWidth, breakpoint: "sm", collapsed: { mobile: !opened } }}
         >
             <AppShell.Header>
                 <AppHeader opened={opened} onToggleNav={toggle} />

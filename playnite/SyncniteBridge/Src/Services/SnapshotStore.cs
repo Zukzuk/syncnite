@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Playnite.SDK;
 using SyncniteBridge.Constants;
+using SyncniteBridge.Helpers;
 
 namespace SyncniteBridge.Services
 {
@@ -12,6 +13,7 @@ namespace SyncniteBridge.Services
     internal sealed class SnapshotStore
     {
         private readonly string path;
+        private readonly BridgeLogger blog;
 
         internal sealed class ManifestSnapshot
         {
@@ -21,10 +23,13 @@ namespace SyncniteBridge.Services
                 new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
         }
 
-        public SnapshotStore(string extensionsDataPath)
+        public SnapshotStore(string extensionsDataPath, BridgeLogger blog = null)
         {
             Directory.CreateDirectory(extensionsDataPath ?? ".");
             path = Path.Combine(extensionsDataPath ?? ".", AppConstants.SnapshotFileName);
+            this.blog = blog;
+
+            blog?.Debug("snapshot", "Snapshot store initialized", new { path });
         }
 
         public ManifestSnapshot Load()
@@ -32,13 +37,32 @@ namespace SyncniteBridge.Services
             try
             {
                 if (!File.Exists(path))
+                {
+                    blog?.Debug("snapshot", "No existing snapshot on disk", new { path });
                     return new ManifestSnapshot();
+                }
+
                 var json = File.ReadAllText(path);
-                var s = Playnite.SDK.Data.Serialization.FromJson<ManifestSnapshot>(json);
-                return s ?? new ManifestSnapshot();
+                var s =
+                    Playnite.SDK.Data.Serialization.FromJson<ManifestSnapshot>(json)
+                    ?? new ManifestSnapshot();
+
+                blog?.Debug(
+                    "snapshot",
+                    "Snapshot loaded",
+                    new
+                    {
+                        updatedAt = s.UpdatedAt,
+                        dbTicks = s.DbTicks,
+                        mediaFolders = s.MediaVersions?.Count ?? 0,
+                    }
+                );
+
+                return s;
             }
-            catch
+            catch (Exception ex)
             {
+                blog?.Warn("snapshot", "Failed to load snapshot", new { path, err = ex.Message });
                 return new ManifestSnapshot();
             }
         }
@@ -49,9 +73,22 @@ namespace SyncniteBridge.Services
             {
                 var json = Playnite.SDK.Data.Serialization.ToJson(snapshot);
                 File.WriteAllText(path, json);
+
+                blog?.Debug(
+                    "snapshot",
+                    "Snapshot saved",
+                    new
+                    {
+                        path,
+                        updatedAt = snapshot?.UpdatedAt,
+                        dbTicks = snapshot?.DbTicks ?? 0,
+                        mediaFolders = snapshot?.MediaVersions?.Count ?? 0,
+                    }
+                );
             }
-            catch
-            { /* ignore */
+            catch (Exception ex)
+            {
+                blog?.Warn("snapshot", "Failed to save snapshot", new { path, err = ex.Message });
             }
         }
     }

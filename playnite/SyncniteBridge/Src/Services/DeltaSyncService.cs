@@ -18,7 +18,7 @@ namespace SyncniteBridge.Services
     internal sealed class DeltaSyncService : IDisposable
     {
         private readonly IPlayniteAPI api;
-        private readonly RemoteLogClient rlog;
+        private readonly BridgeLogger blog;
 
         private readonly string dataRoot;
         private readonly string tempDir;
@@ -38,7 +38,7 @@ namespace SyncniteBridge.Services
         private readonly Timer debounceTimer;
         private Func<bool> isHealthy = () => true;
 
-        private readonly HttpClientEx http = new HttpClientEx();
+        private readonly HttpClientEx http;
 
         // New: composition
         private readonly SnapshotStore snapshot;
@@ -48,13 +48,15 @@ namespace SyncniteBridge.Services
             IPlayniteAPI api,
             string syncUrl,
             string dataRoot,
-            RemoteLogClient rlog
+            BridgeLogger blog
         )
         {
             this.api = api;
-            this.rlog = rlog;
+            this.blog = blog;
             this.dataRoot = dataRoot ?? "";
             this.syncUrl = (syncUrl ?? "").TrimEnd('/');
+
+            http = new HttpClientEx(blog);
 
             var localApp = Environment.GetFolderPath(
                 Environment.SpecialFolder.LocalApplicationData
@@ -63,10 +65,9 @@ namespace SyncniteBridge.Services
             Directory.CreateDirectory(tempDir);
 
             var myExtDataDir = Path.Combine(api.Paths.ExtensionsDataPath, AppConstants.GUID);
-            //var myExtDataDir = api.Paths.PluginUserDataPath; // Doesn't work...?
             Directory.CreateDirectory(myExtDataDir);
             snapshot = new SnapshotStore(myExtDataDir);
-            scanner = new LocalStateScanner(api, this.dataRoot);
+            scanner = new LocalStateScanner(api, this.dataRoot, blog);
 
             var libDir = Path.Combine(this.dataRoot, AppConstants.LibraryDirName);
             Directory.CreateDirectory(libDir);
@@ -110,9 +111,7 @@ namespace SyncniteBridge.Services
         public void UpdateEndpoints(string newSyncUrl)
         {
             syncUrl = (newSyncUrl ?? "").TrimEnd('/');
-            rlog?.Enqueue(
-                RemoteLog.Build("debug", "sync", "Endpoints updated", data: new { syncUrl })
-            );
+            blog?.Debug("sync", "Endpoints updated", new { syncUrl });
         }
 
         public void SetHealthProvider(Func<bool> provider) => isHealthy = provider ?? (() => true);
@@ -134,13 +133,11 @@ namespace SyncniteBridge.Services
                         foreach (var name in cur.MediaVersions.Keys)
                             dirtyMediaFolders.Add(name);
                     }
-                    rlog?.Enqueue(
-                        RemoteLog.Build(
-                            "debug",
-                            "sync",
-                            "Initial seed prepared (first run)",
-                            data: new { json = true, mediaFolders = cur.MediaVersions.Count }
-                        )
+                    // Milestone: first run detected → INFO
+                    blog?.Info(
+                        "sync",
+                        "Initial seed prepared (first run)",
+                        new { json = true, mediaFolders = cur.MediaVersions.Count }
                     );
                 }
                 else
@@ -170,38 +167,31 @@ namespace SyncniteBridge.Services
                         }
                     }
 
-                    rlog?.Enqueue(
-                        RemoteLog.Build(
-                            "debug",
-                            "sync",
-                            "Initial diff prepared",
-                            data: new { json = dbDirty, mediaChanged = changed }
-                        )
+                    blog?.Debug(
+                        "sync",
+                        "Initial diff prepared",
+                        new { json = dbDirty, mediaChanged = changed }
                     );
                 }
             }
             catch (Exception ex)
             {
-                rlog?.Enqueue(
-                    RemoteLog.Build("warn", "sync", "Initial snapshot diff failed", err: ex.Message)
-                );
+                blog?.Warn("sync", "Initial snapshot diff failed", new { err = ex.Message });
             }
 
             libWatcher.EnableRaisingEvents = true;
             mediaWatcher.EnableRaisingEvents = true;
 
-            rlog?.Enqueue(
-                RemoteLog.Build(
-                    "info",
-                    "sync",
-                    "Delta sync started and watchers attached",
-                    data: new
-                    {
-                        libraryDir = Path.Combine(dataRoot, AppConstants.LibraryDirName),
-                        mediaDir = Path.Combine(dataRoot, AppConstants.LibraryFilesDirName),
-                        debounceMs = AppConstants.DebounceMs_Sync,
-                    }
-                )
+            // Milestone: service ready
+            blog?.Info(
+                "sync",
+                "Delta sync started and watchers attached",
+                new
+                {
+                    libraryDir = Path.Combine(dataRoot, AppConstants.LibraryDirName),
+                    mediaDir = Path.Combine(dataRoot, AppConstants.LibraryFilesDirName),
+                    debounceMs = AppConstants.DebounceMs_Sync,
+                }
             );
 
             // single kick if currently healthy
@@ -209,18 +199,12 @@ namespace SyncniteBridge.Services
             {
                 if (isHealthy())
                 {
-                    rlog?.Enqueue(
-                        RemoteLog.Build(
-                            "info",
-                            "startup",
-                            "Health became healthy → triggering push+sync"
-                        )
-                    );
+                    blog?.Info("startup", "Health became healthy → triggering push+sync");
                     Trigger();
                 }
                 else
                 {
-                    rlog?.Enqueue(RemoteLog.Build("debug", "sync", "Skipped trigger: unhealthy"));
+                    blog?.Debug("sync", "Skipped trigger: unhealthy");
                 }
             });
         }
@@ -268,12 +252,13 @@ namespace SyncniteBridge.Services
         {
             if (!isHealthy())
             {
-                rlog?.Enqueue(RemoteLog.Build("debug", "sync", "Skipped trigger: unhealthy"));
+                blog?.Debug("sync", "Skipped trigger: unhealthy");
                 return;
             }
             dirty = true;
             debounceTimer?.Change(AppConstants.DebounceMs_Sync, Timeout.Infinite);
-            rlog?.Enqueue(RemoteLog.Build("info", "sync", "Manual/auto sync trigger queued"));
+            // Milestone: a sync pass has been queued
+            blog?.Info("sync", "Manual/auto sync trigger queued");
         }
 
         private async System.Threading.Tasks.Task DebouncedAsync()
@@ -294,7 +279,7 @@ namespace SyncniteBridge.Services
 
                 if (!isHealthy())
                 {
-                    rlog?.Enqueue(RemoteLog.Build("debug", "sync", "Abort: became unhealthy"));
+                    blog?.Debug("sync", "Abort: became unhealthy");
                     return;
                 }
 
@@ -322,9 +307,16 @@ namespace SyncniteBridge.Services
 
                 if (!needJson && mediaFolders.Count == 0)
                 {
-                    rlog?.Enqueue(RemoteLog.Build("debug", "sync", "Up-to-date; no upload needed"));
+                    blog?.Debug("sync", "Up-to-date; no upload needed");
                     return;
                 }
+
+                // Milestone: preparing plan (what will be uploaded)
+                blog?.Info(
+                    "sync",
+                    "Preparing upload plan",
+                    new { jsonChanged = needJson, mediaFoldersChanged = mediaFolders.Count }
+                );
 
                 var local = scanner.BuildLocalManifestView();
 
@@ -345,8 +337,20 @@ namespace SyncniteBridge.Services
                     $"{AppConstants.ZipNamePrefix}{DateTime.UtcNow.ToString(AppConstants.ZipTimestampFormat)}{AppConstants.ZipExtension}"
                 );
 
+                // Milestone: assembling ZIP (before work starts)
+                blog?.Info(
+                    "sync",
+                    "Assembling ZIP",
+                    new
+                    {
+                        needJson,
+                        mediaFolders = mediaFolders.Count,
+                        temp = zipPath,
+                    }
+                );
+
                 var swZip = System.Diagnostics.Stopwatch.StartNew();
-                using (var zb = new ZipBuilder(zipPath))
+                using (var zb = new ZipBuilder(zipPath, blog))
                 {
                     // /export/manifest.json
                     var manifestObj = new
@@ -376,23 +380,24 @@ namespace SyncniteBridge.Services
 
                     // Media folders that changed
                     foreach (var folder in mediaFolders)
+                    {
+                        blog?.Debug("sync", $"Include media folder: {folder}");
                         AddMediaFolderRecursively(zb, folder);
+                    }
                 }
                 swZip.Stop();
 
-                rlog?.Enqueue(
-                    RemoteLog.Build(
-                        "info",
-                        "sync",
-                        "Uploading delta",
-                        data: new
-                        {
-                            needJson,
-                            mediaFolders = mediaFolders.Count,
-                            zipMs = swZip.ElapsedMilliseconds,
-                            zipPath,
-                        }
-                    )
+                // Milestone: uploading
+                blog?.Info(
+                    "sync",
+                    "Uploading delta",
+                    new
+                    {
+                        needJson,
+                        mediaFolders = mediaFolders.Count,
+                        zipMs = swZip.ElapsedMilliseconds,
+                        zipPath,
+                    }
                 );
 
                 // upload
@@ -407,52 +412,45 @@ namespace SyncniteBridge.Services
                 lock (dirtyMediaLock)
                     dirtyMediaFolders.Clear();
 
-                rlog?.Enqueue(
-                    RemoteLog.Build(
-                        "info",
-                        "sync",
-                        "Upload complete",
-                        data: new
-                        {
-                            json = needJson,
-                            mediaFolders,
-                            uploadMs = swUpload.ElapsedMilliseconds,
-                            totalMs = swTotal.ElapsedMilliseconds,
-                        }
-                    )
+                // Milestone: upload complete
+                blog?.Info(
+                    "sync",
+                    "Upload complete",
+                    new
+                    {
+                        json = needJson,
+                        mediaFolders,
+                        uploadMs = swUpload.ElapsedMilliseconds,
+                        totalMs = swTotal.ElapsedMilliseconds,
+                    }
                 );
 
                 // persist new snapshot
                 try
                 {
                     snapshot.Save(scanner.BuildSnapshot());
-                    rlog?.Enqueue(RemoteLog.Build("debug", "sync", "Saved lastManifest snapshot"));
+                    blog?.Debug("sync", "Saved lastManifest snapshot");
                 }
                 catch (Exception ex)
                 {
-                    rlog?.Enqueue(
-                        RemoteLog.Build("warn", "sync", "Failed to save snapshot", err: ex.Message)
-                    );
+                    blog?.Warn("sync", "Failed to save snapshot", new { err = ex.Message });
                 }
 
                 // if more dirt gathered during upload → schedule again
                 if (dirty)
                 {
                     dirty = false;
-                    rlog?.Enqueue(RemoteLog.Build("debug", "sync", "Processing dirty re-run"));
+                    blog?.Debug("sync", "Processing dirty re-run");
                     Trigger();
                 }
             }
             catch (Exception ex)
             {
-                rlog?.Enqueue(
-                    RemoteLog.Build(
-                        "error",
-                        "sync",
-                        "Upload failed",
-                        err: ex.Message,
-                        data: new { totalMs = swTotal.ElapsedMilliseconds }
-                    )
+                blog?.Error(
+                    "sync",
+                    "Upload failed",
+                    data: new { totalMs = swTotal.ElapsedMilliseconds },
+                    err: ex.Message
                 );
 
                 api?.Notifications?.Add(
@@ -596,10 +594,8 @@ namespace SyncniteBridge.Services
                 Playnite.SDK.Data.Serialization.ToJson(games)
             );
 
-            // --- Recipes: existing first, then the rest
             var recipes = new (IEnumerable<object> Data, string Path)[]
             {
-                // Existing
                 (
                     api.Database.Tags?.Select(t => MapNamed(t)).Cast<object>()
                         ?? Array.Empty<object>(),
@@ -610,7 +606,6 @@ namespace SyncniteBridge.Services
                         ?? Array.Empty<object>(),
                     AppConstants.SourcesJsonPathInZip
                 ),
-                // New (supported in Playnite 10)
                 (
                     api.Database.Platforms?.Select(p =>
                         (object)

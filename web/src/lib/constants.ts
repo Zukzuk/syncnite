@@ -3,6 +3,7 @@ import { Persisted } from "./types";
 export const GRID = {
   cols: "56px minmax(0, 45%) 80px 100px minmax(0, 1fr)",
   rowHeight: 56,
+  menuWidth: 160,
   smallBox: 40,
 } as const;
 

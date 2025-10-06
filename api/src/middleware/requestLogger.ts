@@ -6,7 +6,7 @@ export function requestLogger(): RequestHandler {
         const { method, originalUrl } = req;
         res.on("finish", () => {
             const ms = Date.now() - started;
-            console.log(`[api] ${method} ${originalUrl} → ${res.statusCode} (${ms}ms)`);
+            console.log(`[req] ${method} ${originalUrl} → ${res.statusCode} (${ms}ms)`);
         });
         next();
     };

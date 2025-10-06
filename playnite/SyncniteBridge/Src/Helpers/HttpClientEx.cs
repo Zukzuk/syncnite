@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
@@ -50,10 +49,12 @@ namespace SyncniteBridge.Helpers
         }
 
         private readonly HttpClient http;
+        private readonly BridgeLogger blog;
 
-        public HttpClientEx()
+        public HttpClientEx(BridgeLogger blog, TimeSpan? timeout = null)
         {
-            http = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
+            this.blog = blog;
+            http = new HttpClient { Timeout = timeout ?? TimeSpan.FromMinutes(5) };
         }
 
         public async Task<bool> PingAsync(string url)
@@ -69,73 +70,65 @@ namespace SyncniteBridge.Helpers
             }
         }
 
-        public async Task<RemoteManifestWrapper> GetRemoteManifestAsync(string manifestUrl)
-        {
-            try
-            {
-                var resp = await http.GetAsync(manifestUrl).ConfigureAwait(false);
-                if (resp.StatusCode == HttpStatusCode.NotFound)
-                {
-                    return new RemoteManifestWrapper
-                    {
-                        ok = true,
-                        generatedAt = DateTime.UtcNow.ToString("o"),
-                        manifest = new RemoteManifest(),
-                    };
-                }
-                if (!resp.IsSuccessStatusCode)
-                    return new RemoteManifestWrapper
-                    {
-                        ok = true,
-                        generatedAt = DateTime.UtcNow.ToString("o"),
-                        manifest = new RemoteManifest(),
-                    };
-
-                var body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
-                var parsed = Playnite.SDK.Data.Serialization.FromJson<RemoteManifestWrapper>(body);
-                return parsed
-                    ?? new RemoteManifestWrapper
-                    {
-                        ok = true,
-                        generatedAt = DateTime.UtcNow.ToString("o"),
-                        manifest = new RemoteManifest(),
-                    };
-            }
-            catch
-            {
-                // treat as empty
-                return new RemoteManifestWrapper
-                {
-                    ok = true,
-                    generatedAt = DateTime.UtcNow.ToString("o"),
-                    manifest = new RemoteManifest(),
-                };
-            }
-        }
-
-        // Upload ZIP from disk
+        /// <summary>Upload ZIP from disk to sync endpoint.</summary>
         public async Task<bool> SyncZipAsync(string syncUrl, string zipPath)
         {
+            var fi = new FileInfo(zipPath);
+            blog?.Debug(
+                "http",
+                "POST sync ZIP begin",
+                new
+                {
+                    syncUrl,
+                    size = fi.Exists ? fi.Length : -1,
+                    name = Path.GetFileName(zipPath),
+                }
+            );
+
             using (var content = new MultipartFormDataContent())
-            using (var fileContent = new StreamContent(File.OpenRead(zipPath)))
+            using (var fs = File.OpenRead(zipPath))
+            using (var fileContent = new StreamContent(fs))
             {
                 fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/zip");
                 content.Add(fileContent, "file", Path.GetFileName(zipPath));
 
-                var resp = await http.PostAsync(syncUrl, content).ConfigureAwait(false);
-                var body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
-                if (!resp.IsSuccessStatusCode)
-                    return false;
+                HttpResponseMessage resp = null;
+                string body = null;
 
                 try
                 {
-                    var obj = Playnite.SDK.Data.Serialization.FromJson<SyncResp>(body);
-                    return obj != null && obj.ok;
+                    resp = await http.PostAsync(syncUrl, content).ConfigureAwait(false);
+                    body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                    if (!resp.IsSuccessStatusCode)
+                    {
+                        blog?.Warn(
+                            "http",
+                            "POST sync ZIP non-OK",
+                            new { status = (int)resp.StatusCode, reason = resp.ReasonPhrase }
+                        );
+                        return false;
+                    }
+
+                    try
+                    {
+                        var obj = Playnite.SDK.Data.Serialization.FromJson<SyncResp>(body);
+                        var ok = obj != null && obj.ok;
+                        blog?.Debug("http", "POST sync ZIP OK", new { declaredOk = ok });
+                        return ok;
+                    }
+                    catch
+                    {
+                        // Accept 200 without JSON body
+                        blog?.Debug("http", "POST sync ZIP OK (no JSON body)");
+                        return true;
+                    }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    return true;
-                } // accept 200 without JSON body
+                    blog?.Warn("http", "POST sync ZIP failed", new { err = ex.Message });
+                    return false;
+                }
             }
         }
     }

@@ -7,6 +7,11 @@ namespace SyncniteBridge.Constants
     /// </summary>
     internal static class AppConstants
     {
+        // Common app names/labels
+        public const string AppName = "SyncniteBridge";
+        public const string SettingsTitle = "Syncnite Bridge Settings";
+        public const string MenuTitle = "Syncnite Bridge";
+
         // Extension GUID
         public const string GUID = "a85f0db8-39f4-40ea-9e03-bc5be2298c89";
 
@@ -48,10 +53,6 @@ namespace SyncniteBridge.Constants
 
         // Config file
         public const string ConfigFileName = "SyncniteBridgeConfig.json";
-
-        // Common app names/labels
-        public const string AppName = "SyncniteBridge";
-        public const string SettingsTitle = "Syncnite Bridge Settings";
 
         // ZIP naming
         public const string ZipNamePrefix = "PlayniteSync-";

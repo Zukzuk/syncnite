@@ -17,11 +17,10 @@ namespace SyncniteBridge
         public override Guid Id { get; } = Guid.Parse(AppConstants.GUID);
 
         private readonly ILogger logger = LogManager.GetLogger();
-        private readonly RemoteLogClient rlog;
+        private BridgeLogger blog;
         private PushInstalledService pusher;
         private BridgeConfig config;
         private readonly string configPath;
-
         private DeltaSyncService deltaSync;
         private HealthcheckService health;
 
@@ -31,40 +30,37 @@ namespace SyncniteBridge
             configPath = Path.Combine(GetPluginUserDataPath(), AppConstants.ConfigFileName);
             config = BridgeConfig.Load(configPath);
 
-            var logUrl = Combine(config.ApiBase, AppConstants.Path_Syncnite_Log);
-            rlog = new RemoteLogClient(logUrl);
+            // Bridge logger replaces RemoteLogClient
+            blog = new BridgeLogger(config.ApiBase, BridgeVersion.Current, config.LogLevel);
 
             var playniteVer = PlayniteApi?.ApplicationInfo?.ApplicationVersion?.ToString();
-            rlog.Enqueue(
-                RemoteLog.Build(
-                    "info",
-                    "startup",
-                    "SyncniteBridge loaded",
-                    data: new
-                    {
-                        plugin = "SyncniteBridge",
-                        version = BridgeVersion.Current,
-                        playnite = playniteVer,
-                    }
-                )
+            blog.Info(
+                "startup",
+                "SyncniteBridge loaded",
+                new
+                {
+                    plugin = AppConstants.AppName,
+                    version = BridgeVersion.Current,
+                    playnite = playniteVer,
+                }
             );
 
             // Health service (source of truth for connectivity)
             var pingUrl = Combine(config.ApiBase, AppConstants.Path_Syncnite_Ping);
-            health = new HealthcheckService(api, pingUrl, rlog);
+            health = new HealthcheckService(api, pingUrl, blog);
             health.Start();
 
             // Push installed (independent path)
             pusher = new PushInstalledService(
                 api,
                 Combine(config.ApiBase, AppConstants.Path_Syncnite_Push),
-                rlog
+                blog
             );
             pusher.SetHealthProvider(() => health.IsHealthy);
 
             // Delta sync (ZIP upload)
             var syncUrl = Combine(config.ApiBase, AppConstants.Path_Syncnite_Sync);
-            deltaSync = new DeltaSyncService(api, syncUrl, GetDefaultPlayniteDataRoot(), rlog);
+            deltaSync = new DeltaSyncService(api, syncUrl, GetDefaultPlayniteDataRoot(), blog);
             deltaSync.SetHealthProvider(() => health.IsHealthy);
 
             // When health flips to healthy, kick once
@@ -72,25 +68,13 @@ namespace SyncniteBridge
             {
                 if (ok)
                 {
-                    rlog.Enqueue(
-                        RemoteLog.Build(
-                            "info",
-                            "startup",
-                            "Health became healthy → triggering push+sync"
-                        )
-                    );
+                    blog.Info("startup", "Health became healthy → triggering push+sync");
                     pusher.Trigger();
                     deltaSync.Trigger();
                 }
                 else
                 {
-                    rlog.Enqueue(
-                        RemoteLog.Build(
-                            "warn",
-                            "startup",
-                            "Health became unhealthy → suspend push/sync"
-                        )
-                    );
+                    blog.Warn("startup", "Health became unhealthy → suspend push+sync");
                 }
             };
 
@@ -131,7 +115,7 @@ namespace SyncniteBridge
             {
                 new MainMenuItem
                 {
-                    Description = "Syncnite Bridge",
+                    Description = AppConstants.MenuTitle,
                     Action = _ =>
                     {
                         try
@@ -172,22 +156,16 @@ namespace SyncniteBridge
                                         config.ApiBase,
                                         AppConstants.Path_Syncnite_Ping
                                     );
-                                    var logUrl = Combine(
-                                        config.ApiBase,
-                                        AppConstants.Path_Syncnite_Log
-                                    );
 
                                     pusher?.UpdateEndpoint(pushUrl);
                                     deltaSync?.UpdateEndpoints(syncUrl);
                                     health?.UpdateEndpoint(pingUrl);
-                                    rlog?.UpdateEndpoint(logUrl);
-                                    rlog.Enqueue(
-                                        RemoteLog.Build(
-                                            "info",
-                                            "config",
-                                            "ApiBase updated",
-                                            data: new { apiBase = config.ApiBase }
-                                        )
+                                    blog?.UpdateApiBase(config.ApiBase);
+
+                                    blog.Info(
+                                        "config",
+                                        "ApiBase updated",
+                                        new { apiBase = config.ApiBase }
                                     );
 
                                     if (health.IsHealthy)
@@ -199,29 +177,18 @@ namespace SyncniteBridge
                                 onPushInstalled: () =>
                                 {
                                     pusher?.PushNow();
-                                    rlog.Enqueue(
-                                        RemoteLog.Build("info", "push", "Manual push requested")
-                                    );
+                                    blog.Info("push", "Manual push requested");
                                 },
                                 onSyncLibrary: () =>
                                 {
                                     deltaSync?.Trigger();
-                                    rlog.Enqueue(
-                                        RemoteLog.Build("info", "sync", "Manual sync requested")
-                                    );
+                                    blog.Info("sync", "Manual sync requested");
                                 }
                             );
                         }
                         catch (Exception ex)
                         {
-                            rlog.Enqueue(
-                                RemoteLog.Build(
-                                    "error",
-                                    "ui",
-                                    "Failed to open settings window",
-                                    err: ex.Message
-                                )
-                            );
+                            blog.Error("ui", "Failed to open settings window", err: ex.Message);
                         }
                     },
                 },
@@ -248,8 +215,8 @@ namespace SyncniteBridge
             catch { }
             try
             {
-                rlog?.Enqueue(RemoteLog.Build("info", "shutdown", "SyncniteBridge disposing"));
-                rlog?.Dispose();
+                blog?.Info("shutdown", "SyncniteBridge disposing");
+                blog?.Dispose();
             }
             catch { }
         }

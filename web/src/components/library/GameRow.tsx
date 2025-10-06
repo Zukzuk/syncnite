@@ -6,8 +6,10 @@ import { buildAssetUrl, effectiveLink } from "../../lib/utils";
 import { useDelayedFlag } from "../hooks/useDelayedFlag";
 import { GameRowItem } from "../ui/GameRowItem";
 import { GameRowDetails } from "../ui/GameRowDetails";
+import { GRID } from "../../lib/constants";
 
 type ControlledProps = {
+  topOffset: number;
   collapseOpen: boolean;
   everOpened: boolean;
   onToggle: () => void;
@@ -16,7 +18,7 @@ type ControlledProps = {
 export function GameRow(props: Row & ControlledProps) {
   const {
     id, hidden, sortingName, installed, iconUrl, title, source, tags, year, url, raw,
-    collapseOpen, everOpened, onToggle,
+    collapseOpen, everOpened, topOffset, onToggle,
   } = props;
 
   const theme = useMantineTheme();
@@ -64,8 +66,11 @@ export function GameRow(props: Row & ControlledProps) {
       onClick={onToggle}
     >
       {/* Foreground */}
-      <Box style={{ position: "relative", zIndex: 1 }}>
-
+      <Box
+        style={{ position: "relative", top: 0, left: 0, zIndex: 1 }}
+        w={collapseOpen ? `calc(100vw - ${GRID.menuWidth}px - 12px - 15px)` : "100%"}
+        h={collapseOpen ? `calc(100vh - ${topOffset}px - 38px - ${GRID.smallBox}px - 12px)` : "100%"}
+      >
         {/* Main item */}
         <GameRowItem
           id={id}

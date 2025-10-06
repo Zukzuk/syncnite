@@ -1,3 +1,6 @@
+// https://mantine.dev/styles/css-variables/
+// https://mantine.dev/styles/css-variables-list/
+
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -37,11 +40,11 @@ img.icon {
 
 .game-row {
   &:hover {
-    background: var(--mantine-color-default-hover);
+    background: var(--mantine-color-default-hover) !important;
   }
 
   &.is-installed:hover {
-    background: var(--mantine-primary-color-filled) !important;
+    background: var(--mantine-primary-color-light-hover) !important;
   }
 
   /* Ensure the overlay uses white icons from Tabler (currentColor) */

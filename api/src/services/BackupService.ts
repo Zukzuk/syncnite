@@ -5,8 +5,12 @@ import {
     run, cleanDir, normalizeBackslashPaths, findLibraryDir,
     copyLibraryFilesWithProgress,
 } from "../helpers";
+import { rootLog } from "../logger";
+
+const log = rootLog.child("backupService");
 
 export class BackupService {
+
     /**
      * Moves the uploaded temp file to INPUT_DIR with a sanitized name.
      * Returns the sanitized filename.
@@ -15,19 +19,18 @@ export class BackupService {
         const safe = originalName.replace(/[^A-Za-z0-9._ -]/g, "_");
         const dest = join(INPUT_DIR, safe);
 
-        console.log(`[backupService] Sanitized filename → "${safe}"`);
-        console.log(`[backupService] Moving file to ${dest}`);
+        log.info(`Sanitized filename → "${safe}"`);
+        log.info(`Moving file to ${dest}`);
 
         await fs.rename(tempPath, dest);
 
-        console.log("[backupService] File stored successfully");
+        log.info("File stored successfully");
         return safe;
     }
 
     /**
-     * Processes an uploaded ZIP with progress + logs via SSE callbacks.
-     * - send(type, payload): raw SSE send (already stringified in router)
-     *   We’ll use send('log', string), send('progress', {...}), send('done'|'error', string)
+     * Processes the ZIP file: validates, extracts, normalizes paths,
+     * finds the library directory, dumps the database to JSON, and copies media files.
      */
     async processZipStream(params: {
         filename: string;
@@ -36,9 +39,9 @@ export class BackupService {
     }): Promise<void> {
         const { filename, password = "", send } = params;
 
-        // Wrapper so all service-side logs are prefixed and mirrored to SSE "log"
+        // Mirror selected logs to SSE "log" while keeping server logs structured
         const sseLog = (m: string) => {
-            console.log(`[backupService] ${m}`);
+            log.debug(m);
             send("log", m);
         };
 
@@ -49,17 +52,18 @@ export class BackupService {
         ) => send("progress", { phase, percent, ...(extra || {}) });
 
         const zipPath = join(INPUT_DIR, basename(filename));
-        console.log(`[backupService] zipPath resolved to: ${zipPath}`);
+        log.info(`zipPath resolved`, { zipPath });
 
         try {
             await fs.access(zipPath);
-            console.log("[backupService] ZIP exists, continuing");
+            log.info("ZIP exists, continuing");
 
             await cleanDir(WORK_DIR);
-            console.log("[backupService] WORK_DIR cleaned");
+            log.info("WORK_DIR cleaned");
 
+            // Validate ZIP
             sseLog("Validating ZIP with 7z…");
-            console.log("[backupService] Running 7z test");
+            log.debug("Running 7z test");
             await run("7z", ["t", zipPath], {
                 onStdout: (ln) => {
                     const m = /(\d{1,3})%/.exec(ln);
@@ -67,10 +71,11 @@ export class BackupService {
                 },
                 onStderr: (ln) => /error/i.test(ln) && sseLog(`7z: ${ln}`),
             });
-            console.log("[backupService] ZIP validation complete");
+            log.info("ZIP validation complete");
 
+            // Extract ZIP
             sseLog("Extracting ZIP with 7z…");
-            console.log("[backupService] Running 7z extract");
+            log.debug("Running 7z extract");
             await run("7z", ["x", "-y", `-o${WORK_DIR}`, zipPath, "-bsp1", "-bso1"], {
                 onStdout: (ln) => {
                     const m = /(\d{1,3})%/.exec(ln);
@@ -78,52 +83,57 @@ export class BackupService {
                 },
                 onStderr: (ln) => /error/i.test(ln) && sseLog(`7z: ${ln}`),
             });
-            console.log("[backupService] Extraction complete");
+            log.info("Extraction complete");
 
+            // Normalize paths
             sseLog("Normalizing backslash paths…");
             await normalizeBackslashPaths(WORK_DIR);
-            console.log("[backupService] Backslash normalization complete");
+            log.info("Backslash normalization complete");
 
+            // Locate library dir
             sseLog("Locating library dir…");
             const libDir = await findLibraryDir(WORK_DIR);
             if (!libDir) {
-                console.error("[backupService] No library directory with *.db found");
+                log.warn("No library directory with *.db found");
                 throw new Error("No library directory with *.db");
             }
-            console.log(`[backupService] Library dir found: ${libDir}`);
+            log.info("Library dir found", { libDir });
 
+            // Prepare /data
             sseLog("Clearing /data…");
             await fs.mkdir(DATA_DIR, { recursive: true });
-            console.log("[backupService] DATA_DIR ensured");
+            log.info("DATA_DIR ensured");
 
+            // Dump LiteDB → JSON
             sseLog("Dumping LiteDB to JSON…");
             const env = { ...process.env };
             if (password) env.LITEDB_PASSWORD = password;
-            console.log("[backupService] Running PlayniteBackupImport");
+            log.debug("Running PlayniteBackupImport");
             const { out, err } = await run("./PlayniteBackupImport", [libDir, DATA_DIR], { env });
             if (out?.trim()) out.trim().split(/\r?\n/).forEach((l) => sseLog(l));
             if (err?.trim()) err.trim().split(/\r?\n/).forEach((l) => sseLog(l));
-            console.log("[backupService] PlayniteBackupImport finished");
+            log.info("PlayniteBackupImport finished");
 
-            console.log("[backupService] Starting media copy");
+            // Copy media
+            log.info("Starting media copy");
             await copyLibraryFilesWithProgress({
                 libDir,
                 workRoot: WORK_DIR,
                 dataRoot: DATA_DIR,
-                log: sseLog,
+                log: (m) => sseLog(m),
                 progress: ({ percent, copiedBytes, totalBytes, deltaBytes }) =>
                     progress("copy", percent, { copiedBytes, totalBytes, deltaBytes }),
                 concurrency: 8,
                 tickMs: 500,
             });
-            console.log("[backupService] Media copy finished");
+            log.info("Media copy finished");
 
             send("done", "ok");
-            console.log("[backupService] Process finished successfully");
+            log.info("Process finished successfully");
         } catch (e: any) {
-            console.error("[backupService] ERROR:", String(e?.message || e));
+            log.error("ERROR", { err: String(e?.message ?? e) });
             send("error", String(e?.message || e));
-            throw e; // let router log its own error + end()
+            throw e; // let router handle error + end()
         }
     }
 }

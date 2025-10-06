@@ -1,5 +1,5 @@
 import React from "react";
-import { Stack, Loader, Box } from "@mantine/core";
+import { Stack, Loader, Box, Center } from "@mantine/core";
 import { loadLibrary } from "../lib/data";
 import type { Loaded } from "../lib/types";
 import { GRID } from "../lib/constants";
@@ -48,11 +48,13 @@ export default function LibraryPage() {
                         onCountsChange={(f, t) => { setFiltered(f); setTotal(t); }}
                         filteredCount={filtered}
                         totalCount={total}
-                        installedVersion={installedUpdatedAt || null}
+                        installedUpdatedAt={installedUpdatedAt || ""}
                     />
                 </Box>
             ) : (
-                <Loader size="sm" />
+                <Center w={`calc(100vw - ${GRID.menuWidth}px)`} h={`calc(100vh - ${GRID.rowHeight}px)`}>
+                    <Loader size="lg" />
+                </Center>
             )}
         </Stack>
     );

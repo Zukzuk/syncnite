@@ -10,20 +10,19 @@ type Props = {
   virtuosoRef: React.RefObject<VirtuosoHandle>;
   scrollerRef: (ref: HTMLElement | Window | null) => void;
   groups: { title: string; rows: Row[] }[];
-  controlsH: number;
-  headerH: number;
+  topOffset: number;
   overscan: { top: number; bottom: number };
   rangeChanged: (range: { startIndex: number; endIndex: number }) => void;
   openIds: Set<string>;
   everOpenedIds: Set<string>;
   onToggle: (id: string, globalIndex: number) => void;
   remountKey: string;
-  rowVersion?: string; // ← NEW
+  installedUpdatedAt?: string;
 };
 
 export function GroupedList({
-  virtuosoRef, scrollerRef, groups, controlsH, headerH, overscan, rangeChanged,
-  openIds, everOpenedIds, onToggle, remountKey, rowVersion,
+  virtuosoRef, scrollerRef, groups, topOffset, overscan, rangeChanged,
+  openIds, everOpenedIds, onToggle, remountKey, installedUpdatedAt,
 }: Props) {
   return (
     <GroupedVirtuoso
@@ -36,7 +35,7 @@ export function GroupedList({
       increaseViewportBy={overscan}
       rangeChanged={rangeChanged}
       groupContent={(index) => (
-        <AlphabeticalSeparatorRow bucket={groups[index].title} top={(controlsH + headerH) || 0} />
+        <AlphabeticalSeparatorRow bucket={groups[index].title} top={topOffset || 0} />
       )}
       itemContent={(index) => {
         let i = index;
@@ -47,7 +46,7 @@ export function GroupedList({
             const globalIndex = offset + i;
             return (
               <GameRow
-                key={`${r.id}|${rowVersion ?? ""}`}
+                key={`${r.id}|${installedUpdatedAt}`}
                 id={r.id}
                 hidden={r.hidden}
                 installed={r.installed}
@@ -59,6 +58,7 @@ export function GroupedList({
                 url={r.url}
                 raw={r.raw}
                 sortingName={r.sortingName}
+                topOffset={topOffset}
                 collapseOpen={openIds.has(r.id)}
                 everOpened={everOpenedIds.has(r.id)}
                 onToggle={() => onToggle(r.id, globalIndex)}

@@ -1,5 +1,6 @@
 import React from "react";
 import { Group, Image, Paper, AspectRatio, Box } from "@mantine/core";
+import { GRID } from "../../lib/constants";
 
 type Props = {
     title: string;
@@ -40,11 +41,6 @@ export function GameRowDetails({ title, coverUrl, collapseOpenDelayed, everOpene
                         loading="lazy"
                     />
                 ) : null}
-
-                {/* reserved preview slot */}
-                <AspectRatio ratio={16 / 9} w="100%">
-                    <Box />
-                </AspectRatio>
             </Group>
         </Paper>
     );

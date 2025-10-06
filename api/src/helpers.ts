@@ -2,21 +2,35 @@ import { spawn, type SpawnOptionsWithoutStdio } from "node:child_process";
 import { join, dirname } from "node:path";
 import { promises as fs } from "node:fs";
 import * as fsSync from "node:fs";
+import { rootLog } from "./logger";
 
-export type RunOpts = SpawnOptionsWithoutStdio & {
-    onStdout?: (line: string) => void;
-    onStderr?: (line: string) => void;
-};
+const log = rootLog.child("helpers");
 
 export const INPUT_DIR = "/input";
 export const WORK_DIR = "/work";
 export const DATA_DIR = "/data";
 
+/**
+ * Options for running a command.
+ */
+export type RunOpts = SpawnOptionsWithoutStdio & {
+    onStdout?: (line: string) => void;
+    onStderr?: (line: string) => void;
+};
+
+/**
+ * Run a command and return its output.
+ * @param cmd Command to run
+ * @param args 
+ * @param opts 
+ * @returns 
+ */
 export function run(
     cmd: string,
     args: string[],
     opts: RunOpts = {}
 ): Promise<{ code: number | null; out: string; err: string }> {
+    log.trace(`spawn exec`, { cmd, args });
     return new Promise((resolve, reject) => {
         const child = spawn(cmd, args, { stdio: ["ignore", "pipe", "pipe"], ...opts });
         let out = "", err = "";
@@ -29,11 +43,15 @@ export function run(
 
         child.stdout?.on("data", (b) => feed(b, "out", opts.onStdout));
         child.stderr?.on("data", (b) => feed(b, "err", opts.onStderr));
-        child.on("error", reject);
-        child.on("close", (code) => resolve({ code, out, err }));
+        child.on("error", (e) => { log.warn(`spawn error`, { err: String((e as any)?.message ?? e) }); reject(e); });
+        child.on("close", (code) => { log.trace(`spawn exit`, { code }); resolve({ code, out, err }); });
     });
 }
 
+/**
+ * Clean a directory by removing all its contents. If the directory does not exist, it is created.
+ * @param dir Directory to clean
+ */
 export async function cleanDir(dir: string) {
     try {
         const entries = await fs.readdir(dir, { withFileTypes: true });
@@ -41,12 +59,18 @@ export async function cleanDir(dir: string) {
     } catch (err: any) {
         if (err?.code === "ENOENT") {
             await fs.mkdir(dir, { recursive: true });
+            log.debug(`created directory`, { dir });
         } else {
             throw err;
         }
     }
 }
 
+/**
+ * Normalize backslash paths to forward slashes.
+ * @param root Root directory to normalize
+ * @returns
+ */
 export async function normalizeBackslashPaths(root: string): Promise<void> {
     const entries = await fs.readdir(root, { withFileTypes: true });
     for (const e of entries) {
@@ -57,12 +81,18 @@ export async function normalizeBackslashPaths(root: string): Promise<void> {
             const parts = e.name.split("\\");
             const dest = join(root, ...parts);
             await fs.mkdir(dirname(dest), { recursive: true });
-            try { await fs.rename(p, dest); } catch { /* ignore racing*/ }
+            try { await fs.rename(p, dest); log.debug(`renamed entry`, { from: p, to: dest }); } catch { /* ignore racing*/ }
         }
     }
 }
 
+/**
+ * Find the library directory within the given root.
+ * @param root Root directory to search
+ * @returns The path to the library directory, or null if not found
+ */
 export async function findLibraryDir(root: string): Promise<string | null> {
+    log.debug(`findLibraryDir start`, { root });
     const stack = [root];
     while (stack.length) {
         const dir = stack.pop()!;
@@ -72,23 +102,28 @@ export async function findLibraryDir(root: string): Promise<string | null> {
         } catch { continue; }
 
         const hasGamesDb = entries.some(e => e.isFile() && /^(games|game)\.db$/i.test(e.name));
-        if (hasGamesDb) return dir;
+        if (hasGamesDb) { log.info(`library dir detected`, { dir }); return dir; }
 
         const libEntry = entries.find(e => e.isDirectory() && e.name.toLowerCase() === "library");
         if (libEntry) {
             const lib = join(dir, libEntry.name);
             try {
                 const libEntries = await fs.readdir(lib);
-                if (libEntries.some(n => /^(games|game)\.db$/i.test(n))) return lib;
+                if (libEntries.some(n => /^(games|game)\.db$/i.test(n))) { log.info(`library dir detected`, { dir: lib }); return lib; }
             } catch { /* ignore */ }
         }
 
         for (const e of entries) if (e.isDirectory()) stack.push(join(dir, e.name));
     }
+    log.debug(`library dir not found`, { root });
     return null;
 }
 
-/** Copy library media with live byte-level progress. Returns stats. */
+/**
+ * Copy library media with live byte-level progress. Returns stats.
+ * @param opts Options for copying library files
+ * @returns Stats about the copy operation
+ */
 export async function copyLibraryFilesWithProgress(opts: {
     libDir: string;
     workRoot: string;
@@ -98,7 +133,7 @@ export async function copyLibraryFilesWithProgress(opts: {
     concurrency?: number;
     tickMs?: number;
 }): Promise<{ copiedFiles: number; failures: number; totalBytes: number }> {
-    const { libDir, workRoot, dataRoot, log, progress, concurrency = 8, tickMs = 500 } = opts;
+    const { libDir, workRoot, dataRoot, log: emit, progress, concurrency = 8, tickMs = 500 } = opts;
 
     // Prefer sibling of libDir: ../libraryfiles
     const sib = join(dirname(libDir), "libraryfiles");
@@ -119,7 +154,7 @@ export async function copyLibraryFilesWithProgress(opts: {
     for (const c of candidates) {
         if (await isDir(c)) { src = c; break; }
     }
-    if (!src) { log("No libraryfiles folder found."); return { copiedFiles: 0, failures: 0, totalBytes: 0 }; }
+    if (!src) { emit("No libraryfiles folder found."); return { copiedFiles: 0, failures: 0, totalBytes: 0 }; }
 
     const destRoot = join(dataRoot, "libraryfiles");
     await fs.mkdir(destRoot, { recursive: true });
@@ -144,9 +179,9 @@ export async function copyLibraryFilesWithProgress(opts: {
     }
     await indexDir(src);
 
-    if (!items.length) { log("No media files to copy."); return { copiedFiles: 0, failures: 0, totalBytes }; }
+    if (!items.length) { emit("No media files to copy."); return { copiedFiles: 0, failures: 0, totalBytes }; }
 
-    log(`Copying media from ${src} → ${destRoot}`);
+    emit(`Copying media from ${src} → ${destRoot}`);
 
     let copiedBytes = 0, copiedFiles = 0, failures = 0, lastReport = 0;
     const timer = setInterval(() => {
@@ -180,7 +215,7 @@ export async function copyLibraryFilesWithProgress(opts: {
                 });
                 copiedFiles++;
             } catch (e: any) {
-                failures++; log(`ERROR copying ${it.rel}: ${e?.message ?? e}`);
+                failures++; emit(`ERROR copying ${it.rel}: ${e?.message ?? e}`);
             }
         }
     }
@@ -191,11 +226,16 @@ export async function copyLibraryFilesWithProgress(opts: {
 
     const pct = totalBytes ? (copiedBytes / totalBytes) * 100 : 100;
     progress?.({ phase: "copy", percent: pct, copiedBytes, totalBytes, deltaBytes: 0 });
-    log(`Copy complete: ${copiedFiles} files, ${pct.toFixed(1)}%, ${failures} errors`);
+    emit(`Copy complete: ${copiedFiles} files, ${pct.toFixed(1)}%, ${failures} errors`);
 
     return { copiedFiles, failures, totalBytes };
 }
 
+/**
+ * Recursively copy a directory.
+ * @param src Source directory
+ * @param dest Destination directory
+ */
 export async function copyDir(src: string, dest: string) {
     await fs.mkdir(dest, { recursive: true });
     const entries = await fs.readdir(src, { withFileTypes: true });
@@ -207,8 +247,13 @@ export async function copyDir(src: string, dest: string) {
     }
 }
 
-// Find export directory containing games.game.json or games.json
+/**
+ * Find the export directory containing games.game.json or games.json.
+ * @param root Root directory to search
+ * @returns The path to the export directory, or null if not found
+ */
 export async function findExportDir(root: string): Promise<string | null> {
+    log.debug(`findExportDir start`, { root });
     const stack = [root];
     while (stack.length) {
         const dir = stack.pop()!;
@@ -219,12 +264,15 @@ export async function findExportDir(root: string): Promise<string | null> {
                 const exp = join(dir, e.name);
                 try {
                     const names = (await fs.readdir(exp)).map(n => n.toLowerCase());
-                    // shaped preferred; legacy allowed if you ever send it
-                    if (names.includes("games.game.json") || names.includes("games.json")) return exp;
+                    if (names.includes("games.game.json") || names.includes("games.json")) {
+                        log.info(`export dir detected`, { exportDir: exp });
+                        return exp;
+                    }
                 } catch { /* ignore */ }
             }
             if (e.isDirectory()) stack.push(join(dir, e.name));
         }
     }
+    log.debug(`export dir not found`, { root });
     return null;
 }

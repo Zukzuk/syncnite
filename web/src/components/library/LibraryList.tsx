@@ -19,7 +19,7 @@ type Props = {
   onCountsChange?: (filtered: number, total: number) => void;
   filteredCount: number;
   totalCount: number;
-  installedVersion?: string | null;
+  installedUpdatedAt?: string;
 };
 
 export function LibraryList({
@@ -27,15 +27,14 @@ export function LibraryList({
   onCountsChange,
   filteredCount,
   totalCount,
-  installedVersion,
+  installedUpdatedAt,
 }: Props) {
   const overscan = { top: 600, bottom: 800 } as const;
   const { ui, derived } = useLibraryState(data);
   const { ref: controlsRef, height: controlsH } = useElementSize();
   const { ref: headerRef, height: headerH } = useElementSize();
-  const stickyOffset = controlsH;
   const { openIds, everOpenedIds, toggleOpen } = useCollapseOpenToggle();
-  const { virtuosoRef, setScrollerEl: _setScrollerEl, scrollRowIntoView } = useJumpToScroll(headerH);
+  const { virtuosoRef, setScrollerEl, scrollRowIntoView } = useJumpToScroll(headerH);
 
   React.useEffect(() => {
     onCountsChange?.(derived.filteredCount, derived.totalCount);
@@ -77,10 +76,6 @@ export function LibraryList({
     sortDir: ui.sortDir,
   });
 
-  // IMPORTANT: do NOT append installed to these keys (would remount & reset scroll)
-  const rowVersion = installedVersion ?? "";
-  const setScrollerEl = _setScrollerEl;
-
   return (
     <Flex direction="column" h="100%" style={{ minHeight: 0 }}>
       <StickyControls
@@ -105,7 +100,7 @@ export function LibraryList({
 
       <StickySort
         headerRef={headerRef as unknown as (el: HTMLElement | null) => void}
-        top={stickyOffset}
+        top={controlsH}
         sortKey={ui.sortKey}
         sortDir={ui.sortDir}
         onToggleSort={ui.toggleSort}
@@ -117,28 +112,28 @@ export function LibraryList({
             virtuosoRef={virtuosoRef}
             scrollerRef={setScrollerEl}
             groups={groups}
-            controlsH={controlsH}
-            headerH={headerH}
+            topOffset={controlsH + headerH}
             overscan={overscan}
             rangeChanged={rangeChanged}
             openIds={openIds}
             everOpenedIds={everOpenedIds}
             onToggle={onToggleGrouped}
             remountKey={groupedKey}
-            rowVersion={rowVersion} 
+            installedUpdatedAt={installedUpdatedAt}
           />
         ) : (
           <FlatList
             virtuosoRef={virtuosoRef}
             scrollerRef={setScrollerEl}
             rows={derived.rowsSorted}
+            topOffset={controlsH + headerH}
             overscan={overscan}
             rangeChanged={rangeChanged}
             openIds={openIds}
             everOpenedIds={everOpenedIds}
             onToggle={onToggleFlat}
             remountKey={flatKey}
-            rowVersion={rowVersion}
+            installedUpdatedAt={installedUpdatedAt}
           />
         )}
 

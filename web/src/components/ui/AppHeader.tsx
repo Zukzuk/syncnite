@@ -14,12 +14,13 @@ export function AppHeader({ opened, onToggleNav }: Props) {
     return (
         <Group h="100%" px="md" justify="space-between">
             <Group>
+                {/* Hamburger menu for mobile */}
                 <Burger opened={opened} onClick={onToggleNav} hiddenFrom="sm" size="sm" />
                 <Title order={3}>Syncnite</Title>
             </Group>
 
             <Group gap="sm">
-                {/* Download button */}
+                {/* Download extension button */}
                 <Tooltip withArrow label={`Download Syncnite v${appVersion} (.pext)`}>
                     <Button
                         component="a"

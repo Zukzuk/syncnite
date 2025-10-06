@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, Flex, Text, Group, Badge, Tooltip, ActionIcon, Grid } from "@mantine/core";
+import { Box, Flex, Text, Group, Badge, Tooltip, ActionIcon } from "@mantine/core";
 import { PlayActionOverlay } from "./PlayActionOverlay";
 import { IconImage } from "./IconImage";
 import { GRID } from "../../lib/constants";
@@ -15,13 +15,12 @@ type Props = Row & {
 
 export function GameRowItem(props: Props) {
     const { id, installed, iconUrl, title, year, source, tags, raw, href, dim, collapseOpen } = props;
-
     const [copied, setCopied] = useState(false);
 
     const handleCopy = async (e: React.MouseEvent) => {
         e.stopPropagation();
         try {
-            await navigator.clipboard.writeText(`${title} ${year}`.trim());
+            await navigator.clipboard.writeText(`${title} ${year ? year : ""}`.trim());
             setCopied(true);
             window.setTimeout(() => setCopied(false), 1200);
         } catch {

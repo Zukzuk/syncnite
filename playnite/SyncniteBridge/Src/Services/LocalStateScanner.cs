@@ -16,22 +16,44 @@ namespace SyncniteBridge.Services
     {
         private readonly IPlayniteAPI api;
         private readonly string dataRoot;
+        private readonly BridgeLogger blog;
 
-        public LocalStateScanner(IPlayniteAPI api, string dataRoot)
+        public LocalStateScanner(IPlayniteAPI api, string dataRoot, BridgeLogger blog = null)
         {
             this.api = api;
             this.dataRoot = dataRoot ?? "";
+            this.blog = blog;
         }
 
         public SnapshotStore.ManifestSnapshot BuildSnapshot()
         {
+            // DEBUG: we’re about to build a lightweight snapshot used for initial diffing.
+            blog?.Debug(
+                "scan",
+                "Building snapshot",
+                new
+                {
+                    libraryDir = Path.Combine(dataRoot, AppConstants.LibraryDirName),
+                    mediaDir = Path.Combine(dataRoot, AppConstants.LibraryFilesDirName),
+                }
+            );
+
+            var dbTicks = LatestDbTicks(Path.Combine(dataRoot, AppConstants.LibraryDirName));
+            var mediaVersions = ScanMediaVersions(
+                Path.Combine(dataRoot, AppConstants.LibraryFilesDirName)
+            );
+
+            blog?.Debug(
+                "scan",
+                "Snapshot built",
+                new { dbTicks, mediaFolders = mediaVersions.Count }
+            );
+
             return new SnapshotStore.ManifestSnapshot
             {
                 UpdatedAt = DateTime.UtcNow.ToString("o"),
-                DbTicks = LatestDbTicks(Path.Combine(dataRoot, AppConstants.LibraryDirName)),
-                MediaVersions = ScanMediaVersions(
-                    Path.Combine(dataRoot, AppConstants.LibraryFilesDirName)
-                ),
+                DbTicks = dbTicks,
+                MediaVersions = mediaVersions,
             };
         }
 
@@ -41,6 +63,8 @@ namespace SyncniteBridge.Services
             (int count, string hash) Installed
         ) BuildLocalManifestView()
         {
+            blog?.Debug("scan", "Building local manifest view");
+
             var json = new Dictionary<string, (long, long)>(StringComparer.OrdinalIgnoreCase);
             var mediaFolders = new List<string>();
 
@@ -60,8 +84,12 @@ namespace SyncniteBridge.Services
                     var mtimeMs = new DateTimeOffset(fi.LastWriteTimeUtc).ToUnixTimeMilliseconds();
                     json[Path.GetFileName(path)] = (fi.Length, mtimeMs);
                 }
+                blog?.Debug("scan", "DB summary collected", new { files = json.Count });
             }
-            catch { }
+            catch (Exception ex)
+            {
+                blog?.Warn("scan", "Failed to collect DB summary", new { err = ex.Message });
+            }
 
             // top-level media folders under library/files
             try
@@ -82,18 +110,43 @@ namespace SyncniteBridge.Services
                             mediaFolders.Add(name);
                     }
                 }
+                blog?.Debug("scan", "Media folders listed", new { folders = mediaFolders.Count });
             }
-            catch { }
+            catch (Exception ex)
+            {
+                blog?.Warn("scan", "Failed to enumerate media folders", new { err = ex.Message });
+            }
 
             // installed signature (count + hash)
-            var installedIds =
-                api.Database.Games?.Where(g => g.IsInstalled)
-                    .Select(g => g.Id.ToString().ToLowerInvariant())
-                    .OrderBy(s => s, StringComparer.Ordinal)
-                    .ToList() ?? new List<string>();
+            List<string> installedIds;
+            try
+            {
+                installedIds =
+                    api.Database.Games?.Where(g => g.IsInstalled)
+                        .Select(g => g.Id.ToString().ToLowerInvariant())
+                        .OrderBy(s => s, StringComparer.Ordinal)
+                        .ToList() ?? new List<string>();
+            }
+            catch (Exception ex)
+            {
+                // Very defensive: database access exceptions shouldn’t crash the scan
+                installedIds = new List<string>();
+                blog?.Warn("scan", "Failed to enumerate installed games", new { err = ex.Message });
+            }
 
             var installedHash = HashUtil.Sha1(string.Join("\n", installedIds));
             var installed = (installedIds.Count, installedHash);
+
+            blog?.Debug(
+                "scan",
+                "Local manifest view built",
+                new
+                {
+                    jsonFiles = json.Count,
+                    mediaFolders = mediaFolders.Count,
+                    installedCount = installed.Item1,
+                }
+            );
 
             return (json, mediaFolders, installed);
         }
@@ -126,6 +179,7 @@ namespace SyncniteBridge.Services
             {
                 if (!Directory.Exists(mediaDir))
                     return map;
+
                 foreach (
                     var dir in Directory.GetDirectories(
                         mediaDir,

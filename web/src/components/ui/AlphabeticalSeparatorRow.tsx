@@ -6,6 +6,7 @@ type Props = { bucket: string; top: number };
 export function AlphabeticalSeparatorRow({ bucket, top }: Props) {
   return (
     <Box
+      h={38}
       style={{
         position: 'sticky',
         zIndex: Z_INDEX.seperatorRow,
