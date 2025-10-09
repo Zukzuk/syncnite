@@ -23,7 +23,11 @@ namespace SyncniteBridge
             Action<Action<bool>> unsubscribeHealth,
             Action<string> onSaveApiBase,
             Action onPushInstalled,
-            Action onSyncLibrary
+            Action onSyncLibrary,
+            // NEW:
+            string initialEmail,
+            string initialPassword,
+            Action<string, string> onSaveCredentials
         )
         {
             var win = api.Dialogs.CreateWindow(
@@ -35,147 +39,99 @@ namespace SyncniteBridge
                 }
             );
 
-            // Title (exact text as requested)
             var appVer = BridgeVersion.Current;
             win.Title = AppConstants.SettingsTitle + " (v" + appVer + ")";
 
-            // Hook Playnite theme background/foreground
             ThemeHelpers.HookThemeBackground(win);
             ThemeHelpers.HookThemeForeground(win);
 
-            var root = new Grid { Margin = new Thickness(14) };
-            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Intro
+            var root = new Grid { Margin = new Thickness(16) };
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Header
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Divider
-            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Server status
-            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // API row
-            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Push row
-            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Sync row
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // API base
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Creds
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Actions
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Footer
 
             // Divider helper
-            UIElement MakeDivider(double marginTop = 8, double marginBottom = 8)
+            UIElement MakeDivider(double mt = 10, double mb = 12)
             {
                 var div = new Border
                 {
                     Height = 1,
-                    Margin = new Thickness(0, marginTop, 0, marginBottom),
+                    Margin = new Thickness(0, mt, 0, mb),
                     Opacity = 0.5,
                 };
-                // Try to pull a subtle divider brush from theme; fallback to foreground with low opacity.
-                if (!ThemeHelpers.TrySetDynamicBrush(div, Border.BackgroundProperty, "BorderBrush"))
+                if (
+                    !ThemeHelpers.TrySetDynamicBrush(div, Border.BackgroundProperty, "BorderBrush")
+                    && !ThemeHelpers.TrySetDynamicBrush(div, Border.BackgroundProperty, "TextBrush")
+                )
                 {
-                    if (
-                        !ThemeHelpers.TrySetDynamicBrush(
-                            div,
-                            Border.BackgroundProperty,
-                            "TextBrush"
-                        )
-                    )
-                    {
-                        div.Background = new SolidColorBrush(Color.FromArgb(64, 255, 255, 255));
-                    }
+                    div.Background = new SolidColorBrush(Color.FromArgb(64, 255, 255, 255));
                 }
                 return div;
             }
 
-            // --- Pithy intro text ---
-            var intro = new TextBlock
-            {
-                Text = "Configure the server endpoint and run manual syncs when needed.",
-                Margin = new Thickness(0, 0, 0, 8),
-                TextWrapping = TextWrapping.Wrap,
-            };
-            ThemeHelpers.SetThemeTextBrush(intro);
-            Grid.SetRow(intro, 0);
-            root.Children.Add(intro);
-
-            // --- divider ---
-            var div = MakeDivider(0, 10);
-            Grid.SetRow(div, 1);
-            root.Children.Add(div);
-
-            // --- 1) Server status: green / red dot ---
-            var statusPanel = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Margin = new Thickness(0, 0, 0, 8),
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-
-            var statusLabel = new TextBlock
-            {
-                Text = "Server status:",
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            ThemeHelpers.SetThemeTextBrush(statusLabel);
-            statusPanel.Children.Add(statusLabel);
+            // 1) Header with status dot + text
+            var header = new Grid { Margin = new Thickness(0, 0, 0, 4) };
+            header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
             var dot = new Ellipse
             {
-                Width = 10,
-                Height = 10,
-                Margin = new Thickness(8, 0, 0, 0),
+                Width = 12,
+                Height = 12,
+                Margin = new Thickness(0, 0, 8, 0),
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            statusPanel.Children.Add(dot);
-
             var statusText = new TextBlock
             {
-                Margin = new Thickness(6, 0, 0, 0),
                 VerticalAlignment = VerticalAlignment.Center,
+                FontWeight = FontWeights.SemiBold,
             };
             ThemeHelpers.SetThemeTextBrush(statusText);
-            statusPanel.Children.Add(statusText);
 
-            Grid.SetRow(statusPanel, 2);
-            root.Children.Add(statusPanel);
-
-            // helper to (re)render current state
             void RenderStatus(bool healthy)
             {
-                var applied = false;
                 if (healthy)
                 {
-                    applied =
-                        ThemeHelpers.TrySetDynamicBrush(dot, Shape.FillProperty, "SuccessBrush")
-                        || ThemeHelpers.TrySetDynamicBrush(
+                    if (
+                        !ThemeHelpers.TrySetDynamicBrush(dot, Shape.FillProperty, "SuccessBrush")
+                        && !ThemeHelpers.TrySetDynamicBrush(
                             dot,
                             Shape.FillProperty,
                             "CheckmarkBrush"
                         )
-                        || ThemeHelpers.TrySetDynamicBrush(dot, Shape.FillProperty, "AccentBrush");
-                    if (!applied)
-                        dot.Fill = new SolidColorBrush(Color.FromRgb(0x22, 0xC5, 0x44));
-                    statusText.Text = "healthy";
+                    )
+                    {
+                        dot.Fill = new SolidColorBrush(Color.FromRgb(0x22, 0xC5, 0x44)); // green
+                    }
+                    statusText.Text = AppConstants.HealthStatusHealthy;
                 }
                 else
                 {
-                    applied =
-                        ThemeHelpers.TrySetDynamicBrush(dot, Shape.FillProperty, "ErrorBrush")
-                        || ThemeHelpers.TrySetDynamicBrush(dot, Shape.FillProperty, "WarningBrush");
-                    if (!applied)
-                        dot.Fill = new SolidColorBrush(Color.FromRgb(0xE5, 0x50, 0x35));
-                    statusText.Text = "unreachable";
+                    if (
+                        !ThemeHelpers.TrySetDynamicBrush(dot, Shape.FillProperty, "ErrorBrush")
+                        && !ThemeHelpers.TrySetDynamicBrush(dot, Shape.FillProperty, "WarningBrush")
+                    )
+                    {
+                        dot.Fill = new SolidColorBrush(Color.FromRgb(0xE5, 0x50, 0x35)); // red
+                    }
+                    statusText.Text = AppConstants.HealthStatusUnreachable;
                 }
             }
 
-            // initial paint
-            var isHealthy = string.Equals(
+            // initial status
+            var initialHealthy = string.Equals(
                 getHealthText?.Invoke(),
                 AppConstants.HealthStatusHealthy,
                 StringComparison.OrdinalIgnoreCase
             );
-            RenderStatus(isHealthy);
+            RenderStatus(initialHealthy);
 
-            // subscribe to live updates
-            Action<bool> handler = ok =>
-            {
-                // marshal to UI thread
-                win.Dispatcher.Invoke(() => RenderStatus(ok));
-            };
+            // live updates
+            Action<bool> handler = ok => win.Dispatcher.Invoke(() => RenderStatus(ok));
             subscribeHealth?.Invoke(handler);
-
-            // ensure we detach when window closes
             win.Closed += (s, e) =>
             {
                 try
@@ -185,9 +141,21 @@ namespace SyncniteBridge
                 catch { }
             };
 
-            // --- 2) API endpoint: "API: [input] {Save}" ---
-            var apiRow = new Grid { Margin = new Thickness(0, 0, 0, 8) };
-            apiRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto }); // label
+            Grid.SetColumn(dot, 0);
+            header.Children.Add(dot);
+            Grid.SetColumn(statusText, 1);
+            header.Children.Add(statusText);
+            Grid.SetRow(header, 0);
+            root.Children.Add(header);
+
+            // 2) Divider
+            var div = MakeDivider();
+            Grid.SetRow(div, 1);
+            root.Children.Add(div);
+
+            // 3) API row: label + input + save
+            var apiRow = new Grid { Margin = new Thickness(0, 0, 0, 10) };
+            apiRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(150) }); // label
             apiRow.ColumnDefinitions.Add(
                 new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
             ); // input
@@ -195,9 +163,8 @@ namespace SyncniteBridge
 
             var apiLabel = new TextBlock
             {
-                Text = "API:",
+                Text = "API Base URL",
                 VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 0, 8, 0),
             };
             ThemeHelpers.SetThemeTextBrush(apiLabel);
             Grid.SetColumn(apiLabel, 0);
@@ -205,108 +172,117 @@ namespace SyncniteBridge
 
             var tbApi = new TextBox
             {
-                Text = initialApiBase,
+                Text = initialApiBase ?? "",
                 MinWidth = 420,
-                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 2, 0, 0),
             };
-            ThemeHelpers.SetThemeTextBrush(tbApi);
             Grid.SetColumn(tbApi, 1);
             apiRow.Children.Add(tbApi);
 
-            var btnSave = new Button
+            var btnSaveApi = new Button
             {
                 Content = "Save",
-                Width = 84,
+                Width = 90,
                 Margin = new Thickness(8, 0, 0, 0),
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            btnSave.Click += (s, e) =>
-            {
-                onSaveApiBase?.Invoke(tbApi.Text?.Trim());
-            };
-            Grid.SetColumn(btnSave, 2);
-            apiRow.Children.Add(btnSave);
+            btnSaveApi.Click += (s, e) => onSaveApiBase?.Invoke(tbApi.Text?.Trim());
+            Grid.SetColumn(btnSaveApi, 2);
+            apiRow.Children.Add(btnSaveApi);
 
-            // UX: Enter to save
-            tbApi.KeyDown += (s, e) =>
-            {
-                if (e.Key == Key.Enter)
-                {
-                    btnSave.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-                    e.Handled = true;
-                }
-            };
-
-            Grid.SetRow(apiRow, 3);
+            Grid.SetRow(apiRow, 2);
             root.Children.Add(apiRow);
 
-            // --- 3) Push installed row ---
-            var pushRow = new Grid { Margin = new Thickness(0, 0, 0, 8) };
-            pushRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            pushRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            // 4) Credentials group: Email + Password
+            var creds = new Grid { Margin = new Thickness(0, 0, 0, 10) };
+            creds.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            creds.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
-            var pushLabel = new TextBlock
+            Grid MakeRow(string label, UIElement input)
             {
-                Text = "Update installed games manually:",
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 0, 8, 0),
-            };
-            ThemeHelpers.SetThemeTextBrush(pushLabel);
-            Grid.SetColumn(pushLabel, 0);
-            pushRow.Children.Add(pushLabel);
+                var r = new Grid { Margin = new Thickness(0, 0, 0, 8) };
+                r.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(150) });
+                r.ColumnDefinitions.Add(
+                    new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
+                );
+                var lb = new TextBlock
+                {
+                    Text = label,
+                    VerticalAlignment = VerticalAlignment.Center,
+                };
+                ThemeHelpers.SetThemeTextBrush(lb);
+                Grid.SetColumn(lb, 0);
+                r.Children.Add(lb);
+                Grid.SetColumn(input, 1);
+                r.Children.Add(input);
+                return r;
+            }
 
+            var tbEmail = new TextBox
+            {
+                Text = initialEmail ?? "",
+                Margin = new Thickness(0, 2, 0, 0),
+            };
+            var rowEmail = MakeRow("Admin Email", tbEmail);
+
+            var tbPass = new PasswordBox
+            {
+                Password = initialPassword ?? "",
+                Margin = new Thickness(0, 2, 0, 0),
+            };
+            var rowPass = MakeRow("Admin Password", tbPass);
+
+            Grid.SetRow(rowEmail, 0);
+            creds.Children.Add(rowEmail);
+            Grid.SetRow(rowPass, 1);
+            creds.Children.Add(rowPass);
+
+            Grid.SetRow(creds, 3);
+            root.Children.Add(creds);
+
+            // 5) Actions: Push / Sync
+            var actions = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Margin = new Thickness(0, 2, 0, 12),
+            };
             var btnPush = new Button
             {
-                Content = "Update",
-                Width = 120,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            btnPush.Click += (s, e) => onPushInstalled?.Invoke();
-            Grid.SetColumn(btnPush, 1);
-            pushRow.Children.Add(btnPush);
-
-            Grid.SetRow(pushRow, 4);
-            root.Children.Add(pushRow);
-
-            // --- 4) Sync library row ---
-            var syncRow = new Grid { Margin = new Thickness(0, 0, 0, 8) };
-            syncRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            syncRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-            var syncLabel = new TextBlock
-            {
-                Text = "Sync library manually:",
-                VerticalAlignment = VerticalAlignment.Center,
+                Content = "Push installed",
+                Width = 140,
                 Margin = new Thickness(0, 0, 8, 0),
             };
-            ThemeHelpers.SetThemeTextBrush(syncLabel);
-            Grid.SetColumn(syncLabel, 0);
-            syncRow.Children.Add(syncLabel);
-
-            var btnSync = new Button
-            {
-                Content = "Sync",
-                Width = 120,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
+            btnPush.Click += (s, e) => onPushInstalled?.Invoke();
+            var btnSync = new Button { Content = "Sync now", Width = 120 };
             btnSync.Click += (s, e) => onSyncLibrary?.Invoke();
-            Grid.SetColumn(btnSync, 1);
-            syncRow.Children.Add(btnSync);
+            actions.Children.Add(btnPush);
+            actions.Children.Add(btnSync);
+            Grid.SetRow(actions, 4);
+            root.Children.Add(actions);
 
-            Grid.SetRow(syncRow, 5);
-            root.Children.Add(syncRow);
-
-            // --- 5) Footer: Close button right-aligned ---
+            // 6) Footer: Save creds + Close
             var footer = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
                 HorizontalAlignment = HorizontalAlignment.Right,
             };
+            var btnSaveCreds = new Button
+            {
+                Content = "Save",
+                Width = 100,
+                Margin = new Thickness(0, 0, 8, 0),
+            };
+            btnSaveCreds.Click += (s, e) =>
+            {
+                onSaveCredentials?.Invoke(tbEmail.Text?.Trim() ?? "", tbPass.Password ?? "");
+                win.Close();
+            };
             var btnClose = new Button { Content = "Close", Width = 100 };
             btnClose.Click += (s, e) => win.Close();
+            footer.Children.Add(btnSaveCreds);
             footer.Children.Add(btnClose);
 
-            Grid.SetRow(footer, 6);
+            Grid.SetRow(footer, 5);
             root.Children.Add(footer);
 
             win.Content = root;

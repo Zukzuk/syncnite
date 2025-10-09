@@ -1,6 +1,7 @@
 using System.IO;
 using Playnite.SDK.Data;
 using SyncniteBridge.Constants;
+using SyncniteBridge.Helpers;
 
 namespace SyncniteBridge
 {
@@ -9,11 +10,23 @@ namespace SyncniteBridge
     /// </summary>
     internal sealed class BridgeConfig
     {
+        // Base URL for the Syncnite API server
         public string ApiBase { get; set; } = AppConstants.DefaultApiBase;
 
-        // NEW: user-tunable log level for the extension logger
-        // Allowed: "error" | "warn" | "info" | "debug" | "trace"
+        // user-tunable log level: "error" | "warn" | "info" | "debug" | "trace"
         public string LogLevel { get; set; } = "info";
+
+        // Admin account (email is fine to serialize)
+        public string AuthEmail { get; set; } = "";
+
+        // Store password encrypted at rest; only this field is serialized
+        public string AuthPasswordEncrypted { get; set; } = "";
+
+        // Convenience helpers (NOT serialized—methods aren’t serialized)
+        public string GetAuthPassword() => Crypto.Unprotect(AuthPasswordEncrypted);
+
+        public void SetAuthPassword(string value) =>
+            AuthPasswordEncrypted = Crypto.Protect(value ?? "");
 
         public static BridgeConfig Load(string path)
         {
@@ -22,7 +35,6 @@ namespace SyncniteBridge
                 if (File.Exists(path))
                 {
                     var cfg = Serialization.FromJson<BridgeConfig>(File.ReadAllText(path));
-                    // Backward compat for older files that didn't have LogLevel:
                     if (cfg != null && string.IsNullOrWhiteSpace(cfg.LogLevel))
                         cfg.LogLevel = "info";
                     return cfg ?? new BridgeConfig();

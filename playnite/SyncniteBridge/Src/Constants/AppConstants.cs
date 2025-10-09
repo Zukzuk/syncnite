@@ -22,7 +22,7 @@ namespace SyncniteBridge.Constants
         public const string Path_Syncnite_Push = "sync/push"; // installed list
         public const string Path_Syncnite_Sync = "sync/up"; // library sync
         public const string Path_Syncnite_Log = "sync/log"; // remote log ingest
-        public const string Path_Syncnite_Ping = "ping"; // healthcheck
+        public const string Path_Syncnite_Ping = "sync/ping"; // healthcheck
 
         // Playnite data layout (local)
         public const string LibraryDirName = "library";

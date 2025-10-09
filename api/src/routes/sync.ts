@@ -2,8 +2,10 @@ import express from "express";
 import multer from "multer";
 import { SyncService } from "../services/SyncService";
 import { INPUT_DIR } from "../helpers";
+import { requireAdmin } from "../middleware/requireAdmin";
 
 const router = express.Router();
+router.use(requireAdmin);
 const syncUpload = multer({ dest: INPUT_DIR });
 const syncService = new SyncService();
 
@@ -15,6 +17,46 @@ let isSyncing = false;
  *   - name: Sync
  *     description: Endpoints for the Syncnite Bridge Playnite extension.
  */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     PingResponse:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *           example: ok
+ *         version:
+ *           type: string
+ *           example: v1.0.0
+ */
+
+/**
+ * @openapi
+ * /api/sync/ping:
+ *   get:
+ *     operationId: pingSync
+ *     summary: Ping the Syncnite API
+ *     tags: [Sync]
+ *     security:
+ *       - XAuthEmail: []
+ *       - XAuthPassword: []
+ *     responses:
+ *       200:
+ *         description: Pong response.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/PingResponse'
+ *       500:
+ *         $ref: '#/components/responses/Error500'
+ */
+router.get("/ping", (_req, res) => {
+  const APP_VERSION = process.env.APP_VERSION ?? "dev";
+  res.json({ message: "ok", version: `v${APP_VERSION}` });
+});
 
 /**
  * @openapi
@@ -139,6 +181,9 @@ let isSyncing = false;
  *     operationId: ingestLogs
  *     summary: Ingest log events from the Syncnite Bridge extension
  *     tags: [Sync]
+ *     security:
+ *       - XAuthEmail: []
+ *       - XAuthPassword: []
  *     requestBody:
  *       required: true
  *       content:
@@ -191,6 +236,9 @@ router.post("/log", async (req, res) => {
  *     operationId: pushInstalledGames
  *     summary: Push the current list of installed Playnite games
  *     tags: [Sync]
+ *     security:
+ *       - XAuthEmail: []
+ *       - XAuthPassword: []
  *     requestBody:
  *       required: true
  *       content:
@@ -221,7 +269,9 @@ router.post("/push", async (req, res) => {
 
   try {
     console.log("[sync/push] Raw body received:", req.body);
-    const count = await syncService.pushInstalled(req.body?.installed);
+    const email = (req as any).authEmail
+                  || String(req.header("x-auth-email") || "").toLowerCase();
+    const count = await syncService.pushInstalled(req.body?.installed, email);
     return res.json({ ok: true, count });
   } catch (e: any) {
     const msg = String(e?.message || e);
@@ -241,6 +291,9 @@ router.post("/push", async (req, res) => {
  *     operationId: syncUpload
  *     summary: Sync from the Syncnite Bridge extension
  *     tags: [Sync]
+ *     security:
+ *       - XAuthEmail: []
+ *       - XAuthPassword: []
  *     requestBody:
  *       required: true
  *       content:

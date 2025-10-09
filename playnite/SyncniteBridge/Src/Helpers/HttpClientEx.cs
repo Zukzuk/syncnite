@@ -55,6 +55,7 @@ namespace SyncniteBridge.Helpers
         {
             this.blog = blog;
             http = new HttpClient { Timeout = timeout ?? TimeSpan.FromMinutes(5) };
+            AuthHeaders.Apply(http);
         }
 
         public async Task<bool> PingAsync(string url)

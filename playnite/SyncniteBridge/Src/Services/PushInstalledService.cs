@@ -32,6 +32,8 @@ namespace SyncniteBridge.Services
             this.endpoint = (endpoint ?? "").TrimEnd('/');
             this.blog = blog;
 
+            AuthHeaders.Apply(http);
+
             debounce = new System.Timers.Timer(AppConstants.DebounceMs_Pusher)
             {
                 AutoReset = false,

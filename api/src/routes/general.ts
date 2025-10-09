@@ -66,41 +66,4 @@ router.get("/zips", async (_req, res) => {
     }
 });
 
-/**
- * @openapi
- * components:
- *   schemas:
- *     PingResponse:
- *       type: object
- *       properties:
- *         message:
- *           type: string
- *           example: ok
- *         version:
- *           type: string
- *           example: v1.0.0
- */
-
-/**
- * @openapi
- * /api/ping:
- *   get:
- *     operationId: pingSync
- *     summary: Ping the Syncnite API
- *     tags: [App]
- *     responses:
- *       200:
- *         description: Pong response.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/PingResponse'
- *       500:
- *         $ref: '#/components/responses/Error500'
- */
-router.get("/ping", (_req, res) => {
-    const APP_VERSION = process.env.APP_VERSION ?? "dev";
-  res.json({ message: "ok", version: `v${APP_VERSION}` });
-});
-
 export default router;

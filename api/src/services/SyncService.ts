@@ -38,10 +38,13 @@ export class SyncService {
      * @param installed - array of installed game IDs
      * @returns number of successfully pushed IDs 
      */
-    async pushInstalled(installed: unknown): Promise<number> {
+    async pushInstalled(installed: unknown, email: string): Promise<number> {
         if (!Array.isArray(installed)) {
             log.warn("Invalid payload, expected { installed: string[] }");
             throw new Error("Body must be { installed: string[] }");
+        }
+        if (!email) {
+            throw new Error("missing email");
         }
 
         log.info(`Received ${installed.length} installed entries`);
@@ -56,17 +59,18 @@ export class SyncService {
             updatedAt: new Date().toISOString(),
             source: "playnite-extension",
         };
-        const outPath = join(DATA_DIR, "local/local.Installed.json");
 
-        // Ensure data dir
-        await fs.mkdir(join(DATA_DIR, "local"), { recursive: true });
+        // sanitize email for filename
+        const safeEmail = email.trim().toLowerCase().replace(/[\\/:*?"<>|]/g, "_");
+        const outDir = join(DATA_DIR, "installed");
+        await fs.mkdir(outDir, { recursive: true });
+        const outPath = join(outDir, `${safeEmail}.Installed.json`);
 
         // Write to disk
         log.debug(`Writing Installed list to ${outPath}`);
         await fs.writeFile(outPath, JSON.stringify(out, null, 2), "utf8");
-        log.info("Successfully wrote local.Installed.json");
 
-        log.info(`Push complete, ${uniq.length} unique games recorded`);
+        log.info(`Installed list written`, { outPath, count: uniq.length });
         return uniq.length;
     }
 

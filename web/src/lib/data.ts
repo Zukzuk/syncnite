@@ -1,7 +1,9 @@
 import { FILES } from "./constants";
+import { getEmail } from "./persist";
 import type { GameDoc, Loaded, NamedDoc, Row } from "./types";
-import { asGuid, asGuidArray, buildIconUrl, firstStoreishLink, 
-  normalizePath, extractYear, sourceUrlFallback 
+import {
+  asGuid, asGuidArray, buildIconUrl, firstStoreishLink,
+  normalizePath, extractYear, sourceUrlFallback
 } from "./utils";
 
 async function getJson<T>(path: string): Promise<T> {
@@ -40,10 +42,15 @@ export async function loadLibrary(): Promise<Loaded> {
   const games = await tryLoadMany<GameDoc[]>(FILES.games, []);
   const tags = await tryLoadMany<NamedDoc[]>(FILES.tags, []);
   const sources = await tryLoadMany<NamedDoc[]>(FILES.sources, []);
-  const localInstalled = await tryFetchJson(FILES.localInstalled);
-  const localInstalledSet = Array.isArray(localInstalled?.installed)
-    ? new Set(localInstalled.installed.map((s: string) => String(s).toLowerCase()))
-    : null;
+
+  const email = getEmail();
+  let localInstalledSet: Set<string> | null = null;
+  if (email) {
+    const localInstalled = await tryFetchJson(`/data/installed/${email.toLowerCase()}.Installed.json`);
+    if (Array.isArray(localInstalled?.installed)) {
+      localInstalledSet = new Set(localInstalled.installed.map((s: string) => String(s).toLowerCase()));
+    }
+  }
 
   const normNamed = (x: NamedDoc) => ({
     id: asGuid(x.Id) ?? asGuid(x._id),

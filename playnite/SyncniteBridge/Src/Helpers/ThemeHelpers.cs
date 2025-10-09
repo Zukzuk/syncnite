@@ -34,8 +34,7 @@ namespace SyncniteBridge.Helpers
                 try
                 {
                     w.SetResourceReference(Control.BackgroundProperty, k);
-                    if (w.Background != null)
-                        return;
+                    return; // resource reference set; let WPF resolve it
                 }
                 catch { }
             }
@@ -55,8 +54,7 @@ namespace SyncniteBridge.Helpers
                 try
                 {
                     w.SetResourceReference(Control.ForegroundProperty, k);
-                    if (w.Foreground != null)
-                        return;
+                    return; // resource reference set
                 }
                 catch { }
             }
@@ -64,6 +62,12 @@ namespace SyncniteBridge.Helpers
 
         public static void SetThemeTextBrush(FrameworkElement el)
         {
+            if (el == null)
+                return;
+
+            // Prefer Control.Foreground if the element is a Control, otherwise TextBlock.Foreground
+            var prop = (el is Control) ? Control.ForegroundProperty : TextBlock.ForegroundProperty;
+
             var keys = new[]
             {
                 "TextBrush",
@@ -71,6 +75,7 @@ namespace SyncniteBridge.Helpers
                 "ControlForegroundBrush",
                 "MainWindowForegroundBrush",
             };
+
             foreach (var k in keys)
             {
                 try
@@ -78,7 +83,7 @@ namespace SyncniteBridge.Helpers
                     var brush = el.TryFindResource(k) as Brush;
                     if (brush != null)
                     {
-                        el.SetResourceReference(TextBlock.ForegroundProperty, k);
+                        el.SetResourceReference(prop, k);
                         return;
                     }
                 }

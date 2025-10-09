@@ -3,6 +3,7 @@ import path from "path";
 import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
 import syncRouter from "./routes/sync";
+import accountsRouter from "./routes/accounts";
 import generalRouter from "./routes/general";
 import backupRouter from "./routes/backup";
 import extensionRouter from "./routes/extension";
@@ -22,41 +23,56 @@ export function createApp() {
     const swaggerSpec = swaggerJsdoc({
         definition: {
             openapi: "3.0.0",
-            info: {
-                title: "Syncnite Web API",
-                version: APP_VERSION,
-                description: "API for Syncnite and extension integration",
-            },
+            info: { title: "Syncnite Web API", version: APP_VERSION, description: "API for Syncnite and extension integration" },
             components: {
-                schemas: {
-                    LogEvent: {
-                        type: "object",
-                        properties: {
-                            ts: { type: "string", format: "date-time" },
-                            level: { type: "string", enum: ["trace", "debug", "info", "warn", "error"] },
-                            kind: { type: "string", description: "category like decision, health, push, sync, alert" },
-                            msg: { type: "string" },
-                            data: { type: "object", additionalProperties: true },
-                            err: { type: "string" },
-                            ctx: { type: "object", additionalProperties: true }
-                        },
-                        required: ["msg"]
+                securitySchemes: {
+                    XAuthEmail: {
+                        type: "apiKey",
+                        in: "header",
+                        name: "x-auth-email",
+                        description: "Admin email for header auth"
+                    },
+                    XAuthPassword: {
+                        type: "apiKey",
+                        in: "header",
+                        name: "x-auth-password",
+                        description: "Admin password for header auth"
                     }
-                }
+                },
             }
         },
-        apis: [
-            path.join(__dirname, "routes/*.{ts,js}"),
-        ],
+        apis: [path.join(__dirname, "routes/*.{ts,js}")],
     });
 
     app.get("/api/docs.json", (_req, res) => res.json(swaggerSpec));
     app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+    app.use(
+        "/api/docs",
+        swaggerUi.serve,
+        swaggerUi.setup(swaggerSpec, {
+            swaggerOptions: {
+                persistAuthorization: true,
+                authAction: {
+                    XAuthEmail: {
+                        name: "x-auth-email",
+                        schema: { type: "apiKey", in: "header", name: "x-auth-email" },
+                        value: "dave.timmerman@gmail.com",
+                    },
+                    XAuthPassword: {
+                        name: "x-auth-password",
+                        schema: { type: "apiKey", in: "header", name: "x-auth-password" },
+                        value: "xxxx",
+                    },
+                },
+            },
+        })
+    );
 
     app.use(express.json({ limit: "50mb" }));
 
     // routes
     app.use("/api", generalRouter);
+    app.use("/api/accounts", accountsRouter);
     app.use("/api/sync", syncRouter);
     app.use("/api/backup", backupRouter);
     app.use("/api/extension", extensionRouter);

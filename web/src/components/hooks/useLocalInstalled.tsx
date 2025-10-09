@@ -4,7 +4,7 @@ import { FILES } from "../../lib/constants";
 export type LocalInstalledState = { set: Set<string> | null; updatedAt: string | null };
 
 /**
- * Hook that polls localInstalled.json every `pollMs` ms.
+ * Hook that polls .Installed.json every `pollMs` ms.
  * - Returns { set, updatedAt } when used for reading
  * - Or may be called just for side-effects: useLocalInstalled(4000)
  */
@@ -14,41 +14,44 @@ export function useLocalInstalled(pollMs = 4000): LocalInstalledState {
     React.useEffect(() => {
         let stop = false;
 
+        function getEmail(): string | null {
+            try { return localStorage.getItem("sb_email"); } catch { return null; }
+        }
+
         async function tick() {
             try {
-                const url = `${FILES.localInstalled}?v=${Date.now()}`;
+                const email = getEmail();
+                if (!email) { setState({ set: null, updatedAt: null }); return; }
+
+                const url = `/data/installed/${email.toLowerCase()}.Installed.json?v=${Date.now()}`;
                 const r = await fetch(url, { cache: "no-cache" });
                 if (!r.ok) return;
 
                 const txt = await r.text();
-                // if nginx gives index.html by mistake
-                if (txt.trim().startsWith("<")) return;
+                if (txt.trim().startsWith("<")) return; // nginx index.html guard
 
                 const json = JSON.parse(txt);
                 const ids: string[] | undefined = Array.isArray(json?.installed) ? json.installed : undefined;
-                const updatedAt: string | undefined =
-                    typeof json?.updatedAt === "string" ? json.updatedAt : undefined;
+                const updatedAt: string | undefined = typeof json?.updatedAt === "string" ? json.updatedAt : undefined;
 
                 if (ids && updatedAt) {
                     const next: LocalInstalledState = {
                         set: new Set(ids.map((s) => String(s).toLowerCase())),
                         updatedAt,
                     };
-                    setState((prev) => (prev.updatedAt !== next.updatedAt ? next : prev));
-
-                    // Fire an event for anyone who just wants side effects
+                    setState(prev => (prev.updatedAt !== next.updatedAt ? next : prev));
                     window.dispatchEvent(new CustomEvent("pn:installed-updated", { detail: { updatedAt } }));
                 }
-            } catch {
-                /* ignore network errors */
-            }
+            } catch { /* ignore */ }
             if (!stop) setTimeout(tick, pollMs);
         }
 
         tick();
-        return () => {
-            stop = true;
+        const onAuth = () => { /* restart immediately on auth change */
+            setState({ set: null, updatedAt: null });
         };
+        window.addEventListener("sb:auth-changed", onAuth);
+        return () => { stop = true; window.removeEventListener("sb:auth-changed", onAuth); };
     }, [pollMs]);
 
     return state;

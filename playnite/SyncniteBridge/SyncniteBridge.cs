@@ -29,6 +29,7 @@ namespace SyncniteBridge
         {
             configPath = Path.Combine(GetPluginUserDataPath(), AppConstants.ConfigFileName);
             config = BridgeConfig.Load(configPath);
+            AuthHeaders.Set(config.AuthEmail, config.GetAuthPassword());
 
             // Bridge logger replaces RemoteLogClient
             blog = new BridgeLogger(config.ApiBase, BridgeVersion.Current, config.LogLevel);
@@ -183,6 +184,23 @@ namespace SyncniteBridge
                                 {
                                     deltaSync?.Trigger();
                                     blog.Info("sync", "Manual sync requested");
+                                },
+                                // NEW:
+                                initialEmail: config.AuthEmail,
+                                initialPassword: config.GetAuthPassword(),
+                                onSaveCredentials: (email, password) =>
+                                {
+                                    config.AuthEmail = email ?? "";
+                                    config.SetAuthPassword(password ?? "");
+                                    BridgeConfig.Save(configPath, config);
+                                    AuthHeaders.Set(config.AuthEmail, config.GetAuthPassword());
+
+                                    // Optional UX: if creds just became valid and server is healthy, kick once.
+                                    if (health?.IsHealthy == true)
+                                    {
+                                        pusher?.PushNow();
+                                        deltaSync?.Trigger();
+                                    }
                                 }
                             );
                         }

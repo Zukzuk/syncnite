@@ -4,9 +4,11 @@ import LibraryPage from "./pages/LibraryPage";
 import BridgePage from "./pages/BridgePage";
 import HomePage from "./pages/HomePage";
 import SettingsPage from "./pages/SettingsPage";
+import AdminPage from "./pages/AdminPage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <AppShellLayout><HomePage /></AppShellLayout> },
+  { path: "/admin", element: <AppShellLayout><AdminPage /></AppShellLayout> },
   { path: "/library", element: <AppShellLayout><LibraryPage /></AppShellLayout> },
   { path: "/bridge", element: <AppShellLayout><BridgePage /></AppShellLayout> },
   { path: "/settings", element: <AppShellLayout><SettingsPage /></AppShellLayout> },

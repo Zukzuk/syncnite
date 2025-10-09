@@ -19,7 +19,6 @@ export const BASE = "/data";
 
 export const FILES = {
   manifest: `${BASE}/manifest.json`,
-  localInstalled: `${BASE}/local/local.Installed.json`,
   games: [`${BASE}/games.Game.json`],
   tags: [`${BASE}/tags.Tag.json`],
   sources: [`${BASE}/sources.GameSource.json`, `${BASE}/sources.Source.json`],

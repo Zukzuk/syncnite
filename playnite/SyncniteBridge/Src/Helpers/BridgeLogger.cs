@@ -49,6 +49,7 @@ namespace SyncniteBridge.Helpers
             ver = version ?? "dev";
             threshold = Parse(level);
             worker = Task.Run(() => PumpAsync(cts.Token));
+            AuthHeaders.Apply(http);
         }
 
         public void UpdateApiBase(string apiBase) => endpoint = Combine(apiBase, "sync/log");

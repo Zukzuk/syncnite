@@ -1,6 +1,6 @@
 import { ScrollArea, NavLink, Text, rem } from "@mantine/core";
 import { Link, useLocation } from "react-router-dom";
-import { IconHome2, IconBooks, IconSettings, IconAB2 } from "@tabler/icons-react";
+import { IconHome2, IconBooks, IconSettings, IconAB2, IconShield } from "@tabler/icons-react";
 import { GRID } from "../../lib/constants";
 
 const appVersion = (window as any).__APP_VERSION__ ?? 'dev';
@@ -16,6 +16,13 @@ export function AppNavbar() {
                 label="Home"
                 leftSection={<IconHome2 size={18} />}
                 active={location.pathname === "/"}
+            />
+            <NavLink
+                component={Link}
+                to="/admin"
+                label="Admin"
+                leftSection={<IconShield size={18} />}
+                active={location.pathname.startsWith("/admin")}
             />
             <NavLink
                 component={Link}

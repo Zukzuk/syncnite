@@ -30,6 +30,10 @@ export function jsonSet<T>(key: string, value: T) {
     }
 }
 
+export function getEmail(): string | null {
+  try { return localStorage.getItem("sb_email"); } catch { return null; }
+}
+
 export function loadStateFromCookie(): Persisted {
   try {
     return jsonGet<Persisted>(COOKIE.libraryState, COOKIE_DEFAULTS);
