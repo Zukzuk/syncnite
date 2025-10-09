@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.10.1](https://github.com/Zukzuk/playnite-viewer/compare/v1.9.1...v1.10.1) (2025-10-09)
+
+
+### Bug Fixes
+
+* **added auth:** added auth ([c15a411](https://github.com/Zukzuk/playnite-viewer/commit/c15a41144cd007bfacdd9f6ef4d15ed4c0674a3f))
+
 ## [1.10.0](https://github.com/Zukzuk/playnite-viewer/compare/v1.9.0...v1.10.0) (2025-10-06)
 
 
