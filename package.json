@@ -1,5 +1,5 @@
 {
-  "name": "playnite-viewer",
+  "name": "syncnite",
   "private": true,
   "version": "1.10.1",
   "workspaces": [
@@ -13,7 +13,7 @@
     "build": "npm run build:version && npm -ws --if-present run build && npm run build:ext && npm run codebase",
     "push": "node scripts/git-push.js",
     "release": "node scripts/docker-release.js",
-    "install:all": "npm i --workspaces --include-workspace-root",
+    "i:all": "npm i --workspaces --include-workspace-root",
     "lint": "npm -ws --if-present run lint",
     "test": "npm -ws --if-present run test",
     "build:ext": "node scripts/build-ext.js",
