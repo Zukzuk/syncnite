@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.11.0](https://github.com/Zukzuk/playnite-viewer/compare/v1.10.0...v1.11.0) (2025-10-11)
+
+
+### Features
+
+* added admin guard to frontend ([fdee464](https://github.com/Zukzuk/playnite-viewer/commit/fdee464ae9a0fc9df30c7f70ed0941bc5429dad1))
+
 ### [1.10.1](https://github.com/Zukzuk/playnite-viewer/compare/v1.9.1...v1.10.1) (2025-10-09)
 
 
