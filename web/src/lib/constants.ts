@@ -87,6 +87,16 @@ export const COOKIE_DEFAULTS: Persisted = {
 
 export const MAX_LINES = 1000;
 
+export const LETTERS_LIST = ["#",..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
+
+export const LETTERS = [...LETTERS_LIST] as const;
+
+export const KEY_EMAIL = "sb_email";
+
+export const KEY_PASS = "sb_password";
+
+export const EVT = "sb:auth-changed";
+
 export const NOTIF_IMPORT_ID = "pn-import";
 
 export const KEY = "pn_logs_v1";

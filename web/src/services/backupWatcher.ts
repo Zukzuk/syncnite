@@ -3,8 +3,8 @@
 
 import { BackupListener, BackupWatcherState, ZipMeta } from "../lib/types";
 import { DB_KEY, IDB_DB, IDB_STORE } from "../lib/constants";
-import { UploadRunner } from "./backupUploader";
-import { LogBus } from "./logBus";
+import { BackupUploader } from "./BackupUploader";
+import { LogBus } from "./LogBus";
 
 let dirHandle: FileSystemDirectoryHandle | null = null;
 let timer: number | null = null;
@@ -14,8 +14,8 @@ const state: BackupWatcherState = {
     dirName: null,
     latestLocalZip: null,
     running: false,
-    lastUploadedName: UploadRunner.getLastUploaded()?.name ?? null,
     permission: null,
+    lastUploadedName: BackupUploader.getLastUploaded()?.name ?? null,
 };
 
 // --- IndexedDB helpers ---
@@ -98,13 +98,13 @@ async function tick() {
     state.latestLocalZip = newest; emit();
     if (!newest) return;
 
-    // skip if UploadRunner is already uploading that file
-    if (UploadRunner.isUploadingName(newest.name)) return;
+    // skip if BackupUploader is already uploading that file
+    if (BackupUploader.isUploadingName(newest.name)) return;
 
-    // only prompt if strictly newer than lastUploaded known by the runner
-    if (!strictlyNewer(newest, UploadRunner.getLastUploaded())) return;
+    // only prompt if strictly newer than lastUploaded known by the uploader
+    if (!strictlyNewer(newest, BackupUploader.getLastUploaded())) return;
 
-    // prompt & delegate to runner
+    // prompt & delegate to uploader
     const proceed = window.confirm(`New Playnite backup detected:\n${newest.name}\n\nUpload & import now?`);
     if (!proceed) return;
 
@@ -116,7 +116,7 @@ async function tick() {
         if (!file) return;
 
         LogBus.append(`UPLOAD ▶ ${newest.name}`);
-        await UploadRunner.start(file); // runner handles progress, logs, notifications, zips-changed
+        await BackupUploader.start(file); // runner handles progress, logs, notifications, zips-changed
         state.lastUploadedName = newest.name; emit();
     } catch (e) {
         LogBus.append(`UPLOAD ✗ ${newest.name} — ${String((e as any)?.message || e)}`);

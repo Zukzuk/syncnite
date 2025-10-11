@@ -5,7 +5,6 @@ import { loadStateFromCookie, saveStateToCookie } from "../../lib/persist";
 
 export function useLibraryState(data: Loaded) {
   const persisted = React.useMemo(loadStateFromCookie, []);
-
   const [q, setQ] = React.useState<string>(persisted.q);
   const [sources, setSources] = React.useState<string[]>(persisted.sources);
   const [tags, setTags] = React.useState<string[]>(persisted.tags);

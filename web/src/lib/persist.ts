@@ -1,5 +1,52 @@
-import { COOKIE, COOKIE_DEFAULTS } from "./constants";
-import { Persisted } from "./types";
+import { COOKIE, COOKIE_DEFAULTS, EVT, KEY_EMAIL, KEY_PASS } from "./constants";
+import { Creds, Persisted } from "./types";
+
+export function getCreds(): Creds | null {
+  try {
+    const email = localStorage.getItem(KEY_EMAIL) || "";
+    const password = localStorage.getItem(KEY_PASS) || "";
+    if (!email || !password) return null;
+    return { email, password };
+  } catch {
+    return null;
+  }
+}
+
+export function setCreds(email: string, password: string) {
+  try {
+    localStorage.setItem(KEY_EMAIL, email.toLowerCase());
+    localStorage.setItem(KEY_PASS, password);
+  } finally {
+    window.dispatchEvent(new Event(EVT));
+  }
+}
+
+export function clearCreds() {
+  try {
+    localStorage.removeItem(KEY_EMAIL);
+    localStorage.removeItem(KEY_PASS);
+  } finally {
+    window.dispatchEvent(new Event(EVT));
+  }
+}
+
+export async function verify(): Promise<boolean> {
+  const c = getCreds();
+  if (!c) return false;
+  try {
+    const r = await fetch("/api/accounts/verify", {
+      headers: {
+        "x-auth-email": c.email,
+        "x-auth-password": c.password,
+      },
+      cache: "no-store",
+    });
+    const j = await r.json();
+    return !!j?.ok;
+  } catch {
+    return false;
+  }
+}
 
 export function readCookie(name: string): string | null {
     if (typeof document === "undefined") return null;

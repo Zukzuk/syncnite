@@ -2,7 +2,7 @@ import * as React from "react";
 import type { VirtuosoHandle } from "react-virtuoso";
 import { letterBucket } from "../../lib/utils";
 import type { Letter, AlphaGroup, AlphabeticalRailCounts, Row, Range } from "../../lib/types";
-import { LETTERS } from "../../lib/types";
+import { LETTERS } from "../../lib/constants";
 
 export function useAlphabetRail(
     params: { isGrouped: boolean; groups: AlphaGroup[] | null; flatItems: Row[] },

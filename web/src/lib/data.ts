@@ -27,11 +27,9 @@ async function tryFetchJson(url: string): Promise<any | null> {
     if (!r.ok) return null;
     const ct = (r.headers.get("content-type") || "").toLowerCase();
     const text = await r.text();
-
     // If nginx gave us index.html instead of JSON, bail.
     const looksHtml = ct.includes("text/html") || text.trim().startsWith("<");
     if (looksHtml) return null;
-
     return JSON.parse(text);
   } catch {
     return null;
@@ -42,7 +40,6 @@ export async function loadLibrary(): Promise<Loaded> {
   const games = await tryLoadMany<GameDoc[]>(FILES.games, []);
   const tags = await tryLoadMany<NamedDoc[]>(FILES.tags, []);
   const sources = await tryLoadMany<NamedDoc[]>(FILES.sources, []);
-
   const email = getEmail();
   let localInstalledSet: Set<string> | null = null;
   if (email) {

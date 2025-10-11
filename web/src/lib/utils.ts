@@ -1,6 +1,19 @@
 import { BASE, FALLBACK_ICON } from "./constants";
 import type { Guidish, Link, Letter } from "./types";
 import ICO from "icojs";
+import {
+    IconBrandSteam,
+    IconBox as IconBrandGog,
+    IconShieldChevron as IconBrandEpicGames,
+    IconBrandFacebook,
+    IconBrandTwitter,
+    IconBrandInstagram,
+    IconBrandYoutube,
+    IconBrandDiscord,
+    IconBrandTwitch,
+    IconBrandWikipedia,
+    IconWorldWww,
+} from "@tabler/icons-react";
 
 export function isIcoPath(url: string): boolean {
   try {
@@ -143,6 +156,21 @@ export function sourceProtocolLink(source: string, id: string): string | null {
       return null;
   }
 }
+
+export const iconForSource = (s: string | null | undefined) => {
+    const key = (s ?? "").toLowerCase();
+    if (key.includes("steam")) return IconBrandSteam;
+    if (key.includes("gog")) return IconBrandGog;
+    if (key.includes("epic")) return IconBrandEpicGames;
+    if (key.includes("facebook")) return IconBrandFacebook;
+    if (key.includes("twitter") || key.includes("x")) return IconBrandTwitter;
+    if (key.includes("instagram")) return IconBrandInstagram;
+    if (key.includes("youtube")) return IconBrandYoutube;
+    if (key.includes("discord")) return IconBrandDiscord;
+    if (key.includes("twitch")) return IconBrandTwitch;
+    if (key.includes("wikipedia")) return IconBrandWikipedia;
+    return IconWorldWww;
+};
 
 export function hasEmulatorTag(tags?: string[]): boolean {
   return Array.isArray(tags) && tags.some(t => /\bemulator(s)?\b/i.test(t));

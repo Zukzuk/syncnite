@@ -1,8 +1,6 @@
 import { Paper, Stack, Tooltip, UnstyledButton } from "@mantine/core";
 import { AlphabeticalRailCounts } from "../../lib/types";
-import { Z_INDEX } from "../../lib/constants";
-
-export const DEFAULT_LETTERS = ["#",..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
+import { LETTERS_LIST, Z_INDEX } from "../../lib/constants";
 
 type Props = {
     letters?: string[];
@@ -12,7 +10,7 @@ type Props = {
     title?: string;
 }
 
-export function AlphabeticalRail({ letters = DEFAULT_LETTERS, counts, active, onJump, title = "Jump to letter" }: Props) {
+export function AlphabeticalRail({ letters = LETTERS_LIST, counts, active, onJump, title = "Jump to letter" }: Props) {
     const usable = counts ? letters.filter((ch) => (counts[ch] ?? 0) > 0) : letters;
     if (usable.length === 0) return null;
 

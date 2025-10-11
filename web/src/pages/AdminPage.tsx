@@ -1,56 +1,41 @@
-import React from "react";
-import { Card, Stack, Text, TextInput, PasswordInput, Button, Group, Alert } from "@mantine/core";
-
-async function post(path: string, body: any) {
-    const r = await fetch(`/api${path}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-    });
-    return r.json();
-}
+import * as React from "react";
+import { Stack, Card, Text, Group, Badge, Divider, Code, Alert } from "@mantine/core";
+import { fetchAdminStatus } from "../lib/api";
+import { useAuth } from "../components/hooks/useAuth";
 
 export default function AdminPage() {
-    const [email, setEmail] = React.useState("");
-    const [password, setPassword] = React.useState("");
-    const [msg, setMsg] = React.useState<string | null>(null);
-    const [error, setError] = React.useState<string | null>(null);
+    const { state } = useAuth();
+    const [admin, setAdmin] = React.useState<string | null>(null);
 
-    const remember = (em: string) => {
-        try { localStorage.setItem("sb_email", em.toLowerCase()); } catch { }
-        // Let listeners refresh
-        window.dispatchEvent(new Event("sb:auth-changed"));
-    };
-
-    const onRegister = async () => {
-        setError(null); setMsg(null);
-        const res = await post("/accounts/register", { email: email.trim().toLowerCase(), password });
-        if (res?.ok) { remember(res.email || email.trim()); setMsg("Registered as admin."); }
-        else setError(res?.error || "Failed");
-    };
-
-    const onLogin = async () => {
-        setError(null); setMsg(null);
-        const res = await post("/accounts/login", { email: email.trim().toLowerCase(), password });
-        if (res?.ok) { remember(res.email || email.trim()); setMsg("Login ok."); }
-        else setError(res?.error || "Invalid credentials");
-    };
+    React.useEffect(() => {
+        (async () => {
+            const s = await fetchAdminStatus();
+            setAdmin(s.admin);
+        })();
+    }, []);
 
     return (
         <Stack p="md" gap="lg">
-            <Text fz={24} fw={700}>Admin account</Text>
+            <Text fz={24} fw={700}>Admin Account</Text>
 
-            <Card>
-                <Stack>
-                    <TextInput label="Email" value={email} onChange={(e) => setEmail(e.currentTarget.value)} />
-                    <PasswordInput label="Password" value={password} onChange={(e) => setPassword(e.currentTarget.value)} />
-                    <Group>
-                        <Button onClick={onRegister}>Register / Replace admin</Button>
-                        <Button variant="light" onClick={onLogin}>Login</Button>
-                    </Group>
-                    {msg && <Alert color="green">{msg}</Alert>}
-                    {error && <Alert color="red">{error}</Alert>}
-                </Stack>
+            <Card withBorder>
+                <Text fw={600} mb="xs">Admin</Text>
+                <Group>
+                    <Badge color="green" variant="filled">active</Badge>
+                    <Text>Signed in as&nbsp;<Code>{state.email}</Code></Text>
+                </Group>
+                <Divider my="sm" />
+                <Text size="sm" className="is-dim">
+                    Current admin (per server): <Code>{admin ?? "(loading…)"}</Code>
+                </Text>
+            </Card>
+
+            <Card withBorder>
+                <Text fw={600} mb="xs">Users</Text>
+                <Alert color="gray">
+                    This deployment runs in <b>single-admin mode</b>. The API exposes only admin endpoints — no user store yet.
+                    When you add multi-user to the API, query and display users here.
+                </Alert>
             </Card>
         </Stack>
     );

@@ -172,4 +172,34 @@ router.get("/verify", async (req, res) => {
     res.json({ ok: true });
 });
 
+/**
+ * @openapi
+ * /api/accounts/status:
+ *   get:
+ *     operationId: getAccountStatus
+ *     summary: Get the status of the admin account
+ *     description: Returns information about the current admin account status.
+ *     tags: [Accounts]
+ *     responses:
+ *       200:
+ *         description: Status retrieved successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 hasAdmin:
+ *                   type: boolean
+ *                 admin:
+ *                   type: string
+ *                   format: email
+ *                   nullable: true
+ *       500:
+ *         $ref: '#/components/responses/Error500'
+ */
+router.get("/status", async (_req, res) => {
+    const admin = await AccountsService.currentAdmin();
+    res.json({ hasAdmin: !!admin, admin: admin || null });
+});
+
 export default router;

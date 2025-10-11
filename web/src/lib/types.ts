@@ -1,3 +1,5 @@
+import { LETTERS } from "./constants";
+
 export type Guidish =
   | string
   | { $guid?: string }
@@ -85,26 +87,16 @@ export type Loaded = {
   allTags: string[];
 };
 
-export type Range = { startIndex: number; endIndex: number };
-
-export type WithBucket = { row: Row; bucket: string };
-
-export type AlphaGroup = { title: string; rows: Row[] };
-
-export type AlphabeticalRailCounts = Record<string, number>;
-
-export const LETTERS = ["#",..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"] as const;
-export type Letter = typeof LETTERS[number];
-
-export type SortKey = "title" | "source" | "tags" | "year";
-
-export type SortDir = "asc" | "desc";
-
-export type BackupListener = (s: BackupWatcherState) => void;
-
-export type LogListener = (lines: string[]) => void;
-
-export type ZipMeta = { name: string; lastModified: number; size: number };
+export type KeyDeps = {
+  filteredCount: number;
+  q: string;
+  sources: string[];
+  tags: string[];
+  showHidden: boolean;
+  installedOnly: boolean;
+  sortKey: string;
+  sortDir: string;
+};
 
 export type BackupWatcherState = {
   supported: boolean;
@@ -114,8 +106,6 @@ export type BackupWatcherState = {
   lastUploadedName: string | null;
   permission: PermissionState | "prompt" | null; // keep for compatibility with your types
 };
-
-export type Phase = null | "unzip" | "copy";
 
 export type ImportState = {
     running: boolean;
@@ -131,3 +121,30 @@ export type UploadState = {
     percent: number | null;
 };
 
+export type LocalInstalledState = { set: Set<string> | null; updatedAt: string | null };
+
+export type AuthState = { ready: boolean; loggedIn: boolean; email: string | null };
+
+export type Creds = { email: string; password: string };
+
+export type Range = { startIndex: number; endIndex: number };
+
+export type WithBucket = { row: Row; bucket: string };
+
+export type AlphaGroup = { title: string; rows: Row[] };
+
+export type AlphabeticalRailCounts = Record<string, number>;
+
+export type Letter = typeof LETTERS[number];
+
+export type SortKey = "title" | "source" | "tags" | "year";
+
+export type SortDir = "asc" | "desc";
+
+export type BackupListener = (s: BackupWatcherState) => void;
+
+export type LogListener = (lines: string[]) => void;
+
+export type ZipMeta = { name: string; lastModified: number; size: number };
+
+export type Phase = null | "unzip" | "copy";

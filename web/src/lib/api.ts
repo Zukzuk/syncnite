@@ -1,17 +1,19 @@
 import axios from "axios";
-
 import { LibraryItem, StreamProgress, ZipInfo } from "./types";
 
+// Axios instance with base URL and credentials
 export const api = axios.create({
-    baseURL: "/api",
-    withCredentials: true,
+  baseURL: "/api",
+  withCredentials: true,
 });
 
+// Fetch list of available ZIP backups
 export async function listZips(): Promise<ZipInfo[]> {
   const r = await fetch("/api/zips");
   return r.json();
 }
 
+// Upload a ZIP file, with optional progress callback
 export async function uploadZip(
   file: File,
   onProgress?: (pcent: number) => void
@@ -29,6 +31,7 @@ export async function uploadZip(
   return r.data;
 }
 
+// Start processing a ZIP file on the server, with callbacks for log/progress/done/error
 export function processZipStream({
   filename,
   password,
@@ -89,7 +92,35 @@ export function processZipStream({
   return () => finishOnce();
 }
 
+// Fetch list of library items
 export async function listLibrary(): Promise<LibraryItem[]> {
   const r = await fetch("/api/library");
+  return r.json();
+}
+
+// Fetch whether an admin user exists, and if so their email
+export async function fetchAdminStatus(): Promise<{ hasAdmin: boolean; admin: string | null }> {
+  const r = await fetch("/api/accounts/status", { cache: "no-store" });
+  const j = await r.json();
+  return { hasAdmin: !!j?.hasAdmin, admin: (j?.admin ?? null) as string | null };
+}
+
+// Register a new admin user
+export async function registerAdmin(email: string, password: string) {
+  const r = await fetch("/api/accounts/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
+  });
+  return r.json();
+}
+
+// Login an existing user
+export async function loginUser(email: string, password: string) {
+  const r = await fetch("/api/accounts/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
+  });
   return r.json();
 }

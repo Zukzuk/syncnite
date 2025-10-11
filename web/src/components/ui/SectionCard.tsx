@@ -3,7 +3,7 @@ import { Card, Group, Stack, Text } from "@mantine/core";
 
 type Props = { title: string; right?: React.ReactNode; children: React.ReactNode }
 
-export default function SectionCard({
+export function SectionCard({
     title, right, children,
 }: Props) {
     return (

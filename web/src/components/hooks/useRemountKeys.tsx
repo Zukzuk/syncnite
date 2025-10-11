@@ -1,15 +1,5 @@
 import * as React from "react";
-
-type KeyDeps = {
-  filteredCount: number;
-  q: string;
-  sources: string[];
-  tags: string[];
-  showHidden: boolean;
-  installedOnly: boolean;
-  sortKey: string;
-  sortDir: string;
-};
+import { KeyDeps } from "../../lib/types";
 
 export function useRemountKeys(d: KeyDeps) {
   const dataSig = `${d.filteredCount}|${d.q}|${d.sources.join(",")}|${d.tags.join(",")}|${d.showHidden}|${d.installedOnly}`;

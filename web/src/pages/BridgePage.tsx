@@ -1,13 +1,13 @@
 import React from "react";
 import { Stack, Group, Select, Button, FileButton, PasswordInput, Textarea, Text } from "@mantine/core";
-import SectionCard from "../components/ui/SectionCard";
-import { LoadingBar } from "../components/ui/LoadingBar";
 import { listZips } from "../lib/api";
 import type { BackupWatcherState, ZipInfo } from "../lib/types";
-import { LogBus } from "../services/logBus";
-import { BackupWatcher } from "../services/backupWatcher";
-import { ImportRunner } from "../services/backupImporter";
-import { UploadRunner } from "../services/backupUploader";
+import { SectionCard } from "../components/ui/SectionCard";
+import { LoadingBar } from "../components/ui/LoadingBar";
+import { LogBus } from "../services/LogBus";
+import { BackupWatcher } from "../services/BackupWatcher";
+import { BackupUploader } from "../services/BackupUploader";
+import { BackupImporter } from "../services/BackupImporter";
 
 export default function BridgePage() {
     const [zips, setZips] = React.useState<ZipInfo[]>([]);
@@ -40,7 +40,7 @@ export default function BridgePage() {
     React.useEffect(() => {
         const unsub = BackupWatcher.subscribe(setWatch);
         return () => {
-            unsub();            // ensure the cleanup returns void
+            unsub(); // ensure the cleanup returns void
         };
     }, []);
 
@@ -70,8 +70,8 @@ export default function BridgePage() {
         const onZipsChanged = (e: Event) => {
             const name = (e as CustomEvent).detail?.name as string | undefined;
             (async () => {
-                await refresh();                    // refresh the /zips list
-                if (name) setSelected(name);        // auto-select newest
+                await refresh(); // refresh the /zips list
+                if (name) setSelected(name); // auto-select newest
                 LogBus.append(`SELECT ⮕ ${name}`); // ← add this
             })();
         };
@@ -91,7 +91,7 @@ export default function BridgePage() {
         setUploadPercent(0);
         setUploadSubtext(file.name);
         LogBus.append(`Uploading ${file.name}…`);
-        UploadRunner.start(file);
+        BackupUploader.start(file);
     }
 
     function onRun() {
@@ -104,12 +104,12 @@ export default function BridgePage() {
         setExportPercent(0);
         setExportSubtext("");
 
-        ImportRunner.start({ filename: selected, password: password || undefined });
+        BackupImporter.start({ filename: selected, password: password || undefined });
     }
 
     React.useEffect(() => {
         // Rehydrate current state on mount/route return
-        const s = ImportRunner.getState();
+        const s = BackupImporter.getState();
         if (s.running) {
             setExportBusy(true);
             setExportPhase(s.phase);
@@ -131,7 +131,7 @@ export default function BridgePage() {
         };
 
         const onState = (e: Event) => {
-            const st = (e as CustomEvent).detail as ReturnType<typeof ImportRunner.getState>;
+            const st = (e as CustomEvent).detail as ReturnType<typeof BackupImporter.getState>;
             if (!st?.running) {
                 // finished or error
                 setExportBusy(false);

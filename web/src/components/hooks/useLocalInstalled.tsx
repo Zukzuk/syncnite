@@ -1,7 +1,6 @@
 import * as React from "react";
-import { FILES } from "../../lib/constants";
-
-export type LocalInstalledState = { set: Set<string> | null; updatedAt: string | null };
+import { LocalInstalledState } from "../../lib/types";
+import { getEmail } from "../../lib/persist";
 
 /**
  * Hook that polls .Installed.json every `pollMs` ms.
@@ -13,10 +12,6 @@ export function useLocalInstalled(pollMs = 4000): LocalInstalledState {
 
     React.useEffect(() => {
         let stop = false;
-
-        function getEmail(): string | null {
-            try { return localStorage.getItem("sb_email"); } catch { return null; }
-        }
 
         async function tick() {
             try {

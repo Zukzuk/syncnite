@@ -1,5 +1,7 @@
-import { Group, Title, ActionIcon, Button, Tooltip, Burger, useMantineColorScheme } from "@mantine/core";
+import { Group, Title, ActionIcon, Button, Tooltip, Burger, Text, useMantineColorScheme } from "@mantine/core";
 import { IconDownload, IconMoon, IconSun } from "@tabler/icons-react";
+import { useAuth } from "../hooks/useAuth";
+import { clearCreds } from "../../lib/persist";
 
 const appVersion = (window as any).__APP_VERSION__ ?? 'dev';
 
@@ -10,6 +12,7 @@ type Props = {
 
 export function AppHeader({ opened, onToggleNav }: Props) {
     const { colorScheme, setColorScheme } = useMantineColorScheme();
+    const { state } = useAuth();
 
     return (
         <Group h="100%" px="md" justify="space-between">
@@ -34,6 +37,15 @@ export function AppHeader({ opened, onToggleNav }: Props) {
                         Playnite extension
                     </Button>
                 </Tooltip>
+
+                <Group gap="md">
+                    {state.loggedIn ? (
+                        <>
+                            <Text size="sm" className="is-dim">{state.email}</Text>
+                            <Button size="xs" variant="light" onClick={() => clearCreds()}>Logout</Button>
+                        </>
+                    ) : null}
+                </Group>
 
                 {/* Dark / light toggle */}
                 <ActionIcon

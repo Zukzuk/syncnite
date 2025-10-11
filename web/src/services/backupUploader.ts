@@ -4,9 +4,9 @@
 
 import { notifications } from "@mantine/notifications";
 import { uploadZip } from "../lib/api";
-import { LogBus } from "../services/logBus";
 import { UploadState } from "../lib/types";
 import { LAST_UP_KEY, STATE_KEY, NOTIF_UPLOAD_ID } from "../lib/constants";
+import { LogBus } from "./LogBus";
 
 let current: UploadState = restoreState();
 let lastUploaded: { name: string; size?: number; lastModified?: number } | null = restoreLast();
@@ -51,7 +51,7 @@ function showRunImportNotice(fileName: string) {
     });
 }
 
-export const UploadRunner = {
+export const BackupUploader = {
     getState(): UploadState { return { ...current }; },
     getLastUploaded(): { name: string; size?: number; lastModified?: number } | null { return lastUploaded ? { ...lastUploaded } : null; },
     isUploadingName(name: string) { return current.running && current.name === name; },

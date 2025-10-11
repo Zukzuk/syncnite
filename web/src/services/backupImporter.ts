@@ -8,7 +8,7 @@ import { notifications } from "@mantine/notifications";
 import { processZipStream } from "../lib/api";
 import type { ImportState, Phase, StreamProgress } from "../lib/types";
 import { NOTIF_IMPORT_ID } from "../lib/constants";
-import { LogBus } from "./logBus";
+import { LogBus } from "./LogBus";
 
 let current: ImportState = {
     running: false,
@@ -23,16 +23,18 @@ let lastLoggedCopyPct = -1;
 function emit(type: string, detail: any) {
     window.dispatchEvent(new CustomEvent(type, { detail }));
 }
+
 function snapshot() {
     return { ...current };
 }
+
 function reset() {
     current = { running: false, filename: null, phase: null, percent: null, subtext: "" };
     lastLoggedCopyPct = -1;
     emit("pn:import-state", snapshot());
 }
 
-export const ImportRunner = {
+export const BackupImporter = {
     getState(): ImportState {
         return snapshot();
     },

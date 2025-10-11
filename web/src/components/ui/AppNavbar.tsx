@@ -1,12 +1,27 @@
-import { ScrollArea, NavLink, Text, rem } from "@mantine/core";
+// src/components/ui/AppNavbar.tsx
+import { ScrollArea, NavLink } from "@mantine/core";
 import { Link, useLocation } from "react-router-dom";
-import { IconHome2, IconBooks, IconSettings, IconAB2, IconShield } from "@tabler/icons-react";
+import { IconHome2, IconBooks, IconSettings, IconAB2, IconShield, IconUser } from "@tabler/icons-react";
 import { GRID } from "../../lib/constants";
-
-const appVersion = (window as any).__APP_VERSION__ ?? 'dev';
+import * as React from "react";
+import { useAuth } from "../hooks/useAuth";
+import { fetchAdminStatus } from "../../lib/api";
 
 export function AppNavbar() {
     const location = useLocation();
+    const { state } = useAuth();
+    const [adminEmail, setAdminEmail] = React.useState<string | null>(null);
+
+    React.useEffect(() => {
+        (async () => {
+            const s = await fetchAdminStatus();
+            setAdminEmail(s.admin);
+        })();
+    }, []);
+
+    const isAdmin = state.loggedIn && state.email && adminEmail
+        ? state.email.toLowerCase() === adminEmail.toLowerCase()
+        : false;
 
     return (
         <ScrollArea style={{ height: `calc(100vh - ${GRID.rowHeight}px)` }}>
@@ -17,13 +32,24 @@ export function AppNavbar() {
                 leftSection={<IconHome2 size={18} />}
                 active={location.pathname === "/"}
             />
-            <NavLink
-                component={Link}
-                to="/admin"
-                label="Admin"
-                leftSection={<IconShield size={18} />}
-                active={location.pathname.startsWith("/admin")}
-            />
+            {state.loggedIn && (
+                <NavLink
+                    component={Link}
+                    to="/account"
+                    label="Account"
+                    leftSection={<IconUser size={18} />}
+                    active={location.pathname.startsWith("/account")}
+                />
+            )}
+            {isAdmin && (
+                <NavLink
+                    component={Link}
+                    to="/admin"
+                    label="Admin"
+                    leftSection={<IconShield size={18} />}
+                    active={location.pathname.startsWith("/admin")}
+                />
+            )}
             <NavLink
                 component={Link}
                 to="/library"
@@ -45,9 +71,6 @@ export function AppNavbar() {
                 leftSection={<IconSettings size={18} />}
                 active={location.pathname.startsWith("/settings")}
             />
-            <Text className="is-dim" size="xs" pl={rem(12)} pt="md">
-                v{appVersion}
-            </Text>
         </ScrollArea>
     );
 }

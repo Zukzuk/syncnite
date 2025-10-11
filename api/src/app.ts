@@ -4,6 +4,7 @@ import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
 import syncRouter from "./routes/sync";
 import accountsRouter from "./routes/accounts";
+import usersRouter from "./routes/users";
 import generalRouter from "./routes/general";
 import backupRouter from "./routes/backup";
 import extensionRouter from "./routes/extension";
@@ -73,6 +74,7 @@ export function createApp() {
     // routes
     app.use("/api", generalRouter);
     app.use("/api/accounts", accountsRouter);
+    app.use("/api/users", usersRouter);
     app.use("/api/sync", syncRouter);
     app.use("/api/backup", backupRouter);
     app.use("/api/extension", extensionRouter);
