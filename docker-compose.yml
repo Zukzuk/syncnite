@@ -9,7 +9,6 @@ services:
       NODE_ENV: production
       APP_VERSION: ${VERSION} # runtime env
     volumes:
-      # Docker creates the directories as your current user; the container process may still need correct ownership/permissions on the host.
       - ./uploads:/input
       - ./data:/data
       - ./extension:/extension:ro
@@ -24,12 +23,12 @@ services:
       dockerfile: web/Dockerfile
       args:
         APP_VERSION: ${VERSION} # bakes into image
-    ports:
-      - "3003:3003"
+    environment:
+      APP_VERSION: ${VERSION} # runtime env
     volumes:
       - ./data:/usr/share/nginx/html/data:ro
       - ./extension:/usr/share/nginx/html/extension:ro
+    ports:
+      - "3003:3003"
     depends_on:
       - api
-    environment:
-      APP_VERSION: ${VERSION} # runtime env
