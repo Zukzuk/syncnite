@@ -1,6 +1,13 @@
 import * as React from "react";
 
-export function useDelayedFlag(active: boolean, delayMs: number) {
+type UseParams = {
+    active: boolean;
+    delayMs: number;
+};
+
+type UseReturn = boolean;
+
+export function useDelayedFlag({ active, delayMs }: UseParams): UseReturn {
     const [flag, setFlag] = React.useState(false);
 
     React.useEffect(() => {

@@ -1,7 +1,11 @@
 import React from "react";
 import { Card, Group, Stack, Text } from "@mantine/core";
 
-type Props = { title: string; right?: React.ReactNode; children: React.ReactNode }
+type Props = { 
+    title: string; 
+    right?: React.ReactNode; 
+    children: React.ReactNode 
+}
 
 export function SectionCard({
     title, right, children,

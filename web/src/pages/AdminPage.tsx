@@ -4,7 +4,7 @@ import { fetchAdminStatus } from "../lib/api";
 import { useAuth } from "../components/hooks/useAuth";
 
 export default function AdminPage() {
-    const { state } = useAuth();
+    const { state } = useAuth({ pollMs: 0 });
     const [admin, setAdmin] = React.useState<string | null>(null);
 
     React.useEffect(() => {

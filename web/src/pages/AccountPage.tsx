@@ -4,7 +4,7 @@ import { useAuth } from "../components/hooks/useAuth";
 import { fetchAdminStatus } from "../lib/api";
 
 export default function AccountPage() {
-    const { state } = useAuth();
+    const { state } = useAuth({ pollMs: 0 });
     const [adminEmail, setAdminEmail] = React.useState<string | null>(null);
 
     React.useEffect(() => {

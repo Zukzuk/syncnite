@@ -4,8 +4,8 @@ import { PlayActionOverlay } from "./PlayActionOverlay";
 import { IconImage } from "./IconImage";
 import { GRID } from "../../lib/constants";
 import { SourceBadge } from "./SourceBadge";
-import { Row } from "../../lib/types";
 import { IconCopy, IconExternalLink } from "@tabler/icons-react";
+import { Row } from "../hooks/useLibrary";
 
 type Props = Row & {
     collapseOpen: boolean;

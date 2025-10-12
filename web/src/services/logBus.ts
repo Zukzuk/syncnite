@@ -1,11 +1,7 @@
-// Global log buffer that survives route changes AND page reloads (via sessionStorage).
-// Newest-first order. Keeps up to MAX lines.
-
 import { KEY, MAX_LINES } from "../lib/constants";
-import { LogListener } from "../lib/types";
 
 let lines: string[] = restore();
-
+type LogListener = (lines: string[]) => void;
 const listeners = new Set<LogListener>();
 
 function store() {
@@ -30,6 +26,8 @@ function emit() {
     listeners.forEach((fn) => fn(snapshot));
 }
 
+// Global log buffer that survives route changes AND page reloads (via sessionStorage).
+// Newest-first order. Keeps up to MAX lines.
 export const LogBus = {
     append(line: string) {
         if (!line) return;
@@ -37,14 +35,17 @@ export const LogBus = {
         store();
         emit();
     },
+    
     clear() {
         lines = [];
         store();
         emit();
     },
+
     get(): string[] {
         return [...lines];
     },
+
     subscribe(fn: LogListener) {
         listeners.add(fn);
         fn([...lines]); // immediate hydration

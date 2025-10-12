@@ -1,4 +1,19 @@
-import { Persisted } from "./types";
+import { CookieState } from "./persist";
+
+export const API_ENDPOINTS = {
+  // Fetch list of library items
+  LIBRARY_LIST: "/api/library",
+  DOWNLOAD_EXTENSION: "/api/extension/download",
+  // Admin account management
+  ADMIN_VERIFY: "/api/accounts/verify",
+  ADMIN_STATUS: "/api/accounts/status",
+  ADMIN_REGISTER: "/api/accounts/register",
+  ADMIN_LOGIN: "/api/accounts/login",
+  // Backup management
+  BACKUP_UPLOAD: "/api/backup/upload",
+  BACKUP_PROCESS_STREAM: "/api/backup/process-stream",
+  ZIP_LIST: "/api/zips",
+}
 
 export const GRID = {
   cols: "56px minmax(0, 45%) 80px 100px minmax(0, 1fr)",
@@ -45,7 +60,7 @@ export const FALLBACK_ICON =
     </svg>`
   );
 
-export const sourceTrim: Record<string, string> = {
+export const SOURCE_SHORTNAME_MAP: Record<string, string> = {
   "steam": "steam",
   "gog": "gog",
   "ubisoft connect": "ubisoft",
@@ -58,7 +73,7 @@ export const sourceTrim: Record<string, string> = {
   "microsoft store": "msstore",
 };
 
-export const sourceLabel: Record<string, string> = {
+export const SOURCE_LABEL_MAP: Record<string, string> = {
   "steam": "Steampowered",
   "gog": "Good Old Games",
   "ubisoft connect": "Ubisoft Connect",
@@ -75,7 +90,7 @@ export const COOKIE = {
   libraryState: "pn_library_ui_v2",
 };
 
-export const COOKIE_DEFAULTS: Persisted = {
+export const COOKIE_DEFAULTS: CookieState = {
   q: "",
   sources: [],
   tags: [],

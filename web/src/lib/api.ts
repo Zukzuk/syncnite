@@ -1,15 +1,30 @@
 import axios from "axios";
-import { LibraryItem, StreamProgress, ZipInfo } from "./types";
+import { StreamProgress } from "../services/BackupImporter";
+import { API_ENDPOINTS } from "./constants";
+import { getCreds } from "./persist";
+
+type LibraryItem = {
+  id: string | number;
+  title: string;
+  platform?: string;
+  addedAt?: string;
+  playtimeMinutes?: number;
+};
+
+export type ZipInfo = {
+  name: string;
+  size: number;
+  mtime: number
+};
 
 // Axios instance with base URL and credentials
 export const api = axios.create({
-  baseURL: "/api",
   withCredentials: true,
 });
 
 // Fetch list of available ZIP backups
 export async function listZips(): Promise<ZipInfo[]> {
-  const r = await fetch("/api/zips");
+  const r = await fetch(API_ENDPOINTS.ZIP_LIST);
   return r.json();
 }
 
@@ -17,10 +32,14 @@ export async function listZips(): Promise<ZipInfo[]> {
 export async function uploadZip(
   file: File,
   onProgress?: (pcent: number) => void
-): Promise<{ ok: boolean; file?: string; error?: string }> {
+): Promise<{
+  ok: boolean;
+  file?: string;
+  error?: string
+}> {
   const form = new FormData();
   form.append("file", file);
-  const r = await axios.post("/api/backup/upload", form, {
+  const r = await axios.post(API_ENDPOINTS.BACKUP_UPLOAD, form, {
     headers: { "Content-Type": "multipart/form-data" },
     onUploadProgress: (e) => {
       if (e.total) onProgress?.(Math.round((e.loaded * 100) / e.total));
@@ -33,12 +52,9 @@ export async function uploadZip(
 
 // Start processing a ZIP file on the server, with callbacks for log/progress/done/error
 export function processZipStream({
-  filename,
-  password,
-  onLog,
-  onProgress,
-  onDone,
-  onError,
+  filename, password,
+  onLog, onProgress,
+  onDone, onError,
 }: {
   filename: string;
   password?: string;
@@ -47,7 +63,7 @@ export function processZipStream({
   onDone?: () => void;
   onError?: (msg: string) => void;
 }) {
-  const url = new URL("/api/backup/process-stream", window.location.origin);
+  const url = new URL(API_ENDPOINTS.BACKUP_PROCESS_STREAM, window.location.origin);
   url.searchParams.set("filename", filename);
   if (password) url.searchParams.set("password", password);
 
@@ -94,20 +110,48 @@ export function processZipStream({
 
 // Fetch list of library items
 export async function listLibrary(): Promise<LibraryItem[]> {
-  const r = await fetch("/api/library");
+  const r = await fetch(API_ENDPOINTS.LIBRARY_LIST, { cache: "no-store" });
   return r.json();
 }
 
+// Verify admin credentials are valid
+export async function verifyAdmin(): Promise<boolean> {
+  const c = getCreds();
+  if (!c) return false;
+  try {
+    const r = await fetch(API_ENDPOINTS.ADMIN_VERIFY, {
+      headers: {
+        "x-auth-email": c.email,
+        "x-auth-password": c.password,
+      },
+      cache: "no-store",
+    });
+    const j = await r.json();
+    return !!j?.ok;
+  } catch {
+    return false;
+  }
+}
+
 // Fetch whether an admin user exists, and if so their email
-export async function fetchAdminStatus(): Promise<{ hasAdmin: boolean; admin: string | null }> {
-  const r = await fetch("/api/accounts/status", { cache: "no-store" });
+export async function fetchAdminStatus(): Promise<{
+  hasAdmin: boolean;
+  admin: string | null
+}> {
+  const r = await fetch(API_ENDPOINTS.ADMIN_STATUS, { cache: "no-store" });
   const j = await r.json();
   return { hasAdmin: !!j?.hasAdmin, admin: (j?.admin ?? null) as string | null };
 }
 
 // Register a new admin user
-export async function registerAdmin(email: string, password: string) {
-  const r = await fetch("/api/accounts/register", {
+export async function registerAdmin(
+  email: string,
+  password: string
+): Promise<{
+  ok: boolean;
+  error?: string
+}> {
+  const r = await fetch(API_ENDPOINTS.ADMIN_REGISTER, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
@@ -116,8 +160,14 @@ export async function registerAdmin(email: string, password: string) {
 }
 
 // Login an existing user
-export async function loginUser(email: string, password: string) {
-  const r = await fetch("/api/accounts/login", {
+export async function loginUser(
+  email: string,
+  password: string
+): Promise<{
+  ok: boolean;
+  error?: string
+}> {
+  const r = await fetch(API_ENDPOINTS.ADMIN_LOGIN, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email: email.trim().toLowerCase(), password }),

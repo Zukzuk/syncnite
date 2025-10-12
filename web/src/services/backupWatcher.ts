@@ -1,15 +1,23 @@
-// Detects newer local zips and delegates the actual upload to UploadRunner.
-// Still persists the selected folder and exposes UI state.
-
-import { BackupListener, BackupWatcherState, ZipMeta } from "../lib/types";
 import { DB_KEY, IDB_DB, IDB_STORE } from "../lib/constants";
 import { BackupUploader } from "./BackupUploader";
 import { LogBus } from "./LogBus";
 
-let dirHandle: FileSystemDirectoryHandle | null = null;
-let timer: number | null = null;
-const listeners = new Set<BackupListener>();
-const state: BackupWatcherState = {
+type ZipMeta = { 
+    name: string; 
+    lastModified: number;
+    size: number 
+};
+
+export type BackupWatchState = {
+  supported: boolean;
+  dirName: string | null;
+  latestLocalZip: ZipMeta | null;
+  running: boolean;
+  lastUploadedName: string | null;
+  permission: PermissionState | "prompt" | null;
+};
+
+const defaultState: BackupWatchState = {
     supported: "showDirectoryPicker" in window,
     dirName: null,
     latestLocalZip: null,
@@ -18,7 +26,13 @@ const state: BackupWatcherState = {
     lastUploadedName: BackupUploader.getLastUploaded()?.name ?? null,
 };
 
-// --- IndexedDB helpers ---
+type BackupListener = (s: BackupWatchState) => void;
+
+const listeners = new Set<BackupListener>();
+let currentState: BackupWatchState = { ...defaultState };
+let dirHandle: FileSystemDirectoryHandle | null = null;
+let timer: number | null = null;
+
 function idb(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
         const req = indexedDB.open(IDB_DB, 1);
@@ -27,6 +41,7 @@ function idb(): Promise<IDBDatabase> {
         req.onerror = () => reject(req.error);
     });
 }
+
 async function idbPut<T>(key: string, val: T) {
     const db = await idb();
     await new Promise<void>((res, rej) => {
@@ -36,6 +51,7 @@ async function idbPut<T>(key: string, val: T) {
         tx.onerror = () => rej(tx.error);
     });
 }
+
 async function idbGet<T>(key: string): Promise<T | null> {
     const db = await idb();
     return await new Promise<T | null>((res, rej) => {
@@ -45,21 +61,23 @@ async function idbGet<T>(key: string): Promise<T | null> {
         req.onerror = () => rej(req.error);
     });
 }
+
 async function saveHandle(h: FileSystemDirectoryHandle | null) { await idbPut(DB_KEY, h); }
+
 async function loadHandleFromStorage(): Promise<FileSystemDirectoryHandle | null> {
     try { return (await idbGet<FileSystemDirectoryHandle>(DB_KEY)) ?? null; } catch { return null; }
 }
 
-function emit() { listeners.forEach((fn) => fn({ ...state })); }
+function emit() { listeners.forEach((fn) => fn({ ...currentState })); }
 
 async function ensurePermission() {
-    if (!dirHandle) { state.permission = null; emit(); return false; }
+    if (!dirHandle) { currentState.permission = null; emit(); return false; }
     // @ts-ignore
     const perm = await dirHandle.queryPermission?.({ mode: "read" }) as PermissionState | undefined;
-    if (perm === "granted") { state.permission = "granted"; emit(); return true; }
+    if (perm === "granted") { currentState.permission = "granted"; emit(); return true; }
     // @ts-ignore
     const req = await dirHandle.requestPermission?.({ mode: "read" }) as PermissionState | undefined;
-    state.permission = req ?? "prompt"; emit();
+    currentState.permission = req ?? "prompt"; emit();
     return req === "granted";
 }
 
@@ -95,7 +113,7 @@ async function tick() {
     if (!(await ensurePermission())) return;
 
     const newest = await scanLatestZip();
-    state.latestLocalZip = newest; emit();
+    currentState.latestLocalZip = newest; emit();
     if (!newest) return;
 
     // skip if BackupUploader is already uploading that file
@@ -117,52 +135,59 @@ async function tick() {
 
         LogBus.append(`UPLOAD ▶ ${newest.name}`);
         await BackupUploader.start(file); // runner handles progress, logs, notifications, zips-changed
-        state.lastUploadedName = newest.name; emit();
+        currentState.lastUploadedName = newest.name; emit();
     } catch (e) {
         LogBus.append(`UPLOAD ✗ ${newest.name} — ${String((e as any)?.message || e)}`);
     }
 }
 
+function start() {
+    if (timer != null) return;
+    currentState.running = true; emit();
+    timer = window.setInterval(() => { tick().catch(() => { }); }, 15000);
+    tick().catch(() => { });
+}
+
+function stop() {
+    if (timer != null) { clearInterval(timer); timer = null; }
+    currentState.running = false; emit();
+}
+
+// Detects newer local zips and delegates the actual upload to UploadRunner.
+// Still persists the selected folder and exposes UI state.
 export const BackupWatcher = {
-    subscribe(fn: BackupListener) { listeners.add(fn); fn({ ...state }); return () => { listeners.delete(fn); }; },
+    subscribe(fn: BackupListener) { 
+        listeners.add(fn); 
+        fn({ ...currentState }); 
+        return () => { listeners.delete(fn); }; 
+    },
 
     async selectDirectory() {
-        if (!state.supported) return false;
+        if (!currentState.supported) return false;
         // @ts-ignore
         dirHandle = await (window as any).showDirectoryPicker?.();
         if (!dirHandle) return false;
         // @ts-ignore
-        state.dirName = dirHandle.name ?? null;
+        currentState.dirName = dirHandle.name ?? null;
         await saveHandle(dirHandle);
         emit();
-        LogBus.append(`WATCH ▶ Selected folder: ${state.dirName}`);
+        LogBus.append(`WATCH ▶ Selected folder: ${currentState.dirName}`);
         start();
         return true;
     },
 
     async tryRestorePrevious() {
-        if (!state.supported) return false;
+        if (!currentState.supported) return false;
         const restored = await loadHandleFromStorage();
         if (!restored) return false;
         dirHandle = restored;
         // @ts-ignore
-        state.dirName = dirHandle?.name ?? null;
+        currentState.dirName = dirHandle?.name ?? null;
         emit();
-        LogBus.append(`WATCH ⟳ Restored folder: ${state.dirName}`);
+        LogBus.append(`WATCH ⟳ Restored folder: ${currentState.dirName}`);
         start();
         return true;
     },
 
     start, stop,
 };
-
-function start() {
-    if (timer != null) return;
-    state.running = true; emit();
-    timer = window.setInterval(() => { tick().catch(() => { }); }, 15000);
-    tick().catch(() => { });
-}
-function stop() {
-    if (timer != null) { clearInterval(timer); timer = null; }
-    state.running = false; emit();
-}

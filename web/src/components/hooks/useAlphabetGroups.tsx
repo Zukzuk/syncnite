@@ -1,20 +1,34 @@
 import * as React from "react";
-import { letterBucket } from "../../lib/utils";
-import { AlphaGroup, Row, WithBucket } from "../../lib/types";
+import { orderedLetters } from "../../lib/utils";
+import { Row } from "./useLibrary";
+import { WithBucket } from "./useLibraryState";
 
-export function useAlphabetGroups(
-    sortKey: string | undefined,
-    withBuckets: WithBucket[] | undefined,
-    rowsSorted: Row[] | undefined
-) {
-    const groups = React.useMemo<AlphaGroup[] | null>(() => {
+export type AlphabeticalGroup = { 
+    title: string; 
+    rows: Row[];
+};
+
+type UseParams = {
+    sortKey: string;
+    withBuckets: WithBucket[] | null;
+    rowsSorted: Row[] | null;
+};
+
+type UseReturn = {
+    groups: AlphabeticalGroup[] | null;
+    isGrouped: boolean;
+    flatItems: Row[];
+};
+
+export function useAlphabetGroups({ sortKey, withBuckets, rowsSorted }: UseParams): UseReturn {
+    const groups = React.useMemo<AlphabeticalGroup[] | null>(() => {
         if (sortKey !== "title" || !withBuckets || withBuckets.length === 0) {
             return null;
         }
-        const out: AlphaGroup[] = [];
-        let current: AlphaGroup | null = null;
+        const out: AlphabeticalGroup[] = [];
+        let current: AlphabeticalGroup | null = null;
         for (const { row, bucket } of withBuckets) {
-            const b = (bucket || letterBucket(row?.title)) as string;
+            const b = (bucket || orderedLetters(row?.title)) as string;
             if (!current || current.title !== b) {
                 current = { title: b, rows: [] };
                 out.push(current);

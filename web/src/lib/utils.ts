@@ -1,18 +1,19 @@
-import { BASE, FALLBACK_ICON } from "./constants";
-import type { Guidish, Link, Letter } from "./types";
 import ICO from "icojs";
+import { BASE, FALLBACK_ICON } from "./constants";
+import type { Letter } from "./types";
+import { Link } from "../components/hooks/useLibrary";
 import {
-    IconBrandSteam,
-    IconBox as IconBrandGog,
-    IconShieldChevron as IconBrandEpicGames,
-    IconBrandFacebook,
-    IconBrandTwitter,
-    IconBrandInstagram,
-    IconBrandYoutube,
-    IconBrandDiscord,
-    IconBrandTwitch,
-    IconBrandWikipedia,
-    IconWorldWww,
+  IconBrandSteam,
+  IconBox as IconBrandGog,
+  IconShieldChevron as IconBrandEpicGames,
+  IconBrandFacebook,
+  IconBrandTwitter,
+  IconBrandInstagram,
+  IconBrandYoutube,
+  IconBrandDiscord,
+  IconBrandTwitch,
+  IconBrandWikipedia,
+  IconWorldWww,
 } from "@tabler/icons-react";
 
 export function isIcoPath(url: string): boolean {
@@ -22,12 +23,6 @@ export function isIcoPath(url: string): boolean {
   } catch {
     return /\.ico(\?|#|$)/i.test(url);
   }
-}
-
-export function bucketLetter(title: string, sortingName: string) {
-  const s = (sortingName || title || "").trim();
-  const ch = s.charAt(0).toUpperCase();
-  return /[A-Z]/.test(ch) ? ch : "#";
 }
 
 export async function icoToPngDataUrl(icoUrl: string): Promise<string | null> {
@@ -49,20 +44,6 @@ export async function icoToPngDataUrl(icoUrl: string): Promise<string | null> {
     return null;
   }
 }
-
-export const asGuid = (v: Guidish): string | null => {
-  if (!v) return null;
-  if (typeof v === "string") return v;
-  const obj = v as Record<string, unknown>;
-  for (const key of ["$guid", "$oid", "Guid", "Value"]) {
-    const val = obj[key];
-    if (typeof val === "string" && val.length) return val;
-  }
-  return null;
-};
-
-export const asGuidArray = (arr: Guidish[] | undefined): string[] =>
-  Array.isArray(arr) ? (arr.map(asGuid).filter(Boolean) as string[]) : [];
 
 export function normalizePath(p?: string): string | null {
   if (!p) return null;
@@ -106,7 +87,9 @@ export function firstStoreishLink(links: Link[] | undefined, sourceName: string)
   return byDomain?.Url ?? null;
 }
 
-export function sourceUrlFallback(s: string, id: string): string | null {
+export function sourceUrlFallback(source: string, id: string): string | null {
+  const s = source.toLowerCase();
+
   switch (s) {
     case "steam":
       return `https://store.steampowered.com/app/${encodeURIComponent(id)}`;
@@ -158,18 +141,18 @@ export function sourceProtocolLink(source: string, id: string): string | null {
 }
 
 export const iconForSource = (s: string | null | undefined) => {
-    const key = (s ?? "").toLowerCase();
-    if (key.includes("steam")) return IconBrandSteam;
-    if (key.includes("gog")) return IconBrandGog;
-    if (key.includes("epic")) return IconBrandEpicGames;
-    if (key.includes("facebook")) return IconBrandFacebook;
-    if (key.includes("twitter") || key.includes("x")) return IconBrandTwitter;
-    if (key.includes("instagram")) return IconBrandInstagram;
-    if (key.includes("youtube")) return IconBrandYoutube;
-    if (key.includes("discord")) return IconBrandDiscord;
-    if (key.includes("twitch")) return IconBrandTwitch;
-    if (key.includes("wikipedia")) return IconBrandWikipedia;
-    return IconWorldWww;
+  const key = (s ?? "").toLowerCase();
+  if (key.includes("steam")) return IconBrandSteam;
+  if (key.includes("gog")) return IconBrandGog;
+  if (key.includes("epic")) return IconBrandEpicGames;
+  if (key.includes("facebook")) return IconBrandFacebook;
+  if (key.includes("twitter") || key.includes("x")) return IconBrandTwitter;
+  if (key.includes("instagram")) return IconBrandInstagram;
+  if (key.includes("youtube")) return IconBrandYoutube;
+  if (key.includes("discord")) return IconBrandDiscord;
+  if (key.includes("twitch")) return IconBrandTwitch;
+  if (key.includes("wikipedia")) return IconBrandWikipedia;
+  return IconWorldWww;
 };
 
 export function hasEmulatorTag(tags?: string[]): boolean {
@@ -243,9 +226,10 @@ export function extractYear(val: unknown): number | null {
   return null;
 }
 
-export function letterBucket(s: string | undefined | null): Letter {
+export function orderedLetters(title?: string | null, sortingName?: string | null): Letter {
+  const s = (sortingName || title || "").trim();
   if (!s) return "#";
-  const c = s.trim().charAt(0).toUpperCase();
+  const c = s.charAt(0).toUpperCase();
   return (c >= "A" && c <= "Z" ? c : "#") as Letter;
 }
 

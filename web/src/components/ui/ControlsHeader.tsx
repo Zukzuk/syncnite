@@ -1,7 +1,7 @@
 import React from "react";
 import { Group, MultiSelect, Switch, Text, Stack, Flex } from "@mantine/core";
 import { SearchInput } from "./SearchInput";
-import { sourceLabel } from "../../lib/constants";
+import { SOURCE_LABEL_MAP } from "../../lib/constants";
 
 type Props = {
   q: string; setQ: (v: string) => void;
@@ -26,7 +26,7 @@ export function ControlsHeader(props: Props) {
   } = props;
 
   const sourceData = React.useMemo(
-    () => Array.from(new Set(allSources)).sort().map((s) => ({ value: s, label: sourceLabel[s] })),
+    () => Array.from(new Set(allSources)).sort().map((s) => ({ value: s, label: SOURCE_LABEL_MAP[s] })),
     [allSources]
   );
 

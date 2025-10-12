@@ -1,7 +1,7 @@
 import React from "react";
 import { Box } from "@mantine/core";
-import { Z_INDEX } from "../../lib/constants";
 import { SortHeader } from "../ui/SortHeader";
+import { Z_INDEX } from "../../lib/constants";
 import { SortDir, SortKey } from "../../lib/types";
 
 type Props = {

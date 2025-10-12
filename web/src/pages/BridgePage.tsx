@@ -1,20 +1,20 @@
 import React from "react";
 import { Stack, Group, Select, Button, FileButton, PasswordInput, Textarea, Text } from "@mantine/core";
-import { listZips } from "../lib/api";
-import type { BackupWatcherState, ZipInfo } from "../lib/types";
 import { SectionCard } from "../components/ui/SectionCard";
 import { LoadingBar } from "../components/ui/LoadingBar";
 import { LogBus } from "../services/LogBus";
-import { BackupWatcher } from "../services/BackupWatcher";
+import { BackupWatcher, BackupWatchState } from "../services/BackupWatcher";
 import { BackupUploader } from "../services/BackupUploader";
 import { BackupImporter } from "../services/BackupImporter";
+import { Phase } from "../lib/types";
+import { listZips, ZipInfo } from "../lib/api";
 
 export default function BridgePage() {
     const [zips, setZips] = React.useState<ZipInfo[]>([]);
     const [selected, setSelected] = React.useState<string | null>(null);
     const [password, setPassword] = React.useState("");
     const [logs, setLogs] = React.useState("");
-    const [watch, setWatch] = React.useState<BackupWatcherState | null>(null);
+    const [watch, setWatch] = React.useState<BackupWatchState | null>(null);
 
     // Upload-only progress
     const [uploadBusy, setUploadBusy] = React.useState(false);
@@ -23,7 +23,7 @@ export default function BridgePage() {
 
     // Export-only progress
     const [exportBusy, setExportBusy] = React.useState(false);
-    const [exportPhase, setExportPhase] = React.useState<null | "unzip" | "copy">(null);
+    const [exportPhase, setExportPhase] = React.useState<Phase>(null);
     const [exportPercent, setExportPercent] = React.useState<number | null>(null);
     const [exportSubtext, setExportSubtext] = React.useState<string>("");
 

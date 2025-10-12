@@ -1,12 +1,21 @@
 import * as React from "react";
 import { FILES } from "../../lib/constants";
 
+type UseParams = {
+    pollMs: number;
+};
+
+type UseReturn = {
+    version: number;
+    updatedAt: string | null
+};
+
 /**
  * Poll /data/manifest.json and bump a version when it changes.
  * No window events needed.
  */
-export function useRefreshLibrary(pollMs = 4000): { version: number; updatedAt: string | null } {
-    const [version, setVersion] = React.useState(0);
+export function useRefreshLibrary({ pollMs }: UseParams): UseReturn {
+    const [version, setVersion] = React.useState(0);``
     const [updatedAt, setUpdatedAt] = React.useState<string | null>(null);
     const lastRef = React.useRef<string>("");
 

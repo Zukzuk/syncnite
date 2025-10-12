@@ -1,12 +1,12 @@
 import React, { useMemo, useCallback } from "react";
 import { Box, Collapse } from "@mantine/core";
 import { useMantineTheme, useComputedColorScheme } from "@mantine/core";
-import { Row } from "../../lib/types";
 import { buildAssetUrl, effectiveLink } from "../../lib/utils";
-import { useDelayedFlag } from "../hooks/useDelayedFlag";
+import { GRID } from "../../lib/constants";
 import { GameRowItem } from "../ui/GameRowItem";
 import { GameRowDetails } from "../ui/GameRowDetails";
-import { GRID } from "../../lib/constants";
+import { useDelayedFlag } from "../hooks/useDelayedFlag";
+import { Row } from "../hooks/useLibrary";
 
 type ControlledProps = {
   topOffset: number;
@@ -34,7 +34,7 @@ export function GameRow(props: Row & ControlledProps) {
   const bg = (raw as any)?.BackgroundImage ?? null;
   const coverUrl = useMemo(() => buildAssetUrl(cover), [cover]);
   const bgUrl = useMemo(() => buildAssetUrl(bg), [bg]);
-  const collapseOpenDelayed = useDelayedFlag(collapseOpen, 140);
+  const collapseOpenDelayed = useDelayedFlag({ active: collapseOpen, delayMs: 140 });
 
   const onKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {

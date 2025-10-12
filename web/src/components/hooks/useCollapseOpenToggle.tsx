@@ -1,6 +1,12 @@
 import * as React from "react";
 
-export function useCollapseOpenToggle() {
+type UseReturn = {
+  openIds: Set<string>;
+  everOpenedIds: Set<string>;
+  toggleOpen: (id: string, onOpen?: () => void) => void;
+};
+
+export function useCollapseOpenToggle(): UseReturn {
   const [openIds, setOpenIds] = React.useState<Set<string>>(new Set());
   const [everOpenedIds, setEverOpenedIds] = React.useState<Set<string>>(new Set());
 

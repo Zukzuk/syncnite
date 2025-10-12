@@ -3,7 +3,7 @@ import { Virtuoso } from "react-virtuoso";
 import type { VirtuosoHandle } from "react-virtuoso";
 import { GameRow } from "./GameRow";
 import { Scroller } from "../ui/Scroller";
-import { Row } from "../../lib/types";
+import { Row } from "../hooks/useLibrary";
 
 type Props = {
   virtuosoRef: React.RefObject<VirtuosoHandle>;

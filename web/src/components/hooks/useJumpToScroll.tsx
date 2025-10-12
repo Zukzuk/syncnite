@@ -1,7 +1,18 @@
 import * as React from "react";
 import type { VirtuosoHandle } from "react-virtuoso";
 
-export function useJumpToScroll(headerHeight: number | undefined) {
+type UseParams = {
+  headerH: number;
+};
+
+type UseReturn = {
+  virtuosoRef: React.RefObject<VirtuosoHandle>;
+  scrollerElRef: React.RefObject<HTMLDivElement | null>;
+  setScrollerEl: (ref: HTMLElement | Window | null) => void;
+  scrollRowIntoView: (index: number, grouped: boolean) => void;
+};
+
+export function useJumpToScroll({headerH}: UseParams): UseReturn {
   const virtuosoRef = React.useRef<VirtuosoHandle>(null);
   const scrollerElRef = React.useRef<HTMLDivElement | null>(null);
 
@@ -15,16 +26,16 @@ export function useJumpToScroll(headerHeight: number | undefined) {
 
   const scrollRowIntoView = React.useCallback((index: number, grouped: boolean) => {
     virtuosoRef.current?.scrollToIndex({ index, align: "start", behavior: "auto" });
-    if (!grouped && headerHeight && scrollerElRef.current) {
+    if (!grouped && headerH && scrollerElRef.current) {
       requestAnimationFrame(() => {
         try {
-          scrollerElRef.current!.scrollTop -= headerHeight;
+          scrollerElRef.current!.scrollTop -= headerH;
         } catch {
           /* no-op */
         }
       });
     }
-  }, [headerHeight]);
+  }, [headerH]);
 
   return { virtuosoRef, scrollerElRef, setScrollerEl, scrollRowIntoView };
 }

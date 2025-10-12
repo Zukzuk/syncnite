@@ -7,29 +7,29 @@ import { GRID } from "../lib/constants";
 
 export default function AppShellLayout({
   children,
-  hideChrome = false,
+  hideSite = false,
 }: {
   children: React.ReactNode;
-  hideChrome?: boolean;
+  hideSite?: boolean;
 }) {
   const [opened, { toggle }] = useDisclosure();
 
   return (
     <AppShell
-      header={hideChrome ? undefined : { height: GRID.rowHeight }}
+      header={hideSite ? undefined : { height: GRID.rowHeight }}
       navbar={
-        hideChrome
+        hideSite
           ? undefined
           : { width: GRID.menuWidth, breakpoint: "sm", collapsed: { mobile: !opened } }
       }
     >
-      {!hideChrome && (
+      {!hideSite && (
         <AppShell.Header>
           <AppHeader opened={opened} onToggleNav={toggle} />
         </AppShell.Header>
       )}
 
-      {!hideChrome && (
+      {!hideSite && (
         <AppShell.Navbar p="sm" pr={0} pl={0}>
           <AppNavbar />
         </AppShell.Navbar>

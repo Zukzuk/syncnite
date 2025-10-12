@@ -2,6 +2,7 @@ import { Group, Title, ActionIcon, Button, Tooltip, Burger, Text, useMantineColo
 import { IconDownload, IconMoon, IconSun } from "@tabler/icons-react";
 import { useAuth } from "../hooks/useAuth";
 import { clearCreds } from "../../lib/persist";
+import { API_ENDPOINTS } from "../../lib/constants";
 
 const appVersion = (window as any).__APP_VERSION__ ?? 'dev';
 
@@ -12,7 +13,7 @@ type Props = {
 
 export function AppHeader({ opened, onToggleNav }: Props) {
     const { colorScheme, setColorScheme } = useMantineColorScheme();
-    const { state } = useAuth();
+    const { state } = useAuth({ pollMs: 0 });
 
     return (
         <Group h="100%" px="md" justify="space-between">
@@ -27,7 +28,7 @@ export function AppHeader({ opened, onToggleNav }: Props) {
                 <Tooltip withArrow label={`Download Syncnite v${appVersion} (.pext)`}>
                     <Button
                         component="a"
-                        href="/api/extension/download"
+                        href={API_ENDPOINTS.DOWNLOAD_EXTENSION}
                         size="sm"
                         radius="xl"
                         leftSection={<IconDownload size={16} />}

@@ -5,9 +5,10 @@ import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "../components/hooks/useAuth";
 import { fetchAdminStatus } from "../lib/api";
 import { setCreds } from "../lib/persist";
+import { API_ENDPOINTS } from "../lib/constants";
 
 async function post(path: string, body: any) {
-  const r = await fetch(`/api${path}`, {
+  const r = await fetch(path, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -17,7 +18,7 @@ async function post(path: string, body: any) {
 
 export default function LoginPage() {
   const nav = useNavigate();
-  const { state } = useAuth();
+  const { state } = useAuth({ pollMs : 0 });
   const [error, setError] = React.useState<string | null>(null);
   const [hasAdmin, setHasAdmin] = React.useState<boolean | null>(null);
 
@@ -36,14 +37,14 @@ export default function LoginPage() {
 
   const onLogin = loginForm.onSubmit(async ({ email, password }) => {
     setError(null);
-    const res = await post("/accounts/login", { email: email.trim().toLowerCase(), password });
+    const res = await post(API_ENDPOINTS.ADMIN_LOGIN, { email: email.trim().toLowerCase(), password });
     if (res?.ok) { setCreds(email, password); nav("/", { replace: true }); }
     else setError(res?.error || "Invalid email or password");
   });
 
   const onRegisterAdmin = registerForm.onSubmit(async ({ email, password }) => {
     setError(null);
-    const res = await post("/accounts/register", { email: email.trim().toLowerCase(), password });
+    const res = await post(API_ENDPOINTS.ADMIN_REGISTER, { email: email.trim().toLowerCase(), password });
     if (res?.ok) { setCreds(email, password); nav("/", { replace: true }); }
     else setError(res?.error || "Registration failed");
   });

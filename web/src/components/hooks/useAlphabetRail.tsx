@@ -1,14 +1,32 @@
 import * as React from "react";
 import type { VirtuosoHandle } from "react-virtuoso";
-import { letterBucket } from "../../lib/utils";
-import type { Letter, AlphaGroup, AlphabeticalRailCounts, Row, Range } from "../../lib/types";
+import type { Letter } from "../../lib/types";
 import { LETTERS } from "../../lib/constants";
+import { orderedLetters } from "../../lib/utils";
+import { AlphabeticalGroup } from "./useAlphabetGroups";
+import { AlphabeticalRailCounts } from "../ui/AlphabeticalRail";
+import { Row } from "./useLibrary";
 
-export function useAlphabetRail(
-    params: { isGrouped: boolean; groups: AlphaGroup[] | null; flatItems: Row[] },
-    virtuosoRef: React.RefObject<VirtuosoHandle>
-) {
-    const { isGrouped, groups, flatItems } = params;
+type Range = { 
+    startIndex: number; 
+    endIndex: number 
+};
+
+type UseParams = {
+    isGrouped: boolean;
+    groups: AlphabeticalGroup[] | null;
+    flatItems: Row[];
+    virtuosoRef: React.RefObject<VirtuosoHandle>;
+};
+
+type UseReturn = { 
+    counts: AlphabeticalRailCounts, 
+    activeLetter: string | null, 
+    handleJump: (L: string) => void, 
+    rangeChanged: (range: Range) => void,
+}
+
+export function useAlphabetRail({isGrouped, groups, flatItems, virtuosoRef }: UseParams): UseReturn {
 
     // flat
     const { flatFirstIndex, flatCounts } = React.useMemo(() => {
@@ -16,7 +34,7 @@ export function useAlphabetRail(
         const counts = Object.fromEntries(LETTERS.map((L) => [L, 0])) as AlphabeticalRailCounts;
 
         flatItems.forEach((r, idx) => {
-            const L = letterBucket(r?.title);
+            const L = orderedLetters(r?.title);
             counts[L] = (counts[L] ?? 0) + 1;
             if (firstIndex[L] === -1) firstIndex[L] = idx;
         });
@@ -39,7 +57,7 @@ export function useAlphabetRail(
 
         let running = 0;
         for (const g of groups) {
-            const L = letterBucket(g.title);
+            const L = orderedLetters(g.title);
             if (firstIndex[L] === -1) firstIndex[L] = running;
             counts[L] = (counts[L] ?? 0) + g.rows.length;
             running += g.rows.length;
@@ -98,14 +116,14 @@ export function useAlphabetRail(
             if (isGrouped && groups && groups.length) {
                 let i = idx;
                 for (const g of groups) {
-                    if (i < g.rows.length) return letterBucket(g.title);
+                    if (i < g.rows.length) return orderedLetters(g.title);
                     i -= g.rows.length;
                 }
                 return null;
             }
 
             const r = flatItems[idx];
-            return r ? letterBucket(r.title) : null;
+            return r ? orderedLetters(r.title) : null;
         },
         [isGrouped, groups, flatItems]
     );

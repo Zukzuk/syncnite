@@ -1,6 +1,5 @@
 import React from "react";
-import { Group, Image, Paper, AspectRatio, Box } from "@mantine/core";
-import { GRID } from "../../lib/constants";
+import { Group, Image, Paper } from "@mantine/core";
 
 type Props = {
     title: string;

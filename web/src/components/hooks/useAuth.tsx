@@ -1,12 +1,24 @@
 import * as React from "react";
-import { getCreds, setCreds, clearCreds, verify } from "../../lib/persist";
-import { AuthState } from "../../lib/types";
+import { getCreds, setCreds, clearCreds } from "../../lib/persist";
+import { verifyAdmin } from "../../lib/api";
 
-export function useAuth(pollMs = 0): {
+type AuthState = {
+  ready: boolean;
+  loggedIn: boolean;
+  email: string | null;
+};
+
+type UseParams = { 
+  pollMs: number; 
+};
+
+type UseReturn = {
   state: AuthState;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
-} {
+};
+
+export function useAuth({ pollMs }: UseParams): UseReturn {
   const [state, setState] = React.useState<AuthState>({
     ready: false,
     loggedIn: false,
@@ -15,7 +27,7 @@ export function useAuth(pollMs = 0): {
 
   const refresh = React.useCallback(async () => {
     const c = getCreds();
-    const ok = await verify();
+    const ok = await verifyAdmin();
     setState({
       ready: true,
       loggedIn: ok,
@@ -38,7 +50,7 @@ export function useAuth(pollMs = 0): {
   }, [refresh, pollMs]);
 
   const login = React.useCallback(async (email: string, password: string) => {
-    setCreds(email, password); // persist then verify
+    setCreds(email, password);
     await refresh();
     return true;
   }, [refresh]);

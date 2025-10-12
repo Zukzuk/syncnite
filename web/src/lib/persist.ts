@@ -1,5 +1,20 @@
 import { COOKIE, COOKIE_DEFAULTS, EVT, KEY_EMAIL, KEY_PASS } from "./constants";
-import { Creds, Persisted } from "./types";
+import { SortDir, SortKey } from "./types";
+
+type Creds = { 
+  email: string; 
+  password: string 
+};
+
+export type CookieState = {
+  q: string;
+  sources: string[];
+  tags: string[];
+  showHidden: boolean;
+  installedOnly: boolean;
+  sortKey: SortKey;
+  sortDir: SortDir;
+};
 
 export function getCreds(): Creds | null {
   try {
@@ -27,24 +42,6 @@ export function clearCreds() {
     localStorage.removeItem(KEY_PASS);
   } finally {
     window.dispatchEvent(new Event(EVT));
-  }
-}
-
-export async function verify(): Promise<boolean> {
-  const c = getCreds();
-  if (!c) return false;
-  try {
-    const r = await fetch("/api/accounts/verify", {
-      headers: {
-        "x-auth-email": c.email,
-        "x-auth-password": c.password,
-      },
-      cache: "no-store",
-    });
-    const j = await r.json();
-    return !!j?.ok;
-  } catch {
-    return false;
   }
 }
 
@@ -81,14 +78,44 @@ export function getEmail(): string | null {
   try { return localStorage.getItem("sb_email"); } catch { return null; }
 }
 
-export function loadStateFromCookie(): Persisted {
+export function loadStateFromCookie(): CookieState {
   try {
-    return jsonGet<Persisted>(COOKIE.libraryState, COOKIE_DEFAULTS);
+    return jsonGet<CookieState>(COOKIE.libraryState, COOKIE_DEFAULTS);
   } catch {
     return COOKIE_DEFAULTS;
   }
 }
 
-export function saveStateToCookie(s: Persisted) {
+export function saveStateToCookie(s: CookieState) {
   jsonSet(COOKIE.libraryState, s);
+}
+
+export async function getJson<T>(path: string): Promise<T> {
+  const sep = path.includes("?") ? "&" : "?";
+  const url = `${path}${sep}v=${Date.now()}`;   // cache-bust
+  const r = await fetch(url, { cache: "no-store" });
+  if (!r.ok) throw new Error(`${path} -> ${r.status}`);
+  return r.json();
+}
+
+export async function tryLoadMany<T>(candidates: string[], fallback: T): Promise<T> {
+  for (const c of candidates) {
+    try { return await getJson<T>(c); } catch { /* try next */ }
+  }
+  return fallback;
+}
+
+export async function tryFetchJson(url: string): Promise<any | null> {
+  try {
+    const r = await fetch(url, { cache: "no-cache" });
+    if (!r.ok) return null;
+    const ct = (r.headers.get("content-type") || "").toLowerCase();
+    const text = await r.text();
+    // If nginx gave us index.html instead of JSON, bail.
+    const looksHtml = ct.includes("text/html") || text.trim().startsWith("<");
+    if (looksHtml) return null;
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
 }

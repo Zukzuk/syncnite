@@ -1,23 +1,27 @@
-// Single source of truth for ALL uploads (manual or watcher-initiated).
-// Persists state across navigation, emits progress events, logs to LogBus,
-// notifies with Mantine, and announces availability via pn:zips-changed.
-
 import { notifications } from "@mantine/notifications";
 import { uploadZip } from "../lib/api";
-import { UploadState } from "../lib/types";
 import { LAST_UP_KEY, STATE_KEY, NOTIF_UPLOAD_ID } from "../lib/constants";
 import { LogBus } from "./LogBus";
 
-let current: UploadState = restoreState();
+type BackupUploadState = {
+    running: boolean;
+    name: string | null;
+    percent: number | null;
+};
+
+let currentState: BackupUploadState = restoreState();
+
 let lastUploaded: { name: string; size?: number; lastModified?: number } | null = restoreLast();
 
 function emit(type: string, detail: any) {
     window.dispatchEvent(new CustomEvent(type, { detail }));
 }
+
 function storeState() {
-    try { sessionStorage.setItem(STATE_KEY, JSON.stringify(current)); } catch { }
+    try { sessionStorage.setItem(STATE_KEY, JSON.stringify(currentState)); } catch { }
 }
-function restoreState(): UploadState {
+
+function restoreState(): BackupUploadState {
     try {
         const raw = sessionStorage.getItem(STATE_KEY);
         if (!raw) return { running: false, name: null, percent: null };
@@ -29,18 +33,21 @@ function restoreState(): UploadState {
         };
     } catch { return { running: false, name: null, percent: null }; }
 }
+
 function storeLast(meta: { name: string; size?: number; lastModified?: number } | null) {
     try {
         if (!meta) localStorage.removeItem(LAST_UP_KEY);
         else localStorage.setItem(LAST_UP_KEY, JSON.stringify(meta));
     } catch { }
 }
+
 function restoreLast() {
     try {
         const raw = localStorage.getItem(LAST_UP_KEY);
         return raw ? JSON.parse(raw) : null;
     } catch { return null; }
 }
+
 function showRunImportNotice(fileName: string) {
     const id = `pn-upload-done-${Date.now()}`;
     notifications.show({
@@ -51,18 +58,21 @@ function showRunImportNotice(fileName: string) {
     });
 }
 
+// Single source of truth for ALL uploads (manual or watcher-initiated).
+// Persists state across navigation, emits progress events, logs to LogBus,
+// notifies with Mantine, and announces availability via pn:zips-changed.
 export const BackupUploader = {
-    getState(): UploadState { return { ...current }; },
+    getState(): BackupUploadState { return { ...currentState }; },
     getLastUploaded(): { name: string; size?: number; lastModified?: number } | null { return lastUploaded ? { ...lastUploaded } : null; },
-    isUploadingName(name: string) { return current.running && current.name === name; },
+    isUploadingName(name: string) { return currentState.running && currentState.name === name; },
 
     async start(file: File) {
         if (!file) return;
-        if (current.running && current.name === file.name) return;
+        if (currentState.running && currentState.name === file.name) return;
 
-        current = { running: true, name: file.name, percent: 0 };
+        currentState = { running: true, name: file.name, percent: 0 };
         storeState();
-        emit("pn:upload-state", { ...current });
+        emit("pn:upload-state", { ...currentState });
 
         LogBus.append(`UPLOAD ▶ ${file.name}`);
 
@@ -79,9 +89,9 @@ export const BackupUploader = {
 
         try {
             await uploadZip(file, (p: number) => {
-                current.percent = p ?? current.percent ?? 0;
+                currentState.percent = p ?? currentState.percent ?? 0;
                 storeState();
-                emit("pn:upload-progress", { phase: "progress", name: file.name, percent: current.percent });
+                emit("pn:upload-progress", { phase: "progress", name: file.name, percent: currentState.percent });
             });
 
             // success
@@ -120,9 +130,9 @@ export const BackupUploader = {
                 autoClose: 4000,
             });
         } finally {
-            current = { running: false, name: null, percent: null };
+            currentState = { running: false, name: null, percent: null };
             storeState();
-            emit("pn:upload-state", { ...current });
+            emit("pn:upload-state", { ...currentState });
         }
     },
 };

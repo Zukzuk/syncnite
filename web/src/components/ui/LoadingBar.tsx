@@ -1,7 +1,9 @@
 import { Stack, Progress, Text } from "@mantine/core";
 
 type Props = {
-  label: string; percent: number | null; subtext?: string
+  label: string; 
+  percent: number | null; 
+  subtext?: string;
 }
 
 export function LoadingBar({ label, percent, subtext }: Props) {

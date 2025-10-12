@@ -2,7 +2,17 @@ import * as React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { fetchAdminStatus } from "../../lib/api";
 
-export function useAdminGate(pollMs = 3000) {
+type UseParams = { 
+  pollMs: number; 
+};
+
+type UseReturn = { 
+  hideSite: boolean; 
+  loaded: boolean; 
+  hasAdmin: boolean 
+};
+
+export function useAdminGate({ pollMs }: UseParams): UseReturn {
   const [hasAdmin, setHasAdmin] = React.useState<boolean>(true);
   const [loaded, setLoaded] = React.useState(false);
   const nav = useNavigate();
@@ -27,5 +37,5 @@ export function useAdminGate(pollMs = 3000) {
     return () => { stop = true; };
   }, [pollMs, loc.pathname, nav]);
 
-  return { hideChrome: loaded && !hasAdmin, loaded, hasAdmin };
+  return { hideSite: loaded && !hasAdmin, loaded, hasAdmin };
 }

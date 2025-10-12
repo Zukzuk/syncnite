@@ -1,15 +1,14 @@
-// src/components/ui/AppNavbar.tsx
+import * as React from "react";
 import { ScrollArea, NavLink } from "@mantine/core";
 import { Link, useLocation } from "react-router-dom";
 import { IconHome2, IconBooks, IconSettings, IconAB2, IconShield, IconUser } from "@tabler/icons-react";
 import { GRID } from "../../lib/constants";
-import * as React from "react";
 import { useAuth } from "../hooks/useAuth";
 import { fetchAdminStatus } from "../../lib/api";
 
 export function AppNavbar() {
     const location = useLocation();
-    const { state } = useAuth();
+    const { state } = useAuth({ pollMs: 0 });
     const [adminEmail, setAdminEmail] = React.useState<string | null>(null);
 
     React.useEffect(() => {
@@ -32,6 +31,20 @@ export function AppNavbar() {
                 leftSection={<IconHome2 size={18} />}
                 active={location.pathname === "/"}
             />
+            <NavLink
+                component={Link}
+                to="/library"
+                label="Library"
+                leftSection={<IconBooks size={18} />}
+                active={location.pathname.startsWith("/library")}
+            />
+            <NavLink
+                component={Link}
+                to="/bridge"
+                label="Bridge"
+                leftSection={<IconAB2 size={18} />}
+                active={location.pathname.startsWith("/bridge")}
+            />
             {state.loggedIn && (
                 <NavLink
                     component={Link}
@@ -50,20 +63,6 @@ export function AppNavbar() {
                     active={location.pathname.startsWith("/admin")}
                 />
             )}
-            <NavLink
-                component={Link}
-                to="/library"
-                label="Library"
-                leftSection={<IconBooks size={18} />}
-                active={location.pathname.startsWith("/library")}
-            />
-            <NavLink
-                component={Link}
-                to="/bridge"
-                label="Bridge"
-                leftSection={<IconAB2 size={18} />}
-                active={location.pathname.startsWith("/bridge")}
-            />
             <NavLink
                 component={Link}
                 to="/settings"

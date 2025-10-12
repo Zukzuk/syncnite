@@ -1,8 +1,8 @@
 import React from "react";
 import { ActionIcon, Tooltip } from "@mantine/core";
 import { iconForSource, sourceProtocolLink } from "../../lib/utils";
-import { Row } from "../../lib/types";
-import { sourceTrim } from "../../lib/constants";
+import { SOURCE_SHORTNAME_MAP } from "../../lib/constants";
+import { Row } from "../hooks/useLibrary";
 
 type Props = Pick<Row, "source" | "raw" | "title" | "id"> & {
     onClick?: (e: React.MouseEvent) => void;
@@ -18,7 +18,7 @@ export const SourceBadge = React.memo(function GameRowSourceBadge({
     const proto = sourceProtocolLink(source, raw?.GameId ? String(raw.GameId) : "");
     const Icon = iconForSource(source);
 
-    const label = sourceTrim[source] ?? source;
+    const label = SOURCE_SHORTNAME_MAP[source] ?? source;
 
     return (
         <Tooltip label={`//:${label}`} withArrow>

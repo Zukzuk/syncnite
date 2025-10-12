@@ -1,14 +1,22 @@
 import * as React from "react";
-import { LocalInstalledState } from "../../lib/types";
 import { getEmail } from "../../lib/persist";
+
+type UseParams = {
+    pollMs: number;
+};
+
+type UseReturn = {
+    set: Set<string> | null;
+    updatedAt: string | null
+};
 
 /**
  * Hook that polls .Installed.json every `pollMs` ms.
  * - Returns { set, updatedAt } when used for reading
  * - Or may be called just for side-effects: useLocalInstalled(4000)
  */
-export function useLocalInstalled(pollMs = 4000): LocalInstalledState {
-    const [state, setState] = React.useState<LocalInstalledState>({ set: null, updatedAt: null });
+export function useLocalInstalled({ pollMs }: UseParams): UseReturn {
+    const [state, setState] = React.useState<UseReturn>({ set: null, updatedAt: null });
 
     React.useEffect(() => {
         let stop = false;
@@ -30,7 +38,7 @@ export function useLocalInstalled(pollMs = 4000): LocalInstalledState {
                 const updatedAt: string | undefined = typeof json?.updatedAt === "string" ? json.updatedAt : undefined;
 
                 if (ids && updatedAt) {
-                    const next: LocalInstalledState = {
+                    const next: UseReturn = {
                         set: new Set(ids.map((s) => String(s).toLowerCase())),
                         updatedAt,
                     };
@@ -42,9 +50,11 @@ export function useLocalInstalled(pollMs = 4000): LocalInstalledState {
         }
 
         tick();
+        
         const onAuth = () => { /* restart immediately on auth change */
             setState({ set: null, updatedAt: null });
         };
+
         window.addEventListener("sb:auth-changed", onAuth);
         return () => { stop = true; window.removeEventListener("sb:auth-changed", onAuth); };
     }, [pollMs]);

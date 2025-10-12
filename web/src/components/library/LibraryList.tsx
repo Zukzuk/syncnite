@@ -1,7 +1,6 @@
 import React from "react";
 import { Box, Flex } from "@mantine/core";
 import { useElementSize } from "@mantine/hooks";
-import type { Loaded } from "../../lib/types";
 import { StickyControls } from "./StickyControls";
 import { StickySort } from "./StickySort";
 import { AlphabetRailOverlay } from "./RailOverlay";
@@ -13,9 +12,10 @@ import { useAlphabetRail } from "../hooks/useAlphabetRail";
 import { useCollapseOpenToggle } from "../hooks/useCollapseOpenToggle";
 import { useJumpToScroll } from "../hooks/useJumpToScroll";
 import { useRemountKeys } from "../hooks/useRemountKeys";
+import { LoadedData } from "../hooks/useLibrary";
 
 type Props = {
-  data: Loaded;
+  data: LoadedData;
   onCountsChange?: (filtered: number, total: number) => void;
   filteredCount: number;
   totalCount: number;
@@ -34,7 +34,7 @@ export function LibraryList({
   const { ref: controlsRef, height: controlsH } = useElementSize();
   const { ref: headerRef, height: headerH } = useElementSize();
   const { openIds, everOpenedIds, toggleOpen } = useCollapseOpenToggle();
-  const { virtuosoRef, setScrollerEl, scrollRowIntoView } = useJumpToScroll(headerH);
+  const { virtuosoRef, setScrollerEl, scrollRowIntoView } = useJumpToScroll({ headerH });
 
   React.useEffect(() => {
     onCountsChange?.(derived.filteredCount, derived.totalCount);
@@ -54,15 +54,14 @@ export function LibraryList({
     [toggleOpen, scrollRowIntoView]
   );
 
-  const { groups, isGrouped, flatItems } = useAlphabetGroups(
-    ui.sortKey,
-    derived.withBuckets,
-    derived.rowsSorted
-  );
+  const { groups, isGrouped, flatItems } = useAlphabetGroups({
+    sortKey: ui.sortKey,
+    withBuckets: derived.withBuckets,
+    rowsSorted: derived.rowsSorted,
+  });
 
   const { counts, activeLetter, handleJump, rangeChanged } = useAlphabetRail(
-    { isGrouped, groups, flatItems },
-    virtuosoRef
+    { isGrouped, groups, flatItems, virtuosoRef }
   );
 
   const { groupedKey, flatKey } = useRemountKeys({

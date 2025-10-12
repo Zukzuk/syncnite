@@ -1,22 +1,35 @@
-// Centralized "Run import" controller that survives route changes.
-// Emits:
-//  - "pn:import-progress" { phase: "unzip"|"copy"|null, percent, filename, extras? }
-//  - "pn:import-log"      { line }
-//  - "pn:import-state"    { snapshot of state }
-
 import { notifications } from "@mantine/notifications";
 import { processZipStream } from "../lib/api";
-import type { ImportState, Phase, StreamProgress } from "../lib/types";
+import type { Phase } from "../lib/types";
 import { NOTIF_IMPORT_ID } from "../lib/constants";
 import { LogBus } from "./LogBus";
 
-let current: ImportState = {
+export type StreamProgress = {
+  phase?: Phase;
+  percent?: number;
+  copiedBytes?: number;
+  totalBytes?: number;
+  deltaBytes?: number;
+  log?: string;
+};
+
+type BackupImportState = {
+    running: boolean;
+    filename: string | null;
+    phase: Phase;
+    percent: number | null;
+    subtext?: string;
+};
+
+const defaultState: BackupImportState = {
     running: false,
     filename: null,
     phase: null,
     percent: null,
     subtext: "",
 };
+
+let currentState: BackupImportState = { ...defaultState };
 
 let lastLoggedCopyPct = -1;
 
@@ -25,17 +38,22 @@ function emit(type: string, detail: any) {
 }
 
 function snapshot() {
-    return { ...current };
+    return { ...currentState };
 }
 
 function reset() {
-    current = { running: false, filename: null, phase: null, percent: null, subtext: "" };
+    currentState = { ...defaultState };
     lastLoggedCopyPct = -1;
     emit("pn:import-state", snapshot());
 }
 
+// Centralized "Run import" controller that survives route changes.
+// Emits:
+//  - "pn:import-progress" { phase: "unzip"|"copy"|null, percent, filename, extras? }
+//  - "pn:import-log"      { line }
+//  - "pn:import-state"    { snapshot of state }
 export const BackupImporter = {
-    getState(): ImportState {
+    getState(): BackupImportState {
         return snapshot();
     },
 
@@ -44,9 +62,9 @@ export const BackupImporter = {
         if (!filename) return;
 
         // If already running for same file, ignore; if different, we "replace" (no server cancel)
-        if (current.running && current.filename === filename) return;
+        if (currentState.running && currentState.filename === filename) return;
 
-        current = { running: true, filename, phase: "unzip", percent: 0, subtext: "" };
+        currentState = { running: true, filename, phase: "unzip", percent: 0, subtext: "" };
         lastLoggedCopyPct = -1;
         emit("pn:import-state", snapshot());
 
@@ -69,31 +87,31 @@ export const BackupImporter = {
             },
             onProgress: (p: StreamProgress) => {
                 const phase: Phase = p.phase === "unzip" || p.phase === "copy" ? p.phase : null;
-                const percent = p.percent ?? current.percent ?? 0;
+                const percent = p.percent ?? currentState.percent ?? 0;
 
-                current.phase = phase;
-                current.percent = percent;
+                currentState.phase = phase;
+                currentState.percent = percent;
 
                 if (phase === "copy" && p.copiedBytes != null && p.totalBytes != null) {
                     // human-readable MB summary
                     const mb = (n: number) => (n / (1024 * 1024)).toFixed(1);
-                    current.subtext = `${mb(p.copiedBytes)}MB / ${mb(p.totalBytes)}MB`;
+                    currentState.subtext = `${mb(p.copiedBytes)}MB / ${mb(p.totalBytes)}MB`;
 
                     // Throttle log line every 5%
                     const pct = Math.round(percent);
                     if (pct >= lastLoggedCopyPct + 5) {
-                        LogBus.append(`COPY ${pct}% • ${current.subtext}`);
+                        LogBus.append(`COPY ${pct}% • ${currentState.subtext}`);
                         lastLoggedCopyPct = pct;
                     }
                 } else {
-                    current.subtext = "";
+                    currentState.subtext = "";
                 }
 
                 emit("pn:import-progress", {
-                    phase: current.phase,
-                    percent: current.percent,
-                    filename: current.filename,
-                    extras: { subtext: current.subtext },
+                    phase: currentState.phase,
+                    percent: currentState.percent,
+                    filename: currentState.filename,
+                    extras: { subtext: currentState.subtext },
                 });
                 emit("pn:import-state", snapshot());
             },

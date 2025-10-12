@@ -1,21 +1,10 @@
 import React from "react";
 import {
-  Stack,
-  Group,
-  Card,
-  Text,
-  Table,
-  Badge,
-  Code,
-  Alert,
-  Divider,
-  Anchor,
-  Loader,
-  List,
+  Stack, Group, Card, Text, Table, Badge,
+  Code, Alert, Divider, Anchor, Loader, List,
 } from "@mantine/core";
-import { loadLibrary } from "../lib/data";
 import { effectiveLink } from "../lib/utils";
-import type { Loaded, Row, Link as PnLink } from "../lib/types";
+import { LoadedData, loadLibrary, Row } from "../components/hooks/useLibrary";
 
 function SampleValue({ row, field }: { row: Row; field: keyof Row }) {
   const v = row[field] as any;
@@ -36,7 +25,7 @@ function SampleValue({ row, field }: { row: Row; field: keyof Row }) {
  * - Plus a helper section for *derived/UI* values like the play/install action link and platform links.
  */
 export default function SettingsPage() {
-  const [data, setData] = React.useState<Loaded | null>(null);
+  const [data, setData] = React.useState<LoadedData | null>(null);
 
   React.useEffect(() => {
     (async () => setData(await loadLibrary()))();

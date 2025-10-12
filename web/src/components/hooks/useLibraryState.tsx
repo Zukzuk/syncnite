@@ -1,20 +1,55 @@
 import * as React from "react";
-import type { SortKey, SortDir, Persisted, Loaded } from "../../lib/types";
-import { bucketLetter } from "../../lib/utils";
-import { loadStateFromCookie, saveStateToCookie } from "../../lib/persist";
+import type { SortKey, SortDir } from "../../lib/types";
+import { orderedLetters } from "../../lib/utils";
+import { CookieState, loadStateFromCookie, saveStateToCookie } from "../../lib/persist";
+import { Row } from "./useLibrary";
 
-export function useLibraryState(data: Loaded) {
-  const persisted = React.useMemo(loadStateFromCookie, []);
-  const [q, setQ] = React.useState<string>(persisted.q);
-  const [sources, setSources] = React.useState<string[]>(persisted.sources);
-  const [tags, setTags] = React.useState<string[]>(persisted.tags);
-  const [showHidden, setShowHidden] = React.useState<boolean>(persisted.showHidden);
-  const [sortKey, setSortKey] = React.useState<SortKey>(persisted.sortKey);
-  const [sortDir, setSortDir] = React.useState<SortDir>(persisted.sortDir);
-  const [installedOnly, setInstalledOnly] = React.useState<boolean>(persisted.installedOnly);
+export type WithBucket = { 
+  row: Row; 
+  bucket: string 
+};
+
+type UseParams = {
+  rows: Row[];
+};
+
+type UseReturn = {
+  ui: {
+    q: string;
+    setQ: React.Dispatch<React.SetStateAction<string>>;
+    sources: string[];
+    setSources: React.Dispatch<React.SetStateAction<string[]>>;
+    tags: string[];
+    setTags: React.Dispatch<React.SetStateAction<string[]>>;
+    showHidden: boolean;
+    setShowHidden: React.Dispatch<React.SetStateAction<boolean>>;
+    sortKey: SortKey;
+    sortDir: SortDir;
+    setSortKey: React.Dispatch<React.SetStateAction<SortKey>>;
+    toggleSort: (key: SortKey) => void;
+    installedOnly: boolean;
+    setInstalledOnly: React.Dispatch<React.SetStateAction<boolean>>;
+  };
+  derived: {
+    filteredCount: number;
+    totalCount: number;
+    rowsSorted: Row[];
+    withBuckets: WithBucket[];
+  };
+};
+
+export function useLibraryState({ rows }: UseParams): UseReturn {
+  const cookieState = React.useMemo(loadStateFromCookie, []);
+  const [q, setQ] = React.useState<string>(cookieState.q);
+  const [sources, setSources] = React.useState<string[]>(cookieState.sources);
+  const [tags, setTags] = React.useState<string[]>(cookieState.tags);
+  const [showHidden, setShowHidden] = React.useState<boolean>(cookieState.showHidden);
+  const [sortKey, setSortKey] = React.useState<SortKey>(cookieState.sortKey);
+  const [sortDir, setSortDir] = React.useState<SortDir>(cookieState.sortDir);
+  const [installedOnly, setInstalledOnly] = React.useState<boolean>(cookieState.installedOnly);
 
   React.useEffect(() => {
-    const toSave: Persisted = { q, sources, tags, showHidden, installedOnly, sortKey, sortDir };
+    const toSave: CookieState = { q, sources, tags, showHidden, installedOnly, sortKey, sortDir };
     saveStateToCookie(toSave);
   }, [q, sources, tags, showHidden, installedOnly, sortKey, sortDir]);
 
@@ -26,7 +61,7 @@ export function useLibraryState(data: Loaded) {
   const filteredSorted = React.useMemo(() => {
     const qv = q.toLowerCase().trim();
 
-    const pass = data.rows.filter((r) =>
+    const pass = rows.filter((r) =>
       (!sources.length || sources.includes(r.source)) &&
       (!tags.length || tags.some((t) => r.tags?.includes(t))) &&
       (!qv || (r.title?.toLowerCase().includes(qv) || r.source?.toLowerCase().includes(qv) || r.tags?.some((t) => t.toLowerCase().includes(qv)))) &&
@@ -59,7 +94,7 @@ export function useLibraryState(data: Loaded) {
     });
 
     return pass;
-  }, [q, sources, tags, showHidden, installedOnly, sortKey, sortDir, data.rows]);
+  }, [q, sources, tags, showHidden, installedOnly, sortKey, sortDir, rows]);
 
   return {
     ui: {
@@ -72,10 +107,10 @@ export function useLibraryState(data: Loaded) {
     },
     derived: {
       filteredCount: filteredSorted.length,
-      totalCount: data.rows.length,
+      totalCount: rows.length,
       rowsSorted: filteredSorted,
       withBuckets: filteredSorted.map(
-        (row) => ({ row, bucket: bucketLetter(row.title, row.sortingName) })
+        (row) => ({ row, bucket: orderedLetters(row.title, row.sortingName) })
       ),
     },
   };

@@ -1,6 +1,7 @@
 import { Paper, Stack, Tooltip, UnstyledButton } from "@mantine/core";
-import { AlphabeticalRailCounts } from "../../lib/types";
 import { LETTERS_LIST, Z_INDEX } from "../../lib/constants";
+
+export type AlphabeticalRailCounts = Record<string, number>;
 
 type Props = {
     letters?: string[];
