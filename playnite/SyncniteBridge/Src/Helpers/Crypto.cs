@@ -4,6 +4,9 @@ using System.Text;
 
 namespace SyncniteBridge.Helpers
 {
+    /// <summary>
+    /// Helper for encrypting/decrypting text for the current Windows user.
+    /// </summary>
     internal static class Crypto
     {
         // Encrypts text for the current Windows user; returns Base64.

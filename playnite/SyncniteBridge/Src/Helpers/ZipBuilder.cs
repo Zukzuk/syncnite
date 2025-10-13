@@ -4,6 +4,9 @@ using System.IO.Compression;
 
 namespace SyncniteBridge.Helpers
 {
+    /// <summary>
+    /// Helper for building ZIP archives, either to a file or to a stream.
+    /// </summary>
     internal sealed class ZipBuilder : IDisposable
     {
         private readonly Stream stream;

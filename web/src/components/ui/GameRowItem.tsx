@@ -10,11 +10,13 @@ import { Row } from "../hooks/useLibrary";
 type Props = Row & {
     collapseOpen: boolean;
     dim?: boolean;
-    href?: string | null;
+    href: string | null;
 };
 
 export function GameRowItem(props: Props) {
-    const { id, installed, iconUrl, title, year, source, tags, raw, href, dim, collapseOpen } = props;
+    const { id, installed, iconUrl, title, gameId,
+        year, source, tags, href, dim, collapseOpen 
+    } = props;
     const [copied, setCopied] = useState(false);
 
     const handleCopy = async (e: React.MouseEvent) => {
@@ -119,7 +121,7 @@ export function GameRowItem(props: Props) {
 
             {/* Source */}
             <Box className={dim ? " is-dim" : ""} ta="center">
-                <SourceBadge source={source} raw={raw} title={title} id={id} />
+                <SourceBadge source={source} gameId={gameId} href={href} />
             </Box>
 
             {/* Tags */}

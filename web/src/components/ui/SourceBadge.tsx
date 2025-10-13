@@ -4,20 +4,22 @@ import { iconForSource, sourceProtocolLink } from "../../lib/utils";
 import { SOURCE_SHORTNAME_MAP } from "../../lib/constants";
 import { Row } from "../hooks/useLibrary";
 
-type Props = Pick<Row, "source" | "raw" | "title" | "id"> & {
+type Props = Pick<Row, "source"> & {
+    gameId: string | null;
+    href: string | null;
     onClick?: (e: React.MouseEvent) => void;
 };
 
 export const SourceBadge = React.memo(function GameRowSourceBadge({
     source,
-    raw,
+    href,
+    gameId,
     onClick,
 }: Props) {
     if (!source) return null;
 
-    const proto = sourceProtocolLink(source, raw?.GameId ? String(raw.GameId) : "");
+    const proto = sourceProtocolLink(source, gameId, href);
     const Icon = iconForSource(source);
-
     const label = SOURCE_SHORTNAME_MAP[source] ?? source;
 
     return (
@@ -33,7 +35,6 @@ export const SourceBadge = React.memo(function GameRowSourceBadge({
                         e.stopPropagation();
                         onClick?.(e);
                     }}
-                    target={proto.startsWith("http") ? "_blank" : undefined}
                     variant="subtle"
                     size="sm"
                     style={{ lineHeight: 0 }}

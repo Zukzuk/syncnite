@@ -1,7 +1,6 @@
 import ICO from "icojs";
 import { BASE, FALLBACK_ICON } from "./constants";
 import type { Letter } from "./types";
-import { Link } from "../components/hooks/useLibrary";
 import {
   IconBrandSteam,
   IconBox as IconBrandGog,
@@ -15,6 +14,7 @@ import {
   IconBrandWikipedia,
   IconWorldWww,
 } from "@tabler/icons-react";
+import { GameLink } from "../types/playnite";
 
 export function isIcoPath(url: string): boolean {
   try {
@@ -61,85 +61,6 @@ export function buildIconUrl(iconRel: string | null, iconId: string | null): str
   return FALLBACK_ICON;
 }
 
-export function firstStoreishLink(links: Link[] | undefined, sourceName: string): string | null {
-  if (!links?.length) return null;
-  const lowerSrc = sourceName.toLowerCase();
-  const prefer = links.find(l => {
-    const n = (l.Name ?? "").toLowerCase();
-    return n === "store" || n === lowerSrc || n.includes("store");
-  });
-  if (prefer?.Url) return prefer.Url;
-
-  const byDomain = links.find(l => {
-    const u = (l.Url ?? "").toLowerCase();
-    return (
-      (lowerSrc.includes("steam") && u.includes("steampowered.com")) ||
-      (lowerSrc.includes("epic") && u.includes("epicgames.com")) ||
-      (lowerSrc.includes("gog") && u.includes("gog.com")) ||
-      (lowerSrc.includes("ubisoft") && (u.includes("ubisoft.com") || u.includes("uplay"))) ||
-      (lowerSrc.includes("ea") && (u.includes("ea.com") || u.includes("origin.com"))) ||
-      (lowerSrc.includes("battle") && (u.includes("battle.net") || u.includes("blizzard.com"))) ||
-      (lowerSrc.includes("xbox") && (u.includes("xbox.com") || u.includes("microsoft.com"))) ||
-      (lowerSrc.includes("humble") && u.includes("humblebundle.com")) ||
-      (lowerSrc.includes("nintendo") && u.includes("nintendo.com"))
-    );
-  });
-  return byDomain?.Url ?? null;
-}
-
-export function sourceUrlFallback(source: string, id: string): string | null {
-  const s = source.toLowerCase();
-
-  switch (s) {
-    case "steam":
-      return `https://store.steampowered.com/app/${encodeURIComponent(id)}`;
-    case "gog":
-      return `https://www.gog.com/game/${encodeURIComponent(id)}`;
-    case "ubisoft connect":
-      return `https://www.ubisoft.com/en-us/search?gss-q=${encodeURIComponent(id)}`;
-    case "ea app":
-      return null;
-    case "battle.net":
-      return null;
-    case "epic":
-      return `https://www.epicgames.com/store/en-US/p/${encodeURIComponent(id)}`;
-    case "xbox":
-      return `https://www.xbox.com/en-us/Search/Results?q=${encodeURIComponent(id)}`;
-    case "humble":
-      return `https://www.humblebundle.com/store/search?search=${encodeURIComponent(id)}`;
-    case "nintendo":
-      return `https://www.nintendo.com/us/search/?q=${encodeURIComponent(id)}`;
-    case "microsoft store":
-      return `https://apps.microsoft.com/search?query=${encodeURIComponent(id)}`;
-    default:
-      return null;
-  }
-};
-
-export function sourceProtocolLink(source: string, id: string): string | null {
-  const s = source.toLowerCase();
-
-  switch (s) {
-    case "steam":
-      return id ? `steam://store/${encodeURIComponent(id)}` : "steam://store";
-    case "gog":
-    case "gog galaxy":
-      return id ? `goggalaxy://openGameView/${encodeURIComponent(id)}` : "goggalaxy://openGOGGalaxy";
-    case "epic":
-      return id ? `com.epicgames.launcher://apps/${encodeURIComponent(id)}?action=show` : "com.epicgames.launcher://";
-    case "ubisoft connect":
-      return "uplay://";
-    case "ea app":
-      return "ealauncher://";
-    case "battle.net":
-      return "battlenet://";
-    case "xbox":
-      return "xbox://";
-    default:
-      return null;
-  }
-}
-
 export const iconForSource = (s: string | null | undefined) => {
   const key = (s ?? "").toLowerCase();
   if (key.includes("steam")) return IconBrandSteam;
@@ -154,6 +75,126 @@ export const iconForSource = (s: string | null | undefined) => {
   if (key.includes("wikipedia")) return IconBrandWikipedia;
   return IconWorldWww;
 };
+
+export function findSourcishLink(links: GameLink[] | undefined, sourceName: string): string | null {
+  if (!links || links.length === 0) return null;
+
+  const source = sourceName.toLowerCase();
+
+  // Try to find a link whose name directly matches or refers to a "store"
+  const preferredLink = links.find(link => {
+    const name = (link.Name ?? "").toLowerCase();
+    return name === "store" || name === source || name.includes("store");
+  });
+
+  if (preferredLink?.Url) return preferredLink.Url;
+
+  // Try to match based on known domain patterns for common stores/platforms
+  const domainMatches: Record<string, string[]> = {
+    steam: ["steampowered.com"],
+    epic: ["epicgames.com"],
+    gog: ["gog.com"],
+    ubisoft: ["ubisoft.com", "uplay"],
+    ea: ["ea.com", "origin.com"],
+    battle: ["battle.net", "blizzard.com"],
+    xbox: ["xbox.com", "microsoft.com"],
+    humble: ["humblebundle.com"],
+    nintendo: ["nintendo.com"]
+  };
+
+  const matchedLink = links.find(link => {
+    const url = (link.Url ?? "").toLowerCase();
+    return Object.entries(domainMatches).some(([key, domains]) =>
+      source.includes(key) && domains.some(domain => url.includes(domain))
+    );
+  });
+
+  return matchedLink?.Url ?? null;
+}
+
+export function sourcishLinkFallback(source: string, id: string): string | null {
+  const s = source.toLowerCase();
+  switch (s) {
+    case "steam":
+      return `https://store.steampowered.com/app/${encodeURIComponent(id)}`;
+    
+    case "gog":
+      return `https://www.gog.com/game/${encodeURIComponent(id)}`;
+    
+    case "ubisoft connect":
+      return `https://www.ubisoft.com/en-us/search?gss-q=${encodeURIComponent(id)}`;
+    
+    case "ea app":
+      return null;
+    
+    case "battle.net":
+      return null;
+    
+    case "epic":
+      return `https://www.epicgames.com/store/en-US/p/${encodeURIComponent(id)}`;
+    
+    case "xbox":
+      return `https://www.xbox.com/en-us/Search/Results?q=${encodeURIComponent(id)}`;
+    
+    case "humble":
+      return `https://www.humblebundle.com/store/search?search=${encodeURIComponent(id)}`;
+    
+    case "nintendo":
+      return `https://www.nintendo.com/us/search/?q=${encodeURIComponent(id)}`;
+    
+    case "microsoft store":
+      return `https://apps.microsoft.com/search?query=${encodeURIComponent(id)}`;
+    
+    default:
+      return null;
+  }
+};
+
+export function sourceProtocolLink(source: string, gameId: string | null, href: string | null): string | null {
+  if (!source || !gameId) return null;
+  const s = source.toLowerCase();
+
+  switch (s) {
+    case "steam":
+      return `steam://store/${encodeURIComponent(gameId)}`;
+    
+      case "gog":
+      return `goggalaxy://openGameView/${encodeURIComponent(gameId)}`;
+    
+      case "epic": {
+      // get epic slug after product/ or p/ from href if possible
+      const slug = href?.match(/\/product\/([^/?]+)/)?.[1] || href?.match(/\/p\/([^/?]+)/)?.[1];
+      return slug ? `com.epicgames.launcher://store/product/${encodeURIComponent(slug)}?action=show` : "com.epicgames.launcher://";
+      //return `com.epicgames.launcher://store/product/${encodeURIComponent(gameId)}?action=show`;
+    }
+
+    case "ubisoft connect":
+    case "uplay":
+    case "ubisoft":
+      return `uplay://launch/${encodeURIComponent(gameId)}/0`;
+
+    case "ea app":
+      return `ealaunch://launchbyname/${encodeURIComponent(gameId)}`;
+
+    case "battle.net":
+      return `battlenet://${encodeURIComponent(gameId)}`;
+
+    case "xbox":
+      return `xbox://store/${encodeURIComponent(gameId)}`;
+
+    case "humble":
+      return `https://www.humblebundle.com/store/search?search=${encodeURIComponent(gameId)}`;
+
+    case "nintendo":
+      return `https://www.nintendo.com/us/search/?q=${encodeURIComponent(gameId)}`;
+
+    case "microsoft store":
+      return `ms-windows-store://pdp/?productid=${encodeURIComponent(gameId)}`;
+
+    default:
+      return null;
+  }
+}
 
 export function hasEmulatorTag(tags?: string[]): boolean {
   return Array.isArray(tags) && tags.some(t => /\bemulator(s)?\b/i.test(t));

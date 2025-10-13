@@ -8,7 +8,8 @@ using SyncniteBridge.Helpers;
 namespace SyncniteBridge.Services
 {
     /// <summary>
-    /// Persists the last successful upload snapshot under ExtensionsData/<GUID>/lastManifest.json.
+    /// Persists the last successful upload snapshot 
+    /// under ExtensionsData/<GUID>/lastManifest.json.
     /// </summary>
     internal sealed class SnapshotStore
     {

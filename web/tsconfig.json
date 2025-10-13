@@ -10,5 +10,5 @@
     "skipLibCheck": true,
     "types": []
   },
-  "include": ["src", "vite.config.mts", "../api/src/routes/users.ts", "../api/src/services/UsersService.tsx"]
+  "include": ["src", "vite.config.mts"]
 }

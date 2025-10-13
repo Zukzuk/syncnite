@@ -48,6 +48,7 @@ export function GroupedList({
               <GameRow
                 key={`${r.id}|${installedUpdatedAt}`}
                 id={r.id}
+                gameId={r.gameId}
                 hidden={r.hidden}
                 installed={r.installed}
                 iconUrl={r.iconUrl}

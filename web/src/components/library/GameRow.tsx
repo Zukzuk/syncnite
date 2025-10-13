@@ -17,12 +17,10 @@ type ControlledProps = {
 
 export function GameRow(props: Row & ControlledProps) {
   const {
-    id, hidden, sortingName, installed, iconUrl, title, source, tags, year, url, raw,
+    id, hidden, sortingName, installed, iconUrl, 
+    title, source, tags, year, url, gameId, raw,
     collapseOpen, everOpened, topOffset, onToggle,
   } = props;
-
-  const theme = useMantineTheme();
-  useComputedColorScheme("light", { getInitialValueInEffect: true }); // if needed by your theme
 
   const dim = hidden;
   const href = useMemo(
@@ -74,6 +72,7 @@ export function GameRow(props: Row & ControlledProps) {
         {/* Main item */}
         <GameRowItem
           id={id}
+          gameId={gameId}
           installed={installed}
           iconUrl={iconUrl}
           title={title}

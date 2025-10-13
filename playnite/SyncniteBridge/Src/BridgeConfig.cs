@@ -6,7 +6,8 @@ using SyncniteBridge.Helpers;
 namespace SyncniteBridge
 {
     /// <summary>
-    /// Configuration settings for the bridge, persisted under ExtensionsData/<GUID>/config.json.
+    /// Configuration settings for the bridge, 
+    /// persisted under ExtensionsData/<GUID>/
     /// </summary>
     internal sealed class BridgeConfig
     {

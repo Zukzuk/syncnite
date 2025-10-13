@@ -20,7 +20,7 @@ export function StickyControls({ controlsRef, filteredCount, totalCount, ui }: P
   return (
     <Box
       ref={controlsRef as unknown as React.RefObject<HTMLDivElement>}
-      p="md"
+      p="sm"
       style={{ position: "sticky", top: 0, zIndex: Z_INDEX.controls, background: "var(--mantine-color-body)" }}
     >
       <ControlsHeader

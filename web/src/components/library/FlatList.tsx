@@ -39,6 +39,7 @@ export function FlatList({
         return (
           <GameRow
             id={r.id}
+            gameId={r.gameId}
             hidden={r.hidden}
             installed={r.installed}
             iconUrl={r.iconUrl}

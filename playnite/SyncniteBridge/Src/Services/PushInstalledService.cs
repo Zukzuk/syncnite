@@ -12,7 +12,8 @@ using SyncniteBridge.Helpers;
 namespace SyncniteBridge.Services
 {
     /// <summary>
-    /// Watches Playnite library for installed games changes, and pushes the updated list to a remote endpoint.
+    /// Watches Playnite library for installed games changes, 
+    /// and pushes the updated list to a remote endpoint.
     /// </summary>
     internal sealed class PushInstalledService : IDisposable
     {

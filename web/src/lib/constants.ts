@@ -33,10 +33,12 @@ export const Z_INDEX = {
 export const BASE = "/data";
 
 export const FILES = {
+  meta: `${BASE}/meta.json`,
   manifest: `${BASE}/manifest.json`,
   games: [`${BASE}/games.Game.json`],
+  companies: [`${BASE}/companies.Company.json`],
   tags: [`${BASE}/tags.Tag.json`],
-  sources: [`${BASE}/sources.GameSource.json`, `${BASE}/sources.Source.json`],
+  sources: [`${BASE}/sources.GameSource.json`],
   platforms: [`${BASE}/platforms.Platform.json`],
   genres: [`${BASE}/genres.Genre.json`],
   categories: [`${BASE}/categories.Category.json`],

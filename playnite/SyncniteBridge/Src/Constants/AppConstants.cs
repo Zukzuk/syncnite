@@ -78,6 +78,7 @@ namespace SyncniteBridge.Constants
         public const string SeriesJsonFileName = "series.Series.json";
         public const string RegionsJsonFileName = "regions.Region.json";
         public const string AgeRatingsJsonFileName = "ageratings.AgeRating.json";
+        public const string CompaniesJsonFileName = "companies.Company.json";
         public const string EmulatorsJsonFileName = "emulators.Emulator.json";
         public const string CompletionStatusesJsonFileName =
             "completionstatuses.CompletionStatus.json";
@@ -95,6 +96,7 @@ namespace SyncniteBridge.Constants
         public const string SeriesJsonPathInZip = ExportDir + "/" + SeriesJsonFileName;
         public const string RegionsJsonPathInZip = ExportDir + "/" + RegionsJsonFileName;
         public const string AgeRatingsJsonPathInZip = ExportDir + "/" + AgeRatingsJsonFileName;
+        public const string CompaniesJsonPathInZip = ExportDir + "/" + CompaniesJsonFileName;
         public const string EmulatorsJsonPathInZip = ExportDir + "/" + EmulatorsJsonFileName;
         public const string CompletionStatusesJsonPathInZip =
             ExportDir + "/" + CompletionStatusesJsonFileName;
