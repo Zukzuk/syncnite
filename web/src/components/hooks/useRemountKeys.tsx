@@ -5,6 +5,7 @@ type useParams = {
   q: string;
   sources: string[];
   tags: string[];
+  series: string[];
   showHidden: boolean;
   installedOnly: boolean;
   sortKey: string;
@@ -18,10 +19,10 @@ type UseReturn = {
 
 export function useRemountKeys({
   filteredCount, q, 
-  sources, tags, showHidden,
+  sources, tags, series, showHidden,
   installedOnly, sortKey, sortDir
 }: useParams): UseReturn {
-  const dataSig = `${filteredCount}|${q}|${sources.join(",")}|${tags.join(",")}|${showHidden}|${installedOnly}`;
+  const dataSig = `${filteredCount}|${q}|${sources.join(",")}|${tags.join(",")}|${series.join(",")}|${showHidden}|${installedOnly}`;
   const groupedKey = `grp:${dataSig}|${sortKey}|${sortDir}`;
   const flatKey = `flt:${dataSig}|${sortKey}|${sortDir}`;
   return { groupedKey, flatKey };

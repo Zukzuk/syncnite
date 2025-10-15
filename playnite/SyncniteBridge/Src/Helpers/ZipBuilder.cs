@@ -12,26 +12,25 @@ namespace SyncniteBridge.Helpers
         private readonly Stream stream;
         private readonly ZipArchive zip;
         private readonly bool ownsStream;
-        private readonly BridgeLogger log;
+        private readonly BridgeLogger blog;
 
         public ZipBuilder(string zipPath, BridgeLogger blog = null)
         {
-            log = blog;
             Directory.CreateDirectory(Path.GetDirectoryName(zipPath) ?? ".");
             var fs = new FileStream(zipPath, FileMode.Create, FileAccess.ReadWrite, FileShare.None);
             stream = fs;
             ownsStream = true;
             zip = new ZipArchive(stream, ZipArchiveMode.Create, leaveOpen: false);
-            log?.Info("zip", "ZIP archive created", new { zipPath });
+            blog?.Info("zip", "ZIP archive created");
+            blog?.Debug("zip", "ZIP path", new { path = zipPath });
         }
 
         public ZipBuilder(Stream output, BridgeLogger blog = null)
         {
-            log = blog;
             stream = output;
             ownsStream = false;
             zip = new ZipArchive(stream, ZipArchiveMode.Create, leaveOpen: true);
-            log?.Info("zip", "ZIP archive started (stream-based)");
+            blog?.Info("zip", "ZIP archive started (stream-based)");
         }
 
         public void AddFile(
@@ -41,7 +40,8 @@ namespace SyncniteBridge.Helpers
         )
         {
             var entryPath = relPathInZip.Replace('\\', '/');
-            log?.Debug("zip", "Adding file", new { source = absoluteSource, entryPath });
+            blog?.Debug("zip", "Adding file");
+            blog?.Trace("zip", "File entry", new { entryPath, source = absoluteSource });
             var entry = zip.CreateEntry(entryPath, level);
             using (var zs = entry.Open())
             using (
@@ -60,7 +60,8 @@ namespace SyncniteBridge.Helpers
         public void AddText(string relPathInZip, string text)
         {
             var entryPath = relPathInZip.Replace('\\', '/');
-            log?.Debug("zip", "Adding text entry", new { entryPath, bytes = text?.Length ?? 0 });
+            blog?.Debug("zip", "Adding text entry");
+            blog?.Trace("zip", "Text entry", new { entryPath, bytes = text?.Length ?? 0 });
             var entry = zip.CreateEntry(entryPath, CompressionLevel.Optimal);
             using var zs = entry.Open();
             using var sw = new StreamWriter(zs);
@@ -72,11 +73,11 @@ namespace SyncniteBridge.Helpers
             try
             {
                 zip?.Dispose();
-                log?.Info("zip", "ZIP archive finalized");
+                blog?.Info("zip", "ZIP archive finalized");
             }
             catch (Exception ex)
             {
-                log?.Warn("zip", "Error finalizing ZIP", new { err = ex.Message });
+                blog?.Warn("zip", "Error finalizing ZIP", new { err = ex.Message });
             }
 
             if (ownsStream)
@@ -87,7 +88,8 @@ namespace SyncniteBridge.Helpers
                 }
                 catch (Exception ex)
                 {
-                    log?.Warn("zip", "Error disposing file stream", new { err = ex.Message });
+                    blog?.Warn("zip", "Error disposing file stream");
+                    blog?.Trace("zip", "Error details", new { err = ex.Message });
                 }
             }
         }

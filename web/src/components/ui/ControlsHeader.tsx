@@ -1,5 +1,5 @@
 import React from "react";
-import { Group, MultiSelect, Switch, Text, Stack, Flex, Button, Popover } from "@mantine/core";
+import { Group, MultiSelect, Switch, Text, Stack, Flex, rem } from "@mantine/core";
 import { SearchInput } from "./SearchInput";
 import { SOURCE_LABEL_MAP } from "../../lib/constants";
 
@@ -7,8 +7,10 @@ type Props = {
   q: string; setQ: (v: string) => void;
   sources: string[]; setSources: (v: string[]) => void;
   tags: string[]; setTags: (v: string[]) => void;
+  series: string[]; setSeries: (v: string[]) => void;
   allSources: string[];
   allTags: string[];
+  allSeries: string[];
   showHidden: boolean; setShowHidden: (v: boolean) => void;
   installedOnly: boolean; setInstalledOnly: (v: boolean) => void;
   filteredCount: number;
@@ -20,6 +22,7 @@ export function ControlsHeader(props: Props) {
     q, setQ,
     sources, setSources, allSources,
     tags, setTags, allTags,
+    series, setSeries, allSeries,
     showHidden, setShowHidden,
     installedOnly, setInstalledOnly,
     filteredCount, totalCount,
@@ -33,6 +36,11 @@ export function ControlsHeader(props: Props) {
   const tagData = React.useMemo(
     () => Array.from(new Set(allTags)).sort().map((t) => ({ value: t, label: t })),
     [allTags]
+  );
+
+  const seriesData = React.useMemo(
+    () => Array.from(new Set(allSeries)).sort().map((s) => ({ value: s, label: s })),
+    [allSeries]
   );
 
   return (
@@ -50,41 +58,28 @@ export function ControlsHeader(props: Props) {
         </Group>
 
         <Group gap="sm" align="end" wrap="nowrap" style={{ flex: '0 0 auto' }}>
-          <Popover width={200} position="bottom" withArrow>
-            <Popover.Target>
-              <Button>Platforms</Button>
-            </Popover.Target>
-            <Popover.Dropdown p={0}>
-              <MultiSelect
-                placeholder="All platforms"
-                value={sources}
-                onChange={setSources}
-                data={sourceData}
-                clearable
-                comboboxProps={{ withinPortal: false }}
-                nothingFoundMessage="No sources found"
-                styles={{ pill: { display: "none" } }}
-              />
-            </Popover.Dropdown>
-          </Popover>
-
-          <Popover width={200} position="bottom" withArrow>
-            <Popover.Target>
-              <Button>Tags</Button>
-            </Popover.Target>
-            <Popover.Dropdown p={0}>
-              <MultiSelect
-                placeholder="All tags"
-                value={tags}
-                onChange={setTags}
-                data={tagData}
-                clearable
-                comboboxProps={{ withinPortal: false }}
-                nothingFoundMessage="No tags found"
-                styles={{ pill: { display: "none" } }}
-              />
-            </Popover.Dropdown>
-          </Popover>
+          <MultiSelect
+            w={150}
+            placeholder="Platforms"
+            value={sources}
+            onChange={setSources}
+            data={sourceData}
+            clearable
+            nothingFoundMessage="No sources found"
+            variant={sources.length ? "filled" : "default"}
+            styles={{ pill: { display: "none" as const } }}
+          />
+          <MultiSelect
+            w={150}
+            placeholder="Tags"
+            value={tags}
+            onChange={setTags}
+            data={tagData}
+            clearable
+            nothingFoundMessage="No tags found"
+            variant={tags.length ? "filled" : "default"}
+            styles={{ pill: { display: "none" as const } }}
+          />
         </Group>
       </Group>
 

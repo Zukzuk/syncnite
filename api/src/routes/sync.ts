@@ -3,11 +3,13 @@ import multer from "multer";
 import { SyncService } from "../services/SyncService";
 import { INPUT_DIR } from "../helpers";
 import { requireAdmin } from "../middleware/requireAdmin";
+import { rootLog } from "../logger";
 
 const router = express.Router();
 router.use(requireAdmin);
 const syncUpload = multer({ dest: INPUT_DIR });
 const syncService = new SyncService();
+const log = rootLog.child("route:sync");
 
 let isSyncing = false;
 
@@ -265,10 +267,10 @@ router.post("/log", async (req, res) => {
  *         $ref: '#/components/responses/Error500'
  */
 router.post("/push", async (req, res) => {
-  console.log("[sync/push] Incoming request…");
+  log.info("push: incoming request");
 
   try {
-    console.log("[sync/push] Raw body received:", req.body);
+    log.info("push: raw body received:", req.body);
     const email = (req as any).authEmail
                   || String(req.header("x-auth-email") || "").toLowerCase();
     const count = await syncService.pushInstalled(req.body?.installed, email);
@@ -276,10 +278,10 @@ router.post("/push", async (req, res) => {
   } catch (e: any) {
     const msg = String(e?.message || e);
     if (/Body must be/.test(msg)) {
-      console.warn("[sync/push] Invalid payload, expected { installed: string[] }");
+      log.warn("push: invalid payload, expected { installed: string[] }");
       return res.status(400).json({ ok: false, error: "Body must be { installed: string[] }" });
     }
-    console.error("[sync/push] ERROR:", msg);
+    log.error("push: failed:", msg);
     return res.status(500).json({ ok: false, error: msg });
   }
 });
@@ -332,13 +334,15 @@ router.post("/push", async (req, res) => {
  *         $ref: '#/components/responses/Error500'
  */
 router.post("/up", syncUpload.single("file"), async (req, res) => {
+  log.info("up: incoming request");
+  
   if (!req.file) {
-    console.warn("[sync/up] Request rejected: no file uploaded");
+    log.warn("up: request rejected: no file uploaded");
     return res.status(400).json({ ok: false, error: "no file" });
   }
 
   if (isSyncing) {
-    console.warn("[sync/up] Request rejected: sync already in progress");
+    log.warn("up: request rejected: sync already in progress");
     return res.status(423).json({ ok: false, error: "sync_in_progress" });
   }
   isSyncing = true;
@@ -363,14 +367,14 @@ router.post("/up", syncUpload.single("file"), async (req, res) => {
   } catch (e: any) {
     const msg = String(e?.message || e);
     if ((e as any).statusCode === 400 || /no \/export\/\*\.json found in ZIP/i.test(msg)) {
-      console.warn("[sync/up] No /export/*.json found in ZIP");
+      log.warn("up: no /export/*.json found in ZIP");
       return res.status(400).json({ ok: false, error: "no /export/*.json found in ZIP" });
     }
-    console.error(`[sync/up] ERROR: ${msg}`);
+    log.error("up: failed:", msg);
     return res.status(500).json({ ok: false, error: msg });
   } finally {
     isSyncing = false;
-    console.log("[sync/up] isSyncing reset to false");
+    log.info("up: isSyncing reset to false");
   }
 });
 

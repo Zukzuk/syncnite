@@ -135,9 +135,10 @@ namespace SyncniteBridge.Services
                             dirtyMediaFolders.Add(name);
                     }
                     // Milestone: first run detected → INFO
-                    blog?.Info(
+                    blog?.Info("sync", "Initial seed prepared (first run)");
+                    blog?.Debug(
                         "sync",
-                        "Initial seed prepared (first run)",
+                        "Initial diff prepared (first run)",
                         new { json = true, mediaFolders = cur.MediaVersions.Count }
                     );
                 }
@@ -184,9 +185,10 @@ namespace SyncniteBridge.Services
             mediaWatcher.EnableRaisingEvents = true;
 
             // Milestone: service ready
-            blog?.Info(
+            blog?.Info("sync", "Delta sync started and watchers attached");
+            blog?.Debug(
                 "sync",
-                "Delta sync started and watchers attached",
+                "Watching paths",
                 new
                 {
                     libraryDir = Path.Combine(dataRoot, AppConstants.LibraryDirName),
@@ -313,9 +315,10 @@ namespace SyncniteBridge.Services
                 }
 
                 // Milestone: preparing plan (what will be uploaded)
-                blog?.Info(
+                blog?.Info("sync", "Preparing upload plan");
+                blog?.Debug(
                     "sync",
-                    "Preparing upload plan",
+                    "Upload plan details",
                     new { jsonChanged = needJson, mediaFoldersChanged = mediaFolders.Count }
                 );
 
@@ -339,9 +342,10 @@ namespace SyncniteBridge.Services
                 );
 
                 // Milestone: assembling ZIP (before work starts)
-                blog?.Info(
+                blog?.Info("sync", "Assembling ZIP");
+                blog?.Debug(
                     "sync",
-                    "Assembling ZIP",
+                    "ZIP details",
                     new
                     {
                         needJson,
@@ -389,9 +393,10 @@ namespace SyncniteBridge.Services
                 swZip.Stop();
 
                 // Milestone: uploading
-                blog?.Info(
+                blog?.Info("sync", "Uploading delta");
+                blog?.Debug(
                     "sync",
-                    "Uploading delta",
+                    "Upload details",
                     new
                     {
                         needJson,
@@ -414,9 +419,10 @@ namespace SyncniteBridge.Services
                     dirtyMediaFolders.Clear();
 
                 // Milestone: upload complete
-                blog?.Info(
+                blog?.Info("sync", "Upload complete");
+                blog?.Debug(
                     "sync",
-                    "Upload complete",
+                    "Upload stats",
                     new
                     {
                         json = needJson,

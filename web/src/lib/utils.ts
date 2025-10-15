@@ -15,6 +15,14 @@ import {
   IconWorldWww,
 } from "@tabler/icons-react";
 import { GameLink } from "../types/playnite";
+import { useComputedColorScheme, useMantineTheme } from "@mantine/core";
+
+export function getTheme() {
+  const theme = useMantineTheme();
+  const colorScheme = useComputedColorScheme("light", { getInitialValueInEffect: true });
+  const isDark = colorScheme === "dark";
+  return { theme, isDark };
+}
 
 export function isIcoPath(url: string): boolean {
   try {
@@ -117,34 +125,34 @@ export function sourcishLinkFallback(source: string, id: string): string | null 
   switch (s) {
     case "steam":
       return `https://store.steampowered.com/app/${encodeURIComponent(id)}`;
-    
+
     case "gog":
       return `https://www.gog.com/game/${encodeURIComponent(id)}`;
-    
+
     case "ubisoft connect":
       return `https://www.ubisoft.com/en-us/search?gss-q=${encodeURIComponent(id)}`;
-    
+
     case "ea app":
       return null;
-    
+
     case "battle.net":
       return null;
-    
+
     case "epic":
       return `https://www.epicgames.com/store/en-US/p/${encodeURIComponent(id)}`;
-    
+
     case "xbox":
       return `https://www.xbox.com/en-us/Search/Results?q=${encodeURIComponent(id)}`;
-    
+
     case "humble":
       return `https://www.humblebundle.com/store/search?search=${encodeURIComponent(id)}`;
-    
+
     case "nintendo":
       return `https://www.nintendo.com/us/search/?q=${encodeURIComponent(id)}`;
-    
+
     case "microsoft store":
       return `https://apps.microsoft.com/search?query=${encodeURIComponent(id)}`;
-    
+
     default:
       return null;
   }
@@ -157,11 +165,11 @@ export function sourceProtocolLink(source: string, gameId: string | null, href: 
   switch (s) {
     case "steam":
       return `steam://store/${encodeURIComponent(gameId)}`;
-    
-      case "gog":
+
+    case "gog":
       return `goggalaxy://openGameView/${encodeURIComponent(gameId)}`;
-    
-      case "epic": {
+
+    case "epic": {
       // get epic slug after product/ or p/ from href if possible
       const slug = href?.match(/\/product\/([^/?]+)/)?.[1] || href?.match(/\/p\/([^/?]+)/)?.[1];
       return slug ? `com.epicgames.launcher://store/product/${encodeURIComponent(slug)}?action=show` : "com.epicgames.launcher://";

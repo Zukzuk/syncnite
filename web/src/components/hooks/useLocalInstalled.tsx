@@ -1,5 +1,5 @@
 import * as React from "react";
-import { getEmail } from "../../lib/persist";
+import { fetchUser } from "../../lib/persist";
 
 type UseParams = {
     pollMs: number;
@@ -23,7 +23,7 @@ export function useLocalInstalled({ pollMs }: UseParams): UseReturn {
 
         async function tick() {
             try {
-                const email = getEmail();
+                const email = fetchUser();
                 if (!email) { setState({ set: null, updatedAt: null }); return; }
 
                 const url = `/data/installed/${email.toLowerCase()}.Installed.json?v=${Date.now()}`;

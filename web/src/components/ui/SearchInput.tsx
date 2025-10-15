@@ -8,15 +8,15 @@ type Props = {
     width?: number | string;
 }
 
-export function SearchInput({ value, onChange, placeholder = "Search…", width = 475 }: Props) {
+export function SearchInput({ value, onChange }: Props) {
     return (
         <TextInput
-            placeholder={placeholder}
+            placeholder="Search…"
             value={value}
             onChange={(e) => onChange(e.currentTarget.value)}
-            w={width}
+            w={312}
             size="sm"
-            radius="xl"
+            radius="md"
             variant="filled"
             leftSection={<IconSearch size={18} stroke={2} aria-hidden />}
             leftSectionPointerEvents="none"

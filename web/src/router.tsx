@@ -39,7 +39,7 @@ function AdminOnly() {
 }
 
 function AdminGate() {
-  const { hideSite, loaded, hasAdmin } = useAdminGate({ pollMs: 2000 });
+  const { hideSite, loaded, hasAdmin } = useAdminGate({ pollMs: 4000 });
   if (!loaded) return null;
   if (!hasAdmin) {
     return (

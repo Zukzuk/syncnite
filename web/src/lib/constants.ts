@@ -16,7 +16,7 @@ export const API_ENDPOINTS = {
 }
 
 export const GRID = {
-  cols: "56px minmax(0, 45%) 80px 100px minmax(0, 1fr)",
+  cols: "56px minmax(0, 55%) 60px 95px minmax(0, 1fr)",
   rowHeight: 56,
   menuWidth: 160,
   smallBox: 40,
@@ -96,6 +96,7 @@ export const COOKIE_DEFAULTS: CookieState = {
   q: "",
   sources: [],
   tags: [],
+  series: [],
   showHidden: false,
   installedOnly: false,
   sortKey: "title",
@@ -104,7 +105,7 @@ export const COOKIE_DEFAULTS: CookieState = {
 
 export const MAX_LINES = 1000;
 
-export const LETTERS_LIST = ["#",..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
+export const LETTERS_LIST = ["#", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
 
 export const LETTERS = [...LETTERS_LIST] as const;
 

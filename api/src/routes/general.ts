@@ -1,9 +1,11 @@
 import express from "express";
 import { INPUT_DIR } from "../helpers";
 import { ListZipsService } from "../services/ListZipsService";
+import { rootLog } from "../logger";
 
 const router = express.Router();
 const listZipsService = new ListZipsService(INPUT_DIR);
+const log = rootLog.child("route:app");
 
 /**
  * @openapi
@@ -55,13 +57,13 @@ const listZipsService = new ListZipsService(INPUT_DIR);
  *         $ref: '#/components/responses/Error500'
  */
 router.get("/zips", async (_req, res) => {
-    console.log("[app/zips] Request received");
-
+    log.info("zips: request received");
     try {
         const zips = await listZipsService.get();
+        log.info(`zips: found ${zips.length} zip(s)`);
         res.json(zips);
     } catch (e: any) {
-        console.error("[app/zips] ERROR:", String(e?.message || e));
+        log.error("zips: failed:", String(e?.message || e));
         res.status(500).json({ ok: false, error: String(e?.message || e) });
     }
 });

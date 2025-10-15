@@ -1,33 +1,36 @@
 import * as React from "react";
+import type { Game, GameJson, GameSourceJson, TagJson, SeriesJson, GameLink, GameReleaseDate } from "../../types/playnite";
 import { FILES } from "../../lib/constants";
-import { getEmail, tryFetchJson, tryLoadMany } from "../../lib/persist";
+import { fetchUser, tryFetchJson, tryLoadMany } from "../../lib/persist";
 import {
-    buildIconUrl, findSourcishLink, normalizePath,
-    extractYear, sourcishLinkFallback,
+    buildIconUrl, findSourcishLink, normalizePath, extractYear,
+    sourcishLinkFallback, hasEmulatorTag, myAbandonwareLink, buildAssetUrl,
 } from "../../lib/utils";
 import { useRefreshLibrary } from "./useRefreshLibrary";
 import { useLocalInstalled } from "./useLocalInstalled";
-import type { Game, GameJson, GameSourceJson, TagJson } from "../../types/playnite";
 
 export type LoadedData = {
     rows: Row[];
     allSources: string[];
     allTags: string[];
+    allSeries: string[];
 };
 
 export type Row = {
     id: string;
-    gameId: string | null;
     title: string;
-    sortingName: string;
+    sortingName: string | null;
+    gameId: string | null;
     source: string;
     tags: string[];
-    hidden: boolean;
-    url: string | null;
-    iconUrl: string;
-    year?: number | null;
-    raw: Game;
-    installed: boolean;
+    series: string[];
+    isHidden: boolean;
+    isInstalled: boolean;
+    link: string | null;
+    year: number | null;
+    iconUrl: string | null;
+    coverUrl: string | null;
+    bgUrl: string | null;
 };
 
 type UseParams = { pollMs: number };
@@ -37,10 +40,22 @@ type UseReturn = {
     installedUpdatedAt: string | null;
 };
 
+function getGameId(id: string | null | undefined): string | null {
+    return id ? String(id) : null;
+}
+
+function getGameTitle(name: string | null | undefined): string {
+    return name ?? "Untitled";
+}
+
+function getSortingName(sortingName: string | null | undefined, name: string | null | undefined): string {
+    return sortingName ?? name ?? "";
+}
+
 // Prefer explicit ReleaseYear, otherwise derive from ReleaseDate.ReleaseDate ("yyyy-mm-dd")
-function pickYear(g: Game): number | null {
-    if (typeof g.ReleaseYear === "number") return g.ReleaseYear;
-    const iso = g.ReleaseDate?.ReleaseDate;
+function pickYear(releaseYear: number | null | undefined, releaseDate: GameReleaseDate | null | undefined): number | null {
+    if (typeof releaseYear === "number") return releaseYear;
+    const iso = releaseDate?.ReleaseDate;
     if (typeof iso === "string") {
         const y = extractYear(iso);
         return typeof y === "number" ? y : null;
@@ -48,34 +63,48 @@ function pickYear(g: Game): number | null {
     return null;
 }
 
-function pickIconUrl(g: Game): string {
-    const iconRel = normalizePath(g.Icon ?? undefined);
+// Prefer Icon (path) but fall back to Id (legacy)
+function pickIconUrl(icon: string | null | undefined): string {
+    const iconRel = normalizePath(icon ?? undefined);
     // buildIconUrl historically accepts either a path and/or an id—pass only path here
     return buildIconUrl(iconRel, null);
 }
 
+// Prefer Links matching source, then any Links, then sourcish fallback
+function getEffectiveLink(links: GameLink[] | undefined, name: string, source: string, title: string, tags: string[]): string | null {
+    let url = findSourcishLink(links, source);
+    if (!url && source) url = sourcishLinkFallback(source, name ?? "");
+    if (url) return url;
+    if (!source && !hasEmulatorTag(tags)) return myAbandonwareLink(title);
+    return null;
+}
+
+// Get the Hidden flag (default false)
+function getIsHidden(hidden: boolean | null | undefined): boolean {
+    return !!hidden;
+}
+
+// Pick the "primary" source name (alphabetically first, lowercased)
 function pickPrimarySourceName(g: Game, sourceById: Map<string, string>): string {
     const id = g.SourceId ?? null;
     const name = id ? sourceById.get(id) ?? "" : "";
     return name.toLowerCase().trim();
 }
 
+// Expand TagIds to Tag Names (ignore missing)
 function expandTagNames(ids: string[] | undefined, tagById: Map<string, string>): string[] {
     if (!ids || ids.length === 0) return [];
     return ids.map((id) => tagById.get(id)).filter(Boolean) as string[];
 }
 
-export async function loadLibrary(): Promise<LoadedData> {
-    const games = await tryLoadMany<GameJson>(FILES.games, []);
-    const tags = await tryLoadMany<TagJson>(FILES.tags, []);
-    const sources = await tryLoadMany<GameSourceJson>(FILES.sources, []);
+// Expand SeriesIds to Series Names (ignore missing)
+function expandSeriesNames(ids: string[] | undefined, seriesById: Map<string, string>): string[] {
+    if (!ids || ids.length === 0) return [];
+    return ids.map((id) => seriesById.get(id)).filter(Boolean) as string[];
+}
 
-    // index maps (Id -> Name)
-    const tagById = new Map<string, string>(tags.map((t) => [t.Id, t.Name]));
-    const sourceById = new Map<string, string>(sources.map((s) => [s.Id, s.Name]));
-
-    // best-effort local Installed set for initial paint
-    const email = getEmail();
+// Prefetch the local Installed.json (case-insensitive ids)
+async function fetchInstalledList(email: string | null): Promise<Set<string> | null> {
     let localInstalledSet: Set<string> | null = null;
     if (email) {
         const localInstalled = await tryFetchJson(
@@ -87,34 +116,69 @@ export async function loadLibrary(): Promise<LoadedData> {
             );
         }
     }
+    return localInstalledSet;
+}
+
+function getInstalled(id: string, installedSet: Set<string> | null): boolean {
+    return installedSet ? installedSet.has(id.toLowerCase()) : false;
+}
+
+// Get CoverImage URL (if any)
+function getCoverUrl(cover: string | null | undefined): string | null {
+    return cover ? buildAssetUrl(cover) : null;
+}
+
+// Get BackgroundImage URL (if any)
+function getBgUrl(bg: string | null | undefined): string | null {
+    return bg ? buildAssetUrl(bg) : null;
+}
+
+export async function loadLibrary(): Promise<LoadedData> {
+    // load raw data
+    const games = await tryLoadMany<GameJson>(FILES.games, []);
+    const tags = await tryLoadMany<TagJson>(FILES.tags, []);
+    const sources = await tryLoadMany<GameSourceJson>(FILES.sources, []);
+    const series = await tryLoadMany<SeriesJson>(FILES.series, []);
+
+    // index maps (Id -> Name)
+    const tagById = new Map<string, string>(tags.map((t) => [t.Id, t.Name]));
+    const sourceById = new Map<string, string>(sources.map((s) => [s.Id, s.Name]));
+    const seriesById = new Map<string, string>(series.map((s) => [s.Id, s.Name]));
+
+    // Get the user's email
+    const email = fetchUser();
+    // prefetch installed set (case-insensitive ids)
+    const isInstalledSet = await fetchInstalledList(email);
 
     // build rows
-    const rows: Row[] = games.map((g) => {
+    const rows: Row[] = await Promise.all(games.map(async (g) => {
         const id = g.Id;
-        const gameId = g.GameId ? String(g.GameId) : null;
-        const title = g.Name ?? "Untitled";
-        const sortingName = g.SortingName ?? g.Name ?? ""
+        const gameId = getGameId(g.GameId);
+        const title = getGameTitle(g.Name);
+        const sortingName = getSortingName(g.SortingName, g.Name);
         const source = pickPrimarySourceName(g, sourceById);
-        const year = pickYear(g);
+        const year = pickYear(g.ReleaseYear, g.ReleaseDate);
         const tags = expandTagNames(g.TagIds, tagById);
-        const hidden = !!g.Hidden;
-        let url = findSourcishLink(g.Links, source);
-        if (!url && source) url = sourcishLinkFallback(source, g.Name ?? "");
-        const iconUrl = pickIconUrl(g);
-        const installed = localInstalledSet ? localInstalledSet.has(id.toLowerCase()) : false;
+        const isHidden = getIsHidden(g.Hidden);
+        const link = getEffectiveLink(g.Links, g.Name, source, title, tags);
+        const iconUrl = pickIconUrl(g.Icon);
+        const isInstalled = getInstalled(g.Id, isInstalledSet);
+        const series = expandSeriesNames(g.SeriesIds, seriesById);
+        const coverUrl = getCoverUrl(g.CoverImage);
+        const bgUrl = getBgUrl(g.BackgroundImage);
         return {
             id, gameId, title, sortingName, source, tags,
-            hidden, url, iconUrl, year, installed, raw: g,
+            series, isHidden, link, iconUrl, year,
+            isInstalled, coverUrl, bgUrl
         };
-    });
+    }));
 
-    // all unique sources (sorted)
+    // all unique sources/tags/series (alphabetically sorted)
     const allSources = Array.from(new Set(rows.map((r) => r.source).filter(Boolean))).sort();
-
-    // all unique tags (sorted)
     const allTags = Array.from(new Set(rows.flatMap((r) => r.tags).filter(Boolean))).sort();
+    const allSeries = Array.from(new Set(rows.flatMap((r) => r.series).filter(Boolean))).sort();
 
-    return { rows, allSources, allTags };
+    return { rows, allSources, allTags, allSeries };
 }
 
 /**

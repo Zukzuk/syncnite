@@ -68,8 +68,8 @@ export function useAlphabetRail({isGrouped, groups, flatItems, virtuosoRef }: Us
     const [activeLetter, setActiveLetter] = React.useState<string | null>(null);
     const lastRangeRef = React.useRef<Range | null>(null);
 
-    // 1) If the letter's first item can be placed at the top, go there.
-    // 2) Otherwise, go straight to the *end* of the list.
+    // If the letter's first item can be placed at the top, go there.
+    // Otherwise, go straight to the *end* of the list.
     const handleJump = React.useCallback(
         (L: string) => {
             const targetIdx = isGrouped
@@ -82,7 +82,7 @@ export function useAlphabetRail({isGrouped, groups, flatItems, virtuosoRef }: Us
 
             // If we don't yet know viewport size, try aligning to the target "start".
             // If it ends up clamped by Virtuoso, next rangeChanged will give us viewport,
-            // and subsequent clicks will follow rule (2).
+            // and subsequent clicks will follow goto end.
             if (!lastRange) {
                 virtuosoRef.current?.scrollToIndex({ index: targetIdx, align: "start", behavior: "auto" });
                 return;

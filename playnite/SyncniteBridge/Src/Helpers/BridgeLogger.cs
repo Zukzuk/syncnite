@@ -1,4 +1,3 @@
-// Src/Helpers/BridgeLogger.cs
 using System;
 using System.Collections.Concurrent;
 using System.Net.Http;
@@ -6,6 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Playnite.SDK;
+using SyncniteBridge.Constants;
 
 namespace SyncniteBridge.Helpers
 {
@@ -45,14 +45,15 @@ namespace SyncniteBridge.Helpers
 
         public BridgeLogger(string apiBase, string version, string level = "info")
         {
-            endpoint = Combine(apiBase, "sync/log"); // same endpoint name as before
+            endpoint = Combine(apiBase, AppConstants.Path_Syncnite_Log);
             ver = version ?? "dev";
             threshold = Parse(level);
             worker = Task.Run(() => PumpAsync(cts.Token));
             AuthHeaders.Apply(http);
         }
 
-        public void UpdateApiBase(string apiBase) => endpoint = Combine(apiBase, "sync/log");
+        public void UpdateApiBase(string apiBase) =>
+            endpoint = Combine(apiBase, AppConstants.Path_Syncnite_Log);
 
         public void UpdateLevel(string level) => threshold = Parse(level);
 

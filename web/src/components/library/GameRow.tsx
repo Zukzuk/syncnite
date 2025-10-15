@@ -1,7 +1,6 @@
 import React, { useMemo, useCallback } from "react";
 import { Box, Collapse } from "@mantine/core";
-import { useMantineTheme, useComputedColorScheme } from "@mantine/core";
-import { buildAssetUrl, effectiveLink } from "../../lib/utils";
+import { buildAssetUrl } from "../../lib/utils";
 import { GRID } from "../../lib/constants";
 import { GameRowItem } from "../ui/GameRowItem";
 import { GameRowDetails } from "../ui/GameRowDetails";
@@ -17,21 +16,10 @@ type ControlledProps = {
 
 export function GameRow(props: Row & ControlledProps) {
   const {
-    id, hidden, sortingName, installed, iconUrl, 
-    title, source, tags, year, url, gameId, raw,
+    id, installed, coverUrl, bgUrl, title, isHidden,
     collapseOpen, everOpened, topOffset, onToggle,
   } = props;
 
-  const dim = hidden;
-  const href = useMemo(
-    () => url ?? effectiveLink({ url, source, title, tags }),
-    [url, source, title, tags]
-  );
-
-  const cover = (raw as any)?.CoverImage ?? null;
-  const bg = (raw as any)?.BackgroundImage ?? null;
-  const coverUrl = useMemo(() => buildAssetUrl(cover), [cover]);
-  const bgUrl = useMemo(() => buildAssetUrl(bg), [bg]);
   const collapseOpenDelayed = useDelayedFlag({ active: collapseOpen, delayMs: 140 });
 
   const onKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -44,7 +32,7 @@ export function GameRow(props: Row & ControlledProps) {
   return (
     <Box
       data-row-id={id}
-      className={`game-row${dim ? " is-dim" : ""}${installed ? " is-installed" : ""}`}
+      className={`game-row${isHidden ? " is-dim" : ""}${installed ? " is-installed" : ""}`}
       role="button"
       tabIndex={0}
       aria-expanded={collapseOpen}
@@ -71,21 +59,7 @@ export function GameRow(props: Row & ControlledProps) {
       >
         {/* Main item */}
         <GameRowItem
-          id={id}
-          gameId={gameId}
-          installed={installed}
-          iconUrl={iconUrl}
-          title={title}
-          year={year}
-          source={source}
-          tags={tags}
-          raw={raw}
-          href={href}
-          dim={dim}
-          sortingName={sortingName}
-          hidden={hidden}
-          url={url}
-          collapseOpen={collapseOpen}
+          {... props }
         />
 
         {/* Details */}

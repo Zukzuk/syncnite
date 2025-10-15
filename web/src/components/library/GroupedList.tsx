@@ -47,18 +47,7 @@ export function GroupedList({
             return (
               <GameRow
                 key={`${r.id}|${installedUpdatedAt}`}
-                id={r.id}
-                gameId={r.gameId}
-                hidden={r.hidden}
-                installed={r.installed}
-                iconUrl={r.iconUrl}
-                title={r.title}
-                source={r.source}
-                tags={r.tags}
-                year={r.year}
-                url={r.url}
-                raw={r.raw}
-                sortingName={r.sortingName}
+                { ...r }
                 topOffset={topOffset}
                 collapseOpen={openIds.has(r.id)}
                 everOpened={everOpenedIds.has(r.id)}

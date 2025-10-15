@@ -45,9 +45,10 @@ namespace SyncniteBridge.Services
             {
                 await Task.Delay(delay).ConfigureAwait(false);
                 timer.Start();
-                blog?.Info(
+                blog?.Info("health", "Healthcheck started");
+                blog?.Debug(
                     "health",
-                    "Healthcheck started",
+                    "First check in ms",
                     new { pingUrl, intervalMs = AppConstants.HealthcheckIntervalMs }
                 );
                 await TickAsync().ConfigureAwait(false);
@@ -73,7 +74,8 @@ namespace SyncniteBridge.Services
 
                 if (ok)
                 {
-                    blog?.Info("health", "server healthy", new { pingUrl });
+                    blog?.Info("health", "server healthy");
+                    blog?.Debug("health", "server reachable", new { pingUrl });
                 }
                 else
                 {

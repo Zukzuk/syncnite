@@ -23,7 +23,7 @@ export const SourceBadge = React.memo(function GameRowSourceBadge({
     const label = SOURCE_SHORTNAME_MAP[source] ?? source;
 
     return (
-        <Tooltip label={`//:${label}`} withArrow>
+        <Tooltip label={`//:${label}`} withArrow position="top">
             {proto ? (
                 <ActionIcon
                     component="a"
@@ -39,7 +39,7 @@ export const SourceBadge = React.memo(function GameRowSourceBadge({
                     size="sm"
                     style={{ lineHeight: 0 }}
                 >
-                    <Icon size={20} stroke={2} />
+                    <Icon size={18} stroke={2} />
                 </ActionIcon>
             ) : (
                 <ActionIcon
@@ -55,7 +55,7 @@ export const SourceBadge = React.memo(function GameRowSourceBadge({
                     size="sm"
                     style={{ lineHeight: 0 }}
                 >
-                    <Icon size={20} stroke={2} />
+                    <Icon size={18} stroke={2} />
                 </ActionIcon>
             )}
         </Tooltip>

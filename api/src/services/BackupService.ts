@@ -2,7 +2,7 @@ import { promises as fs } from "node:fs";
 import { join, basename } from "node:path";
 import {
     INPUT_DIR, WORK_DIR, DATA_DIR,
-    run, cleanDir, normalizeBackslashPaths, findLibraryDir,
+    run, cleanDir, normalizeBackslashPaths,
     copyLibraryFilesWithProgress,
 } from "../helpers";
 import { rootLog } from "../logger";
@@ -92,7 +92,7 @@ export class BackupService {
 
             // Locate library dir
             sseLog("Locating library dir…");
-            const libDir = await findLibraryDir(WORK_DIR);
+            const libDir = await this.findLibraryDir(WORK_DIR);
             if (!libDir) {
                 log.warn("No library directory with *.db found");
                 throw new Error("No library directory with *.db");
@@ -135,5 +135,38 @@ export class BackupService {
             send("error", String(e?.message || e));
             throw e; // let router handle error + end()
         }
+    }
+
+    /**
+     * Find the library directory within the given root.
+     * @param root Root directory to search
+     * @returns The path to the library directory, or null if not found
+     */
+    async findLibraryDir(root: string): Promise<string | null> {
+        log.debug(`findLibraryDir start`, { root });
+        const stack = [root];
+        while (stack.length) {
+            const dir = stack.pop()!;
+            let entries: import("node:fs").Dirent[];
+            try {
+                entries = await fs.readdir(dir, { withFileTypes: true });
+            } catch { continue; }
+
+            const hasGamesDb = entries.some(e => e.isFile() && /^(games|game)\.db$/i.test(e.name));
+            if (hasGamesDb) { log.info(`library dir detected`, { dir }); return dir; }
+
+            const libEntry = entries.find(e => e.isDirectory() && e.name.toLowerCase() === "library");
+            if (libEntry) {
+                const lib = join(dir, libEntry.name);
+                try {
+                    const libEntries = await fs.readdir(lib);
+                    if (libEntries.some(n => /^(games|game)\.db$/i.test(n))) { log.info(`library dir detected`, { dir: lib }); return lib; }
+                } catch { /* ignore */ }
+            }
+
+            for (const e of entries) if (e.isDirectory()) stack.push(join(dir, e.name));
+        }
+        log.debug(`library dir not found`, { root });
+        return null;
     }
 }

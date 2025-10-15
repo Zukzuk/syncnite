@@ -1,17 +1,20 @@
 import { createApp } from "./app";
+import { rootLog } from "./logger";
 
 const app = createApp();
 const port = process.env.PORT ? Number(process.env.PORT) : 3004;
+const log = rootLog.child("server");
 
 const server = app.listen(port, () => {
-    console.log(`API listening on ${port}`);
+    log.info("started", { port });
 });
 
 process.on("SIGTERM", () => {
-    console.log("SIGTERM received, closing server…");
+    log.info("received SIGTERM");
     server.close(() => process.exit(0));
 });
+
 process.on("SIGINT", () => {
-    console.log("SIGINT received, closing server…");
+    log.info("received SIGINT");
     server.close(() => process.exit(0));
 });

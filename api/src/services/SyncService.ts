@@ -2,7 +2,8 @@ import { existsSync, promises as fs } from "node:fs";
 import { join, basename } from "node:path";
 import {
     INPUT_DIR, WORK_DIR, DATA_DIR,
-    cleanDir, normalizeBackslashPaths, copyLibraryFilesWithProgress, findExportDir, copyDir, run
+    cleanDir, normalizeBackslashPaths, 
+    copyLibraryFilesWithProgress, run
 } from "../helpers";
 import { rootLog } from "../logger";
 
@@ -110,7 +111,7 @@ export class SyncService {
             await normalizeBackslashPaths(WORK_DIR);
 
             log.debug("Locating /export/*.json…");
-            const exportDir = await findExportDir(WORK_DIR);
+            const exportDir = await this.findExportDir(WORK_DIR);
             if (!exportDir) {
                 log.warn("No /export/*.json found in ZIP");
                 const err = new Error("no /export/*.json found in ZIP") as any;
@@ -120,7 +121,7 @@ export class SyncService {
 
             // Milestone: copying JSON
             log.info("Copying JSON export to /data…");
-            await copyDir(exportDir, DATA_DIR);
+            await this.copyDir(exportDir, DATA_DIR);
             const names = await fs.readdir(DATA_DIR);
             jsonFiles = names.filter((n) => n.toLowerCase().endsWith(".json")).length;
             log.info(`JSON copy done, ${jsonFiles} JSON file(s) in DATA_DIR`);
@@ -245,4 +246,49 @@ export class SyncService {
         }
     }
 
+    /**
+     * Recursively copy a directory.
+     * @param src Source directory
+     * @param dest Destination directory
+     */
+    async copyDir(src: string, dest: string) {
+        await fs.mkdir(dest, { recursive: true });
+        const entries = await fs.readdir(src, { withFileTypes: true });
+        for (const e of entries) {
+            const s = join(src, e.name);
+            const d = join(dest, e.name);
+            if (e.isDirectory()) await this.copyDir(s, d);
+            else await fs.copyFile(s, d);
+        }
+    }
+
+    /**
+     * Find the export directory containing games.game.json or games.json.
+     * @param root Root directory to search
+     * @returns The path to the export directory, or null if not found
+     */
+    async findExportDir(root: string): Promise<string | null> {
+        log.debug(`findExportDir start`, { root });
+        const stack = [root];
+        while (stack.length) {
+            const dir = stack.pop()!;
+            let entries: import("node:fs").Dirent[];
+            try { entries = await fs.readdir(dir, { withFileTypes: true }); } catch { continue; }
+            for (const e of entries) {
+                if (e.isDirectory() && e.name.toLowerCase() === "export") {
+                    const exp = join(dir, e.name);
+                    try {
+                        const names = (await fs.readdir(exp)).map(n => n.toLowerCase());
+                        if (names.includes("games.game.json") || names.includes("games.json")) {
+                            log.info(`export dir detected`, { exportDir: exp });
+                            return exp;
+                        }
+                    } catch { /* ignore */ }
+                }
+                if (e.isDirectory()) stack.push(join(dir, e.name));
+            }
+        }
+        log.debug(`export dir not found`, { root });
+        return null;
+    }
 }

@@ -87,39 +87,6 @@ export async function normalizeBackslashPaths(root: string): Promise<void> {
 }
 
 /**
- * Find the library directory within the given root.
- * @param root Root directory to search
- * @returns The path to the library directory, or null if not found
- */
-export async function findLibraryDir(root: string): Promise<string | null> {
-    log.debug(`findLibraryDir start`, { root });
-    const stack = [root];
-    while (stack.length) {
-        const dir = stack.pop()!;
-        let entries: import("node:fs").Dirent[];
-        try {
-            entries = await fs.readdir(dir, { withFileTypes: true });
-        } catch { continue; }
-
-        const hasGamesDb = entries.some(e => e.isFile() && /^(games|game)\.db$/i.test(e.name));
-        if (hasGamesDb) { log.info(`library dir detected`, { dir }); return dir; }
-
-        const libEntry = entries.find(e => e.isDirectory() && e.name.toLowerCase() === "library");
-        if (libEntry) {
-            const lib = join(dir, libEntry.name);
-            try {
-                const libEntries = await fs.readdir(lib);
-                if (libEntries.some(n => /^(games|game)\.db$/i.test(n))) { log.info(`library dir detected`, { dir: lib }); return lib; }
-            } catch { /* ignore */ }
-        }
-
-        for (const e of entries) if (e.isDirectory()) stack.push(join(dir, e.name));
-    }
-    log.debug(`library dir not found`, { root });
-    return null;
-}
-
-/**
  * Copy library media with live byte-level progress. Returns stats.
  * @param opts Options for copying library files
  * @returns Stats about the copy operation
@@ -229,50 +196,4 @@ export async function copyLibraryFilesWithProgress(opts: {
     emit(`Copy complete: ${copiedFiles} files, ${pct.toFixed(1)}%, ${failures} errors`);
 
     return { copiedFiles, failures, totalBytes };
-}
-
-/**
- * Recursively copy a directory.
- * @param src Source directory
- * @param dest Destination directory
- */
-export async function copyDir(src: string, dest: string) {
-    await fs.mkdir(dest, { recursive: true });
-    const entries = await fs.readdir(src, { withFileTypes: true });
-    for (const e of entries) {
-        const s = join(src, e.name);
-        const d = join(dest, e.name);
-        if (e.isDirectory()) await copyDir(s, d);
-        else await fs.copyFile(s, d);
-    }
-}
-
-/**
- * Find the export directory containing games.game.json or games.json.
- * @param root Root directory to search
- * @returns The path to the export directory, or null if not found
- */
-export async function findExportDir(root: string): Promise<string | null> {
-    log.debug(`findExportDir start`, { root });
-    const stack = [root];
-    while (stack.length) {
-        const dir = stack.pop()!;
-        let entries: import("node:fs").Dirent[];
-        try { entries = await fs.readdir(dir, { withFileTypes: true }); } catch { continue; }
-        for (const e of entries) {
-            if (e.isDirectory() && e.name.toLowerCase() === "export") {
-                const exp = join(dir, e.name);
-                try {
-                    const names = (await fs.readdir(exp)).map(n => n.toLowerCase());
-                    if (names.includes("games.game.json") || names.includes("games.json")) {
-                        log.info(`export dir detected`, { exportDir: exp });
-                        return exp;
-                    }
-                } catch { /* ignore */ }
-            }
-            if (e.isDirectory()) stack.push(join(dir, e.name));
-        }
-    }
-    log.debug(`export dir not found`, { root });
-    return null;
 }

@@ -6,11 +6,12 @@ type Props = {
   sortKey: SortKey;
   sortDir: SortDir;
   onToggleSort: (k: SortKey) => void;
-}
+};
 
 export function SortHeader(props: Props) {
   const { headerRef, sortKey, sortDir, onToggleSort } = props;
-  const label = (base: string, key: SortKey) => (sortKey === key ? `${base} ${sortDir === "asc" ? "▲" : "▼"}` : base);
+  const label = (base: string, key: SortKey) =>
+    sortKey === key ? `${base} ${sortDir === "asc" ? "▲" : "▼"}` : base;
 
   return (
     <div
@@ -34,10 +35,30 @@ export function SortHeader(props: Props) {
         }}
       >
         <div />
-        <div style={{ cursor: "pointer", textAlign: "left" }} onClick={() => onToggleSort("title")}>{label("Title", "title")}</div>
-        <div style={{ cursor: "pointer", textAlign: "center" }} onClick={() => onToggleSort("year")}>{label("Year", "year")}</div>
-        <div style={{ cursor: "pointer", textAlign: "center" }} onClick={() => onToggleSort("source")}>{label("Platform", "source")}</div>
-        <div style={{ cursor: "pointer", textAlign: "left" }} onClick={() => onToggleSort("tags")}>{label("Tags", "tags")}</div>
+        <div
+          style={{ cursor: "pointer", textAlign: "left" }}
+          onClick={() => onToggleSort("title")}
+        >
+          {label("Title", "title")}
+        </div>
+        <div
+          style={{ cursor: "pointer", textAlign: "center" }}
+          onClick={() => onToggleSort("year")}
+        >
+          {label("Year", "year")}
+        </div>
+        <div
+          style={{ cursor: "pointer", textAlign: "center" }}
+          onClick={() => onToggleSort("source")}
+        >
+          {label("Platform", "source")}
+        </div>
+        <div
+          style={{ cursor: "pointer", textAlign: "left" }}
+          onClick={() => onToggleSort("series")}
+        >
+          {label("Series", "series")}
+        </div>
       </div>
     </div>
   );

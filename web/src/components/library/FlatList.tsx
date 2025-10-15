@@ -38,18 +38,8 @@ export function FlatList({
         const r = rows[index];
         return (
           <GameRow
-            id={r.id}
-            gameId={r.gameId}
-            hidden={r.hidden}
-            installed={r.installed}
-            iconUrl={r.iconUrl}
-            title={r.title}
-            source={r.source}
-            tags={r.tags}
-            year={r.year}
-            url={r.url}
-            raw={r.raw}
-            sortingName={r.sortingName}
+            key={`${r.id}|${installedUpdatedAt}`}
+            {...r}
             topOffset={topOffset}
             collapseOpen={openIds.has(r.id)}
             everOpened={everOpenedIds.has(r.id)}

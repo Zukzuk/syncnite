@@ -2,10 +2,12 @@ import express from "express";
 import multer from "multer";
 import { BackupService } from "../services/BackupService";
 import { INPUT_DIR } from "../helpers";
+import { rootLog } from "../logger";
 
 const router = express.Router();
 const upload = multer({ dest: INPUT_DIR });
 const backupService = new BackupService();
+const log = rootLog.child("route:backup");
 
 /**
  * @openapi
@@ -111,11 +113,11 @@ const backupService = new BackupService();
  *         $ref: '#/components/responses/Error500'
  */
 router.post("/upload", upload.single("file"), async (req, res) => {
-  console.log("[backup/upload] Incoming request…");
+  log.info("upload: incoming");
 
   try {
     if (!req.file) {
-      console.warn("[backup/upload] No file field provided");
+      log.warn("upload: no file field");
       return res.status(400).json({ ok: false, error: "no file" });
     }
 
@@ -123,12 +125,12 @@ router.post("/upload", upload.single("file"), async (req, res) => {
     const tmpPath = req.file.path;
     const size = req.file.size ?? 0;
 
-    console.log(`[backup/upload] Received file: "${origName}", size=${size} bytes, temp="${tmpPath}"`);
+    log.info("upload: received", { origName, size, tmpPath });
 
     const safe = await backupService.storeUploadedFile(tmpPath, origName);
     return res.json({ ok: true, file: safe });
   } catch (e: any) {
-    console.error("[backup/upload] ERROR:", String(e?.message || e));
+    log.error("upload: failed", { error: String(e?.message || e) });
     return res.status(500).json({ ok: false, error: String(e?.message || e) });
   }
 });
@@ -188,10 +190,10 @@ router.get("/process-stream", async (req, res) => {
   const filename = String(req.query.filename ?? "");
   const password = String(req.query.password ?? "");
 
-  console.log("[backup/process-stream] Request received", { filename, password: password ? "***" : "(none)" });
+  log.info("process-stream: started", { filename });
 
   if (!filename || !/\.zip$/i.test(filename)) {
-    console.warn("[backup/process-stream] Invalid or missing filename");
+    log.info("process-stream: missing filename");
     res.setHeader("Content-Type", "text/event-stream");
     return res.end("event: error\ndata: filename missing or not .zip\n\n");
   }
@@ -212,7 +214,7 @@ router.get("/process-stream", async (req, res) => {
     res.end();
   } catch (e: any) {
     // Service already logged and sent "error", router still logs lifecycle error and closes.
-    console.error("[backup/process-stream] ERROR:", String(e?.message || e));
+    log.error("process-stream: failed", { error: String(e?.message || e) });
     res.end();
   }
 });

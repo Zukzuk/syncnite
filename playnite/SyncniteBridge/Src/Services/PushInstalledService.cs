@@ -12,7 +12,7 @@ using SyncniteBridge.Helpers;
 namespace SyncniteBridge.Services
 {
     /// <summary>
-    /// Watches Playnite library for installed games changes, 
+    /// Watches Playnite library for installed games changes,
     /// and pushes the updated list to a remote endpoint.
     /// </summary>
     internal sealed class PushInstalledService : IDisposable
@@ -155,7 +155,8 @@ namespace SyncniteBridge.Services
 
                 int count = api.Database.Games.Count(g => g.IsInstalled);
                 // Milestone: push ok
-                blog?.Info("push", "Push OK", new { count });
+                blog?.Info("push", "Push OK");
+                blog?.Debug("push", "Push details", new { count });
             }
             catch (OperationCanceledException) { }
             catch (HttpRequestException hex)

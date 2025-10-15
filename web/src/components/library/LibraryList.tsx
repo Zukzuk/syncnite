@@ -69,6 +69,7 @@ export function LibraryList({
     q: ui.q,
     sources: ui.sources,
     tags: ui.tags,
+    series: ui.series,
     showHidden: ui.showHidden,
     installedOnly: ui.installedOnly,
     sortKey: ui.sortKey,
@@ -81,20 +82,7 @@ export function LibraryList({
         controlsRef={controlsRef as unknown as (el: HTMLElement | null) => void}
         filteredCount={filteredCount}
         totalCount={totalCount}
-        ui={{
-          q: ui.q,
-          setQ: ui.setQ,
-          sources: ui.sources,
-          setSources: ui.setSources,
-          allSources: data.allSources,
-          tags: ui.tags,
-          setTags: ui.setTags,
-          allTags: data.allTags,
-          showHidden: ui.showHidden,
-          setShowHidden: ui.setShowHidden,
-          installedOnly: ui.installedOnly,
-          setInstalledOnly: ui.setInstalledOnly,
-        }}
+        ui={{ ...ui, allSources: data.allSources, allTags: data.allTags, allSeries: data.allSeries }}
       />
 
       <StickySort

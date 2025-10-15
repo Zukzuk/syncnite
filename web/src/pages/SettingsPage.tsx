@@ -32,7 +32,7 @@ export default function SettingsPage() {
   }, []);
 
   const sample: Row | null = data?.rows?.[0] ?? null;
-  const primaryHref = sample ? (sample.url ?? effectiveLink({ url: sample.url, source: sample.source, title: sample.title, tags: sample.tags })) : null;
+  const primaryHref = sample ? (sample.link ?? effectiveLink({ url: sample.link, source: sample.source, title: sample.title, tags: sample.tags })) : null;
   const actionHref = sample ? `playnite://playnite/start/${encodeURIComponent(sample.id)}` : null;
 
   // NOTE: This list mirrors the Row type from web/src/lib/types.ts.
@@ -48,10 +48,10 @@ export default function SettingsPage() {
       { key: "sortingName", type: "string", desc: "Used only for alphabetical sort + buckets.", sourceHint: "Game.SortingName || Game.Name" },
       { key: "source", type: "string", desc: "Store / launcher name shown as Source column and filter.", sourceHint: "Game.SourceId → sources.*.Name" },
       { key: "tags", type: "string[]", desc: "Tags badges and filtering.", sourceHint: "Game.TagIds → tags.*.Name" },
-      { key: "hidden", type: "boolean", desc: "Controls visibility and dimming in UI.", sourceHint: "Game.Hidden" },
-      { key: "installed", type: "boolean", desc: "Highlights row and toggles Play / Install overlay.", sourceHint: "Game.IsInstalled" },
+      { key: "isHidden", type: "boolean", desc: "Controls visibility and dimming in UI.", sourceHint: "Game.Hidden" },
+      { key: "isInstalled", type: "boolean", desc: "Highlights row and toggles Play / Install overlay.", sourceHint: "Game.IsInstalled" },
       { key: "year", type: "number | null", desc: "Derived release year (used for sorting and display).", sourceHint: "ReleaseYear/ReleaseDate/Ticks → year" },
-      { key: "url", type: "string | null", desc: "Primary external link for the game title.", sourceHint: "Game.Links (best guess) or source-specific template" },
+      { key: "link", type: "string | null", desc: "Primary external link for the game title.", sourceHint: "Game.Links (best guess) or source-specific template" },
       { key: "iconUrl", type: "string", desc: "Icon used in grid; ICOs are converted to PNG on demand.", sourceHint: "Game.Icon / IconId → /data/libraryfiles" },
     ];
 

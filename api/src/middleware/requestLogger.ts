@@ -1,4 +1,7 @@
 import type { RequestHandler } from "express";
+import { rootLog } from "../logger";
+
+const log = rootLog.child("http");
 
 export function requestLogger(): RequestHandler {
     return (req, res, next) => {
@@ -6,7 +9,7 @@ export function requestLogger(): RequestHandler {
         const { method, originalUrl } = req;
         res.on("finish", () => {
             const ms = Date.now() - started;
-            console.log(`[req] ${method} ${originalUrl} → ${res.statusCode} (${ms}ms)`);
+            log.trace("request", { method, url: originalUrl, status: res.statusCode, ms });
         });
         next();
     };

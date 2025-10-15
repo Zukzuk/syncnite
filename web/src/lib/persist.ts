@@ -10,6 +10,7 @@ export type CookieState = {
   q: string;
   sources: string[];
   tags: string[];
+  series: string[];
   showHidden: boolean;
   installedOnly: boolean;
   sortKey: SortKey;
@@ -74,7 +75,7 @@ export function jsonSet<T>(key: string, value: T) {
     }
 }
 
-export function getEmail(): string | null {
+export function fetchUser(): string | null {
   try { return localStorage.getItem("sb_email"); } catch { return null; }
 }
 

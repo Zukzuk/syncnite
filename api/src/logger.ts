@@ -47,11 +47,17 @@ function consoleFor(level: Level) {
  * @param parts 
  * @returns 
  */
-function emitInternal(scopes: string[], level: Level, parts: any[]) {
+function emitInternal(scopes: string[], level: Level, parts?: any[]) {
     if (levelOrder[level] > threshold) return;
     const prefix = `[api][v${APP_VERSION}][${level.toUpperCase()}]`;
     const scopeStr = scopes.map((s) => `[${s}]`);
-    consoleFor(level)(prefix, ...scopeStr, ...parts);
+    if (threshold >= levelOrder.debug && parts && parts.length > 0) {
+        consoleFor(level)(prefix, ...scopeStr, ...parts);   
+    } else if (parts && parts.length > 0) {
+        consoleFor(level)(prefix, ...scopeStr, parts[0]);
+    } else {
+        consoleFor(level)(prefix, ...scopeStr);
+    }
 }
 
 /**
@@ -64,7 +70,7 @@ function emitInternal(scopes: string[], level: Level, parts: any[]) {
  */
 function emitRaw(level: Level, line: string, meta?: Record<string, unknown>) {
     if (levelOrder[level] > threshold) return;
-    if (meta && Object.keys(meta).length > 0) {
+    if (threshold >= levelOrder.debug && meta && Object.keys(meta).length > 0) {
         consoleFor(level)(line, meta);
     } else {
         consoleFor(level)(line);

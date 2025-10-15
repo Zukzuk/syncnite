@@ -35,9 +35,10 @@ namespace SyncniteBridge
             blog = new BridgeLogger(config.ApiBase, BridgeVersion.Current, config.LogLevel);
 
             var playniteVer = PlayniteApi?.ApplicationInfo?.ApplicationVersion?.ToString();
-            blog.Info(
+            blog.Info("startup", "SyncniteBridge loaded");
+            blog.Debug(
                 "startup",
-                "SyncniteBridge loaded",
+                "Versions",
                 new
                 {
                     plugin = AppConstants.AppName,
@@ -163,9 +164,10 @@ namespace SyncniteBridge
                                     health?.UpdateEndpoint(pingUrl);
                                     blog?.UpdateApiBase(config.ApiBase);
 
-                                    blog.Info(
+                                    blog.Info("config", "ApiBase updated");
+                                    blog.Debug(
                                         "config",
-                                        "ApiBase updated",
+                                        "New ApiBase",
                                         new { apiBase = config.ApiBase }
                                     );
 
