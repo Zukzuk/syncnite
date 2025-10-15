@@ -1,5 +1,6 @@
 {
-  "name": "project-scripts",
+  "name": "syncnite-scripts",
+  "private": true,
   "version": "1.0.0",
   "devDependencies": {
     "concurrently": "^9.2.0",

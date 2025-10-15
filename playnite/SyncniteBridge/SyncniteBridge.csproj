@@ -6,6 +6,7 @@
     <RootNamespace>SyncniteBridge</RootNamespace>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
   <!-- Framework/GAC references -->
   <ItemGroup>

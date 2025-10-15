@@ -4,6 +4,7 @@ using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using SyncniteBridge.Helpers;
 
 namespace SyncniteBridge.Helpers
 {
@@ -72,62 +73,77 @@ namespace SyncniteBridge.Helpers
         }
 
         /// <summary>Upload ZIP from disk to sync endpoint.</summary>
-        public async Task<bool> SyncZipAsync(string syncUrl, string zipPath)
+        public async Task<bool> SyncZipAsync(string syncUrl, string zipPath, BridgeLogger blog)
         {
             var fi = new FileInfo(zipPath);
-            blog?.Debug(
-                "http",
-                "POST sync ZIP begin",
-                new
-                {
-                    syncUrl,
-                    size = fi.Exists ? fi.Length : -1,
-                    name = Path.GetFileName(zipPath),
-                }
+            var total = fi.Exists ? fi.Length : -1;
+
+            blog?.Info(
+                "sync",
+                "upload start",
+                new { size = total, name = Path.GetFileName(zipPath) }
             );
 
             using (var content = new MultipartFormDataContent())
             using (var fs = File.OpenRead(zipPath))
-            using (var fileContent = new StreamContent(fs))
             {
-                fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/zip");
-                content.Add(fileContent, "file", Path.GetFileName(zipPath));
+                var fileContent = new ProgressableStreamContent(
+                    fs,
+                    total,
+                    (sent, len) =>
+                    {
+                        if (len > 0)
+                        {
+                            var pct = (int)Math.Max(0, Math.Min(100, (sent * 100L) / len));
+                            // progress (API will rewrite to SSE `event: progress`)
+                            blog?.Info(
+                                "progress",
+                                "uploading",
+                                new { phase = "upload", percent = pct }
+                            );
+                        }
+                    }
+                );
 
-                HttpResponseMessage resp = null;
-                string body = null;
+                content.Add(fileContent, "file", Path.GetFileName(zipPath));
 
                 try
                 {
-                    resp = await http.PostAsync(syncUrl, content).ConfigureAwait(false);
-                    body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    var resp = await http.PostAsync(syncUrl, content).ConfigureAwait(false);
+                    var body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
 
                     if (!resp.IsSuccessStatusCode)
                     {
                         blog?.Warn(
                             "http",
-                            "POST sync ZIP non-OK",
+                            "upload non-OK",
                             new { status = (int)resp.StatusCode, reason = resp.ReasonPhrase }
                         );
                         return false;
                     }
 
+                    // Final tick: 100%
+                    blog?.Info(
+                        "progress",
+                        "upload complete",
+                        new { phase = "upload", percent = 100 }
+                    );
+                    blog?.Info("sync", "upload done");
+
+                    // If server returns json { ok: bool }, honor it; otherwise accept success status as OK
                     try
                     {
                         var obj = Playnite.SDK.Data.Serialization.FromJson<SyncResp>(body);
-                        var ok = obj != null && obj.ok;
-                        blog?.Debug("http", "POST sync ZIP OK", new { declaredOk = ok });
-                        return ok;
+                        return obj != null && obj.ok;
                     }
                     catch
                     {
-                        // Accept 200 without JSON body
-                        blog?.Debug("http", "POST sync ZIP OK (no JSON body)");
                         return true;
                     }
                 }
                 catch (Exception ex)
                 {
-                    blog?.Warn("http", "POST sync ZIP failed", new { err = ex.Message });
+                    blog?.Warn("http", "upload failed", new { err = ex.Message });
                     return false;
                 }
             }

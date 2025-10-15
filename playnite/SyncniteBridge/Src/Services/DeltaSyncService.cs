@@ -354,30 +354,61 @@ namespace SyncniteBridge.Services
                     }
                 );
 
+                // Build manifest object up-front so we can estimate size
+                var manifestObj = new
+                {
+                    json = local.Json.ToDictionary(
+                        k => k.Key,
+                        v => new { size = v.Value.size, mtimeMs = v.Value.mtimeMs },
+                        StringComparer.OrdinalIgnoreCase
+                    ),
+                    mediaFolders = local
+                        .MediaFolders.OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+                        .ToArray(),
+                    installed = new { count = local.Installed.count, hash = local.Installed.hash },
+                };
+
+                // Serialize manifest now so estimator knows its byte length
+                var manifestJson = Playnite.SDK.Data.Serialization.ToJson(manifestObj);
+
+                // We won’t precompute the (potentially large) snapshot JSON string.
+                // Progress will still be smooth because we clamp to 100% and ZipBuilder
+                // sends a final 100% tick on Dispose.
+                string? snapshotJson = null;
+
+                // Media root (used by estimator and the add loop)
+                var mediaRoot = Path.Combine(dataRoot, AppConstants.LibraryFilesDirName);
+
+                // Estimate total work for zipping
+                long totalZipBytes =
+                    ZipSizeEstimator.ForText(manifestJson)
+                    + ZipSizeEstimator.ForText(snapshotJson) // 0 if null
+                    + ZipSizeEstimator.ForFilesUnder(mediaRoot);
+
                 var swZip = System.Diagnostics.Stopwatch.StartNew();
-                using (var zb = new ZipBuilder(zipPath, blog))
+                using (
+                    var zb = new ZipBuilder(
+                        zipPath,
+                        blog,
+                        expectedTotalBytes: totalZipBytes,
+                        onPercent: pct =>
+                            blog?.Info("progress", "zipping", new { phase = "zip", percent = pct })
+                    )
+                )
                 {
                     // /export/manifest.json
-                    var manifestObj = new
+                    zb.AddText(AppConstants.ManifestPathInZip, manifestJson);
+
+                    // JSON snapshot if DB changed
+                    if (needJson)
+                        ExportSdkSnapshotToZip(zb);
+
+                    // Media folders that changed
+                    foreach (var folder in mediaFolders)
                     {
-                        json = local.Json.ToDictionary(
-                            k => k.Key,
-                            v => new { size = v.Value.size, mtimeMs = v.Value.mtimeMs },
-                            StringComparer.OrdinalIgnoreCase
-                        ),
-                        mediaFolders = local
-                            .MediaFolders.OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
-                            .ToArray(),
-                        installed = new
-                        {
-                            count = local.Installed.count,
-                            hash = local.Installed.hash,
-                        },
-                    };
-                    zb.AddText(
-                        AppConstants.ManifestPathInZip,
-                        Playnite.SDK.Data.Serialization.ToJson(manifestObj)
-                    );
+                        blog?.Debug("sync", $"Include media folder: {folder}");
+                        AddMediaFolderRecursively(zb, folder);
+                    }
 
                     // JSON snapshot if DB changed
                     if (needJson)
@@ -408,7 +439,7 @@ namespace SyncniteBridge.Services
 
                 // upload
                 var swUpload = System.Diagnostics.Stopwatch.StartNew();
-                var ok = await http.SyncZipAsync(syncUrl, zipPath).ConfigureAwait(false);
+                var ok = await http.SyncZipAsync(syncUrl, zipPath, blog).ConfigureAwait(false);
                 swUpload.Stop();
                 if (!ok)
                     throw new Exception("sync endpoint returned non-OK");

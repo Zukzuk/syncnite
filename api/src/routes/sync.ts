@@ -4,6 +4,8 @@ import { SyncService } from "../services/SyncService";
 import { INPUT_DIR } from "../helpers";
 import { requireAdmin } from "../middleware/requireAdmin";
 import { rootLog } from "../logger";
+import { SyncBus } from "../services/EventBusService";
+import { createSSE } from "../sse";
 
 const router = express.Router();
 router.use(requireAdmin);
@@ -227,6 +229,29 @@ router.get("/ping", (_req, res) => {
  */
 router.post("/log", async (req, res) => {
   const count = syncService.ingestLogs(req.body);
+
+  // Fan-out to SSE subscribers + progress rewrite
+  const rows = Array.isArray(req.body) ? req.body : [req.body];
+  for (const r of rows) {
+    const level = String(r?.level || "").toLowerCase();
+    const kind = String(r?.kind || "event").toLowerCase();
+    const msg = r?.line || r?.msg || "";
+
+    const d = (r?.data || {}) as any;
+    if (kind === "progress" || (d && typeof d.percent === "number")) {
+      SyncBus.publish({ type: "progress", data: { phase: d?.phase ?? null, percent: d.percent } });
+      if (msg) SyncBus.publish({ type: "log", data: String(msg) });
+      continue;
+    }
+
+    // we keep all other events as log lines (incl. errors)
+    const line = String(msg || `[${kind}]`);
+    SyncBus.publish({ type: "log", data: line });
+    if (level === "error") {
+      // optional: echo a visible error line (UI shows it anyway via `log`)
+    }
+  }
+
   if (!count) return res.status(400).json({ ok: false, error: "invalid payload" });
   res.sendStatus(204);
 });
@@ -272,7 +297,7 @@ router.post("/push", async (req, res) => {
   try {
     log.info("push: raw body received:", req.body);
     const email = (req as any).authEmail
-                  || String(req.header("x-auth-email") || "").toLowerCase();
+      || String(req.header("x-auth-email") || "").toLowerCase();
     const count = await syncService.pushInstalled(req.body?.installed, email);
     return res.json({ ok: true, count });
   } catch (e: any) {
@@ -335,7 +360,7 @@ router.post("/push", async (req, res) => {
  */
 router.post("/up", syncUpload.single("file"), async (req, res) => {
   log.info("up: incoming request");
-  
+
   if (!req.file) {
     log.warn("up: request rejected: no file uploaded");
     return res.status(400).json({ ok: false, error: "no file" });
@@ -376,6 +401,27 @@ router.post("/up", syncUpload.single("file"), async (req, res) => {
     isSyncing = false;
     log.info("up: isSyncing reset to false");
   }
+});
+
+/**
+ * @openapi
+ * /api/sync/process-stream:
+ *   get:
+ *     operationId: syncProcessStream
+ *     summary: Stream sync process events
+ *     tags: [Sync]
+ *     responses:
+ *       200:
+ *         description: Event stream
+ *         content:
+ *           text/event-stream:
+ *             schema:
+ *               type: string
+ */
+router.get("/process-stream", (req, res) => {
+  const sse = createSSE(res);
+  const off = SyncBus.subscribe(({ type, data }) => sse.send(type as any, data));
+  res.on("close", () => { off(); sse.close(); });
 });
 
 export default router;

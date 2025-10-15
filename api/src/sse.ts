@@ -1,5 +1,5 @@
-// src/utils/sse.ts
 import type { Response } from "express";
+import { AsyncLocalStorage } from "node:async_hooks";
 
 export type SseEvent =
     | { type: "log"; data: string }
@@ -13,7 +13,6 @@ export type SseSink = {
     progress: (p: { phase?: string | null; percent?: number | null;[k: string]: any }) => void;
     done: () => void;
     error: (msg: string) => void;
-    heartbeat: () => void;
     close: () => void;
 };
 
@@ -28,20 +27,21 @@ export function createSSE(res: Response): SseSink {
         res.write(`data: ${String(payload).replace(/\n/g, "\\n")}\n\n`);
     };
 
-    const sink: SseSink = {
+    return {
         send: (type, data) => write(type, data),
         log: (line) => write("log", String(line ?? "")),
         progress: (p) => write("progress", { phase: p?.phase ?? null, percent: p?.percent ?? null, ...p }),
         done: () => write("done", "ok"),
         error: (msg) => write("error", String(msg || "error")),
-        heartbeat: () => write("log", "[♥]"),
         close: () => { try { res.end(); } catch { } },
     };
+}
 
-    // close on client disconnect
-    const clean = () => { /* nothing else for now */ };
-    res.on("close", clean);
-    res.on("finish", clean);
-
-    return sink;
+/** Per-request SSE context so any logger output auto-forwards. */
+const sseALS = new AsyncLocalStorage<SseSink>();
+export function withSSE<T>(sse: SseSink, fn: () => Promise<T> | T) {
+    return sseALS.run(sse, fn);
+}
+export function currentSSE(): SseSink | null {
+    return sseALS.getStore() ?? null;
 }

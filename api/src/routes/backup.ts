@@ -3,6 +3,7 @@ import multer from "multer";
 import { BackupService } from "../services/BackupService";
 import { INPUT_DIR } from "../helpers";
 import { rootLog } from "../logger";
+import { createSSE, withSSE } from "../sse";
 
 const router = express.Router();
 const upload = multer({ dest: INPUT_DIR });
@@ -198,24 +199,18 @@ router.get("/process-stream", async (req, res) => {
     return res.end("event: error\ndata: filename missing or not .zip\n\n");
   }
 
-  res.setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache");
-  res.setHeader("Connection", "keep-alive");
-
-  // Router-level SSE sender (service will call this)
-  const send = (type: string, data: any) => {
-    const payload = typeof data === "string" ? data : JSON.stringify(data);
-    res.write(`event: ${type}\n`);
-    res.write(`data: ${payload.replace ? payload.replace(/\n/g, "\\n") : payload}\n\n`);
-  };
+  const sse = createSSE(res);
 
   try {
-    await backupService.processZipStream({ filename, password, send });
-    res.end();
+    await withSSE(sse, async () => {
+      await backupService.processZipStream({ filename, password });
+    });
+    sse.done();
   } catch (e: any) {
-    // Service already logged and sent "error", router still logs lifecycle error and closes.
     log.error("process-stream: failed", { error: String(e?.message || e) });
-    res.end();
+    sse.error(String(e?.message || e));
+  } finally {
+    sse.close();
   }
 });
 

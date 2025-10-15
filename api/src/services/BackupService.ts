@@ -32,24 +32,8 @@ export class BackupService {
      * Processes the ZIP file: validates, extracts, normalizes paths,
      * finds the library directory, dumps the database to JSON, and copies media files.
      */
-    async processZipStream(params: {
-        filename: string;
-        password?: string;
-        send: (type: string, data: any) => void;
-    }): Promise<void> {
-        const { filename, password = "", send } = params;
-
-        // Mirror selected logs to SSE "log" while keeping server logs structured
-        const sseLog = (m: string) => {
-            log.debug(m);
-            send("log", m);
-        };
-
-        const progress = (
-            phase: "unzip" | "copy",
-            percent: number,
-            extra?: Record<string, any>
-        ) => send("progress", { phase, percent, ...(extra || {}) });
+    async processZipStream(params: { filename: string; password?: string; }): Promise<void> {
+        const { filename, password = "" } = params;
 
         const zipPath = join(INPUT_DIR, basename(filename));
         log.info(`zipPath resolved`, { zipPath });
@@ -62,78 +46,57 @@ export class BackupService {
             log.info("WORK_DIR cleaned");
 
             // Validate ZIP
-            sseLog("Validating ZIP with 7z…");
-            log.debug("Running 7z test");
+            log.info("Validating ZIP with 7z…");
             await run("7z", ["t", zipPath], {
                 onStdout: (ln) => {
                     const m = /(\d{1,3})%/.exec(ln);
-                    if (m) progress("unzip", Number(m[1])); // reuse unzip bar for test
+                    if (m) rootLog.logExternal({ level: "info", kind: "progress", data: { phase: "unzip", percent: Number(m[1]) } });
                 },
-                onStderr: (ln) => /error/i.test(ln) && sseLog(`7z: ${ln}`),
+                onStderr: (ln) => /error/i.test(ln) && log.warn(`7z: ${ln}`),
             });
             log.info("ZIP validation complete");
 
             // Extract ZIP
-            sseLog("Extracting ZIP with 7z…");
-            log.debug("Running 7z extract");
+            log.info("Extracting ZIP with 7z…");
             await run("7z", ["x", "-y", `-o${WORK_DIR}`, zipPath, "-bsp1", "-bso1"], {
                 onStdout: (ln) => {
                     const m = /(\d{1,3})%/.exec(ln);
-                    if (m) progress("unzip", Number(m[1]));
+                    if (m) rootLog.logExternal({ level: "info", kind: "progress", data: { phase: "unzip", percent: Number(m[1]) } });
                 },
-                onStderr: (ln) => /error/i.test(ln) && sseLog(`7z: ${ln}`),
+                onStderr: (ln) => /error/i.test(ln) && log.warn(`7z: ${ln}`),
             });
-            log.info("Extraction complete");
 
-            // Normalize paths
-            sseLog("Normalizing backslash paths…");
+            log.info("Normalizing backslash paths…");
             await normalizeBackslashPaths(WORK_DIR);
-            log.info("Backslash normalization complete");
 
-            // Locate library dir
-            sseLog("Locating library dir…");
+            log.info("Locating library dir…");
             const libDir = await this.findLibraryDir(WORK_DIR);
-            if (!libDir) {
-                log.warn("No library directory with *.db found");
-                throw new Error("No library directory with *.db");
-            }
-            log.info("Library dir found", { libDir });
+            if (!libDir) throw new Error("No library directory with *.db");
 
-            // Prepare /data
-            sseLog("Clearing /data…");
+            log.info("Clearing /data…");
             await fs.mkdir(DATA_DIR, { recursive: true });
-            log.info("DATA_DIR ensured");
 
-            // Dump LiteDB → JSON
-            sseLog("Dumping LiteDB to JSON…");
+            log.info("Dumping LiteDB to JSON…");
             const env = { ...process.env };
-            if (password) env.LITEDB_PASSWORD = password;
-            log.debug("Running PlayniteBackupImport");
+            if (password) (env as any).LITEDB_PASSWORD = password;
             const { out, err } = await run("./PlayniteBackupImport", [libDir, DATA_DIR], { env });
-            if (out?.trim()) out.trim().split(/\r?\n/).forEach((l) => sseLog(l));
-            if (err?.trim()) err.trim().split(/\r?\n/).forEach((l) => sseLog(l));
-            log.info("PlayniteBackupImport finished");
+            if (out?.trim()) out.trim().split(/\r?\n/).forEach((l) => log.info(l));
+            if (err?.trim()) err.trim().split(/\r?\n/).forEach((l) => log.warn(l));
 
-            // Copy media
-            log.info("Starting media copy");
+            // Copy media with progress
             await copyLibraryFilesWithProgress({
                 libDir,
                 workRoot: WORK_DIR,
                 dataRoot: DATA_DIR,
-                log: (m) => sseLog(m),
+                log: (m) => log.info(m),
                 progress: ({ percent, copiedBytes, totalBytes, deltaBytes }) =>
-                    progress("copy", percent, { copiedBytes, totalBytes, deltaBytes }),
-                concurrency: 8,
-                tickMs: 500,
+                    rootLog.logExternal({ level: "info", kind: "progress", data: { phase: "copy", percent, copiedBytes, totalBytes, deltaBytes } }),
             });
-            log.info("Media copy finished");
 
-            send("done", "ok");
-            log.info("Process finished successfully");
+            log.info("Processing complete.");
         } catch (e: any) {
             log.error("ERROR", { err: String(e?.message ?? e) });
-            send("error", String(e?.message || e));
-            throw e; // let router handle error + end()
+            throw e;
         }
     }
 

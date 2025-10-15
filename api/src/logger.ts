@@ -1,3 +1,5 @@
+import { currentSSE } from "./sse";
+
 type Level = "error" | "warn" | "info" | "debug" | "trace";
 const levelOrder: Record<Level, number> = { error: 0, warn: 1, info: 2, debug: 3, trace: 4 };
 const APP_VERSION = process.env.APP_VERSION ?? "dev";
@@ -52,11 +54,20 @@ function emitInternal(scopes: string[], level: Level, parts?: any[]) {
     const prefix = `[api][v${APP_VERSION}][${level.toUpperCase()}]`;
     const scopeStr = scopes.map((s) => `[${s}]`);
     if (threshold >= levelOrder.debug && parts && parts.length > 0) {
-        consoleFor(level)(prefix, ...scopeStr, ...parts);   
+        consoleFor(level)(prefix, ...scopeStr, ...parts);
     } else if (parts && parts.length > 0) {
         consoleFor(level)(prefix, ...scopeStr, parts[0]);
     } else {
         consoleFor(level)(prefix, ...scopeStr);
+    }
+
+    const sse = currentSSE();
+    if (sse) {
+        try {
+            const first = parts && parts.length > 0 ? parts[0] : "";
+            const line = typeof first === "string" ? first : JSON.stringify(first ?? "");
+            sse.log(line);
+        } catch { }
     }
 }
 
@@ -74,6 +85,19 @@ function emitRaw(level: Level, line: string, meta?: Record<string, unknown>) {
         consoleFor(level)(line, meta);
     } else {
         consoleFor(level)(line);
+    }
+
+    const sse = currentSSE();
+    if (sse) {
+        try {
+            const kind = String(meta?.kind ?? "");
+            const d = (meta?.data ?? {}) as any;
+            if (kind === "progress" || (d && typeof d.percent === "number")) {
+                sse.progress({ phase: (d?.phase ?? null) as any, percent: d.percent });
+            } else {
+                sse.log(line);
+            }
+        } catch { }
     }
 }
 

@@ -10,13 +10,16 @@ const ADMIN_SUFFIX = ".admin.json";
 async function ensureDir() {
     await fs.mkdir(ACC_DIR, { recursive: true });
 }
+
 async function listAll(): Promise<string[]> {
     try { return (await fs.readdir(ACC_DIR)); } catch { return []; }
 }
+
 async function listAdmins(): Promise<string[]> {
     const files = await listAll();
     return files.filter(f => f.endsWith(ADMIN_SUFFIX));
 }
+
 async function readAdmin(email: string): Promise<Account | null> {
     try {
         const raw = await fs.readFile(join(ACC_DIR, `${email}${ADMIN_SUFFIX}`), "utf8");
@@ -25,6 +28,7 @@ async function readAdmin(email: string): Promise<Account | null> {
         return { email: String(parsed.email), password: String(parsed.password) };
     } catch { return null; }
 }
+
 async function writeAdmin(acc: Account) {
     await ensureDir();
     await fs.writeFile(join(ACC_DIR, `${acc.email}${ADMIN_SUFFIX}`), JSON.stringify(acc, null, 2), "utf8");
