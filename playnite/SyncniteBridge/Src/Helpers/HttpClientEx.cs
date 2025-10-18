@@ -8,9 +8,7 @@ using SyncniteBridge.Helpers;
 
 namespace SyncniteBridge.Helpers
 {
-    /// <summary>
-    /// Helper class extending HttpClient for Syncnite-specific operations.
-    /// </summary>
+    /// <summary>Extended HTTP client for Syncnite operations.</summary>
     internal sealed class HttpClientEx
     {
         private sealed class SyncResp
@@ -32,14 +30,10 @@ namespace SyncniteBridge.Helpers
 
         public sealed class RemoteManifest
         {
-            // e.g. { "games.Game.json": { size, mtimeMs }, ... }
             public Dictionary<string, RemoteJsonFile> json { get; set; } =
-                new Dictionary<string, RemoteJsonFile>(StringComparer.OrdinalIgnoreCase);
-
-            // top-level folder names under /data/libraryfiles
-            public List<string> mediaFolders { get; set; } = new List<string>();
-
-            public RemoteInstalled installed { get; set; } = new RemoteInstalled();
+                new(StringComparer.OrdinalIgnoreCase);
+            public List<string> mediaFolders { get; set; } = new();
+            public RemoteInstalled installed { get; set; } = new();
         }
 
         public sealed class RemoteManifestWrapper
@@ -72,21 +66,23 @@ namespace SyncniteBridge.Helpers
             }
         }
 
-        /// <summary>Upload ZIP from disk to sync endpoint.</summary>
-        public async Task<bool> SyncZipAsync(string syncUrl, string zipPath, BridgeLogger blog)
+        /// <summary>Upload ZIP from disk to sync endpoint (sparse progress).</summary>
+        public async Task<bool> SyncZipAsync(string syncUrl, string zipPath)
         {
             var fi = new FileInfo(zipPath);
             var total = fi.Exists ? fi.Length : -1;
 
-            blog?.Info(
+            blog?.Info("sync", "upload start");
+            blog?.Debug(
                 "sync",
-                "upload start",
+                "upload info",
                 new { size = total, name = Path.GetFileName(zipPath) }
             );
 
             using (var content = new MultipartFormDataContent())
             using (var fs = File.OpenRead(zipPath))
             {
+                var upBuckets = new PercentBuckets(step: 10);
                 var fileContent = new ProgressableStreamContent(
                     fs,
                     total,
@@ -95,12 +91,15 @@ namespace SyncniteBridge.Helpers
                         if (len > 0)
                         {
                             var pct = (int)Math.Max(0, Math.Min(100, (sent * 100L) / len));
-                            // progress (API will rewrite to SSE `event: progress`)
-                            blog?.Info(
-                                "progress",
-                                "uploading",
-                                new { phase = "upload", percent = pct }
-                            );
+                            if (upBuckets.ShouldEmit(pct, out var b))
+                            {
+                                blog?.Info("progress", "uploading");
+                                blog?.Debug(
+                                    "progress",
+                                    "uploading",
+                                    new { phase = "upload", percent = b }
+                                );
+                            }
                         }
                     }
                 );
@@ -122,15 +121,13 @@ namespace SyncniteBridge.Helpers
                         return false;
                     }
 
-                    // Final tick: 100%
-                    blog?.Info(
+                    blog?.Debug(
                         "progress",
                         "upload complete",
                         new { phase = "upload", percent = 100 }
                     );
                     blog?.Info("sync", "upload done");
 
-                    // If server returns json { ok: bool }, honor it; otherwise accept success status as OK
                     try
                     {
                         var obj = Playnite.SDK.Data.Serialization.FromJson<SyncResp>(body);
@@ -138,7 +135,7 @@ namespace SyncniteBridge.Helpers
                     }
                     catch
                     {
-                        return true;
+                        return true; // accept 200 without JSON body
                     }
                 }
                 catch (Exception ex)

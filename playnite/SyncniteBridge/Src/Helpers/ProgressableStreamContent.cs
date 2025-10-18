@@ -26,10 +26,7 @@ namespace SyncniteBridge.Helpers
             Headers.ContentType = new MediaTypeHeaderValue("application/zip");
         }
 
-        protected override async Task SerializeToStreamAsync(
-            Stream target,
-            TransportContext context
-        )
+        protected override async Task SerializeToStreamAsync(Stream target, TransportContext context)
         {
             var buffer = new byte[BufferSize];
             long sent = 0;

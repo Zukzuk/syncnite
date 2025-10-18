@@ -45,6 +45,9 @@ namespace SyncniteBridge.Services
         private readonly SnapshotStore snapshot;
         private readonly LocalStateScanner scanner;
 
+        /// <summary>
+        /// Create delta sync service.
+        /// </summary>
         public DeltaSyncService(
             IPlayniteAPI api,
             string syncUrl,
@@ -117,6 +120,9 @@ namespace SyncniteBridge.Services
 
         public void SetHealthProvider(Func<bool> provider) => isHealthy = provider ?? (() => true);
 
+        /// <summary>
+        /// Start watching and syncing.
+        /// </summary>
         public void Start()
         {
             // Snapshot-based initial diff
@@ -295,8 +301,9 @@ namespace SyncniteBridge.Services
             }
         }
 
-        // Upload pipeline
-
+        /// <summary>
+        /// Perform upload if there are changes.
+        /// </summary>
         private async System.Threading.Tasks.Task DoUploadIfNeededAsync()
         {
             var swTotal = System.Diagnostics.Stopwatch.StartNew();
@@ -357,58 +364,67 @@ namespace SyncniteBridge.Services
                 // Build manifest object up-front so we can estimate size
                 var manifestObj = new
                 {
-                    json = local.Json.ToDictionary(
-                        k => k.Key,
-                        v => new { size = v.Value.size, mtimeMs = v.Value.mtimeMs },
-                        StringComparer.OrdinalIgnoreCase
-                    ),
+                    json = local
+                        .Json.OrderBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase)
+                        .ToDictionary(
+                            kv => kv.Key,
+                            kv => new { size = kv.Value.size, mtimeMs = kv.Value.mtimeMs },
+                            StringComparer.OrdinalIgnoreCase
+                        ),
                     mediaFolders = local
                         .MediaFolders.OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
                         .ToArray(),
                     installed = new { count = local.Installed.count, hash = local.Installed.hash },
                 };
 
-                // Serialize manifest now so estimator knows its byte length
+                // Serialize manifest now for estimator
                 var manifestJson = Playnite.SDK.Data.Serialization.ToJson(manifestObj);
 
-                // We won’t precompute the (potentially large) snapshot JSON string.
-                // Progress will still be smooth because we clamp to 100% and ZipBuilder
-                // sends a final 100% tick on Dispose.
+                // We won’t precompute the (potentially large) snapshot JSON.
+                // Progress remains smooth and we still finish with a 100% tick.
                 string? snapshotJson = null;
 
-                // Media root (used by estimator and the add loop)
-                var mediaRoot = Path.Combine(dataRoot, AppConstants.LibraryFilesDirName);
-
-                // Estimate total work for zipping
+                // Estimate total work for zipping (only the content we’ll actually add)
+                long mediaBytes = 0;
+                foreach (var folder in mediaFolders)
+                {
+                    var abs = Path.Combine(dataRoot, AppConstants.LibraryFilesDirName, folder);
+                    try
+                    {
+                        mediaBytes += ZipSizeEstimator.ForFilesUnder(abs);
+                    }
+                    catch { }
+                }
                 long totalZipBytes =
                     ZipSizeEstimator.ForText(manifestJson)
                     + ZipSizeEstimator.ForText(snapshotJson) // 0 if null
-                    + ZipSizeEstimator.ForFilesUnder(mediaRoot);
+                    + mediaBytes;
 
                 var swZip = System.Diagnostics.Stopwatch.StartNew();
+                var zipBuckets = new PercentBuckets(step: 10);
+                blog?.Info("sync", "zipping start");
                 using (
                     var zb = new ZipBuilder(
                         zipPath,
                         blog,
                         expectedTotalBytes: totalZipBytes,
                         onPercent: pct =>
-                            blog?.Info("progress", "zipping", new { phase = "zip", percent = pct })
+                        {
+                            if (zipBuckets.ShouldEmit(pct, out var b))
+                            {
+                                blog?.Info("progress", "zipping");
+                                blog?.Debug(
+                                    "progress",
+                                    "zipping",
+                                    new { phase = "zip", percent = b }
+                                );
+                            }
+                        }
                     )
                 )
                 {
                     // /export/manifest.json
                     zb.AddText(AppConstants.ManifestPathInZip, manifestJson);
-
-                    // JSON snapshot if DB changed
-                    if (needJson)
-                        ExportSdkSnapshotToZip(zb);
-
-                    // Media folders that changed
-                    foreach (var folder in mediaFolders)
-                    {
-                        blog?.Debug("sync", $"Include media folder: {folder}");
-                        AddMediaFolderRecursively(zb, folder);
-                    }
 
                     // JSON snapshot if DB changed
                     if (needJson)
@@ -437,9 +453,9 @@ namespace SyncniteBridge.Services
                     }
                 );
 
-                // upload
+                // upload (sparse % handled in HttpClientEx)
                 var swUpload = System.Diagnostics.Stopwatch.StartNew();
-                var ok = await http.SyncZipAsync(syncUrl, zipPath, blog).ConfigureAwait(false);
+                var ok = await http.SyncZipAsync(syncUrl, zipPath).ConfigureAwait(false);
                 swUpload.Stop();
                 if (!ok)
                     throw new Exception("sync endpoint returned non-OK");
@@ -449,7 +465,6 @@ namespace SyncniteBridge.Services
                 lock (dirtyMediaLock)
                     dirtyMediaFolders.Clear();
 
-                // Milestone: upload complete
                 blog?.Info("sync", "Upload complete");
                 blog?.Debug(
                     "sync",
@@ -516,7 +531,7 @@ namespace SyncniteBridge.Services
                     : p + Path.DirectorySeparatorChar;
         }
 
-        private string GetTopLevelMediaFolderFromPath(string fullPath)
+        private string? GetTopLevelMediaFolderFromPath(string fullPath)
         {
             if (string.IsNullOrWhiteSpace(fullPath))
                 return null;
@@ -561,13 +576,22 @@ namespace SyncniteBridge.Services
                 return;
 
             foreach (
-                var path in Directory.EnumerateFiles(folderAbs, "*", SearchOption.AllDirectories)
+                var path in Directory
+                    .EnumerateFiles(folderAbs, "*", SearchOption.AllDirectories)
+                    .OrderBy(p => p, StringComparer.OrdinalIgnoreCase)
             )
             {
                 var rel = GetRelativePath(folderAbs, path);
                 var relInZip = Path.Combine(AppConstants.ZipFilesDirName, topLevelFolder, rel)
                     .Replace('\\', '/');
-                zb.AddFile(path, relInZip, CompressionLevel.Optimal);
+                try
+                {
+                    zb.AddFile(path, relInZip, CompressionLevel.Optimal);
+                }
+                catch (Exception ex)
+                {
+                    blog?.Warn("zip", "skip file", new { path, err = ex.Message });
+                }
             }
         }
 

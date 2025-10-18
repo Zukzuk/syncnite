@@ -11,13 +11,12 @@ namespace SyncniteBridge.Helpers
     internal sealed class ZipBuilder : IDisposable
     {
         private readonly ZipArchive zip;
-        private readonly Stream output;
-        private readonly bool ownsStream;
+        private readonly FileStream output
         private readonly BridgeLogger? blog;
 
         private readonly long expectedTotalBytes;
         private long zippedBytes = 0;
-        private readonly Action<int>? onPercent; // optional
+        private readonly Action<int>? onPercent;
 
         internal ZipBuilder(
             string zipPath,
@@ -27,36 +26,11 @@ namespace SyncniteBridge.Helpers
         )
         {
             Directory.CreateDirectory(Path.GetDirectoryName(zipPath)!);
-            this.output = new FileStream(
-                zipPath,
-                FileMode.Create,
-                FileAccess.Write,
-                FileShare.Read
-            );
-            this.ownsStream = true;
-            this.zip = new ZipArchive(this.output, ZipArchiveMode.Create, leaveOpen: false);
+            output = new FileStream(zipPath, FileMode.Create, FileAccess.Write, FileShare.Read);
+            zip = new ZipArchive(output, ZipArchiveMode.Create, leaveOpen: false);
             this.blog = blog;
             this.expectedTotalBytes = Math.Max(0, expectedTotalBytes);
             this.onPercent = onPercent;
-
-            blog?.Info("sync", "zipping start");
-        }
-
-        internal ZipBuilder(
-            Stream output,
-            BridgeLogger? blog = null,
-            long expectedTotalBytes = 0,
-            Action<int>? onPercent = null
-        )
-        {
-            this.output = output ?? throw new ArgumentNullException(nameof(output));
-            this.ownsStream = false;
-            this.zip = new ZipArchive(this.output, ZipArchiveMode.Create, leaveOpen: true);
-            this.blog = blog;
-            this.expectedTotalBytes = Math.Max(0, expectedTotalBytes);
-            this.onPercent = onPercent;
-
-            blog?.Info("sync", "zipping start");
         }
 
         public void AddFile(
@@ -124,16 +98,8 @@ namespace SyncniteBridge.Helpers
                 zip?.Dispose();
             }
             catch { }
-            if (ownsStream)
-            {
-                try
-                {
-                    output?.Dispose();
-                }
-                catch { }
-            }
+            // output stream is already closed by zip.Dispose() (leaveOpen:false)
             blog?.Info("sync", "zipping done");
-            // Final 100% tick in case we ended early or totals matched exactly
             if (expectedTotalBytes > 0)
                 onPercent?.Invoke(100);
         }
