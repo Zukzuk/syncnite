@@ -41,7 +41,7 @@ export function createApp() {
                 },
             }
         },
-        apis: [path.join(__dirname, "routes/*.{ts,js}")],
+        apis: [path.join(__dirname, "openapi.{ts,js}")],
     });
 
     app.get("/api/docs.json", (_req, res) => res.json(swaggerSpec));

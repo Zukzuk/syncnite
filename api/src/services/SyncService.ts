@@ -2,8 +2,9 @@ import { existsSync, promises as fs } from "node:fs";
 import { join, basename } from "node:path";
 import {
     INPUT_DIR, WORK_DIR, DATA_DIR,
-    cleanDir, normalizeBackslashPaths, 
-    copyLibraryFilesWithProgress, run
+    cleanDir, normalizeBackslashPaths,
+    copyLibraryFilesWithProgress, run,
+    findLibraryDir
 } from "../helpers";
 import { rootLog } from "../logger";
 
@@ -24,16 +25,6 @@ export interface SyncUploadResult {
 }
 
 export class SyncService {
-
-    /**
-     * Ingests log events from the Playnite extension.
-     * @param payload - single event object or array of events
-     * @returns number of ingested events
-     */
-    ingestLogs(payload: any): number {
-        return rootLog.logExternal(payload);
-    }
-
     /**
      * Pushes installed game IDs to the server.
      * @param installed - array of installed game IDs
@@ -98,8 +89,9 @@ export class SyncService {
 
         try {
             await cleanDir(WORK_DIR);
+            await cleanDir(DATA_DIR);
             await fs.mkdir(DATA_DIR, { recursive: true });
-            log.info("Cleaned WORK_DIR and prepared DATA_DIR");
+            log.info("Cleaned WORK_DIR and DATA_DIR");
 
             log.debug(`Validating ZIP ${basename(zipPath)}…`);
             await run("7z", ["t", zipPath]);
@@ -110,32 +102,37 @@ export class SyncService {
             log.debug("Normalizing backslash paths…");
             await normalizeBackslashPaths(WORK_DIR);
 
-            log.debug("Locating /export/*.json…");
-            const exportDir = await this.findExportDir(WORK_DIR);
-            if (!exportDir) {
-                log.warn("No /export/*.json found in ZIP");
-                const err = new Error("no /export/*.json found in ZIP") as any;
-                err.statusCode = 400;
+            // --- Locate library dir, dump LiteDB → JSON, copy media ---
+            log.info("Locating library dir…");
+            const libDir = await findLibraryDir(WORK_DIR);
+            if (!libDir) {
+                const err = new Error("No library directory with *.db");
+                (err as any).statusCode = 400;
                 throw err;
             }
 
-            // Milestone: copying JSON
-            log.info("Copying JSON export to /data…");
-            await this.copyDir(exportDir, DATA_DIR);
+            log.info("Ensuring /data exists…");
+            await fs.mkdir(DATA_DIR, { recursive: true });
+
+            log.info("Dumping LiteDB to JSON…");
+            const env = { ...process.env };
+            const password = process.env.LITEDB_PASSWORD || "";
+            if (password) (env as any).LITEDB_PASSWORD = password;
+            const { out, err } = await run("./PlayniteBackupImport", [libDir, DATA_DIR], { env });
+            if (out?.trim()) out.trim().split(/\r?\n/).forEach((l) => log.info(l));
+            if (err?.trim()) err.trim().split(/\r?\n/).forEach((l) => log.warn(l));
             const names = await fs.readdir(DATA_DIR);
             jsonFiles = names.filter((n) => n.toLowerCase().endsWith(".json")).length;
-            log.info(`JSON copy done, ${jsonFiles} JSON file(s) in DATA_DIR`);
+            log.info(`Dump done, ${jsonFiles} JSON file(s) in DATA_DIR`);
 
-            // Milestone: copying media
-            log.info("Copying media (libraryfiles)…");
+            // Copy media with progress from the same root as the DBs
             const mediaResult = await copyLibraryFilesWithProgress({
-                libDir: join(exportDir, ".."),
+                libDir,
                 workRoot: WORK_DIR,
                 dataRoot: DATA_DIR,
-                log: (m: string) => log.debug(m),
-                progress: () => { },
-                concurrency: 8,
-                tickMs: 500,
+                log: (m: string) => log.info(m),
+                progress: ({ percent, copiedBytes, totalBytes, deltaBytes }) =>
+                    rootLog.raw({ level: "info", kind: "progress", data: { phase: "copy", percent, copiedBytes, totalBytes, deltaBytes } }),
             });
             mediaFiles = mediaResult?.copiedFiles ?? 0;
             log.info(`Media copy done: ${mediaFiles} files`);
@@ -260,35 +257,5 @@ export class SyncService {
             if (e.isDirectory()) await this.copyDir(s, d);
             else await fs.copyFile(s, d);
         }
-    }
-
-    /**
-     * Find the export directory containing games.game.json or games.json.
-     * @param root Root directory to search
-     * @returns The path to the export directory, or null if not found
-     */
-    async findExportDir(root: string): Promise<string | null> {
-        log.debug(`findExportDir start`, { root });
-        const stack = [root];
-        while (stack.length) {
-            const dir = stack.pop()!;
-            let entries: import("node:fs").Dirent[];
-            try { entries = await fs.readdir(dir, { withFileTypes: true }); } catch { continue; }
-            for (const e of entries) {
-                if (e.isDirectory() && e.name.toLowerCase() === "export") {
-                    const exp = join(dir, e.name);
-                    try {
-                        const names = (await fs.readdir(exp)).map(n => n.toLowerCase());
-                        if (names.includes("games.game.json") || names.includes("games.json")) {
-                            log.info(`export dir detected`, { exportDir: exp });
-                            return exp;
-                        }
-                    } catch { /* ignore */ }
-                }
-                if (e.isDirectory()) stack.push(join(dir, e.name));
-            }
-        }
-        log.debug(`export dir not found`, { root });
-        return null;
     }
 }

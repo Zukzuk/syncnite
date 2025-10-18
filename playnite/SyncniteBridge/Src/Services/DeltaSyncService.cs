@@ -310,12 +310,11 @@ namespace SyncniteBridge.Services
 
             try
             {
-                bool needJson = dbDirty;
                 List<string> mediaFolders;
                 lock (dirtyMediaLock)
                     mediaFolders = dirtyMediaFolders.ToList();
 
-                if (!needJson && mediaFolders.Count == 0)
+                if (!dbDirty && mediaFolders.Count == 0)
                 {
                     blog?.Debug("sync", "Up-to-date; no upload needed");
                     return;
@@ -326,7 +325,7 @@ namespace SyncniteBridge.Services
                 blog?.Debug(
                     "sync",
                     "Upload plan details",
-                    new { jsonChanged = needJson, mediaFoldersChanged = mediaFolders.Count }
+                    new { dbChanged = dbDirty, mediaFoldersChanged = mediaFolders.Count }
                 );
 
                 var local = scanner.BuildLocalManifestView();
@@ -353,12 +352,7 @@ namespace SyncniteBridge.Services
                 blog?.Debug(
                     "sync",
                     "ZIP details",
-                    new
-                    {
-                        needJson,
-                        mediaFolders = mediaFolders.Count,
-                        temp = zipPath,
-                    }
+                    new { mediaFolders = mediaFolders.Count, temp = zipPath }
                 );
 
                 // Build manifest object up-front so we can estimate size
@@ -380,10 +374,6 @@ namespace SyncniteBridge.Services
                 // Serialize manifest now for estimator
                 var manifestJson = Playnite.SDK.Data.Serialization.ToJson(manifestObj);
 
-                // We won’t precompute the (potentially large) snapshot JSON.
-                // Progress remains smooth and we still finish with a 100% tick.
-                string? snapshotJson = null;
-
                 // Estimate total work for zipping (only the content we’ll actually add)
                 long mediaBytes = 0;
                 foreach (var folder in mediaFolders)
@@ -395,10 +385,12 @@ namespace SyncniteBridge.Services
                     }
                     catch { }
                 }
-                long totalZipBytes =
-                    ZipSizeEstimator.ForText(manifestJson)
-                    + ZipSizeEstimator.ForText(snapshotJson) // 0 if null
-                    + mediaBytes;
+
+                // Also include rough cost for DB files (small).
+                long dbBytes = ZipSizeEstimator.ForFilesUnder(
+                    Path.Combine(dataRoot, AppConstants.LibraryDirName)
+                );
+                long totalZipBytes = ZipSizeEstimator.ForText(manifestJson) + dbBytes + mediaBytes;
 
                 var swZip = System.Diagnostics.Stopwatch.StartNew();
                 var zipBuckets = new PercentBuckets(step: 10);
@@ -426,9 +418,8 @@ namespace SyncniteBridge.Services
                     // /export/manifest.json
                     zb.AddText(AppConstants.ManifestPathInZip, manifestJson);
 
-                    // JSON snapshot if DB changed
-                    if (needJson)
-                        ExportSdkSnapshotToZip(zb);
+                    // Always include DB files under /library/*.db (server will dump to JSON)
+                    AddDbFiles(zb);
 
                     // Media folders that changed
                     foreach (var folder in mediaFolders)
@@ -446,7 +437,6 @@ namespace SyncniteBridge.Services
                     "Upload details",
                     new
                     {
-                        needJson,
                         mediaFolders = mediaFolders.Count,
                         zipMs = swZip.ElapsedMilliseconds,
                         zipPath,
@@ -471,7 +461,6 @@ namespace SyncniteBridge.Services
                     "Upload stats",
                     new
                     {
-                        json = needJson,
                         mediaFolders,
                         uploadMs = swUpload.ElapsedMilliseconds,
                         totalMs = swTotal.ElapsedMilliseconds,
@@ -568,6 +557,34 @@ namespace SyncniteBridge.Services
             catch { }
         }
 
+        // Add library/*.db into the ZIP so the server can transform them
+        private void AddDbFiles(ZipBuilder zb)
+        {
+            var libDir = Path.Combine(dataRoot, AppConstants.LibraryDirName);
+            if (!Directory.Exists(libDir))
+                return;
+
+            foreach (
+                var path in Directory
+                    .EnumerateFiles(libDir, "*.db", SearchOption.TopDirectoryOnly)
+                    .OrderBy(p => p, StringComparer.OrdinalIgnoreCase)
+            )
+            {
+                try
+                {
+                    var name = Path.GetFileName(path);
+                    var relInZip = Path.Combine(AppConstants.LibraryDirName, name)
+                        .Replace('\\', '/');
+                    zb.AddFile(path, relInZip, CompressionLevel.Fastest);
+                    blog?.Debug("zip", "include db", new { name });
+                }
+                catch (Exception ex)
+                {
+                    blog?.Warn("zip", "skip db", new { path, err = ex.Message });
+                }
+            }
+        }
+
         private void AddMediaFolderRecursively(ZipBuilder zb, string topLevelFolder)
         {
             var mediaRoot = Path.Combine(dataRoot, AppConstants.LibraryFilesDirName);
@@ -593,275 +610,6 @@ namespace SyncniteBridge.Services
                     blog?.Warn("zip", "skip file", new { path, err = ex.Message });
                 }
             }
-        }
-
-        private void ExportSdkSnapshotToZip(ZipBuilder zb)
-        {
-            // meta
-            zb.AddText(
-                AppConstants.MetaPathInZip,
-                Playnite.SDK.Data.Serialization.ToJson(
-                    new
-                    {
-                        exportedAt = DateTime.UtcNow.ToString("o"),
-                        exporter = AppConstants.AppName,
-                    }
-                )
-            );
-
-            // --- GAMES (explicit, richer projection)
-            var games =
-                api.Database.Games?.Select(g =>
-                        (object)
-                            new
-                            {
-                                // identity
-                                g.Id,
-                                g.Name,
-                                g.SortingName,
-                                g.Hidden,
-
-                                // install
-                                g.IsInstalled,
-                                g.InstallDirectory,
-                                g.InstallSize,
-
-                                // library identity
-                                g.PluginId, // e.g. GOG plugin GUID
-                                g.GameId, // store-specific id
-
-                                // joins
-                                g.SourceId,
-                                TagIds = (g.TagIds ?? new List<Guid>()).ToList(),
-                                PlatformIds = (g.PlatformIds ?? new List<Guid>()).ToList(),
-                                PrimaryPlatformId = (
-                                    g.PlatformIds != null && g.PlatformIds.Count > 0
-                                )
-                                    ? (Guid?)g.PlatformIds[0]
-                                    : null,
-                                g.GenreIds,
-                                g.CategoryIds,
-                                g.FeatureIds,
-                                SeriesIds = g.SeriesIds,
-                                PrimarySeriesId = (g.SeriesIds != null && g.SeriesIds.Count > 0)
-                                    ? (Guid?)g.SeriesIds[0]
-                                    : null,
-                                g.CompletionStatusId,
-                                g.AgeRatingIds,
-                                g.RegionIds,
-                                g.DeveloperIds,
-                                g.PublisherIds,
-
-                                // dates + art
-                                g.ReleaseDate,
-                                ReleaseYear = (int?)g.ReleaseDate?.Year,
-                                g.Icon,
-                                g.CoverImage,
-                                g.BackgroundImage,
-
-                                // usage/activity
-                                g.Added,
-                                g.Modified,
-                                g.LastActivity,
-                                g.Playtime, // minutes
-                                g.PlayCount,
-
-                                // scores
-                                g.UserScore,
-                                g.CommunityScore,
-                                g.CriticScore,
-
-                                // content
-                                g.Description,
-                                g.Notes,
-
-                                // links/actions/roms
-                                g.Links,
-                                g.GameActions,
-                                g.Roms,
-                            }
-                    )
-                    .ToList() ?? new List<object>();
-
-            zb.AddText(
-                AppConstants.GamesJsonPathInZip,
-                Playnite.SDK.Data.Serialization.ToJson(games)
-            );
-
-            // --- LOOKUP/RELATED COLLECTIONS (explicit field lists)
-
-            // helper for simple Name/Id objects
-            object MapNamed<T>(T x)
-            {
-                dynamic d = x;
-                return new { Id = d.Id, Name = d.Name };
-            }
-
-            // Tags
-            var tags =
-                api.Database.Tags?.Select(MapNamed).Cast<object>().ToList() ?? new List<object>();
-            zb.AddText(
-                AppConstants.TagsJsonPathInZip,
-                Playnite.SDK.Data.Serialization.ToJson(tags)
-            );
-
-            // Sources
-            var sources =
-                api.Database.Sources?.Select(MapNamed).Cast<object>().ToList()
-                ?? new List<object>();
-            zb.AddText(
-                AppConstants.SourcesJsonPathInZip,
-                Playnite.SDK.Data.Serialization.ToJson(sources)
-            );
-
-            // Platforms (Id, Name, Icon)
-            var platforms =
-                api.Database.Platforms?.Select(p =>
-                        (object)
-                            new
-                            {
-                                p.Id,
-                                p.Name,
-                                p.Icon,
-                            }
-                    )
-                    .ToList() ?? new List<object>();
-            zb.AddText(
-                AppConstants.PlatformsJsonPathInZip,
-                Playnite.SDK.Data.Serialization.ToJson(platforms)
-            );
-
-            // Genres
-            var genres =
-                api.Database.Genres?.Select(MapNamed).Cast<object>().ToList() ?? new List<object>();
-            zb.AddText(
-                AppConstants.GenresJsonPathInZip,
-                Playnite.SDK.Data.Serialization.ToJson(genres)
-            );
-
-            // Categories
-            var categories =
-                api.Database.Categories?.Select(MapNamed).Cast<object>().ToList()
-                ?? new List<object>();
-            zb.AddText(
-                AppConstants.CategoriesJsonPathInZip,
-                Playnite.SDK.Data.Serialization.ToJson(categories)
-            );
-
-            // Features
-            var features =
-                api.Database.Features?.Select(MapNamed).Cast<object>().ToList()
-                ?? new List<object>();
-            zb.AddText(
-                AppConstants.FeaturesJsonPathInZip,
-                Playnite.SDK.Data.Serialization.ToJson(features)
-            );
-
-            // Series
-            var series =
-                api.Database.Series?.Select(MapNamed).Cast<object>().ToList() ?? new List<object>();
-            zb.AddText(
-                AppConstants.SeriesJsonPathInZip,
-                Playnite.SDK.Data.Serialization.ToJson(series)
-            );
-
-            // Regions
-            var regions =
-                api.Database.Regions?.Select(MapNamed).Cast<object>().ToList()
-                ?? new List<object>();
-            zb.AddText(
-                AppConstants.RegionsJsonPathInZip,
-                Playnite.SDK.Data.Serialization.ToJson(regions)
-            );
-
-            // Age Ratings
-            var ageRatings =
-                api.Database.AgeRatings?.Select(MapNamed).Cast<object>().ToList()
-                ?? new List<object>();
-            zb.AddText(
-                AppConstants.AgeRatingsJsonPathInZip,
-                Playnite.SDK.Data.Serialization.ToJson(ageRatings)
-            );
-
-            // Companies
-            var companies =
-                api.Database.Companies?.Select(MapNamed).Cast<object>().ToList()
-                ?? new List<object>();
-            zb.AddText(
-                AppConstants.CompaniesJsonPathInZip,
-                Playnite.SDK.Data.Serialization.ToJson(companies)
-            );
-
-            // Emulators (explicit + profiles)
-            var emulators =
-                api.Database.Emulators?.Select(e =>
-                        (object)
-                            new
-                            {
-                                e.Id,
-                                e.Name,
-                                Profiles = (e.AllProfiles ?? new List<EmulatorProfile>())
-                                    .Select(p => new
-                                    {
-                                        // Id/Name exist on profiles; keep them if your code consumed them
-                                        p.Id,
-                                        p.Name,
-
-                                        // The following exist on CustomEmulatorProfile only. Use safe casts:
-                                        Executable = (p as CustomEmulatorProfile)?.Executable,
-                                        Arguments = (p as CustomEmulatorProfile)?.Arguments,
-                                        WorkingDirectory = (
-                                            p as CustomEmulatorProfile
-                                        )?.WorkingDirectory,
-                                        ImageExtensions = (
-                                            p as CustomEmulatorProfile
-                                        )?.ImageExtensions ?? new List<string>(),
-                                        Platforms = (p as CustomEmulatorProfile)?.Platforms
-                                            ?? new List<Guid>(),
-
-                                        // Optional: include Built-in profile info when applicable
-                                        BuiltInProfileName = (
-                                            p as BuiltInEmulatorProfile
-                                        )?.BuiltInProfileName,
-                                        BuiltInCustomArguments = (
-                                            p as BuiltInEmulatorProfile
-                                        )?.CustomArguments,
-                                    })
-                                    .ToList(),
-                            }
-                    )
-                    .ToList() ?? new List<object>();
-            zb.AddText(
-                AppConstants.EmulatorsJsonPathInZip,
-                Playnite.SDK.Data.Serialization.ToJson(emulators)
-            );
-
-            // Completion Statuses
-            var completionStatuses =
-                api.Database.CompletionStatuses?.Select(MapNamed).Cast<object>().ToList()
-                ?? new List<object>();
-            zb.AddText(
-                AppConstants.CompletionStatusesJsonPathInZip,
-                Playnite.SDK.Data.Serialization.ToJson(completionStatuses)
-            );
-
-            // Filter Presets (Id, Name only to keep explicit & stable)
-            var filterPresets =
-                api.Database.FilterPresets?.Select(fp => (object)new { fp.Id, fp.Name }).ToList()
-                ?? new List<object>();
-            zb.AddText(
-                AppConstants.FilterPresetsJsonPathInZip,
-                Playnite.SDK.Data.Serialization.ToJson(filterPresets)
-            );
-
-            // Import Exclusions (keep Name/Id mapping as in your original)
-            var importExclusions =
-                api.Database.ImportExclusions?.Select(MapNamed).Cast<object>().ToList()
-                ?? new List<object>();
-            zb.AddText(
-                AppConstants.ImportExclusionsJsonPathInZip,
-                Playnite.SDK.Data.Serialization.ToJson(importExclusions)
-            );
         }
     }
 }

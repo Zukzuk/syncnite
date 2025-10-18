@@ -6,38 +6,6 @@ const router = express.Router();
 const extensionService = new ExtensionService();
 const log = rootLog.child("route:extension");
 
-/**
- * @openapi
- * tags:
- *   - name: Extension
- *     description: Manage and download Playnite extensions.
- */
-
-/**
- * @openapi
- * /api/extension/download:
- *   get:
- *     operationId: downloadExtension
- *     summary: Download the latest Syncnite Bridge extension (.pext)
- *     tags: [Extension]
- *     responses:
- *       200:
- *         description: The extension package.
- *         headers:
- *           Content-Disposition:
- *             schema:
- *               type: string
- *             example: attachment; filename="syncnite-bridge.pext"
- *         content:
- *           application/octet-stream:
- *             schema:
- *               type: string
- *               format: binary
- *       404:
- *         $ref: '#/components/responses/Error404'
- *       500:
- *         $ref: '#/components/responses/Error500'
- */
 router.get("/download", (_req, res) => {
   log.info("download: request received");
 

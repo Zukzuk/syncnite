@@ -3,6 +3,7 @@ import { CookieState } from "./persist";
 export const API_ENDPOINTS = {
   // Fetch list of library items
   LIBRARY_LIST: "/api/library",
+  SSE: "/api/sse",
   DOWNLOAD_EXTENSION: "/api/extension/download",
   // Admin account management
   ADMIN_VERIFY: "/api/accounts/verify",
@@ -11,7 +12,6 @@ export const API_ENDPOINTS = {
   ADMIN_LOGIN: "/api/accounts/login",
   // Backup management
   BACKUP_UPLOAD: "/api/backup/upload",
-  BACKUP_PROCESS_STREAM: "/api/backup/process-stream",
   ZIP_LIST: "/api/zips",
 }
 

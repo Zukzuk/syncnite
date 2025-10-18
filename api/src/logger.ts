@@ -1,10 +1,12 @@
-import { currentSSE } from "./sse";
+import { SyncBus } from "./services/EventBusService";
 
 type Level = "error" | "warn" | "info" | "debug" | "trace";
 const levelOrder: Record<Level, number> = { error: 0, warn: 1, info: 2, debug: 3, trace: 4 };
+const validLevels: readonly Level[] = ["error", "warn", "info", "debug", "trace"] as const;
 const APP_VERSION = process.env.APP_VERSION ?? "dev";
 const env = (process.env.LOG_LEVEL ?? "info").toLowerCase() as Level;
 const threshold: number = levelOrder[env] ?? levelOrder.info;
+
 export type Logger = {
     level: Level;
 
@@ -14,43 +16,76 @@ export type Logger = {
     info: (...a: any[]) => void;
     debug: (...a: any[]) => void;
     trace: (...a: any[]) => void;
-
-    // Create a scoped child for INTERNAL logs
-    child: (scope: string) => Logger;
-
     /**
-     * EXTERNAL ingestion: sanitize payload, KEEP sender's prefix/line if provided,
+     * Raw ingestion: sanitize payload, KEEP sender's prefix/line if provided,
      * apply level threshold, then log via single console sink.
      *
      * Returns number of ingested events.
      */
-    logExternal: (payload: unknown) => number;
+    raw: (payload: unknown) => number;
+    // Create a scoped child for INTERNAL logs
+    child: (scope: string) => Logger;
 };
 
-const validLevels: readonly Level[] = ["error", "warn", "info", "debug", "trace"] as const;
 function toLevel(raw: unknown): Level {
     const s = String(raw ?? "info").toLowerCase();
     return (validLevels as readonly string[]).includes(s as Level) ? (s as Level) : "info";
 }
 
-/**
- * Get the appropriate console method for the given log level.
- * @param level log level
- * @returns console method
- */
+// helper to select console method based on level
 function consoleFor(level: Level) {
     return level === "error" ? console.error : level === "warn" ? console.warn : console.log;
 }
 
-/**
- * INTERNAL emit: adds [api][vX][LEVEL] and scopes. Enforces threshold and uses single console sink.
- * @param scopes 
- * @param level 
- * @param parts 
- * @returns 
- */
+// raw emit method exposed on logger
+function raw(payload: unknown): number {
+    const events = Array.isArray(payload) ? payload : [payload];
+
+    const sanitized = events
+        .filter((e): e is Record<string, unknown> => !!e && typeof e === "object")
+        .map((e) => {
+            const level = toLevel(e.level);
+            const ts = (e.ts as string) || new Date().toISOString();
+            const kind = String(e.kind ?? "event");
+            const msg = e.msg != null ? String(e.msg) : "";
+            const src = (e.src as string) || "external";
+
+            // Prefer a fully formatted line the sender provided (KEEP AS-IS)
+            const providedLine = typeof e.line === "string" ? e.line : undefined;
+
+            // If no preformatted line, construct a minimal one without adding [api] or scopes
+            // We keep it neutral (e.g., "[ext]" if src suggests extension), but do not force it.
+            const inferredPrefix =
+                src.toLowerCase().includes("ext") || src.toLowerCase().includes("playnite")
+                    ? "[ext]"
+                    : `[${src}]`;
+
+            const line =
+                providedLine ||
+                (msg
+                    ? `${inferredPrefix} ${msg}`
+                    : `${inferredPrefix} ${kind}`);
+
+            const meta: Record<string, unknown> = { ts, kind, src };
+            if (e.ctx && typeof e.ctx === "object") meta.ctx = e.ctx;
+            if (e.data && typeof e.data === "object") meta.data = e.data;
+            if (e.err != null) meta.err = String(e.err);
+
+            return { level, line, meta };
+        });
+
+    if (!sanitized.length) return 0;
+
+    for (const ev of sanitized) {
+        emitRaw(ev.level, ev.line, ev.meta);
+    }
+    return sanitized.length;
+}
+
+// internal emit: adds [api][version][level][scopes], enforce threshold, single console sink.
 function emitInternal(scopes: string[], level: Level, parts?: any[]) {
     if (levelOrder[level] > threshold) return;
+
     const prefix = `[api][v${APP_VERSION}][${level.toUpperCase()}]`;
     const scopeStr = scopes.map((s) => `[${s}]`);
     if (threshold >= levelOrder.debug && parts && parts.length > 0) {
@@ -61,43 +96,42 @@ function emitInternal(scopes: string[], level: Level, parts?: any[]) {
         consoleFor(level)(prefix, ...scopeStr);
     }
 
-    const sse = currentSSE();
-    if (sse) {
-        try {
-            const first = parts && parts.length > 0 ? parts[0] : "";
-            const line = typeof first === "string" ? first : JSON.stringify(first ?? "");
-            sse.log(line);
-        } catch { }
+    // ---- Global broadcast ----
+    try {
+        const first = parts && parts.length > 0 ? parts[0] : "";
+        const line = typeof first === "string" ? first : JSON.stringify(first ?? "");
+        SyncBus.publish({ type: "log", data: line });
+    } catch {
+        /* ignore */
     }
 }
 
-/**
- * RAW emit for external lines: keeps the caller-provided line/prefix as-is.
- * Still enforces threshold and uses the same console sink. Adds meta if provided.
- * @param level 
- * @param line 
- * @param meta 
- * @returns 
- */
+// raw emit: sanitize payload, KEEP sender's prefix/line if provided, enforce threshold, single console sink.
 function emitRaw(level: Level, line: string, meta?: Record<string, unknown>) {
     if (levelOrder[level] > threshold) return;
+
     if (threshold >= levelOrder.debug && meta && Object.keys(meta).length > 0) {
         consoleFor(level)(line, meta);
     } else {
         consoleFor(level)(line);
     }
 
-    const sse = currentSSE();
-    if (sse) {
-        try {
-            const kind = String(meta?.kind ?? "");
-            const d = (meta?.data ?? {}) as any;
-            if (kind === "progress" || (d && typeof d.percent === "number")) {
-                sse.progress({ phase: (d?.phase ?? null) as any, percent: d.percent });
-            } else {
-                sse.log(line);
-            }
-        } catch { }
+    // ---- Global broadcast ----
+    try {
+        const kind = String(meta?.kind ?? "");
+        const d = (meta?.data ?? {}) as any;
+        const isProgress = kind === "progress" || (d && typeof d.percent === "number");
+
+        if (isProgress) {
+            const phase = (d?.phase ?? null) as any;
+            const percent = Number(d?.percent) || 0;
+            SyncBus.publish({ type: "progress", data: { phase, percent } });
+            if (line) SyncBus.publish({ type: "log", data: line });
+        } else {
+            SyncBus.publish({ type: "log", data: line });
+        }
+    } catch {
+        /* ignore */
     }
 }
 
@@ -114,54 +148,9 @@ export const rootLog: Logger = (function create(scopes: string[] = []): Logger {
         info: (...a: any[]) => emitInternal(scopes, "info", a),
         debug: (...a: any[]) => emitInternal(scopes, "debug", a),
         trace: (...a: any[]) => emitInternal(scopes, "trace", a),
-
+        raw,
         child(scope: string) {
             return create([...scopes, scope]);
-        },
-
-        // EXTERNAL
-        logExternal(payload: unknown): number {
-            const events = Array.isArray(payload) ? payload : [payload];
-
-            const sanitized = events
-                .filter((e): e is Record<string, unknown> => !!e && typeof e === "object")
-                .map((e) => {
-                    const level = toLevel(e.level);
-                    const ts = (e.ts as string) || new Date().toISOString();
-                    const kind = String(e.kind ?? "event");
-                    const msg = e.msg != null ? String(e.msg) : "";
-                    const src = (e.src as string) || "external";
-
-                    // Prefer a fully formatted line the sender provided (KEEP AS-IS)
-                    const providedLine = typeof e.line === "string" ? e.line : undefined;
-
-                    // If no preformatted line, construct a minimal one without adding [api] or scopes
-                    // We keep it neutral (e.g., "[ext]" if src suggests extension), but do not force it.
-                    const inferredPrefix =
-                        src.toLowerCase().includes("ext") || src.toLowerCase().includes("playnite")
-                            ? "[ext]"
-                            : `[${src}]`;
-
-                    const line =
-                        providedLine ||
-                        (msg
-                            ? `${inferredPrefix} ${msg}`
-                            : `${inferredPrefix} ${kind}`);
-
-                    const meta: Record<string, unknown> = { ts, kind, src };
-                    if (e.ctx && typeof e.ctx === "object") meta.ctx = e.ctx;
-                    if (e.data && typeof e.data === "object") meta.data = e.data;
-                    if (e.err != null) meta.err = String(e.err);
-
-                    return { level, line, meta };
-                });
-
-            if (!sanitized.length) return 0;
-
-            for (const ev of sanitized) {
-                emitRaw(ev.level, ev.line, ev.meta);
-            }
-            return sanitized.length;
         },
     };
 })();

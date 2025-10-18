@@ -1,5 +1,4 @@
 import type { Response } from "express";
-import { AsyncLocalStorage } from "node:async_hooks";
 
 export type SseEvent =
     | { type: "log"; data: string }
@@ -35,13 +34,4 @@ export function createSSE(res: Response): SseSink {
         error: (msg) => write("error", String(msg || "error")),
         close: () => { try { res.end(); } catch { } },
     };
-}
-
-/** Per-request SSE context so any logger output auto-forwards. */
-const sseALS = new AsyncLocalStorage<SseSink>();
-export function withSSE<T>(sse: SseSink, fn: () => Promise<T> | T) {
-    return sseALS.run(sse, fn);
-}
-export function currentSSE(): SseSink | null {
-    return sseALS.getStore() ?? null;
 }

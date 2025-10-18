@@ -63,7 +63,7 @@ export function processZipStream({
   onDone?: () => void;
   onError?: (msg: string) => void;
 }) {
-  const url = new URL(API_ENDPOINTS.BACKUP_PROCESS_STREAM, window.location.origin);
+  const url = new URL(API_ENDPOINTS.SSE, window.location.origin);
   url.searchParams.set("filename", filename);
   if (password) url.searchParams.set("password", password);
 

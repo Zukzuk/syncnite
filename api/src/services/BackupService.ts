@@ -3,7 +3,7 @@ import { join, basename } from "node:path";
 import {
     INPUT_DIR, WORK_DIR, DATA_DIR,
     run, cleanDir, normalizeBackslashPaths,
-    copyLibraryFilesWithProgress,
+    copyLibraryFilesWithProgress, findLibraryDir
 } from "../helpers";
 import { rootLog } from "../logger";
 
@@ -50,7 +50,7 @@ export class BackupService {
             await run("7z", ["t", zipPath], {
                 onStdout: (ln) => {
                     const m = /(\d{1,3})%/.exec(ln);
-                    if (m) rootLog.logExternal({ level: "info", kind: "progress", data: { phase: "unzip", percent: Number(m[1]) } });
+                    if (m) rootLog.raw({ level: "info", kind: "progress", data: { phase: "unzip", percent: Number(m[1]) } });
                 },
                 onStderr: (ln) => /error/i.test(ln) && log.warn(`7z: ${ln}`),
             });
@@ -61,7 +61,7 @@ export class BackupService {
             await run("7z", ["x", "-y", `-o${WORK_DIR}`, zipPath, "-bsp1", "-bso1"], {
                 onStdout: (ln) => {
                     const m = /(\d{1,3})%/.exec(ln);
-                    if (m) rootLog.logExternal({ level: "info", kind: "progress", data: { phase: "unzip", percent: Number(m[1]) } });
+                    if (m) rootLog.raw({ level: "info", kind: "progress", data: { phase: "unzip", percent: Number(m[1]) } });
                 },
                 onStderr: (ln) => /error/i.test(ln) && log.warn(`7z: ${ln}`),
             });
@@ -70,10 +70,11 @@ export class BackupService {
             await normalizeBackslashPaths(WORK_DIR);
 
             log.info("Locating library dir…");
-            const libDir = await this.findLibraryDir(WORK_DIR);
+            const libDir = await findLibraryDir(WORK_DIR);
             if (!libDir) throw new Error("No library directory with *.db");
 
             log.info("Clearing /data…");
+            await cleanDir(DATA_DIR);
             await fs.mkdir(DATA_DIR, { recursive: true });
 
             log.info("Dumping LiteDB to JSON…");
@@ -90,7 +91,7 @@ export class BackupService {
                 dataRoot: DATA_DIR,
                 log: (m) => log.info(m),
                 progress: ({ percent, copiedBytes, totalBytes, deltaBytes }) =>
-                    rootLog.logExternal({ level: "info", kind: "progress", data: { phase: "copy", percent, copiedBytes, totalBytes, deltaBytes } }),
+                    rootLog.raw({ level: "info", kind: "progress", data: { phase: "copy", percent, copiedBytes, totalBytes, deltaBytes } }),
             });
 
             log.info("Processing complete.");
@@ -98,38 +99,5 @@ export class BackupService {
             log.error("ERROR", { err: String(e?.message ?? e) });
             throw e;
         }
-    }
-
-    /**
-     * Find the library directory within the given root.
-     * @param root Root directory to search
-     * @returns The path to the library directory, or null if not found
-     */
-    async findLibraryDir(root: string): Promise<string | null> {
-        log.debug(`findLibraryDir start`, { root });
-        const stack = [root];
-        while (stack.length) {
-            const dir = stack.pop()!;
-            let entries: import("node:fs").Dirent[];
-            try {
-                entries = await fs.readdir(dir, { withFileTypes: true });
-            } catch { continue; }
-
-            const hasGamesDb = entries.some(e => e.isFile() && /^(games|game)\.db$/i.test(e.name));
-            if (hasGamesDb) { log.info(`library dir detected`, { dir }); return dir; }
-
-            const libEntry = entries.find(e => e.isDirectory() && e.name.toLowerCase() === "library");
-            if (libEntry) {
-                const lib = join(dir, libEntry.name);
-                try {
-                    const libEntries = await fs.readdir(lib);
-                    if (libEntries.some(n => /^(games|game)\.db$/i.test(n))) { log.info(`library dir detected`, { dir: lib }); return lib; }
-                } catch { /* ignore */ }
-            }
-
-            for (const e of entries) if (e.isDirectory()) stack.push(join(dir, e.name));
-        }
-        log.debug(`library dir not found`, { root });
-        return null;
     }
 }
