@@ -11,7 +11,7 @@ namespace SyncniteBridge.Helpers
     internal sealed class ZipBuilder : IDisposable
     {
         private readonly ZipArchive zip;
-        private readonly FileStream output
+        private readonly FileStream output;
         private readonly BridgeLogger? blog;
 
         private readonly long expectedTotalBytes;
