@@ -15,7 +15,10 @@ namespace SyncniteBridge.Helpers
         // Keep weak refs so disposed clients don’t leak.
         private static readonly List<WeakReference<HttpClient>> clients =
             new List<WeakReference<HttpClient>>();
-
+        
+        /// <summary>
+        /// Set the email and password to be used for authentication.
+        /// </summary>
         public static void Set(string newEmail, string newPassword)
         {
             email = newEmail?.Trim() ?? "";
@@ -23,6 +26,9 @@ namespace SyncniteBridge.Helpers
             ReapplyAll();
         }
 
+        /// <summary>
+        /// Apply auth headers to the given HttpClient.
+        /// </summary>
         public static void Apply(HttpClient http)
         {
             if (http == null)
@@ -38,6 +44,9 @@ namespace SyncniteBridge.Helpers
             Stamp(http);
         }
 
+        /// <summary>
+        /// Apply current auth headers to the given HttpClient.
+        /// </summary>
         private static void Stamp(HttpClient http)
         {
             try
@@ -57,6 +66,9 @@ namespace SyncniteBridge.Helpers
             }
         }
 
+        /// <summary>
+        /// Reapply auth headers to all tracked HttpClients.
+        /// </summary>
         private static void ReapplyAll()
         {
             lock (clients)
@@ -73,6 +85,9 @@ namespace SyncniteBridge.Helpers
             }
         }
 
+        /// <summary>
+        /// Whether email or password is missing.
+        /// </summary>
         public static bool MissingCredentials =>
             string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password);
     }

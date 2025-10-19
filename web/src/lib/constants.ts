@@ -48,7 +48,6 @@ export const FILES = {
   series: [`${BASE}/series.Series.json`],
   regions: [`${BASE}/regions.Region.json`],
   ageRatings: [`${BASE}/ageratings.AgeRating.json`],
-  emulators: [`${BASE}/emulators.Emulator.json`],
   completionStatuses: [`${BASE}/completionstatuses.CompletionStatus.json`],
   filterPresets: [`${BASE}/filterpresets.FilterPreset.json`],
   importExclusions: [`${BASE}/importexclusions.ImportExclusion.json`]

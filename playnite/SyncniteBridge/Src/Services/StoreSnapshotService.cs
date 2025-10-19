@@ -8,14 +8,17 @@ using SyncniteBridge.Helpers;
 namespace SyncniteBridge.Services
 {
     /// <summary>
-    /// Persists the last successful upload snapshot 
+    /// Persists the last successful upload snapshot
     /// under ExtensionsData/<GUID>/lastManifest.json.
     /// </summary>
-    internal sealed class SnapshotStore
+    internal sealed class StoreSnapshotService
     {
         private readonly string path;
-        private readonly BridgeLogger blog;
-
+        private readonly BridgeLogger? blog;
+        
+        /// <summary>
+        /// Snapshot structure.
+        /// </summary>
         internal sealed class ManifestSnapshot
         {
             public string UpdatedAt { get; set; } = "";
@@ -24,7 +27,10 @@ namespace SyncniteBridge.Services
                 new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
         }
 
-        public SnapshotStore(string extensionsDataPath, BridgeLogger blog = null)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="StoreSnapshotService"/> class.
+        /// </summary>
+        public StoreSnapshotService(string extensionsDataPath, BridgeLogger? blog = null)
         {
             Directory.CreateDirectory(extensionsDataPath ?? ".");
             path = Path.Combine(extensionsDataPath ?? ".", AppConstants.SnapshotFileName);
@@ -33,6 +39,9 @@ namespace SyncniteBridge.Services
             blog?.Debug("snapshot", "Snapshot store initialized", new { path });
         }
 
+        /// <summary>
+        /// Load the last saved snapshot from disk.
+        /// </summary>
         public ManifestSnapshot Load()
         {
             try
@@ -68,6 +77,9 @@ namespace SyncniteBridge.Services
             }
         }
 
+        /// <summary>
+        /// Save the snapshot to disk.
+        /// </summary>
         public void Save(ManifestSnapshot snapshot)
         {
             try

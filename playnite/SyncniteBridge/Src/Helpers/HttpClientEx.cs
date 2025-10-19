@@ -8,26 +8,40 @@ using SyncniteBridge.Helpers;
 
 namespace SyncniteBridge.Helpers
 {
-    /// <summary>Extended HTTP client for Syncnite operations.</summary>
+    /// <summary>
+    /// Extended HTTP client for Syncnite operations.
+    /// </summary>
     internal sealed class HttpClientEx
     {
+        /// <summary>
+        /// Response from sync upload.
+        /// </summary>
         private sealed class SyncResp
         {
             public bool ok { get; set; }
         }
 
+        /// <summary>
+        /// Remote JSON file info.
+        /// </summary>
         public sealed class RemoteJsonFile
         {
             public long size { get; set; }
             public long mtimeMs { get; set; }
         }
 
+        /// <summary>
+        /// Remote installed info.
+        /// </summary>
         public sealed class RemoteInstalled
         {
             public int count { get; set; }
-            public string hash { get; set; }
+            public string hash { get; set; } = string.Empty;
         }
 
+        /// <summary>
+        /// Remote manifest structure.
+        /// </summary>
         public sealed class RemoteManifest
         {
             public Dictionary<string, RemoteJsonFile> json { get; set; } =
@@ -35,23 +49,32 @@ namespace SyncniteBridge.Helpers
             public RemoteInstalled installed { get; set; } = new();
         }
 
+        /// <summary>
+        /// Remote manifest wrapper structure.
+        /// </summary>
         public sealed class RemoteManifestWrapper
         {
             public bool ok { get; set; }
-            public string generatedAt { get; set; }
-            public RemoteManifest manifest { get; set; }
+            public string generatedAt { get; set; } = string.Empty;
+            public RemoteManifest manifest { get; set; } = new();
         }
 
         private readonly HttpClient http;
-        private readonly BridgeLogger blog;
+        private readonly BridgeLogger? blog;
 
-        public HttpClientEx(BridgeLogger blog, TimeSpan? timeout = null)
+        /// <summary>
+        /// Create a new HttpClientEx.
+        /// </summary>
+        public HttpClientEx(BridgeLogger? blog, TimeSpan? timeout = null)
         {
             this.blog = blog;
             http = new HttpClient { Timeout = timeout ?? TimeSpan.FromMinutes(5) };
             AuthHeaders.Apply(http);
         }
 
+        /// <summary>
+        /// Ping the given URL; returns true on 200 OK.
+        /// </summary>
         public async Task<bool> PingAsync(string url)
         {
             try
@@ -65,7 +88,9 @@ namespace SyncniteBridge.Helpers
             }
         }
 
-        /// <summary>Upload ZIP from disk to sync endpoint (sparse progress).</summary>
+        /// <summary>
+        /// Upload ZIP from disk to sync endpoint (sparse progress).
+        /// </summary>
         public async Task<bool> SyncZipAsync(string syncUrl, string zipPath)
         {
             var fi = new FileInfo(zipPath);

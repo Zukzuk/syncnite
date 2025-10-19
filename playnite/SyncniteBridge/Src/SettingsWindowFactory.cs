@@ -15,6 +15,10 @@ namespace SyncniteBridge
     /// </summary>
     public static class SettingsWindowFactory
     {
+
+        /// <summary>
+        /// Build and show the settings window.
+        /// </summary>
         public static void BuildAndShow(
             IPlayniteAPI api,
             string initialApiBase,
@@ -91,6 +95,9 @@ namespace SyncniteBridge
             };
             ThemeHelpers.SetThemeTextBrush(statusText);
 
+            /// <summary>
+            /// Render the health status.
+            /// </summary>
             void RenderStatus(bool healthy)
             {
                 if (healthy)
@@ -198,6 +205,9 @@ namespace SyncniteBridge
             creds.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             creds.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
+            /// <summary>
+            /// Make a labeled row.
+            /// </summary>
             Grid MakeRow(string label, UIElement input)
             {
                 var r = new Grid { Margin = new Thickness(0, 0, 0, 8) };

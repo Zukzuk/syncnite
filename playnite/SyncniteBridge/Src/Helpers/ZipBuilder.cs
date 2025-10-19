@@ -18,6 +18,9 @@ namespace SyncniteBridge.Helpers
         private long zippedBytes = 0;
         private readonly Action<int>? onPercent;
 
+        /// <summary>
+        /// Create a new ZipBuilder.
+        /// </summary>
         internal ZipBuilder(
             string zipPath,
             BridgeLogger? blog = null,
@@ -33,6 +36,9 @@ namespace SyncniteBridge.Helpers
             this.onPercent = onPercent;
         }
 
+        /// <summary>
+        /// Add a file to the zip.
+        /// </summary>
         public void AddFile(
             string absoluteSource,
             string relPathInZip,
@@ -55,6 +61,9 @@ namespace SyncniteBridge.Helpers
             }
         }
 
+        /// <summary>
+        /// Add text content as a file to the zip.
+        /// </summary>
         public void AddText(string relPathInZip, string text)
         {
             var entryPath = relPathInZip.Replace('\\', '/');
@@ -65,6 +74,9 @@ namespace SyncniteBridge.Helpers
             CopyWithProgress(ms, zs);
         }
 
+        /// <summary>
+        /// Copy data from src to dst with progress reporting.
+        /// </summary>
         private void CopyWithProgress(Stream src, Stream dst)
         {
             var buf = new byte[64 * 1024];

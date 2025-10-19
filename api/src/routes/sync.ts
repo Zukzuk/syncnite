@@ -34,7 +34,7 @@ router.post("/push", async (req, res) => {
   log.info("push: incoming request");
 
   try {
-    log.info("push: raw body received:", req.body);
+    log.info("push: raw body received", req.body);
     const email = (req as any).authEmail
       || String(req.header("x-auth-email") || "").toLowerCase();
     const count = await syncService.pushInstalled(req.body?.installed, email);

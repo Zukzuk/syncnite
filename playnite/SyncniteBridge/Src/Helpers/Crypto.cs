@@ -9,7 +9,9 @@ namespace SyncniteBridge.Helpers
     /// </summary>
     internal static class Crypto
     {
-        // Encrypts text for the current Windows user; returns Base64.
+        /// <summary>
+        /// Encrypts plain text; returns Base64.
+        /// </summary>
         public static string Protect(string plain)
         {
             if (string.IsNullOrEmpty(plain))
@@ -23,7 +25,9 @@ namespace SyncniteBridge.Helpers
             return Convert.ToBase64String(prot);
         }
 
-        // Decrypts Base64 produced by Protect; returns empty on failure.
+        /// <summary>
+        /// Decrypts Base64 text; returns plain.
+        /// </summary>
         public static string Unprotect(string b64)
         {
             try

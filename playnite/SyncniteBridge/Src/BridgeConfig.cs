@@ -29,6 +29,9 @@ namespace SyncniteBridge
         public void SetAuthPassword(string value) =>
             AuthPasswordEncrypted = Crypto.Protect(value ?? "");
 
+        /// <summary>
+        /// Load the config from disk.
+        /// </summary>
         public static BridgeConfig Load(string path)
         {
             try
@@ -48,6 +51,9 @@ namespace SyncniteBridge
             return new BridgeConfig();
         }
 
+        /// <summary>
+        /// Save the config to disk.
+        /// </summary>
         public static void Save(string path, BridgeConfig cfg)
         {
             try

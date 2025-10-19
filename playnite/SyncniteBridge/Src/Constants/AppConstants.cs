@@ -75,7 +75,6 @@ namespace SyncniteBridge.Constants
         public const string RegionsJsonFileName = "regions.Region.json";
         public const string AgeRatingsJsonFileName = "ageratings.AgeRating.json";
         public const string CompaniesJsonFileName = "companies.Company.json";
-        public const string EmulatorsJsonFileName = "emulators.Emulator.json";
         public const string CompletionStatusesJsonFileName =
             "completionstatuses.CompletionStatus.json";
         public const string FilterPresetsJsonFileName = "filterpresets.FilterPreset.json";

@@ -9,6 +9,9 @@ namespace SyncniteBridge.Helpers
     /// </summary>
     internal static class HashUtil
     {
+        /// <summary>
+        /// Compute the SHA1 hash of the given input string.
+        /// </summary>
         public static string Sha1(string input)
         {
             using (var sha = SHA1.Create())

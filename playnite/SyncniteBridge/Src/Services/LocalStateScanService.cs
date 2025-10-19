@@ -12,22 +12,27 @@ namespace SyncniteBridge.Services
     /// Knows how to read current local state: DB ticks, media folder mtimes,
     /// and build the manifest payload we embed into the ZIP.
     /// </summary>
-    internal sealed class LocalStateScanner
+    internal sealed class LocalStateScanService
     {
         private readonly IPlayniteAPI api;
         private readonly string dataRoot;
-        private readonly BridgeLogger blog;
+        private readonly BridgeLogger? blog;
 
-        public LocalStateScanner(IPlayniteAPI api, string dataRoot, BridgeLogger blog = null)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LocalStateScanService"/> class.
+        /// </summary>
+        public LocalStateScanService(IPlayniteAPI api, string dataRoot, BridgeLogger? blog = null)
         {
             this.api = api;
             this.dataRoot = dataRoot ?? "";
             this.blog = blog;
         }
 
-        public SnapshotStore.ManifestSnapshot BuildSnapshot()
+        /// <summary>
+        /// Build a lightweight snapshot of current local state for diffing.
+        /// </summary>
+        public StoreSnapshotService.ManifestSnapshot BuildSnapshot()
         {
-            // DEBUG: we’re about to build a lightweight snapshot used for initial diffing.
             blog?.Debug(
                 "scan",
                 "Building snapshot",
@@ -49,7 +54,7 @@ namespace SyncniteBridge.Services
                 new { dbTicks, mediaFolders = mediaVersions.Count }
             );
 
-            return new SnapshotStore.ManifestSnapshot
+            return new StoreSnapshotService.ManifestSnapshot
             {
                 UpdatedAt = DateTime.UtcNow.ToString("o"),
                 DbTicks = dbTicks,
@@ -57,6 +62,9 @@ namespace SyncniteBridge.Services
             };
         }
 
+        /// <summary>
+        /// Build a view of the local manifest: DB files, media folders, installed signature.
+        /// </summary>
         public (
             Dictionary<string, (long size, long mtimeMs)> Json,
             List<string> MediaFolders,
@@ -151,6 +159,9 @@ namespace SyncniteBridge.Services
             return (json, mediaFolders, installed);
         }
 
+        /// <summary>
+        /// Get the latest modification ticks among all DB files.
+        /// </summary>
         private static long LatestDbTicks(string libraryDir)
         {
             try
@@ -172,6 +183,9 @@ namespace SyncniteBridge.Services
             }
         }
 
+        /// <summary>
+        /// Scan media folders and get their modification versions.
+        /// </summary>
         private static Dictionary<string, long> ScanMediaVersions(string mediaDir)
         {
             var map = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);

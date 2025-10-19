@@ -21,13 +21,15 @@ namespace SyncniteBridge.Services
         private string endpoint;
         private readonly System.Timers.Timer debounce;
         private readonly ILogger log = LogManager.GetLogger();
-        private CancellationTokenSource pushCts;
-        private readonly BridgeLogger blog;
+        private CancellationTokenSource? pushCts;
+        private readonly BridgeLogger? blog;
         private readonly HttpClient http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
-
         private Func<bool> isHealthy = () => true; // injected
 
-        public PushInstalledService(IPlayniteAPI api, string endpoint, BridgeLogger blog = null)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PushInstalledService"/> class.
+        /// </summary>
+        public PushInstalledService(IPlayniteAPI api, string endpoint, BridgeLogger? blog = null)
         {
             this.api = api;
             this.endpoint = (endpoint ?? "").TrimEnd('/');
@@ -45,14 +47,23 @@ namespace SyncniteBridge.Services
             api.Database.Games.ItemUpdated += (s, e) => Trigger();
         }
 
+        /// <summary>
+        /// Sets the health check provider.
+        /// </summary>
         public void SetHealthProvider(Func<bool> provider) => isHealthy = provider ?? (() => true);
 
+        /// <summary>
+        /// Update the push endpoint URL.
+        /// </summary>
         public void UpdateEndpoint(string endpoint)
         {
             this.endpoint = (endpoint ?? "").TrimEnd('/');
             blog?.Debug("push", "Endpoint updated", new { endpoint = this.endpoint });
         }
 
+        /// <summary>
+        /// Trigger a debounced push.
+        /// </summary>
         public void Trigger()
         {
             if (!isHealthy())
@@ -72,6 +83,9 @@ namespace SyncniteBridge.Services
             catch { }
         }
 
+        /// <summary>
+        /// Immediately push the installed list.
+        /// </summary>
         public void PushNow()
         {
             if (!isHealthy())
@@ -87,6 +101,9 @@ namespace SyncniteBridge.Services
             _ = PushInstalledAsync();
         }
 
+        /// <summary>
+        /// Build the JSON payload for the installed list.
+        /// </summary>
         private string BuildPayload()
         {
             var obj = new
@@ -99,6 +116,9 @@ namespace SyncniteBridge.Services
             return Playnite.SDK.Data.Serialization.ToJson(obj);
         }
 
+        /// <summary>
+        /// Push the installed list to the remote endpoint.
+        /// </summary>
         private async Task PushInstalledAsync()
         {
             if (!isHealthy())
@@ -153,8 +173,8 @@ namespace SyncniteBridge.Services
                 var resp = await sendTask.ConfigureAwait(false);
                 resp.EnsureSuccessStatusCode();
 
-                int count = api.Database.Games.Count(g => g.IsInstalled);
                 // Milestone: push ok
+                int count = api.Database.Games.Count(g => g.IsInstalled);
                 blog?.Info("push", "Push OK");
                 blog?.Debug("push", "Push details", new { count });
             }

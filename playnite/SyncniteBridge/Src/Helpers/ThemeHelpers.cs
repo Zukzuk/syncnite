@@ -9,6 +9,9 @@ namespace SyncniteBridge.Helpers
     /// </summary>
     internal static class ThemeHelpers
     {
+        /// <summary>
+        /// Try to apply the given style to the element.
+        /// </summary>
         public static void TryStyle(FrameworkElement el, string styleKey)
         {
             try
@@ -20,6 +23,9 @@ namespace SyncniteBridge.Helpers
             catch { }
         }
 
+        /// <summary>
+        /// Hook theme background to the given Window.
+        /// </summary>
         public static void HookThemeBackground(Window w)
         {
             var keys = new[]
@@ -40,6 +46,9 @@ namespace SyncniteBridge.Helpers
             }
         }
 
+        /// <summary>
+        /// Hook theme foreground to the given Window.
+        /// </summary>
         public static void HookThemeForeground(Window w)
         {
             var keys = new[]
@@ -60,6 +69,9 @@ namespace SyncniteBridge.Helpers
             }
         }
 
+        /// <summary>
+        /// Set the text brush on the given element.
+        /// </summary>
         public static void SetThemeTextBrush(FrameworkElement el)
         {
             if (el == null)
@@ -91,6 +103,9 @@ namespace SyncniteBridge.Helpers
             }
         }
 
+        /// <summary>
+        /// Try to set a dynamic brush on the given element.
+        /// </summary>
         public static bool TrySetDynamicBrush(
             FrameworkElement el,
             DependencyProperty prop,

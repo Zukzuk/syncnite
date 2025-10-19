@@ -13,21 +13,23 @@ namespace SyncniteBridge.Services
     /// </summary>
     internal sealed class HealthcheckService : IDisposable
     {
+        public string StatusText =>
+            lastOk ? AppConstants.HealthStatusHealthy : AppConstants.HealthStatusUnreachable;
+        public bool IsHealthy => lastOk;
+        public event Action<bool> StatusChanged; // new status (true=healthy)
+
         private readonly IPlayniteAPI api;
         private readonly ILogger log = LogManager.GetLogger();
         private readonly HttpClientEx http;
         private readonly Timer timer;
         private string pingUrl;
         private bool lastOk;
-        public string StatusText =>
-            lastOk ? AppConstants.HealthStatusHealthy : AppConstants.HealthStatusUnreachable;
-        public bool IsHealthy => lastOk;
+        private readonly BridgeLogger? blog;
 
-        private readonly BridgeLogger blog;
-
-        public event Action<bool> StatusChanged; // new status (true=healthy)
-
-        public HealthcheckService(IPlayniteAPI api, string pingUrl, BridgeLogger blog = null)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="HealthcheckService"/> class.
+        /// </summary>
+        public HealthcheckService(IPlayniteAPI api, string pingUrl, BridgeLogger? blog = null)
         {
             this.api = api;
             this.pingUrl = pingUrl;
@@ -37,6 +39,9 @@ namespace SyncniteBridge.Services
             timer.Elapsed += async (s, e) => await TickAsync();
         }
 
+        /// <summary>
+        /// Start periodic health checks.
+        /// </summary>
         public void Start()
         {
             var rnd = new Random();
@@ -55,6 +60,9 @@ namespace SyncniteBridge.Services
             });
         }
 
+        /// <summary>
+        /// Update the ping endpoint URL.
+        /// </summary>
         public void UpdateEndpoint(string newPingUrl)
         {
             pingUrl = newPingUrl;
@@ -62,6 +70,9 @@ namespace SyncniteBridge.Services
             _ = TickAsync();
         }
 
+        /// <summary>
+        /// Perform a single health check tick.
+        /// </summary>
         private async Task TickAsync()
         {
             var ok = await http.PingAsync(pingUrl).ConfigureAwait(false);

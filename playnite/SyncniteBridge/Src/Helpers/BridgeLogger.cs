@@ -21,6 +21,9 @@ namespace SyncniteBridge.Helpers
         Trace = 4,
     }
 
+    /// <summary>
+    /// Logger that sends logs both to Playnite and to the Syncnite server.
+    /// </summary>
     internal sealed class BridgeLogger : IDisposable
     {
         private const int MaxBatch = 32;
@@ -43,6 +46,9 @@ namespace SyncniteBridge.Helpers
         private readonly string ver;
         private BridgeLevel threshold;
 
+        /// <summary>
+        /// Create a new BridgeLogger.
+        /// </summary>
         public BridgeLogger(string apiBase, string version, string level = "info")
         {
             endpoint = Combine(apiBase, AppConstants.Path_Syncnite_Log);
@@ -52,38 +58,62 @@ namespace SyncniteBridge.Helpers
             AuthHeaders.Apply(http);
         }
 
+        /// <summary>
+        /// Update the API base URL.
+        /// </summary>
         public void UpdateApiBase(string apiBase) =>
             endpoint = Combine(apiBase, AppConstants.Path_Syncnite_Log);
 
+        /// <summary>
+        /// Update the logging level.
+        /// </summary>
         public void UpdateLevel(string level) => threshold = Parse(level);
 
-        public void Error(string kind, string msg, object data = null, string err = null) =>
+        /// <summary>
+        /// Log an error message.
+        /// </summary>
+        public void Error(string kind, string msg, object? data = null, string? err = null) =>
             Emit(BridgeLevel.Error, kind, msg, data, err);
 
-        public void Warn(string kind, string msg, object data = null) =>
+        /// <summary>
+        /// Log a warning message.
+        /// </summary>
+        public void Warn(string kind, string msg, object? data = null) =>
             Emit(BridgeLevel.Warn, kind, msg, data);
 
-        public void Info(string kind, string msg, object data = null) =>
+        /// <summary>
+        /// Log an informational message.
+        /// </summary>
+        public void Info(string kind, string msg, object? data = null) =>
             Emit(BridgeLevel.Info, kind, msg, data);
 
-        public void Debug(string kind, string msg, object data = null)
+        /// <summary>
+        /// Log a debug message.
+        /// </summary>
+        public void Debug(string kind, string msg, object? data = null)
         {
             if (threshold >= BridgeLevel.Debug)
                 Emit(BridgeLevel.Debug, kind, msg, data);
         }
 
-        public void Trace(string kind, string msg, object data = null)
+        /// <summary>
+        /// Log a trace message.
+        /// </summary>
+        public void Trace(string kind, string msg, object? data = null)
         {
             if (threshold >= BridgeLevel.Trace)
                 Emit(BridgeLevel.Trace, kind, msg, data);
         }
 
+        /// <summary>
+        /// Emit a log message.
+        /// </summary>
         private void Emit(
             BridgeLevel lvl,
             string kind,
             string msg,
-            object data = null,
-            string err = null
+            object? data = null,
+            string? err = null
         )
         {
             if (lvl > threshold)
@@ -124,6 +154,9 @@ namespace SyncniteBridge.Helpers
             }
         }
 
+        /// <summary>
+        /// Asynchronous log pumping task.
+        /// </summary>
         private async Task PumpAsync(CancellationToken ct)
         {
             var batch = new System.Collections.Generic.List<string>(MaxBatch);
@@ -204,6 +237,9 @@ namespace SyncniteBridge.Helpers
             catch { }
         }
 
+        /// <summary>
+        /// Parse a logging level string.
+        /// </summary>
         private static BridgeLevel Parse(string s)
         {
             switch ((s ?? "info").Trim().ToLowerInvariant())
@@ -223,6 +259,9 @@ namespace SyncniteBridge.Helpers
             }
         }
 
+        /// <summary>
+        /// Combine base URL and path.
+        /// </summary>
         private static string Combine(string baseUrl, string path)
         {
             baseUrl = (baseUrl ?? string.Empty).TrimEnd('/');

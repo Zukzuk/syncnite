@@ -17,6 +17,9 @@ namespace SyncniteBridge.Helpers
         private readonly long length;
         private readonly Action<long, long> onProgress; // (sent,total)
 
+        /// <summary>
+        /// Create a new ProgressableStreamContent.
+        /// </summary>
         public ProgressableStreamContent(Stream source, long length, Action<long, long> onProgress)
         {
             src = source ?? throw new ArgumentNullException(nameof(source));
@@ -26,7 +29,13 @@ namespace SyncniteBridge.Helpers
             Headers.ContentType = new MediaTypeHeaderValue("application/zip");
         }
 
-        protected override async Task SerializeToStreamAsync(Stream target, TransportContext context)
+        /// <summary>
+        /// Serialize the content to the given stream, reporting progress.
+        /// </summary>
+        protected override async Task SerializeToStreamAsync(
+            Stream target,
+            TransportContext context
+        )
         {
             var buffer = new byte[BufferSize];
             long sent = 0;
@@ -48,6 +57,9 @@ namespace SyncniteBridge.Helpers
             }
         }
 
+        /// <summary>
+        /// Try to compute the length of the content.
+        /// </summary>
         protected override bool TryComputeLength(out long length64)
         {
             length64 = length;

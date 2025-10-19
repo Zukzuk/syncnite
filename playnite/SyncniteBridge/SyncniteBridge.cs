@@ -17,13 +17,16 @@ namespace SyncniteBridge
         public override Guid Id { get; } = Guid.Parse(AppConstants.GUID);
 
         private readonly ILogger logger = LogManager.GetLogger();
-        private BridgeLogger blog;
+        private BridgeLogger? blog;
         private PushInstalledService pusher;
         private BridgeConfig config;
         private readonly string configPath;
         private DeltaSyncService deltaSync;
         private HealthcheckService health;
 
+        /// <summary>
+        /// Create a new SyncniteBridge plugin instance.
+        /// </summary>
         public SyncniteBridge(IPlayniteAPI api)
             : base(api)
         {
@@ -85,6 +88,9 @@ namespace SyncniteBridge
             Properties = new GenericPluginProperties { HasSettings = true };
         }
 
+        /// <summary>
+        /// Combine base URL and path.
+        /// </summary>
         private static string Combine(string baseUrl, string path)
         {
             baseUrl = (baseUrl ?? string.Empty).TrimEnd('/');
@@ -92,6 +98,9 @@ namespace SyncniteBridge
             return baseUrl + "/" + path;
         }
 
+        /// <summary>
+        /// Get the default Playnite data root path.
+        /// </summary>
         private static string GetDefaultPlayniteDataRoot()
         {
             try
@@ -109,6 +118,9 @@ namespace SyncniteBridge
 
         public override UserControl GetSettingsView(bool firstRunSettings) => null;
 
+        /// <summary>
+        /// Get main menu items.
+        /// </summary>
         public override System.Collections.Generic.IEnumerable<MainMenuItem> GetMainMenuItems(
             GetMainMenuItemsArgs args
         )
