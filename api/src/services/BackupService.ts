@@ -2,7 +2,7 @@ import { promises as fs } from "node:fs";
 import { join, basename } from "node:path";
 import { runImportCore } from "../helpers";
 import { rootLog } from "../logger";
-import { INPUT_DIR } from "../constants";
+import { UPLOADS_DIR } from "../constants";
 import { SyncBus } from "./EventBusService";
 
 const log = rootLog.child("backupService");
@@ -10,12 +10,12 @@ const log = rootLog.child("backupService");
 export class BackupService {
 
     /**
-     * Moves the uploaded temp file to INPUT_DIR with a sanitized name.
+     * Moves the uploaded temp file to UPLOADS_DIR with a sanitized name.
      * Returns the sanitized filename.
      */
     async storeUploadedFile(tempPath: string, originalName: string): Promise<string> {
         const safe = originalName.replace(/[^A-Za-z0-9._ -]/g, "_");
-        const dest = join(INPUT_DIR, safe);
+        const dest = join(UPLOADS_DIR, safe);
 
         log.info(`Sanitized filename → "${safe}"`);
         log.info(`Moving file to ${dest}`);
@@ -32,7 +32,7 @@ export class BackupService {
      */
     async processZipStream(params: { filename: string; password?: string }): Promise<void> {
         const { filename, password = "" } = params;
-        const zipPath = join(INPUT_DIR, basename(filename));
+        const zipPath = join(UPLOADS_DIR, basename(filename));
         log.info("zipPath resolved", { zipPath });
 
         try {

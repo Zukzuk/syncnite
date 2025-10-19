@@ -365,9 +365,6 @@ namespace SyncniteBridge.Services
                             kv => new { size = kv.Value.size, mtimeMs = kv.Value.mtimeMs },
                             StringComparer.OrdinalIgnoreCase
                         ),
-                    mediaFolders = local
-                        .MediaFolders.OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
-                        .ToArray(),
                     installed = new { count = local.Installed.count, hash = local.Installed.hash },
                 };
 
@@ -589,18 +586,6 @@ namespace SyncniteBridge.Services
 
         private void ExportSdkSnapshotToZip(ZipBuilder zb)
         {
-            // meta
-            zb.AddText(
-                AppConstants.MetaFileName,
-                Playnite.SDK.Data.Serialization.ToJson(
-                    new
-                    {
-                        exportedAt = DateTime.UtcNow.ToString("o"),
-                        exporter = AppConstants.AppName,
-                    }
-                )
-            );
-
             // --- GAMES (explicit, richer projection)
             var games =
                 api.Database.Games?.Select(g =>

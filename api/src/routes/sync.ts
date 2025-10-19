@@ -2,12 +2,12 @@ import express from "express";
 import multer from "multer";
 import { SyncService } from "../services/SyncService";
 import { requireAdmin } from "../middleware/requireAdmin";
-import { INPUT_DIR } from "../constants";
+import { UPLOADS_DIR } from "../constants";
 import { rootLog } from "../logger";
 
 const router = express.Router();
 router.use(requireAdmin);
-const syncUpload = multer({ dest: INPUT_DIR });
+const syncUpload = multer({ dest: UPLOADS_DIR });
 const syncService = new SyncService();
 const log = rootLog.child("route:sync");
 

@@ -1,12 +1,12 @@
 import express from "express";
 import { ListZipsService } from "../services/ListZipsService";
-import { INPUT_DIR } from "../constants";
+import { UPLOADS_DIR } from "../constants";
 import { rootLog } from "../logger";
 import { createSSE } from "../sse";
 import { SyncBus } from "../services/EventBusService";
 
 const router = express.Router();
-const listZipsService = new ListZipsService(INPUT_DIR);
+const listZipsService = new ListZipsService(UPLOADS_DIR);
 const log = rootLog.child("route:app");
 
 router.get("/zips", async (_req, res) => {

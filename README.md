@@ -66,7 +66,7 @@ Builds and pushes the api and web docker images, tagging with the current versio
 cd deploy
 docker compose up -d
 ```
-Mount your host paths under /input, /data, /extension.
+Mount your host paths under /uploads, /data, /extension.
 
 ### Clean
 ```

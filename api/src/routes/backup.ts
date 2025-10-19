@@ -1,11 +1,11 @@
 import express from "express";
 import multer from "multer";
 import { BackupService } from "../services/BackupService";
-import { INPUT_DIR } from "../constants";
+import { UPLOADS_DIR } from "../constants";
 import { rootLog } from "../logger";
 
 const router = express.Router();
-const upload = multer({ dest: INPUT_DIR });
+const upload = multer({ dest: UPLOADS_DIR });
 const backupService = new BackupService();
 const log = rootLog.child("route:backup");
 

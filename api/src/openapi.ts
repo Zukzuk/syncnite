@@ -150,7 +150,7 @@
  *           properties:
  *             savedZip:
  *               type: string
- *               example: /input/2025-09-20-23-10.zip
+ *               example: /uploads/2025-09-20-23-10.zip
  *             sizeBytes:
  *               type: integer
  *               example: 12345678

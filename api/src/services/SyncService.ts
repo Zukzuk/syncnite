@@ -2,7 +2,7 @@ import { existsSync, promises as fs } from "node:fs";
 import { join } from "node:path";
 import { runImportCore } from "../helpers";
 import { rootLog } from "../logger";
-import { DATA_DIR, INPUT_DIR, WORK_DIR } from "../constants";
+import { DATA_DIR, UPLOADS_DIR, WORK_DIR } from "../constants";
 
 const log = rootLog.child("syncService");
 
@@ -65,16 +65,16 @@ export class SyncService {
     /**
      * Processes an uploaded ZIP from the extension.
      * Additive: never clears /data. Uses WORK_DIR for extraction/staging, then merges into /data.
-     * After merging, (re)builds /data/manifest.json and finally persists the uploaded zip in /input.
+     * After merging, (re)builds /data/manifest.json and finally persists the uploaded zip in /uploads.
      */
     async processZipStream(input: SyncUploadInput): Promise<SyncUploadResult> {
         const { zipPath, originalName: origName, sizeBytes: size } = input;
         const password = "";
         const isSync = true;
 
-        if (!existsSync(INPUT_DIR)) {
-            await fs.mkdir(INPUT_DIR, { recursive: true });
-            log.debug(`Created input dir at: ${INPUT_DIR}`);
+        if (!existsSync(UPLOADS_DIR)) {
+            await fs.mkdir(UPLOADS_DIR, { recursive: true });
+            log.debug(`Created uploads dir at: ${UPLOADS_DIR}`);
         }
 
         log.info(`Incoming upload "${origName}" (${size} bytes), temp="${zipPath}"`);
@@ -121,7 +121,7 @@ export class SyncService {
                 log.debug("manifest.json not found in zipfile");
             }
 
-            // --- Normalize /data/manifest.json (derive media folders/versions from /data)
+            // --- Normalize /data/manifest.json (derive mediaVersions from /data)
             try {
                 const manifestPath = join(DATA_DIR, "manifest.json");
 
@@ -135,15 +135,12 @@ export class SyncService {
                     log.debug("/data/manifest.json missing; creating a minimal one");
                 }
 
-                // Scan /data/libraryfiles → derive mediaFolders + mediaVersions
+                // Scan /data/libraryfiles → derive mediaVersions
                 const lfRoot = join(DATA_DIR, "libraryfiles");
-                let mediaFolders: string[] = [];
                 const mediaVersions: Record<string, number> = {};
 
                 try {
                     const ents = await fs.readdir(lfRoot, { withFileTypes: true });
-                    mediaFolders = ents.filter(e => e.isDirectory()).map(e => e.name).sort();
-
                     for (const e of ents) {
                         if (!e.isDirectory()) continue;
                         const st = await fs.stat(join(lfRoot, e.name));
@@ -159,7 +156,6 @@ export class SyncService {
                 const finalManifest = {
                     updatedAt: new Date().toISOString(),
                     json: base.json ?? {},
-                    mediaFolders,
                     mediaVersions,
                 };
 
@@ -169,11 +165,11 @@ export class SyncService {
                 log.warn("could not normalize /data/manifest.json", { err: String(e) });
             }
 
-            // --- Persist the uploaded ZIP in /input (success path only)
+            // --- Persist the uploaded ZIP in /uploads (success path only)
             const tryPath = (suffix: number) =>
                 suffix === 0
-                    ? join(INPUT_DIR, origName)
-                    : join(INPUT_DIR, origName.replace(/(\.[^.]*)?$/, (m) => `-${suffix}${m || ""}`));
+                    ? join(UPLOADS_DIR, origName)
+                    : join(UPLOADS_DIR, origName.replace(/(\.[^.]*)?$/, (m) => `-${suffix}${m || ""}`));
 
             let attempt = 0;
             while (attempt < 1000) {
@@ -182,7 +178,7 @@ export class SyncService {
                     await fs.access(candidate);
                     attempt += 1; // exists → try next
                 } catch {
-                    await fs.rename(zipPath, candidate); // move temp → /input
+                    await fs.rename(zipPath, candidate); // move temp → /uploads
                     savedZipPath = candidate;
                     log.info(`Saved uploaded ZIP → ${candidate}`);
                     break;

@@ -32,7 +32,6 @@ namespace SyncniteBridge.Helpers
         {
             public Dictionary<string, RemoteJsonFile> json { get; set; } =
                 new(StringComparer.OrdinalIgnoreCase);
-            public List<string> mediaFolders { get; set; } = new();
             public RemoteInstalled installed { get; set; } = new();
         }
 

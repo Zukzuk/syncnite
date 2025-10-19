@@ -10,7 +10,7 @@ services:
     ports:
       - "3004:3004"
     volumes:
-      - /volume1/docker/syncnite/uploads:/input
+      - /volume1/docker/syncnite/uploads:/uploads
       - /volume1/docker/syncnite/data:/data
       - /volume1/docker/syncnite/extension:/extension:ro
     tmpfs:

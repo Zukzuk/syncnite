@@ -61,7 +61,6 @@ namespace SyncniteBridge.Constants
 
         // Export/manifest structure
         public const string ManifestFileName = "manifest.json";
-        public const string MetaFileName = "meta.json";
         public const string SnapshotFileName = "lastManifest.json";
 
         // Keep your existing three:
