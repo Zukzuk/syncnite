@@ -1,12 +1,8 @@
 import { existsSync, promises as fs } from "node:fs";
-import { join, basename } from "node:path";
-import {
-    INPUT_DIR, WORK_DIR, DATA_DIR,
-    cleanDir, normalizeBackslashPaths,
-    copyLibraryFilesWithProgress, run,
-    findLibraryDir
-} from "../helpers";
+import { join } from "node:path";
+import { runImportCore } from "../helpers";
 import { rootLog } from "../logger";
+import { DATA_DIR, INPUT_DIR, WORK_DIR } from "../constants";
 
 const log = rootLog.child("syncService");
 
@@ -67,20 +63,20 @@ export class SyncService {
     }
 
     /**
-     * Processes an uploaded ZIP file from the Playnite extension.
-     * Validates, extracts, copies JSON + media, normalizes manifest, saves the ZIP.
-     * @param input - details about the uploaded ZIP file
-     * @returns details about the processed upload
+     * Processes an uploaded ZIP from the extension.
+     * Additive: never clears /data. Uses WORK_DIR for extraction/staging, then merges into /data.
+     * After merging, (re)builds /data/manifest.json and finally persists the uploaded zip in /input.
      */
-    async processUpload(input: SyncUploadInput): Promise<SyncUploadResult> {
+    async processZipStream(input: SyncUploadInput): Promise<SyncUploadResult> {
         const { zipPath, originalName: origName, sizeBytes: size } = input;
+        const password = "";
+        const isSync = true;
 
         if (!existsSync(INPUT_DIR)) {
             await fs.mkdir(INPUT_DIR, { recursive: true });
             log.debug(`Created input dir at: ${INPUT_DIR}`);
         }
 
-        // Milestone: incoming upload
         log.info(`Incoming upload "${origName}" (${size} bytes), temp="${zipPath}"`);
 
         let jsonFiles = 0;
@@ -88,66 +84,44 @@ export class SyncService {
         let savedZipPath: string | null = null;
 
         try {
-            await cleanDir(WORK_DIR);
-            await cleanDir(DATA_DIR);
-            await fs.mkdir(DATA_DIR, { recursive: true });
-            log.info("Cleaned WORK_DIR and DATA_DIR");
+            // --- Run the shared import core (WORK_DIR → DATA_DIR additive)
+            await runImportCore(zipPath, password, isSync);
 
-            log.debug(`Validating ZIP ${basename(zipPath)}…`);
-            await run("7z", ["t", zipPath]);
+            // Quick counts from WORK_DIR (do not rely on shallow DATA_DIR listing)
+            try {
+                const tmpJson = join(WORK_DIR, "json");
+                const list = await fs.readdir(tmpJson, { withFileTypes: true });
+                jsonFiles = list.filter((e) => e.isFile() && e.name.toLowerCase().endsWith(".json")).length;
+            } catch { jsonFiles = 0; }
 
-            log.debug("Extracting ZIP…");
-            await run("7z", ["x", "-y", `-o${WORK_DIR}`, zipPath, "-bsp1", "-bso1"]);
+            try {
+                const tmpMedia = join(WORK_DIR, "libraryfiles");
+                const stack = [tmpMedia];
+                let count = 0;
+                while (stack.length) {
+                    const d = stack.pop()!;
+                    const ents = await fs.readdir(d, { withFileTypes: true });
+                    for (const e of ents) {
+                        const p = join(d, e.name);
+                        if (e.isDirectory()) stack.push(p);
+                        else if (e.isFile()) count++;
+                    }
+                }
+                mediaFiles = count;
+            } catch { mediaFiles = 0; }
+            log.info(`This upload produced → JSON: ${jsonFiles}, Media files: ${mediaFiles}`);
 
-            log.debug("Normalizing backslash paths…");
-            await normalizeBackslashPaths(WORK_DIR);
-
-            // --- Locate library dir, dump LiteDB → JSON, copy media ---
-            log.info("Locating library dir…");
-            const libDir = await findLibraryDir(WORK_DIR);
-            if (!libDir) {
-                const err = new Error("No library directory with *.db");
-                (err as any).statusCode = 400;
-                throw err;
-            }
-
-            log.info("Ensuring /data exists…");
-            await fs.mkdir(DATA_DIR, { recursive: true });
-
-            log.info("Dumping LiteDB to JSON…");
-            const env = { ...process.env };
-            const password = process.env.LITEDB_PASSWORD || "";
-            if (password) (env as any).LITEDB_PASSWORD = password;
-            const { out, err } = await run("./PlayniteBackupImport", [libDir, DATA_DIR], { env });
-            if (out?.trim()) out.trim().split(/\r?\n/).forEach((l) => log.info(l));
-            if (err?.trim()) err.trim().split(/\r?\n/).forEach((l) => log.warn(l));
-            const names = await fs.readdir(DATA_DIR);
-            jsonFiles = names.filter((n) => n.toLowerCase().endsWith(".json")).length;
-            log.info(`Dump done, ${jsonFiles} JSON file(s) in DATA_DIR`);
-
-            // Copy media with progress from the same root as the DBs
-            const mediaResult = await copyLibraryFilesWithProgress({
-                libDir,
-                workRoot: WORK_DIR,
-                dataRoot: DATA_DIR,
-                log: (m: string) => log.info(m),
-                progress: ({ percent, copiedBytes, totalBytes, deltaBytes }) =>
-                    rootLog.raw({ level: "info", kind: "progress", data: { phase: "copy", percent, copiedBytes, totalBytes, deltaBytes } }),
-            });
-            mediaFiles = mediaResult?.copiedFiles ?? 0;
-            log.info(`Media copy done: ${mediaFiles} files`);
-
-            // Copy client-exported manifest if present (we'll normalize it next)
-            const mf = join(WORK_DIR, "export", "manifest.json");
+            // --- Copy client-exported manifest if present (optional seed)
+            const mf = join(WORK_DIR, "manifest.json");
             try {
                 const s = await fs.readFile(mf, "utf8");
                 await fs.writeFile(join(DATA_DIR, "manifest.json"), s, "utf8");
-                log.debug("manifest.json copied");
+                log.debug("manifest.json copied from zipfile");
             } catch {
-                log.debug("manifest.json not found or unreadable");
+                log.debug("manifest.json not found in zipfile");
             }
 
-            // --- Normalize /data/manifest.json (authoritative from filesystem) ---
+            // --- Normalize /data/manifest.json (derive media folders/versions from /data)
             try {
                 const manifestPath = join(DATA_DIR, "manifest.json");
 
@@ -176,7 +150,7 @@ export class SyncService {
                         mediaVersions[e.name] = Math.floor(st.mtimeMs);
                     }
                 } catch {
-                    // ok if there is no media yet
+                    // ok if no media yet
                 }
 
                 // Final manifest (no 'installed' here)
@@ -195,31 +169,26 @@ export class SyncService {
                 log.warn("could not normalize /data/manifest.json", { err: String(e) });
             }
 
-            // --- Only now (success path) do we persist the uploaded ZIP ---
-            // Use the original filename; if it exists, add -1, -2, ...
-            const baseName = origName;
+            // --- Persist the uploaded ZIP in /input (success path only)
             const tryPath = (suffix: number) =>
                 suffix === 0
-                    ? join(INPUT_DIR, baseName)
-                    : join(INPUT_DIR, baseName.replace(/(\.[^.]*)?$/, (m) => `-${suffix}${m || ""}`));
+                    ? join(INPUT_DIR, origName)
+                    : join(INPUT_DIR, origName.replace(/(\.[^.]*)?$/, (m) => `-${suffix}${m || ""}`));
 
             let attempt = 0;
             while (attempt < 1000) {
                 const candidate = tryPath(attempt);
                 try {
                     await fs.access(candidate);
-                    attempt += 1; // exists, try next
+                    attempt += 1; // exists → try next
                 } catch {
-                    // doesn't exist → move (rename) the temp file here
-                    await fs.rename(zipPath, candidate);
+                    await fs.rename(zipPath, candidate); // move temp → /input
                     savedZipPath = candidate;
                     log.info(`Saved uploaded ZIP → ${candidate}`);
                     break;
                 }
             }
-            if (!savedZipPath) {
-                log.warn("Could not determine a unique filename for saved ZIP");
-            }
+            if (!savedZipPath) log.warn("Could not determine a unique filename for saved ZIP");
 
             // Milestone: done
             log.info("Upload & sync finished successfully");
@@ -231,7 +200,7 @@ export class SyncService {
                 sizeBytes: size,
             };
         } finally {
-            // If we successfully moved the file (savedZipPath set), zipPath no longer exists.
+            // If we didn't move it successfully, clean tmp
             if (!savedZipPath) {
                 try {
                     await fs.unlink(zipPath);
@@ -240,22 +209,6 @@ export class SyncService {
                     log.warn(`Could not remove temp upload "${zipPath}"`);
                 }
             }
-        }
-    }
-
-    /**
-     * Recursively copy a directory.
-     * @param src Source directory
-     * @param dest Destination directory
-     */
-    async copyDir(src: string, dest: string) {
-        await fs.mkdir(dest, { recursive: true });
-        const entries = await fs.readdir(src, { withFileTypes: true });
-        for (const e of entries) {
-            const s = join(src, e.name);
-            const d = join(dest, e.name);
-            if (e.isDirectory()) await this.copyDir(s, d);
-            else await fs.copyFile(s, d);
         }
     }
 }

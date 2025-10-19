@@ -1,7 +1,7 @@
 import express from "express";
 import multer from "multer";
 import { BackupService } from "../services/BackupService";
-import { INPUT_DIR } from "../helpers";
+import { INPUT_DIR } from "../constants";
 import { rootLog } from "../logger";
 
 const router = express.Router();

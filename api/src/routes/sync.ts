@@ -2,7 +2,7 @@ import express from "express";
 import multer from "multer";
 import { SyncService } from "../services/SyncService";
 import { requireAdmin } from "../middleware/requireAdmin";
-import { INPUT_DIR } from "../helpers";
+import { INPUT_DIR } from "../constants";
 import { rootLog } from "../logger";
 
 const router = express.Router();
@@ -22,7 +22,7 @@ router.post("/log", async (req, res) => {
   try {
     const count = log.raw(req.body);
     if (!count) return res.status(400).json({ ok: false, error: "invalid payload" });
-    log.info("sync/log accepted", { count });
+    log.debug("sync/log accepted", { count });
     return res.sendStatus(204);
   } catch (e) {
     log.error("sync/log failed", { err: (e as Error).message });
@@ -65,7 +65,7 @@ router.post("/up", syncUpload.single("file"), async (req, res) => {
   isSyncing = true;
 
   try {
-    const result = await syncService.processUpload({
+    const result = await syncService.processZipStream({
       zipPath: req.file.path,
       originalName: req.file.originalname,
       sizeBytes: req.file.size ?? 0,

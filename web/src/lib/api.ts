@@ -50,11 +50,10 @@ export async function uploadZip(
   return r.data;
 }
 
-// Start processing a ZIP file on the server, with callbacks for log/progress/done/error
+// Start processing a ZIP on the server, then stream logs/progress via /api/sse
 export function processZipStream({
   filename, password,
-  onLog, onProgress,
-  onDone, onError,
+  onLog, onProgress, onDone, onError,
 }: {
   filename: string;
   password?: string;
@@ -63,50 +62,74 @@ export function processZipStream({
   onDone?: () => void;
   onError?: (msg: string) => void;
 }) {
-  const url = new URL(API_ENDPOINTS.SSE, window.location.origin);
-  url.searchParams.set("filename", filename);
-  if (password) url.searchParams.set("password", password);
-
-  const es = new EventSource(url.toString());
-
   let finished = false;
+  let es: EventSource | null = null;
+
   const finishOnce = (cb?: () => void) => {
     if (finished) return;
     finished = true;
-    try { es.close(); } catch { }
+    try { es?.close(); } catch { }
     cb?.();
   };
 
-  // server emits named events: "log", "progress", "done", "error"
-  es.addEventListener("log", (ev: MessageEvent) => {
-    onLog?.(String(ev.data));
-  });
+  const controller = new AbortController();
 
-  es.addEventListener("progress", (ev: MessageEvent) => {
+  // Kick off the job first (POST), then attach to the shared SSE stream.
+  (async () => {
     try {
-      const data = JSON.parse(String(ev.data)) as StreamProgress;
-      onProgress?.(data);
-    } catch {
-      /* ignore malformed progress lines */
+      const r = await fetch(API_ENDPOINTS.ZIP_PROCESS, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename, ...(password ? { password } : {}) }),
+        signal: controller.signal,
+      });
+      const payload = await r.json().catch(() => ({} as any));
+
+      if (!r.ok || payload?.ok === false) {
+        const msg = payload?.error || `Failed to start import (${r.status})`;
+        return finishOnce(() => onError?.(msg));
+      }
+
+      // Now stream events (log/progress/done/error) from the server bus
+      es = new EventSource(API_ENDPOINTS.SSE /* , { withCredentials: true } as any */);
+
+      es.addEventListener("log", (ev: MessageEvent) => {
+        onLog?.(String(ev.data ?? ""));
+      });
+
+      es.addEventListener("progress", (ev: MessageEvent) => {
+        try {
+          const data = JSON.parse(String(ev.data)) as StreamProgress;
+          onProgress?.(data);
+        } catch {
+          // ignore malformed progress lines
+        }
+      });
+
+      es.addEventListener("done", () => {
+        finishOnce(onDone);
+      });
+
+      // Named "error" events emitted by the server (human-readable message)
+      es.addEventListener("error", (ev: MessageEvent) => {
+        const msg = String(ev.data || "Import failed");
+        finishOnce(() => onError?.(msg));
+      });
+
+      // Transport-level errors (disconnects, CORS, etc.)
+      es.onerror = () => finishOnce(() => onError?.("Stream closed unexpectedly"));
+    } catch (e: any) {
+      finishOnce(() => onError?.(String(e?.message ?? e)));
     }
-  });
+  })();
 
-  es.addEventListener("done", () => {
-    finishOnce(onDone);
-  });
-
-  // The server also emits a named "error" event with a human message.
-  es.addEventListener("error", (ev: MessageEvent) => {
-    // If the server sent data, prefer that. Otherwise fall back below.
-    const msg = String(ev.data || "Export failed");
-    finishOnce(() => onError?.(msg));
-  });
-
-  // Fallback: transport-level errors (disconnects, etc.)
-  es.onerror = () => finishOnce(() => onError?.("Stream closed unexpectedly"));
-
-  return () => finishOnce();
+  // caller can stop early
+  return () => {
+    controller.abort();
+    finishOnce();
+  };
 }
+
 
 // Fetch list of library items
 export async function listLibrary(): Promise<LibraryItem[]> {

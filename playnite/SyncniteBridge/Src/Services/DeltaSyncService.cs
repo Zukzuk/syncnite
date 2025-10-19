@@ -416,10 +416,13 @@ namespace SyncniteBridge.Services
                 )
                 {
                     // /export/manifest.json
-                    zb.AddText(AppConstants.ManifestPathInZip, manifestJson);
+                    zb.AddText(AppConstants.ManifestFileName, manifestJson);
 
-                    // Always include DB files under /library/*.db (server will dump to JSON)
-                    AddDbFiles(zb);
+                    // Always include SDK snapshot when DB changed (old behavior, safety net)
+                    if (dbDirty)
+                    {
+                        ExportSdkSnapshotToZip(zb);
+                    }
 
                     // Media folders that changed
                     foreach (var folder in mediaFolders)
@@ -557,34 +560,6 @@ namespace SyncniteBridge.Services
             catch { }
         }
 
-        // Add library/*.db into the ZIP so the server can transform them
-        private void AddDbFiles(ZipBuilder zb)
-        {
-            var libDir = Path.Combine(dataRoot, AppConstants.LibraryDirName);
-            if (!Directory.Exists(libDir))
-                return;
-
-            foreach (
-                var path in Directory
-                    .EnumerateFiles(libDir, "*.db", SearchOption.TopDirectoryOnly)
-                    .OrderBy(p => p, StringComparer.OrdinalIgnoreCase)
-            )
-            {
-                try
-                {
-                    var name = Path.GetFileName(path);
-                    var relInZip = Path.Combine(AppConstants.LibraryDirName, name)
-                        .Replace('\\', '/');
-                    zb.AddFile(path, relInZip, CompressionLevel.Fastest);
-                    blog?.Debug("zip", "include db", new { name });
-                }
-                catch (Exception ex)
-                {
-                    blog?.Warn("zip", "skip db", new { path, err = ex.Message });
-                }
-            }
-        }
-
         private void AddMediaFolderRecursively(ZipBuilder zb, string topLevelFolder)
         {
             var mediaRoot = Path.Combine(dataRoot, AppConstants.LibraryFilesDirName);
@@ -610,6 +585,293 @@ namespace SyncniteBridge.Services
                     blog?.Warn("zip", "skip file", new { path, err = ex.Message });
                 }
             }
+        }
+
+        private void ExportSdkSnapshotToZip(ZipBuilder zb)
+        {
+            // meta
+            zb.AddText(
+                AppConstants.MetaFileName,
+                Playnite.SDK.Data.Serialization.ToJson(
+                    new
+                    {
+                        exportedAt = DateTime.UtcNow.ToString("o"),
+                        exporter = AppConstants.AppName,
+                    }
+                )
+            );
+
+            // --- GAMES (explicit, richer projection)
+            var games =
+                api.Database.Games?.Select(g =>
+                        (object)
+                            new
+                            {
+                                // identity
+                                g.Id,
+                                g.Name,
+                                g.SortingName,
+                                g.Hidden,
+
+                                // install
+                                g.IsInstalled,
+                                g.InstallDirectory,
+                                g.InstallSize,
+
+                                // library identity
+                                g.PluginId, // e.g. GOG plugin GUID
+                                g.GameId, // store-specific id
+
+                                // joins
+                                g.SourceId,
+                                TagIds = (g.TagIds ?? new List<Guid>()).ToList(),
+                                PlatformIds = (g.PlatformIds ?? new List<Guid>()).ToList(),
+                                PrimaryPlatformId = (
+                                    g.PlatformIds != null && g.PlatformIds.Count > 0
+                                )
+                                    ? (Guid?)g.PlatformIds[0]
+                                    : null,
+                                g.GenreIds,
+                                g.CategoryIds,
+                                g.FeatureIds,
+                                SeriesIds = g.SeriesIds,
+                                PrimarySeriesId = (g.SeriesIds != null && g.SeriesIds.Count > 0)
+                                    ? (Guid?)g.SeriesIds[0]
+                                    : null,
+                                g.CompletionStatusId,
+                                g.AgeRatingIds,
+                                g.RegionIds,
+                                g.DeveloperIds,
+                                g.PublisherIds,
+
+                                // dates + art
+                                g.ReleaseDate,
+                                ReleaseYear = (int?)g.ReleaseDate?.Year,
+                                g.Icon,
+                                g.CoverImage,
+                                g.BackgroundImage,
+
+                                // usage/activity
+                                g.Added,
+                                g.Modified,
+                                g.LastActivity,
+                                g.Playtime, // minutes
+                                g.PlayCount,
+
+                                // scores
+                                g.UserScore,
+                                g.CommunityScore,
+                                g.CriticScore,
+
+                                // content
+                                g.Description,
+                                g.Notes,
+
+                                // links/actions/roms
+                                g.Links,
+                                g.GameActions,
+                                g.Roms,
+                            }
+                    )
+                    .ToList() ?? new List<object>();
+
+            zb.AddText(
+                Path.Combine(AppConstants.LibraryDirName, AppConstants.GamesJsonFileName)
+                    .Replace('\\', '/'),
+                Playnite.SDK.Data.Serialization.ToJson(games)
+            );
+
+            // --- LOOKUP/RELATED COLLECTIONS (explicit field lists)
+
+            // helper for simple Name/Id objects
+            object MapNamed<T>(T x)
+            {
+                dynamic d = x;
+                return new { Id = d.Id, Name = d.Name };
+            }
+
+            // Tags
+            var tags =
+                api.Database.Tags?.Select(MapNamed).Cast<object>().ToList() ?? new List<object>();
+            zb.AddText(
+                Path.Combine(AppConstants.LibraryDirName, AppConstants.TagsJsonFileName)
+                    .Replace('\\', '/'),
+                Playnite.SDK.Data.Serialization.ToJson(tags)
+            );
+
+            // Sources
+            var sources =
+                api.Database.Sources?.Select(MapNamed).Cast<object>().ToList()
+                ?? new List<object>();
+            zb.AddText(
+                Path.Combine(AppConstants.LibraryDirName, AppConstants.SourcesJsonFileName)
+                    .Replace('\\', '/'),
+                Playnite.SDK.Data.Serialization.ToJson(sources)
+            );
+
+            // Platforms (Id, Name, Icon)
+            var platforms =
+                api.Database.Platforms?.Select(p =>
+                        (object)
+                            new
+                            {
+                                p.Id,
+                                p.Name,
+                                p.Icon,
+                            }
+                    )
+                    .ToList() ?? new List<object>();
+            zb.AddText(
+                Path.Combine(AppConstants.LibraryDirName, AppConstants.PlatformsJsonFileName)
+                    .Replace('\\', '/'),
+                Playnite.SDK.Data.Serialization.ToJson(platforms)
+            );
+
+            // Genres
+            var genres =
+                api.Database.Genres?.Select(MapNamed).Cast<object>().ToList() ?? new List<object>();
+            zb.AddText(
+                Path.Combine(AppConstants.LibraryDirName, AppConstants.GenresJsonFileName)
+                    .Replace('\\', '/'),
+                Playnite.SDK.Data.Serialization.ToJson(genres)
+            );
+
+            // Categories
+            var categories =
+                api.Database.Categories?.Select(MapNamed).Cast<object>().ToList()
+                ?? new List<object>();
+            zb.AddText(
+                Path.Combine(AppConstants.LibraryDirName, AppConstants.CategoriesJsonFileName)
+                    .Replace('\\', '/'),
+                Playnite.SDK.Data.Serialization.ToJson(categories)
+            );
+
+            // Features
+            var features =
+                api.Database.Features?.Select(MapNamed).Cast<object>().ToList()
+                ?? new List<object>();
+            zb.AddText(
+                Path.Combine(AppConstants.LibraryDirName, AppConstants.FeaturesJsonFileName)
+                    .Replace('\\', '/'),
+                Playnite.SDK.Data.Serialization.ToJson(features)
+            );
+
+            // Series
+            var series =
+                api.Database.Series?.Select(MapNamed).Cast<object>().ToList() ?? new List<object>();
+            zb.AddText(
+                Path.Combine(AppConstants.LibraryDirName, AppConstants.SeriesJsonFileName)
+                    .Replace('\\', '/'),
+                Playnite.SDK.Data.Serialization.ToJson(series)
+            );
+
+            // Regions
+            var regions =
+                api.Database.Regions?.Select(MapNamed).Cast<object>().ToList()
+                ?? new List<object>();
+            zb.AddText(
+                Path.Combine(AppConstants.LibraryDirName, AppConstants.RegionsJsonFileName)
+                    .Replace('\\', '/'),
+                Playnite.SDK.Data.Serialization.ToJson(regions)
+            );
+
+            // Age Ratings
+            var ageRatings =
+                api.Database.AgeRatings?.Select(MapNamed).Cast<object>().ToList()
+                ?? new List<object>();
+            zb.AddText(
+                Path.Combine(AppConstants.LibraryDirName, AppConstants.AgeRatingsJsonFileName)
+                    .Replace('\\', '/'),
+                Playnite.SDK.Data.Serialization.ToJson(ageRatings)
+            );
+
+            // Companies
+            var companies =
+                api.Database.Companies?.Select(MapNamed).Cast<object>().ToList()
+                ?? new List<object>();
+            zb.AddText(
+                Path.Combine(AppConstants.LibraryDirName, AppConstants.CompaniesJsonFileName)
+                    .Replace('\\', '/'),
+                Playnite.SDK.Data.Serialization.ToJson(companies)
+            );
+
+            // Emulators (explicit + profiles)
+            var emulators =
+                api.Database.Emulators?.Select(e =>
+                        (object)
+                            new
+                            {
+                                e.Id,
+                                e.Name,
+                                Profiles = (e.AllProfiles ?? new List<EmulatorProfile>())
+                                    .Select(p => new
+                                    {
+                                        // Id/Name exist on profiles; keep them if your code consumed them
+                                        p.Id,
+                                        p.Name,
+
+                                        // The following exist on CustomEmulatorProfile only. Use safe casts:
+                                        Executable = (p as CustomEmulatorProfile)?.Executable,
+                                        Arguments = (p as CustomEmulatorProfile)?.Arguments,
+                                        WorkingDirectory = (
+                                            p as CustomEmulatorProfile
+                                        )?.WorkingDirectory,
+                                        ImageExtensions = (
+                                            p as CustomEmulatorProfile
+                                        )?.ImageExtensions ?? new List<string>(),
+                                        Platforms = (p as CustomEmulatorProfile)?.Platforms
+                                            ?? new List<Guid>(),
+
+                                        // Optional: include Built-in profile info when applicable
+                                        BuiltInProfileName = (
+                                            p as BuiltInEmulatorProfile
+                                        )?.BuiltInProfileName,
+                                        BuiltInCustomArguments = (
+                                            p as BuiltInEmulatorProfile
+                                        )?.CustomArguments,
+                                    })
+                                    .ToList(),
+                            }
+                    )
+                    .ToList() ?? new List<object>();
+            zb.AddText(
+                Path.Combine(AppConstants.LibraryDirName, AppConstants.EmulatorsJsonFileName)
+                    .Replace('\\', '/'),
+                Playnite.SDK.Data.Serialization.ToJson(emulators)
+            );
+
+            // Completion Statuses
+            var completionStatuses =
+                api.Database.CompletionStatuses?.Select(MapNamed).Cast<object>().ToList()
+                ?? new List<object>();
+            zb.AddText(
+                Path.Combine(
+                        AppConstants.LibraryDirName,
+                        AppConstants.CompletionStatusesJsonFileName
+                    )
+                    .Replace('\\', '/'),
+                Playnite.SDK.Data.Serialization.ToJson(completionStatuses)
+            );
+
+            // Filter Presets (Id, Name only to keep explicit & stable)
+            var filterPresets =
+                api.Database.FilterPresets?.Select(fp => (object)new { fp.Id, fp.Name }).ToList()
+                ?? new List<object>();
+            zb.AddText(
+                Path.Combine(AppConstants.LibraryDirName, AppConstants.FilterPresetsJsonFileName)
+                    .Replace('\\', '/'),
+                Playnite.SDK.Data.Serialization.ToJson(filterPresets)
+            );
+
+            // Import Exclusions (keep Name/Id mapping as in your original)
+            var importExclusions =
+                api.Database.ImportExclusions?.Select(MapNamed).Cast<object>().ToList()
+                ?? new List<object>();
+            zb.AddText(
+                Path.Combine(AppConstants.LibraryDirName, AppConstants.ImportExclusionsJsonFileName)
+                    .Replace('\\', '/'),
+                Playnite.SDK.Data.Serialization.ToJson(importExclusions)
+            );
         }
     }
 }

@@ -3,29 +3,17 @@ import { join, dirname } from "node:path";
 import { promises as fs } from "node:fs";
 import * as fsSync from "node:fs";
 import { rootLog } from "./logger";
+import { DATA_DIR, WORK_DIR } from "./constants";
 
 const log = rootLog.child("helpers");
 
-export const INPUT_DIR = "/input";
-export const WORK_DIR = "/work";
-export const DATA_DIR = "/data";
-
-/**
- * Options for running a command.
- */
-export type RunOpts = SpawnOptionsWithoutStdio & {
+type RunOpts = SpawnOptionsWithoutStdio & {
     onStdout?: (line: string) => void;
     onStderr?: (line: string) => void;
 };
 
-/**
- * Run a command and return its output.
- * @param cmd Command to run
- * @param args 
- * @param opts 
- * @returns 
- */
-export function run(
+// Runs a command with args, returns exit code, stdout, stderr.
+function run(
     cmd: string,
     args: string[],
     opts: RunOpts = {}
@@ -48,11 +36,8 @@ export function run(
     });
 }
 
-/**
- * Clean a directory by removing all its contents. If the directory does not exist, it is created.
- * @param dir Directory to clean
- */
-export async function cleanDir(dir: string) {
+// Recursively delete all contents of a directory
+async function cleanDir(dir: string) {
     try {
         const entries = await fs.readdir(dir, { withFileTypes: true });
         await Promise.all(entries.map((e) => fs.rm(join(dir, e.name), { recursive: true, force: true })));
@@ -66,12 +51,8 @@ export async function cleanDir(dir: string) {
     }
 }
 
-/**
- * Normalize backslash paths to forward slashes.
- * @param root Root directory to normalize
- * @returns
- */
-export async function normalizeBackslashPaths(root: string): Promise<void> {
+// Recursively rename any files/dirs with backslashes in name to use forward slashes
+async function normalizeBackslashPaths(root: string): Promise<void> {
     const entries = await fs.readdir(root, { withFileTypes: true });
     for (const e of entries) {
         const p = join(root, e.name);
@@ -86,12 +67,8 @@ export async function normalizeBackslashPaths(root: string): Promise<void> {
     }
 }
 
-/**
- * Copy library media with live byte-level progress. Returns stats.
- * @param opts Options for copying library files
- * @returns Stats about the copy operation
- */
-export async function copyLibraryFilesWithProgress(opts: {
+// Copy library files from the extracted WORK_DIR to WORK_DIR/libraryfiles,
+async function copyLibraryFilesWithProgress(opts: {
     libDir: string;
     workRoot: string;
     dataRoot: string;
@@ -198,6 +175,79 @@ export async function copyLibraryFilesWithProgress(opts: {
     return { copiedFiles, failures, totalBytes };
 }
 
+// Utility helpers for file operations
+async function copyFileInto(target: string, source: string) {
+    await ensureDir(dirname(target));
+    await fs.copyFile(source, target);
+}
+
+// Recursively copy from src → dst, overwriting files, never deleting extras in dst.
+async function mergeTreeOverwrite(src: string, dst: string) {
+    const entries = await fs.readdir(src, { withFileTypes: true });
+    for (const e of entries) {
+        const s = join(src, e.name);
+        const d = join(dst, e.name);
+        if (e.isDirectory()) {
+            await ensureDir(d);
+            await mergeTreeOverwrite(s, d);
+        } else if (e.isFile()) {
+            await copyFileInto(d, s);
+        }
+    }
+}
+
+// utility helpers (put near your other helpers)
+async function countJsonRec(root: string): Promise<number> {
+    let total = 0;
+    try {
+        const stack = [root];
+        while (stack.length) {
+            const cur = stack.pop()!;
+            const ents = await fs.readdir(cur, { withFileTypes: true });
+            for (const e of ents) {
+                const p = join(cur, e.name);
+                if (e.isDirectory()) stack.push(p);
+                else if (e.isFile() && e.name.toLowerCase().endsWith(".json")) total++;
+            }
+        }
+    } catch { }
+    return total;
+}
+
+async function pathExists(p: string): Promise<boolean> {
+  try { await fs.access(p); return true; } catch { return false; }
+}
+
+async function dirExists(p: string): Promise<boolean> {
+  try { return (await fs.stat(p)).isDirectory(); } catch { return false; }
+}
+
+async function fileExists(p: string): Promise<boolean> {
+  try { return (await fs.stat(p)).isFile(); } catch { return false; }
+}
+
+async function findRecentJsonDirs(root: string, sinceMs: number = Date.now() - 60_000): Promise<string[]> {
+    const dirs = new Set<string>();
+    const stack = [root];
+    while (stack.length) {
+        const cur = stack.pop()!;
+        const ents = await fs.readdir(cur, { withFileTypes: true }).catch(() => []);
+        for (const e of ents) {
+            const p = join(cur, e.name);
+            if (e.isDirectory()) {
+                stack.push(p);
+            } else if (e.isFile() && e.name.toLowerCase().endsWith(".json")) {
+                try {
+                    const st = await fs.stat(p);
+                    // consider “recent” (last few minutes) to isolate this run’s dump
+                    if (st.mtimeMs >= sinceMs) dirs.add(dirname(p));
+                } catch { }
+            }
+        }
+    }
+    return Array.from(dirs);
+}
+
 export async function findLibraryDir(root: string): Promise<string | null> {
     log.debug(`findLibraryDir start`, { root });
     const stack = [root];
@@ -223,4 +273,106 @@ export async function findLibraryDir(root: string): Promise<string | null> {
         for (const e of entries) if (e.isDirectory()) stack.push(join(dir, e.name));
     }
     return null;
+}
+
+export async function ensureDir(p: string) {
+    await fs.mkdir(p, { recursive: true });
+}
+
+/**
+ * Validates, extracts to WORK_DIR, finds lib dir, dumps DB to JSON (unless isSync),
+ * copies media into WORK_DIR/libraryfiles, then merges both into DATA_DIR (overwrite-only).
+ * NOTE: This does NOT clean DATA_DIR. It only cleans WORK_DIR.
+ */
+export async function runImportCore(zipPath: string, password = "", isSync = false): Promise<void> {
+    await cleanDir(WORK_DIR);
+    await ensureDir(WORK_DIR);
+
+    await run("7z", ["t", zipPath]);
+    await run("7z", ["x", "-y", `-o${WORK_DIR}`, zipPath, "-bsp1", "-bso1"]);
+
+    await normalizeBackslashPaths(WORK_DIR);
+
+    const TMP_JSON = join(WORK_DIR, "json");
+    const TMP_MEDIA = join(WORK_DIR, "libraryfiles");
+    await ensureDir(TMP_JSON);
+    await ensureDir(TMP_MEDIA);
+
+    // --- SYNC path: ready-made zip (skip DB dump entirely)
+    if (isSync) {
+        const libDir = join(WORK_DIR, "library");
+        if (!(await dirExists(libDir))) {
+            throw new Error("isSync=true but no /library directory found in zip");
+        }
+
+        // 1) Copy JSONs as-is
+        await mergeTreeOverwrite(libDir, DATA_DIR);
+
+        // 2) Copy media
+        if (await dirExists(TMP_MEDIA)) {
+            await mergeTreeOverwrite(TMP_MEDIA, join(DATA_DIR, "libraryfiles"));
+        }
+
+        // 3) Copy manifest (root-only)
+        const mf = join(WORK_DIR, "manifest.json");
+        if (await fileExists(mf)) {
+            await fs.copyFile(mf, join(DATA_DIR, "manifest.json"));
+            log.info("[import] manifest.json copied from zip root");
+        } else {
+            log.warn("[import] no manifest.json found at zip root");
+        }
+
+        return;
+    }
+
+    // --- BACKUP path: do normal DB → JSON dump
+    const libDir = await findLibraryDir(WORK_DIR);
+    if (!libDir) throw new Error("No library directory with *.db");
+
+    const env = { ...process.env };
+    if (password) (env as any).LITEDB_PASSWORD = password;
+
+    const dumpStart = Date.now();
+    const { out, err } = await run("./PlayniteImport", [libDir, TMP_JSON], { env });
+    if (out?.trim()) out.trim().split(/\r?\n/).forEach((l) => log.info(l));
+    if (err?.trim()) err.trim().split(/\r?\n/).forEach((l) => log.warn(l));
+
+    const intendedCount = await countJsonRec(TMP_JSON);
+    log.info(`[import] intended dump dir ${TMP_JSON} has ${intendedCount} JSON(s)`);
+
+    let dumpOutDir = TMP_JSON;
+    if (intendedCount === 0) {
+        const candidates = await findRecentJsonDirs(WORK_DIR, dumpStart - 5_000);
+        const scored = await Promise.all(candidates.map(async d => ({ d, n: await countJsonRec(d) })));
+        scored.sort((a, b) => b.n - a.n);
+        const pick = scored.find(s => s.n > 0);
+        if (pick) {
+            dumpOutDir = pick.d;
+            log.warn(`[import] JSONs not in ${TMP_JSON}; using discovered dir: ${dumpOutDir} (${pick.n} files)`);
+        } else {
+            log.warn(`[import] No JSON files discovered under ${WORK_DIR} after dump.`);
+        }
+    } else {
+        const ents = await fs.readdir(TMP_JSON).catch(() => []);
+        log.info(`[import] sample JSON(s): ${ents.slice(0, 10).join(", ")}`);
+    }
+
+    // Copy media
+    await copyLibraryFilesWithProgress({
+        libDir,
+        workRoot: WORK_DIR,
+        dataRoot: WORK_DIR,
+        log: (m) => log.info(m),
+        progress: ({ percent, copiedBytes, totalBytes, deltaBytes }) =>
+            rootLog.raw({ level: "info", kind: "progress", data: { phase: "copy", percent, copiedBytes, totalBytes, deltaBytes } }),
+    });
+
+    // Merge JSONs → /data
+    await ensureDir(DATA_DIR);
+    if (await countJsonRec(dumpOutDir) > 0) {
+        await mergeTreeOverwrite(dumpOutDir, DATA_DIR);
+    }
+
+    // Merge media → /data/libraryfiles
+    await mergeTreeOverwrite(TMP_MEDIA, join(DATA_DIR, "libraryfiles"));
 }

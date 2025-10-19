@@ -1,6 +1,6 @@
 import express from "express";
 import { ListZipsService } from "../services/ListZipsService";
-import { INPUT_DIR } from "../helpers";
+import { INPUT_DIR } from "../constants";
 import { rootLog } from "../logger";
 import { createSSE } from "../sse";
 import { SyncBus } from "../services/EventBusService";
@@ -28,10 +28,11 @@ router.get("/sse", (req, res) => {
   const unsub = SyncBus.subscribe((ev) => {
     if (ev.type === "progress") sse.progress(ev.data);
     else if (ev.type === "log") sse.log(ev.data);
+    else if (ev.type === "done") sse.done();
   });
 
   // welcome line (optional)
-  sse.log("connected to process-stream");
+  sse.log("connected to api/sync/sse");
 
   // cleanup on disconnect
   req.on("close", () => {

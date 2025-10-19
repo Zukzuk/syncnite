@@ -1,11 +1,9 @@
 import { promises as fs } from "node:fs";
 import { join, basename } from "node:path";
-import {
-    INPUT_DIR, WORK_DIR, DATA_DIR,
-    run, cleanDir, normalizeBackslashPaths,
-    copyLibraryFilesWithProgress, findLibraryDir
-} from "../helpers";
+import { runImportCore } from "../helpers";
 import { rootLog } from "../logger";
+import { INPUT_DIR } from "../constants";
+import { SyncBus } from "./EventBusService";
 
 const log = rootLog.child("backupService");
 
@@ -29,72 +27,20 @@ export class BackupService {
     }
 
     /**
-     * Processes the ZIP file: validates, extracts, normalizes paths,
-     * finds the library directory, dumps the database to JSON, and copies media files.
+     * Validates + extracts the ZIP into WORK_DIR, dumps JSON into WORK_DIR/json,
+     * copies media into WORK_DIR/libraryfiles, merges into /data (overwrite, never delete).
      */
-    async processZipStream(params: { filename: string; password?: string; }): Promise<void> {
+    async processZipStream(params: { filename: string; password?: string }): Promise<void> {
         const { filename, password = "" } = params;
-
         const zipPath = join(INPUT_DIR, basename(filename));
-        log.info(`zipPath resolved`, { zipPath });
+        log.info("zipPath resolved", { zipPath });
 
         try {
-            await fs.access(zipPath);
-            log.info("ZIP exists, continuing");
-
-            await cleanDir(WORK_DIR);
-            log.info("WORK_DIR cleaned");
-
-            // Validate ZIP
-            log.info("Validating ZIP with 7z…");
-            await run("7z", ["t", zipPath], {
-                onStdout: (ln) => {
-                    const m = /(\d{1,3})%/.exec(ln);
-                    if (m) rootLog.raw({ level: "info", kind: "progress", data: { phase: "unzip", percent: Number(m[1]) } });
-                },
-                onStderr: (ln) => /error/i.test(ln) && log.warn(`7z: ${ln}`),
-            });
-            log.info("ZIP validation complete");
-
-            // Extract ZIP
-            log.info("Extracting ZIP with 7z…");
-            await run("7z", ["x", "-y", `-o${WORK_DIR}`, zipPath, "-bsp1", "-bso1"], {
-                onStdout: (ln) => {
-                    const m = /(\d{1,3})%/.exec(ln);
-                    if (m) rootLog.raw({ level: "info", kind: "progress", data: { phase: "unzip", percent: Number(m[1]) } });
-                },
-                onStderr: (ln) => /error/i.test(ln) && log.warn(`7z: ${ln}`),
-            });
-
-            log.info("Normalizing backslash paths…");
-            await normalizeBackslashPaths(WORK_DIR);
-
-            log.info("Locating library dir…");
-            const libDir = await findLibraryDir(WORK_DIR);
-            if (!libDir) throw new Error("No library directory with *.db");
-
-            log.info("Clearing /data…");
-            await cleanDir(DATA_DIR);
-            await fs.mkdir(DATA_DIR, { recursive: true });
-
-            log.info("Dumping LiteDB to JSON…");
-            const env = { ...process.env };
-            if (password) (env as any).LITEDB_PASSWORD = password;
-            const { out, err } = await run("./PlayniteBackupImport", [libDir, DATA_DIR], { env });
-            if (out?.trim()) out.trim().split(/\r?\n/).forEach((l) => log.info(l));
-            if (err?.trim()) err.trim().split(/\r?\n/).forEach((l) => log.warn(l));
-
-            // Copy media with progress
-            await copyLibraryFilesWithProgress({
-                libDir,
-                workRoot: WORK_DIR,
-                dataRoot: DATA_DIR,
-                log: (m) => log.info(m),
-                progress: ({ percent, copiedBytes, totalBytes, deltaBytes }) =>
-                    rootLog.raw({ level: "info", kind: "progress", data: { phase: "copy", percent, copiedBytes, totalBytes, deltaBytes } }),
-            });
-
+            await fs.access(zipPath); // ensure it exists
+            await runImportCore(zipPath, password);
             log.info("Processing complete.");
+            // optional: notify UI it's done
+            try { SyncBus.publish({ type: "done", data: { ok: true } }); } catch { }
         } catch (e: any) {
             log.error("ERROR", { err: String(e?.message ?? e) });
             throw e;

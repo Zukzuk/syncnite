@@ -60,11 +60,26 @@ namespace SyncniteBridge.Constants
         public const string ZipExtension = ".zip";
 
         // Export/manifest structure
-        public const string ExportDir = "export";
         public const string ManifestFileName = "manifest.json";
-        public const string ManifestPathInZip = ExportDir + "/" + ManifestFileName;
         public const string MetaFileName = "meta.json";
-        public const string MetaPathInZip = ExportDir + "/" + MetaFileName;
         public const string SnapshotFileName = "lastManifest.json";
+
+        // Keep your existing three:
+        public const string GamesJsonFileName = "games.Game.json";
+        public const string TagsJsonFileName = "tags.Tag.json";
+        public const string SourcesJsonFileName = "sources.GameSource.json";
+        public const string PlatformsJsonFileName = "platforms.Platform.json";
+        public const string GenresJsonFileName = "genres.Genre.json";
+        public const string CategoriesJsonFileName = "categories.Category.json";
+        public const string FeaturesJsonFileName = "features.Feature.json";
+        public const string SeriesJsonFileName = "series.Series.json";
+        public const string RegionsJsonFileName = "regions.Region.json";
+        public const string AgeRatingsJsonFileName = "ageratings.AgeRating.json";
+        public const string CompaniesJsonFileName = "companies.Company.json";
+        public const string EmulatorsJsonFileName = "emulators.Emulator.json";
+        public const string CompletionStatusesJsonFileName =
+            "completionstatuses.CompletionStatus.json";
+        public const string FilterPresetsJsonFileName = "filterpresets.FilterPreset.json";
+        public const string ImportExclusionsJsonFileName = "importexclusions.ImportExclusion.json";
     }
 }

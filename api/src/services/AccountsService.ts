@@ -1,6 +1,6 @@
 import { promises as fs } from "node:fs";
 import { join } from "node:path";
-import { DATA_DIR } from "../helpers";
+import { DATA_DIR } from "../constants";
 
 export type Account = { email: string; password: string };
 
