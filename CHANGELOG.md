@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.13.5](https://github.com/Zukzuk/syncnite/compare/v1.13.3...v1.13.5) (2025-10-19)
+
+
+### Bug Fixes
+
+* trying to unify backup and sync streaming flow, still buggy though ([3a0decb](https://github.com/Zukzuk/syncnite/commit/3a0decb9fa5f9b57a39d7b16c0bbf2f429a3e74d))
+
 ### [1.13.4](https://github.com/zukzuk/playnite-viewer/compare/v1.13.2...v1.13.4) (2025-10-18)
 
 
