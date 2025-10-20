@@ -6,6 +6,7 @@ import { useAuth } from "../components/hooks/useAuth";
 import { fetchAdminStatus } from "../lib/api";
 import { setCreds } from "../lib/persist";
 import { API_ENDPOINTS } from "../lib/constants";
+import { TabKey } from "../lib/types";
 
 async function post(path: string, body: any) {
   const r = await fetch(path, {
@@ -18,11 +19,11 @@ async function post(path: string, body: any) {
 
 export default function LoginPage() {
   const nav = useNavigate();
-  const { state } = useAuth({ pollMs : 0 });
+  const { state } = useAuth({ pollMs: 0 });
   const [error, setError] = React.useState<string | null>(null);
   const [hasAdmin, setHasAdmin] = React.useState<boolean | null>(null);
+  const [activeTab, setActiveTab] = React.useState<TabKey>("login");
 
-  // Hooks are always called — no conditional placement
   const loginForm = useForm({ initialValues: { email: "", password: "" } });
   const registerForm = useForm({ initialValues: { email: "", password: "" } });
 
@@ -30,6 +31,7 @@ export default function LoginPage() {
     (async () => {
       const s = await fetchAdminStatus();
       setHasAdmin(s.hasAdmin);
+      setActiveTab(s.hasAdmin ? "login" : "register");
     })();
   }, []);
 
@@ -57,43 +59,51 @@ export default function LoginPage() {
       {error && <Alert color="red">{error}</Alert>}
 
       <Card withBorder radius="md" p="lg">
-        <Tabs defaultValue={hasAdmin ? "login" : "register"} keepMounted={false}>
-          <Tabs.List grow>
-            <Tabs.Tab value="login" disabled={!hasAdmin}>Login</Tabs.Tab>
-            <Tabs.Tab value="register">
-              Register{hasAdmin && <Badge ml="xs" variant="light">Admin disabled</Badge>}
-            </Tabs.Tab>
-          </Tabs.List>
+        {hasAdmin === null ? (
+          <Text ta="center">Checking system status…</Text>
+        ) : (
+          <Tabs
+            value={activeTab}
+            onChange={(v) => v && setActiveTab(v as TabKey)}
+            keepMounted={false}
+          >
+            <Tabs.List grow>
+              <Tabs.Tab value="login" disabled={!hasAdmin}>Login</Tabs.Tab>
+              <Tabs.Tab value="register">
+                Register{hasAdmin && <Badge ml="xs" variant="light">Admin disabled</Badge>}
+              </Tabs.Tab>
+            </Tabs.List>
 
-          <Tabs.Panel value="login" pt="md">
-            <form onSubmit={onLogin}>
-              <Stack>
-                <TextInput label="Email" placeholder="you@example.com" withAsterisk {...loginForm.getInputProps("email")} />
-                <PasswordInput label="Password" placeholder="••••••••" withAsterisk {...loginForm.getInputProps("password")} />
-                <Group justify="flex-end">
-                  <Button type="submit" disabled={!hasAdmin}>Login</Button>
-                </Group>
-              </Stack>
-            </form>
-          </Tabs.Panel>
+            <Tabs.Panel value="login" pt="md">
+              <form onSubmit={onLogin}>
+                <Stack>
+                  <TextInput label="Email" placeholder="you@example.com" withAsterisk {...loginForm.getInputProps("email")} />
+                  <PasswordInput label="Password" placeholder="••••••••" withAsterisk {...loginForm.getInputProps("password")} />
+                  <Group justify="flex-end">
+                    <Button type="submit" disabled={!hasAdmin}>Login</Button>
+                  </Group>
+                </Stack>
+              </form>
+            </Tabs.Panel>
 
-          <Tabs.Panel value="register" pt="md">
-            <form onSubmit={onRegisterAdmin}>
-              <Stack>
-                {!hasAdmin ? (
-                  <Alert variant="light">Create the admin account</Alert>
-                ) : (
-                  <Alert variant="light" color="yellow">An admin already exists — registering a new admin is disabled.</Alert>
-                )}
-                <TextInput label="Admin email" placeholder="admin@example.com" withAsterisk disabled={registerDisabled} {...registerForm.getInputProps("email")} />
-                <PasswordInput label="Password" placeholder="••••••••" withAsterisk disabled={registerDisabled} {...registerForm.getInputProps("password")} />
-                <Group justify="flex-end">
-                  <Button type="submit" disabled={registerDisabled}>Create admin</Button>
-                </Group>
-              </Stack>
-            </form>
-          </Tabs.Panel>
-        </Tabs>
+            <Tabs.Panel value="register" pt="md">
+              <form onSubmit={onRegisterAdmin}>
+                <Stack>
+                  {!hasAdmin ? (
+                    <Alert variant="light">Create the admin account</Alert>
+                  ) : (
+                    <Alert variant="light" color="yellow">An admin already exists — registering a new admin is disabled.</Alert>
+                  )}
+                  <TextInput label="Admin email" placeholder="admin@example.com" withAsterisk disabled={registerDisabled} {...registerForm.getInputProps("email")} />
+                  <PasswordInput label="Password" placeholder="••••••••" withAsterisk disabled={registerDisabled} {...registerForm.getInputProps("password")} />
+                  <Group justify="flex-end">
+                    <Button type="submit" disabled={registerDisabled}>Create admin</Button>
+                  </Group>
+                </Stack>
+              </form>
+            </Tabs.Panel>
+          </Tabs>
+        )}
       </Card>
     </Stack>
   );

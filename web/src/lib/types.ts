@@ -7,3 +7,6 @@ export type SortKey = "title" | "series" | "year" | "source" | "tags";
 export type SortDir = "asc" | "desc";
 
 export type Phase = "unzip" | "copy" | null;
+
+export type TabKey = "login" | "register";
+
