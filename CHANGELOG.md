@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.14.2](https://github.com/zukzuk/playnite-viewer/compare/v1.13.6...v1.14.2) (2025-10-20)
+
+
+### Bug Fixes
+
+* fixed ts issue with mocks generator of the api ([dcb3d43](https://github.com/zukzuk/playnite-viewer/commit/dcb3d43737b1ab2c59ead9dcf5eebf0858dd5783))
+
 ### [1.14.1](https://github.com/zukzuk/playnite-viewer/compare/v1.13.6...v1.14.1) (2025-10-20)
 
 ## [1.14.0](https://github.com/zukzuk/playnite-viewer/compare/v1.13.5...v1.14.0) (2025-10-20)
