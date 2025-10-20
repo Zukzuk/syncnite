@@ -1,93 +1,144 @@
-# Syncnite — project overview & workflows
+# Syncnite — self-hosted Playnite library sync + web viewer
 
-Syncnite lets you export your [Playnite](https://playnite.link) library (games + media) from Windows and serve it anywhere via a tiny web UI and JSON snapshots. A companion Playnite extension, Syncnite Bridge, can push your currently installed games and upload your latest backup straight from Playnite.
+Syncnite lets you export your [Playnite](https://playnite.link) library (games, media, and metadata) and serve it anywhere via a lightweight web UI and JSON snapshots.  
+It comes with a companion Playnite extension — **Syncnite Bridge** — to upload your library directly from Playnite with one click.
 
-## What you can do
+## 🔧 What Syncnite does
 
-- Browse your library on the web — fast, searchable view of your Playnite export.
-- Keep JSON snapshots of Playnite’s LiteDB contents for reuse in other tools.
-- One‑click upload from Playnite via Syncnite Bridge (push installed list + upload ZIP).
-- Self‑host easily (Docker images provided), or run locally for dev.
+- **Serve your Playnite library on the web**
+  - Fast, searchable JSON-based viewer.
+  - Supports live logs and progress via SSE.
+- **Create and keep JSON snapshots** of Playnite’s LiteDB contents for reuse.
+- **Push from Playnite via Syncnite Bridge**
+  - Uploads your exported ZIP and installed games list.
+- **Self-host easily**
+  - Docker Compose stack (`api`, `web`, `.pext` builder).
+  - Runs locally or on any small server.
 
-## The Playnite extension: Syncnite Bridge
+## ⚙️ Developer workflows
 
-- Purpose: from inside Playnite, push the list of installed games and upload a new ZIP (your Playnite export + media) to your Syncnite server.
+All orchestration scripts live in the repo root and manage the workspaces (`api`, `web`, extension builder).
 
-- Setup
-  - Start your Syncnite server (see “Run” below) so it serves /extension/latest.pext.
-  - In Playnite, install that .pext (e.g. http://<server>:3003/extension/latest.pext).
-  - In Syncnite Bridge Settings, set:
-    - API base: http://<server>:3003/api/
-    - Admin email & password (same creds you set on the web admin page).
-- Use: Click Push installed or Sync now in the extension UI; it will authenticate and upload.
-
-## Workflow
-
-All scripts are at the repo root. They orchestrate the workspaces (api, web) and packaging.
-
-### Install deps (monorepo)
-```
-npm run i:all
-```
-Installs workspaces and the root.
-
-### Run app
-```
+### Run the full stack (API + web)
+```bash
 npm run up
 ```
-Run complete stack
 
-### Conventional commits
+### Install all dependencies
+```bash
+npm run i:all
 ```
-npm run commit
-```
-Uses Commitizen with the conventional changelog adapter.
 
-### Build 
-```
+### Build all components
+```bash
 npm run build
 ```
-Performs in order: set version → build API & Web workspaces → build the Playnite .pext → refresh the codebase summary.
+Builds the API, web, and `.pext` extension; updates version and summary.
 
-### Push code
+### Conventional commits
+```bash
+npm run commit
 ```
+
+### Push current branch + tags
+```bash
 npm run push
 ```
-Pushes current branch + tags.
 
 ### Release Docker images
-```
+```bash
 npm run release
 ```
-Builds and pushes the api and web docker images, tagging with the current version.
+Builds and pushes `api` and `web` Docker images, tagged with the current version.
 
-### Using prebuilt images
-```
-cd deploy
-docker compose up -d
-```
-Mount your host paths under /uploads, /data, /extension.
-
-### Clean
-```
+### Clean generated artifacts
+```bash
 npm run clean
 ```
-Cleans generated artifacts used by the build/release flow.
 
-## Useful endpoints (when self‑hosting)
+## 🧩 Components
 
-Web: http://<host>:3003/
-Download extension: http://<host>:3003/extension/latest.pext
-API Swagger: http://<host>:3004/api/docs
+| Component | Description |
+|-----------|-------------|
+| **syncnite-api** | Node.js/TypeScript backend (Express). Handles uploads, processing, and API routes. |
+| **syncnite-web** | Minimal web frontend to browse your exported data (served via Docker). |
+| **PlayniteImport** | .NET 8 dumper that converts Playnite’s LiteDB to JSON during backup. |
+| **Syncnite Bridge** | Playnite extension (`.pext`) to push installed games and upload your backup ZIPs. |
 
-## Notes
 
-ZIPs can be large; Nginx is configured for big uploads and long timeouts.
+## 🚀 Syncnite Bridge (Playnite extension)
 
-If your Playnite DB is password‑protected, pass password=... when processing; the dumper respects LITEDB_PASSWORD.
+**Purpose:** from inside Playnite, push your installed games list and upload your export ZIP to your Syncnite server.
 
-The served .pext name includes the app version; the API resolves /extension/latest.pext dynamically.
+### Setup
 
-## License
+1. Start your Syncnite server
+2. Create an Admin account
+3. Download the extension `.pext` 
+4. In Playnite, install that `.pext`
+5. In Playnite menu, open **Syncnite Bridge**, configure:
+   - **API base:** `http://<server>:3003/api/`
+   - **Admin email/password:** same as the registered Admin
 
-MIT (unless noted otherwise in subfolders).
+### Convenience (not needed)
+- **Push installed** → writes `Installed.json` on the server.
+- **Sync now** → uploads ZIP and triggers import.
+- View live progress/logs streamed from `/api/sse`.
+
+## 🧠 API overview
+
+The backend exposes a clean OpenAPI-documented API:
+
+| Area | Example endpoints |
+|------|-------------------|
+| **General** | `/api/zips`, `/api/sse` |
+| **Accounts** | `/api/accounts/register`, `/api/accounts/login`, `/api/accounts/verify` |
+| **Backup** | `/api/backup/upload`, `/api/backup/process` |
+| **Sync** | `/api/sync/push`, `/api/sync/up`, `/api/sync/log` |
+| **Extension** | `/api/extension/download` |
+
+Docs available at:  
+**<http://<server>:3003/api/docs>**
+
+## 🧠 Architecture notes
+
+- The **API** runs on port `3004` and is a TypeScript/Express service.
+- The **web UI** runs on port `3003` and serves the `.pext` plus library viewer.
+- **PlayniteImport** (.NET 8) is built as a self-contained binary inside the API image.
+- **Logs and progress** are streamed through `/api/sse` to the frontend.
+- All paths (uploads, workdir, data) are configurable constants in `api/src/constants.ts`.
+
+## 📂 Useful endpoints (when self-hosting)
+
+| Purpose | URL |
+|---------|-----|
+| Web app | `http://<host>:3003/` |
+| Download Playnite extension | `http://<host>:3003/extension/latest.pext` |
+| API Swagger docs | `http://<host>:3004/api/docs` |
+| Live logs/progress (SSE) | `http://<host>:3004/api/sse` |
+
+---
+
+## 🧱 Data locations
+
+| Path | Description |
+|------|-------------|
+| `/uploads` | Uploaded Playnite ZIPs |
+| `/data` | Processed JSON + media |
+| `/data/manifest.json` | Current manifest built from `/data/libraryfiles` |
+| `/data/installed/*.Installed.json` | Installed list pushed from Playnite |
+| `/extension` | Packaged `.pext` extension served by `/api/extension/download` |
+
+---
+
+## 🧩 Notes
+
+- Large ZIP uploads are supported (Nginx / Express body limits tuned).
+- If your Playnite DB is password-protected, set `LITEDB_PASSWORD` when importing.
+- The `.pext` name reflects the app version, but `/extension/latest.pext` always resolves to the latest build.
+
+---
+
+## 📜 License
+
+MIT (unless otherwise noted in subfolders)

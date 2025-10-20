@@ -33,8 +33,6 @@ namespace SyncniteBridge
             configPath = Path.Combine(GetPluginUserDataPath(), AppConstants.ConfigFileName);
             config = BridgeConfig.Load(configPath);
             AuthHeaders.Set(config.AuthEmail, config.GetAuthPassword());
-
-            // Bridge logger replaces RemoteLogClient
             blog = new BridgeLogger(config.ApiBase, BridgeVersion.Current, config.LogLevel);
 
             var playniteVer = PlayniteApi?.ApplicationInfo?.ApplicationVersion?.ToString();
@@ -199,7 +197,6 @@ namespace SyncniteBridge
                                     deltaSync?.Trigger();
                                     blog.Info("sync", "Manual sync requested");
                                 },
-                                // NEW:
                                 initialEmail: config.AuthEmail,
                                 initialPassword: config.GetAuthPassword(),
                                 onSaveCredentials: (email, password) =>

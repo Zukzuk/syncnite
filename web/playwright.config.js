@@ -6,7 +6,7 @@ const config = {
         baseURL: process.env.WEB_BASE_URL || "http://localhost:3003",
         trace: "on-first-retry",
     },
-    reporter: [["html", { outputFolder: "reports" }]], // <— write to ./reports
+    reporter: [["html", { outputFolder: "reports" }]],
     projects: [{ name: "chromium" }],
 };
 module.exports = config;
