@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.14.0](https://github.com/zukzuk/playnite-viewer/compare/v1.13.5...v1.14.0) (2025-10-20)
+
+
+### Features
+
+* fixed login/register modal on startup ([e2cfef6](https://github.com/zukzuk/playnite-viewer/commit/e2cfef6729eea9f3bce24badbb5939cada574286))
+
 ### [1.13.6](https://github.com/Zukzuk/syncnite/compare/v1.13.4...v1.13.6) (2025-10-19)
 
 ### [1.13.5](https://github.com/Zukzuk/syncnite/compare/v1.13.3...v1.13.5) (2025-10-19)
