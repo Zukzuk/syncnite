@@ -194,7 +194,7 @@
  *             $ref: '#/components/schemas/ErrorResponse'
  *
  * paths:
- *   /app/zips:
+ *   /zips:
  *     get:
  *       summary: List uploaded ZIPs
  *       tags: [App]
@@ -207,10 +207,15 @@
  *                 type: array
  *                 items:
  *                   $ref: '#/components/schemas/ZipFile'
+ *               examples:
+ *                 sample:
+ *                   value:
+ *                     - { "name": "2025-10-12-12-00.zip", "sizeBytes": 123456, "mtime": "2025-10-12T10:00:00.000Z" }
+ *                     - { "name": "2025-10-10-09-30.zip", "sizeBytes": 987654, "mtime": "2025-10-10T07:30:00.000Z" }
  *         500:
  *           $ref: '#/components/responses/Error500'
  *
- *   /app/sse:
+ *   /sse:
  *     get:
  *       summary: Subscribe to live logs and progress (SSE)
  *       tags: [App]
@@ -249,6 +254,12 @@
  *                 password:
  *                   type: string
  *       responses:
+ *       responses:
+ *         200:
+ *           description: Registered.
+ *           content:
+ *             application/json:
+ *               schema: { type: object, properties: { ok: { type: boolean, example: true } } }
  *         201:
  *           description: Registered.
  *         409:
@@ -274,6 +285,9 @@
  *       responses:
  *         200:
  *           description: Login successful.
+ *           content:
+ *             application/json:
+ *               schema: { type: object, properties: { ok: { type: boolean, example: true } } }
  *         401:
  *           $ref: '#/components/responses/Error401'
  *
@@ -297,6 +311,13 @@
  *       responses:
  *         200:
  *           description: Returns whether an admin exists.
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   hasAdmin: { type: boolean, example: false }
+ *                   admin: { type: string, nullable: true, example: null }
  *
  *   /backup/upload:
  *     post:
@@ -319,6 +340,8 @@
  *             application/json:
  *               schema:
  *                 $ref: '#/components/schemas/UploadResult'
+ *               examples:
+ *                 ok: { value: { ok: true, file: "2025-10-12-12-00.zip" } }
  *         400:
  *           $ref: '#/components/responses/Error400'
  *         413:
@@ -345,6 +368,9 @@
  *       responses:
  *         200:
  *           description: Process started.
+ *           content:
+ *             application/json:
+ *               schema: { type: object, properties: { ok: { type: boolean, example: true } } }
  *         400:
  *           $ref: '#/components/responses/Error400'
  *         500:

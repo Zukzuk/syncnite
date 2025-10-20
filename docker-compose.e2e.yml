@@ -1,0 +1,38 @@
+services:
+  api:
+    environment:
+      MOCKS: spec
+
+  web:
+    depends_on:
+      - api
+
+  e2e:
+    image: mcr.microsoft.com/playwright:v1.48.2-jammy
+    working_dir: /tests
+    depends_on: [ web ]
+    environment:
+      WEB_BASE_URL: http://web:3003
+      HOME: /root
+    volumes:
+      - ./web/e2e:/tests/e2e:ro
+      - ./web/playwright.config.js:/tests/playwright.config.js:ro
+      - ./reports:/tests/reports             # <— mount host ./reports to /tests/reports
+      - e2e_node_modules:/tests/node_modules # cache node_modules between runs
+    command: >
+      bash -lc "
+        test -f package.json || npm init -y >/dev/null &&
+        npm i -D @playwright/test@1.48.2 &&
+        npx playwright test --reporter=html --project=chromium
+      "
+
+  e2e-report:
+    image: nginx:alpine
+    depends_on: [ e2e ]
+    volumes:
+      - ./reports:/usr/share/nginx/html:ro   # <— serve ./reports (now has index.html)
+    ports:
+      - "9323:80"
+
+volumes:
+  e2e_node_modules:
