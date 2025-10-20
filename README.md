@@ -1,7 +1,7 @@
 # Syncnite — self-hosted Playnite library sync + web viewer
 
-Syncnite lets you export your [Playnite](https://playnite.link) library (games, media, and metadata) and serve it anywhere via a lightweight web UI and JSON snapshots.  
-It comes with a companion Playnite extension — **Syncnite Bridge** — to upload your library directly from Playnite with one click.
+Syncnite lets you share your [Playnite](https://playnite.link) library (games, media, and metadata) with family memebers. You can serve it anywhere via a lightweight web UI and JSON snapshots.  
+It comes with a companion Playnite extension — **Syncnite Bridge** — to syncs the admin's library directly from Playnite with one click.
 
 ## 🔧 What Syncnite does
 
@@ -10,7 +10,7 @@ It comes with a companion Playnite extension — **Syncnite Bridge** — to uplo
   - Supports live logs and progress via SSE.
 - **Create and keep JSON snapshots** of Playnite’s LiteDB contents for reuse.
 - **Push from Playnite via Syncnite Bridge**
-  - Uploads your exported ZIP and installed games list.
+  - Syncs library ZIP and installed games list.
 - **Self-host easily**
   - Docker Compose stack (`api`, `web`, `.pext` builder).
   - Runs locally or on any small server.
@@ -61,21 +61,21 @@ npm run clean
 | Component | Description |
 |-----------|-------------|
 | **syncnite-api** | Node.js/TypeScript backend (Express). Handles uploads, processing, and API routes. |
-| **syncnite-web** | Minimal web frontend to browse your exported data (served via Docker). |
-| **PlayniteImport** | .NET 8 dumper that converts Playnite’s LiteDB to JSON during backup. |
-| **Syncnite Bridge** | Playnite extension (`.pext`) to push installed games and upload your backup ZIPs. |
+| **syncnite-web** | Minimal web frontend to browse the library. |
+| **PlayniteImport** | .NET 8 dumper that converts Playnite’s LiteDB to JSON. |
+| **Syncnite Bridge** | Playnite extension (`.pext`) to push installed games and sync library ZIPs. |
 
 
 ## 🚀 Syncnite Bridge (Playnite extension)
 
-**Purpose:** from inside Playnite, push your installed games list and upload your export ZIP to your Syncnite server.
+**Purpose:** from inside Playnite, push your installed games list and upload library ZIP to your Syncnite server.
 
 ### Setup
 
 1. Start your Syncnite server
 2. Create an Admin account
 3. Download the extension `.pext` 
-4. In Playnite, install that `.pext`
+4. In Playnite, install the extension `.pext`
 5. In Playnite menu, open **Syncnite Bridge**, configure:
    - **API base:** `http://<server>:3003/api/`
    - **Admin email/password:** same as the registered Admin
