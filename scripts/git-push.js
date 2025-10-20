@@ -6,6 +6,10 @@ const run = (cmd) => execSync(cmd, { stdio: 'inherit' });
 const out = (cmd) => execSync(cmd).toString().trim();
 
 try {
+  // block pushes unless E2E passes
+  run('node scripts/e2e-gate.js');
+
+  // check if there are new commits compared to origin/main
   run('git fetch origin main');
 
   const ahead = parseInt(out('git rev-list --count origin/main..HEAD'), 10);
