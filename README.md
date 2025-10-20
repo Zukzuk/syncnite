@@ -1,6 +1,6 @@
 # Syncnite — self-hosted Playnite library sync + web viewer
 
-Syncnite lets you share your [Playnite](https://playnite.link) library (games, media, and metadata) with family memebers. You can serve it anywhere via a lightweight web UI and JSON snapshots.  
+Syncnite lets you share your [Playnite](https://playnite.link) library (games, media, and metadata) with family members. You can serve it anywhere via a lightweight web UI and JSON snapshots.  
 It comes with a companion Playnite extension — **Syncnite Bridge** — to syncs the admin's library directly from Playnite with one click.
 
 ## 🔧 What Syncnite does
