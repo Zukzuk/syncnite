@@ -1,13 +1,22 @@
-import { Alert, Stack, Text } from "@mantine/core";
+import React from "react";
+import { Container, Loader } from "@mantine/core";
+import Markdown from "../components/ui/Markdown";
 
 export default function HomePage() {
-  return (
-    <Stack gap="lg" p="md">
-      <Text fz={24} fw={700}>Home</Text>
-      
-      <Alert variant="light" color="gray" title="About this page">
-        Welcome to your shared game library
-      </Alert>
-    </Stack>
-  );
+    const [content, setContent] = React.useState<string | null>(null);
+
+    React.useEffect(() => {
+        fetch("/README.md")
+            .then((r) => r.text())
+            .then(setContent)
+            .catch(() => setContent("# README not found"));
+    }, []);
+
+    if (!content) return <Loader />;
+
+    return (
+        <Container size="md" py="lg">
+            <Markdown content={content} />
+        </Container>
+    );
 }
