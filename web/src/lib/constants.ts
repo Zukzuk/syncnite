@@ -63,30 +63,17 @@ export const FALLBACK_ICON =
     </svg>`
   );
 
-export const SOURCE_SHORTNAME_MAP: Record<string, string> = {
-  "steam": "steam",
-  "gog": "gog",
-  "ubisoft connect": "ubisoft",
-  "ea app": "ea",
-  "battle.net": "blizzard",
-  "epic": "epic",
-  "xbox": "xbox",
-  "humble": "humble",
-  "nintendo": "nintendo",
-  "microsoft store": "msstore",
-};
-
-export const SOURCE_LABEL_MAP: Record<string, string> = {
-  "steam": "Steampowered",
-  "gog": "Good Old Games",
-  "ubisoft connect": "Ubisoft Connect",
-  "ea app": "Electronic Arts",
-  "battle.net": "Activision/Blizzard",
-  "epic": "Epic Games",
-  "xbox": "XBox",
-  "humble": "Humble Bundle",
-  "nintendo": "Nintendo",
-  "microsoft store": "Microsoft Store",
+export const SOURCE_MAP: Record<string, { platform: string; online: string; label: string }> = {
+  "steam": {platform: "steam://", online: "https://store.steampowered.com", label: "Steampowered" },
+  "gog": {platform: "goggalaxy://", online: "https://www.gog.com", label: "Good Old Games" },
+  "ubisoft connect": {platform: "uplay://", online: "https://www.ubisoft.com", label: "Ubisoft Connect" },
+  "ea app": {platform: "ealaunch://", online: "https://www.ea.com/origin", label: "EA App" },
+  "battle.net": {platform: "battlenet://", online: "https://www.battle.net", label: "Battle.net" },
+  "epic": {platform: "com.epicgames.launcher://", online: "https://www.epicgames.com", label: "Epic Games" },
+  "xbox": {platform: "xbox://", online: "https://www.xbox.com", label: "XBox" },
+  "humble": {platform: "humble://", online: "https://www.humblebundle.com", label: "Humble Bundle" },
+  "nintendo": {platform: "nintendo://", online: "https://www.nintendo.com", label: "Nintendo" },
+  "microsoft store": {platform: "ms-windows-store://", online: "https://apps.microsoft.com", label: "Microsoft Store" },
 };
 
 export const COOKIE = {

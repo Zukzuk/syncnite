@@ -25,12 +25,16 @@ export function AppHeader({ opened, onToggleNav }: Props) {
 
             <Group gap="sm">
                 {/* Download extension button */}
-                <Tooltip withArrow label={`Download Syncnite v${appVersion} (.pext)`}>
+                <Tooltip 
+                    withArrow 
+                    label={`Download SyncniteBridge v${appVersion} (.pext)`}
+                    style={{ fontSize: 10 }}
+                >
                     <Button
                         component="a"
                         href={API_ENDPOINTS.DOWNLOAD_EXTENSION}
-                        size="sm"
-                        radius="xl"
+                        size="xs"
+                        radius="md"
                         leftSection={<IconDownload size={16} />}
                         variant="filled"
                         fw={600}
@@ -39,10 +43,10 @@ export function AppHeader({ opened, onToggleNav }: Props) {
                     </Button>
                 </Tooltip>
 
-                <Group gap="md">
+                <Group gap="sm">
                     {state.loggedIn ? (
                         <>
-                            <Text size="sm" className="is-dim">{state.email}</Text>
+                            <Text size="xs" className="is-dim">{state.email}</Text>
                             <Button size="xs" variant="light" onClick={() => clearCreds()}>Logout</Button>
                         </>
                     ) : null}

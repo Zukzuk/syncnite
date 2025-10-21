@@ -1,0 +1,33 @@
+
+import React from "react";
+import { ActionIcon, Tooltip } from "@mantine/core";
+import { Row } from "../hooks/useLibrary";
+import { IconExternalLink } from "@tabler/icons-react";
+import { SOURCE_MAP } from "../../lib/constants";
+
+type Props = Pick<Row, "link" | "title" | "source">;
+
+export const ExternalLink = React.memo(function ExternalLink({
+    link,
+    title,
+    source,
+}: Props) {
+    if (!link) return null;
+    return (
+        <Tooltip label={SOURCE_MAP[source]?.online} withArrow position="top">
+             <ActionIcon
+                component="a"
+                href={link}
+                target="_blank"
+                rel="noopener"
+                aria-label={`Open link for ${title}`}
+                onClick={(e) => e.stopPropagation()}
+                variant="subtle"
+                size="sm"
+                style={{ lineHeight: 0 }}
+            >
+                <IconExternalLink size={18} stroke={2} />
+            </ActionIcon>
+        </Tooltip>
+    );
+});

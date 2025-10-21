@@ -1,40 +1,30 @@
 import React from "react";
 import { ActionIcon, Tooltip } from "@mantine/core";
 import { iconForSource, sourceProtocolLink } from "../../lib/utils";
-import { SOURCE_SHORTNAME_MAP } from "../../lib/constants";
+import { SOURCE_MAP } from "../../lib/constants";
 import { Row } from "../hooks/useLibrary";
 
-type Props = Pick<Row, "source"> & {
-    gameId: string | null;
-    href: string | null;
-    onClick?: (e: React.MouseEvent) => void;
-};
+type Props = Pick<Row, "source" | "gameId" | "link">;
 
-export const SourceBadge = React.memo(function GameRowSourceBadge({
+export const SourceIcon = React.memo(function SourceIcon({
     source,
-    href,
+    link,
     gameId,
-    onClick,
 }: Props) {
     if (!source) return null;
 
-    const proto = sourceProtocolLink(source, gameId, href);
+    const protocolLink = sourceProtocolLink(source, gameId, link);
     const Icon = iconForSource(source);
-    const label = SOURCE_SHORTNAME_MAP[source] ?? source;
 
     return (
-        <Tooltip label={`//:${label}`} withArrow position="top">
-            {proto ? (
+        <Tooltip label={SOURCE_MAP[source]?.platform} withArrow position="top">
+            {protocolLink ? (
                 <ActionIcon
                     component="a"
-                    href={proto}
+                    href={protocolLink}
                     rel="noopener"
                     aria-label={`Goto game in ${source}`}
-                    title={`Goto game in ${source}`}
-                    onClick={(e: React.MouseEvent) => {
-                        e.stopPropagation();
-                        onClick?.(e);
-                    }}
+                    onClick={(e) => e.stopPropagation()}
                     variant="subtle"
                     size="sm"
                     style={{ lineHeight: 0 }}
@@ -46,11 +36,7 @@ export const SourceBadge = React.memo(function GameRowSourceBadge({
                     component="a"
                     rel="noopener"
                     aria-label={`Goto game in ${source}`}
-                    title={`Goto game in ${source}`}
-                    onClick={(e: React.MouseEvent) => {
-                        e.stopPropagation();
-                        onClick?.(e);
-                    }}
+                    onClick={(e) => e.stopPropagation()}
                     variant="subtle"
                     size="sm"
                     style={{ lineHeight: 0 }}

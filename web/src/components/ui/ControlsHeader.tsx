@@ -1,7 +1,8 @@
 import React from "react";
 import { Group, MultiSelect, Switch, Text, Stack, Flex, rem } from "@mantine/core";
 import { SearchInput } from "./SearchInput";
-import { SOURCE_LABEL_MAP } from "../../lib/constants";
+import { SOURCE_MAP } from "../../lib/constants";
+import { getTheme } from "../../lib/utils";
 
 type Props = {
   q: string; setQ: (v: string) => void;
@@ -29,12 +30,12 @@ export function ControlsHeader(props: Props) {
   } = props;
 
   const sourceData = React.useMemo(
-    () => Array.from(new Set(allSources)).sort().map((s) => ({ value: s, label: SOURCE_LABEL_MAP[s] })),
+    () => Array.from(new Set(allSources)).sort().map((s) => ({ value: s, label: SOURCE_MAP[s]?.label ?? s })),
     [allSources]
   );
 
   const tagData = React.useMemo(
-    () => Array.from(new Set(allTags)).sort().map((t) => ({ value: t, label: t })),
+    () => Array.from(new Set(allTags)).sort().map((t) => ({ value: t, label: SOURCE_MAP[t]?.label ?? t })),
     [allTags]
   );
 
@@ -42,6 +43,8 @@ export function ControlsHeader(props: Props) {
     () => Array.from(new Set(allSeries)).sort().map((s) => ({ value: s, label: s })),
     [allSeries]
   );
+
+  const { theme } = getTheme();
 
   return (
     <Group wrap="wrap" align="center" gap="sm">
@@ -64,9 +67,9 @@ export function ControlsHeader(props: Props) {
             value={sources}
             onChange={setSources}
             data={sourceData}
-            clearable
-            nothingFoundMessage="No sources found"
             variant={sources.length ? "filled" : "default"}
+            nothingFoundMessage="No sources found"
+            clearable
             styles={{ pill: { display: "none" as const } }}
           />
           <MultiSelect
@@ -75,9 +78,9 @@ export function ControlsHeader(props: Props) {
             value={tags}
             onChange={setTags}
             data={tagData}
-            clearable
-            nothingFoundMessage="No tags found"
             variant={tags.length ? "filled" : "default"}
+            nothingFoundMessage="No tags found"
+            clearable
             styles={{ pill: { display: "none" as const } }}
           />
         </Group>

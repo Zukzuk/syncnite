@@ -3,9 +3,10 @@ import { Box, Flex, Text, Group, Badge, Tooltip, ActionIcon } from "@mantine/cor
 import { PlayActionOverlay } from "./PlayActionOverlay";
 import { IconImage } from "./IconImage";
 import { GRID } from "../../lib/constants";
-import { SourceBadge } from "./SourceBadge";
-import { IconCopy, IconExternalLink } from "@tabler/icons-react";
+import { SourceIcon } from "./SourceIcon";
+import { IconCopy } from "@tabler/icons-react";
 import { Row } from "../hooks/useLibrary";
+import { ExternalLink } from "./ExternalLink";
 
 type Props = Row & {
     collapseOpen: boolean;
@@ -71,10 +72,9 @@ export function GameRowItem(props: Props) {
 
                 {/* Copy title */}
                 {title && (
-                    <Tooltip label={copied ? "Copied!" : "Copy me!"} withArrow position="top">
+                    <Tooltip label={copied ? "Copied!" : "Copy title"} withArrow position="top">
                         <ActionIcon
-                            aria-label={`Copy title of ${title}`}
-                            title="Copy title"
+                            aria-label={`Copy ${title}`}
                             onClick={handleCopy}
                             onMouseDown={(e) => e.stopPropagation()}
                             variant="subtle"
@@ -98,26 +98,9 @@ export function GameRowItem(props: Props) {
             <Box className={isHidden ? " is-dim" : ""} ta="center">
                 <Group gap={6} align="center" wrap="nowrap" style={{ justifyContent: "center" }}>
                     {/* External link */}
-                    {link && (
-                        <Tooltip label={link} withArrow position="top">
-                            <ActionIcon
-                                component="a"
-                                href={link}
-                                target="_blank"
-                                rel="noopener"
-                                aria-label={`Open link for ${title}`}
-                                title={`Open link for ${title}`}
-                                onClick={(e) => e.stopPropagation()}
-                                variant="subtle"
-                                size="sm"
-                                style={{ lineHeight: 0 }}
-                            >
-                                <IconExternalLink size={18} stroke={2} />
-                            </ActionIcon>
-                        </Tooltip>
-                    )}
+                    <ExternalLink source={source} link={link} title={title} />
                     {/* Source */}
-                    <SourceBadge source={source} gameId={gameId} href={link} />
+                    <SourceIcon source={source} gameId={gameId} link={link} />
                 </Group>
             </Box>
 

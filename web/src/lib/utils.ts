@@ -1,5 +1,5 @@
 import ICO from "icojs";
-import { BASE, FALLBACK_ICON } from "./constants";
+import { BASE, FALLBACK_ICON, SOURCE_MAP } from "./constants";
 import type { Letter } from "./types";
 import {
   IconBrandSteam,
@@ -124,13 +124,15 @@ export function sourcishLinkFallback(source: string, id: string): string | null 
   const s = source.toLowerCase();
   switch (s) {
     case "steam":
-      return `https://store.steampowered.com/app/${encodeURIComponent(id)}`;
+      return `${SOURCE_MAP.steam.online}/app/${encodeURIComponent(id)}`;
 
     case "gog":
-      return `https://www.gog.com/game/${encodeURIComponent(id)}`;
+      return `${SOURCE_MAP.gog.online}/game/${encodeURIComponent(id)}`;
 
     case "ubisoft connect":
-      return `https://www.ubisoft.com/en-us/search?gss-q=${encodeURIComponent(id)}`;
+    case "uplay":
+    case "ubisoft":
+      return `${SOURCE_MAP["ubisoft connect"].online}/en-us/search?gss-q=${encodeURIComponent(id)}`;
 
     case "ea app":
       return null;
@@ -139,19 +141,19 @@ export function sourcishLinkFallback(source: string, id: string): string | null 
       return null;
 
     case "epic":
-      return `https://www.epicgames.com/store/en-US/p/${encodeURIComponent(id)}`;
+      return `${SOURCE_MAP.epic.online}/store/en-US/p/${encodeURIComponent(id)}`;
 
     case "xbox":
-      return `https://www.xbox.com/en-us/Search/Results?q=${encodeURIComponent(id)}`;
+      return `${SOURCE_MAP.xbox.online}/en-us/Search/Results?q=${encodeURIComponent(id)}`;
 
     case "humble":
-      return `https://www.humblebundle.com/store/search?search=${encodeURIComponent(id)}`;
+      return `${SOURCE_MAP.humble.online}/store/search?search=${encodeURIComponent(id)}`;
 
     case "nintendo":
-      return `https://www.nintendo.com/us/search/?q=${encodeURIComponent(id)}`;
+      return `${SOURCE_MAP.nintendo.online}/us/search/?q=${encodeURIComponent(id)}`;
 
     case "microsoft store":
-      return `https://apps.microsoft.com/search?query=${encodeURIComponent(id)}`;
+      return `${SOURCE_MAP["microsoft store"].online}/search?query=${encodeURIComponent(id)}`;
 
     default:
       return null;
@@ -164,40 +166,40 @@ export function sourceProtocolLink(source: string, gameId: string | null, href: 
 
   switch (s) {
     case "steam":
-      return `steam://store/${encodeURIComponent(gameId)}`;
+      return `${SOURCE_MAP.steam.platform}store/${encodeURIComponent(gameId)}`;
 
     case "gog":
-      return `goggalaxy://openGameView/${encodeURIComponent(gameId)}`;
+      return `${SOURCE_MAP.gog.platform}openGameView/${encodeURIComponent(gameId)}`;
 
     case "epic": {
       // get epic slug after product/ or p/ from href if possible
       const slug = href?.match(/\/product\/([^/?]+)/)?.[1] || href?.match(/\/p\/([^/?]+)/)?.[1];
-      return slug ? `com.epicgames.launcher://store/product/${encodeURIComponent(slug)}?action=show` : "com.epicgames.launcher://";
+      return slug ? `${SOURCE_MAP.epic.platform}store/product/${encodeURIComponent(slug)}?action=show` : `${SOURCE_MAP.epic.platform}`;
       //return `com.epicgames.launcher://store/product/${encodeURIComponent(gameId)}?action=show`;
     }
 
     case "ubisoft connect":
     case "uplay":
     case "ubisoft":
-      return `uplay://launch/${encodeURIComponent(gameId)}/0`;
+      return `${SOURCE_MAP["ubisoft connect"].platform}launch/${encodeURIComponent(gameId)}/0`;
 
     case "ea app":
-      return `ealaunch://launchbyname/${encodeURIComponent(gameId)}`;
+      return `${SOURCE_MAP["ea app"].platform}launchbyname/${encodeURIComponent(gameId)}`;
 
     case "battle.net":
-      return `battlenet://${encodeURIComponent(gameId)}`;
+      return `${SOURCE_MAP["battle.net"].platform}${encodeURIComponent(gameId)}`;
 
     case "xbox":
-      return `xbox://store/${encodeURIComponent(gameId)}`;
+      return `${SOURCE_MAP.xbox.platform}store/${encodeURIComponent(gameId)}`;
 
     case "humble":
-      return `https://www.humblebundle.com/store/search?search=${encodeURIComponent(gameId)}`;
+      return null;
 
     case "nintendo":
-      return `https://www.nintendo.com/us/search/?q=${encodeURIComponent(gameId)}`;
+      return null;
 
     case "microsoft store":
-      return `ms-windows-store://pdp/?productid=${encodeURIComponent(gameId)}`;
+      return `${SOURCE_MAP["microsoft store"].platform}pdp/?productid=${encodeURIComponent(gameId)}`;
 
     default:
       return null;

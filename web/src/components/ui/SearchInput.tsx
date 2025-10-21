@@ -17,7 +17,7 @@ export function SearchInput({ value, onChange }: Props) {
             w={312}
             size="sm"
             radius="md"
-            variant="filled"
+            variant={!!value ? "filled" : "default"}
             leftSection={<IconSearch size={18} stroke={2} aria-hidden />}
             leftSectionPointerEvents="none"
             rightSection={
