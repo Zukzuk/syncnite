@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.16.0](https://github.com/Zukzuk/syncnite/compare/v1.14.3...v1.16.0) (2025-10-21)
+
+
+### Features
+
+* added first iterraion of the grid view ([9256931](https://github.com/Zukzuk/syncnite/commit/9256931ab08ebb8ef0d223858f55984fcb21a90b))
+
+
+### Bug Fixes
+
+* fixing e2e ([8e9254c](https://github.com/Zukzuk/syncnite/commit/8e9254c9436e6578cf03b1756dce6dd2177b002c))
+
 ## [1.15.0](https://github.com/Zukzuk/syncnite/compare/v1.14.3...v1.15.0) (2025-10-21)
 
 
