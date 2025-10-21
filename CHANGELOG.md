@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.15.0](https://github.com/Zukzuk/syncnite/compare/v1.14.3...v1.15.0) (2025-10-21)
+
+
+### Features
+
+* added first iterraion of the grid view ([9256931](https://github.com/Zukzuk/syncnite/commit/9256931ab08ebb8ef0d223858f55984fcb21a90b))
+
 ### [1.14.4](https://github.com/zukzuk/playnite-viewer/compare/v1.14.2...v1.14.4) (2025-10-20)
 
 ### [1.14.3](https://github.com/zukzuk/playnite-viewer/compare/v1.14.1...v1.14.3) (2025-10-20)
