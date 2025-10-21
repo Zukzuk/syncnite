@@ -2,7 +2,7 @@ import * as React from "react";
 import { Card, Stack, Text, TextInput, PasswordInput, Button, Alert, Tabs, Group, Badge } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useNavigate, Navigate } from "react-router-dom";
-import { useAuth } from "../components/hooks/useAuth";
+import { useAuth } from "../hooks/useAuth";
 import { fetchAdminStatus } from "../lib/api";
 import { setCreds } from "../lib/persist";
 import { API_ENDPOINTS } from "../lib/constants";

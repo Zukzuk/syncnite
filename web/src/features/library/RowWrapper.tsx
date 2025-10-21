@@ -1,22 +1,21 @@
 import React, { useMemo, useCallback } from "react";
 import { Box, Collapse } from "@mantine/core";
-import { buildAssetUrl } from "../../lib/utils";
 import { GRID } from "../../lib/constants";
-import { GameRowItem } from "../ui/GameRowItem";
-import { GameRowDetails } from "../ui/GameRowDetails";
 import { useDelayedFlag } from "../hooks/useDelayedFlag";
 import { Row } from "../hooks/useLibrary";
+import { RowItem } from "./RowItem";
+import { RowDetails } from "./RowDetails";
 
-type ControlledProps = {
+type Props = Row &{
   topOffset: number;
   collapseOpen: boolean;
   everOpened: boolean;
   onToggle: () => void;
 };
 
-export function GameRow(props: Row & ControlledProps) {
+export function RowWrapper(props: Props) {
   const {
-    id, installed, coverUrl, bgUrl, title, isHidden,
+    id, isInstalled, coverUrl, bgUrl, title, isHidden,
     collapseOpen, everOpened, topOffset, onToggle,
   } = props;
 
@@ -32,7 +31,7 @@ export function GameRow(props: Row & ControlledProps) {
   return (
     <Box
       data-row-id={id}
-      className={`game-row${isHidden ? " is-dim" : ""}${installed ? " is-installed" : ""}`}
+      className={`game-row${isHidden ? " is-dim" : ""}${isInstalled ? " is-installed" : ""}`}
       role="button"
       tabIndex={0}
       aria-expanded={collapseOpen}
@@ -47,24 +46,24 @@ export function GameRow(props: Row & ControlledProps) {
         overflow: "hidden",
         isolation: "isolate",
         transition: "background-color 140ms ease",
-        backgroundColor: installed ? "var(--mantine-primary-color-light)" : "transparent",
+        backgroundColor: isInstalled ? "var(--mantine-primary-color-light)" : "transparent",
       }}
       onClick={onToggle}
     >
-      {/* Foreground */}
+      {/* Container */}
       <Box
         style={{ position: "relative", top: 0, left: 0, zIndex: 1 }}
         w={collapseOpen ? `calc(100vw - ${GRID.menuWidth}px - 12px - 15px)` : "100%"}
         h={collapseOpen ? `calc(100vh - ${topOffset}px - 38px - ${GRID.smallBox}px - 12px)` : "100%"}
       >
-        {/* Main item */}
-        <GameRowItem
+        {/* Row */}
+        <RowItem
           {... props }
         />
 
-        {/* Details */}
+        {/* Opened */}
         <Collapse in={collapseOpen} transitionDuration={140}>
-          <GameRowDetails
+          <RowDetails
             title={title}
             coverUrl={coverUrl}
             collapseOpenDelayed={collapseOpenDelayed}

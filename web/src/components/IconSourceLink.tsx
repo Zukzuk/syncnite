@@ -1,12 +1,12 @@
 import React from "react";
 import { ActionIcon, Tooltip } from "@mantine/core";
-import { iconForSource, sourceProtocolLink } from "../../lib/utils";
-import { SOURCE_MAP } from "../../lib/constants";
-import { Row } from "../hooks/useLibrary";
+import { iconForSource, sourceProtocolLink } from "../lib/utils";
+import { SOURCE_MAP } from "../lib/constants";
+import { Row } from "../features/hooks/useLibrary";
 
 type Props = Pick<Row, "source" | "gameId" | "link">;
 
-export const SourceIcon = React.memo(function SourceIcon({
+export const IconSourceLink = React.memo(function IconSourceLink({
     source,
     link,
     gameId,

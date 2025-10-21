@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { fetchAdminStatus } from "../../lib/api";
+import { fetchAdminStatus } from "../lib/api";
 
 type UseParams = { 
   pollMs: number; 

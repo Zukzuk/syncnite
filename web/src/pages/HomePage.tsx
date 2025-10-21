@@ -1,6 +1,6 @@
 import React from "react";
 import { Container, Loader } from "@mantine/core";
-import Markdown from "../components/ui/Markdown";
+import Markdown from "../components/Markdown";
 
 export default function HomePage() {
     const [content, setContent] = React.useState<string | null>(null);

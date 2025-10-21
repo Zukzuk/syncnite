@@ -1,6 +1,6 @@
 import * as React from "react";
-import { getCreds, setCreds, clearCreds } from "../../lib/persist";
-import { verifyAdmin } from "../../lib/api";
+import { getCreds, setCreds, clearCreds } from "../lib/persist";
+import { verifyAdmin } from "../lib/api";
 
 type AuthState = {
   ready: boolean;

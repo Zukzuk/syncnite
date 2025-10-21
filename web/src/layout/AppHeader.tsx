@@ -1,8 +1,8 @@
 import { Group, Title, ActionIcon, Button, Tooltip, Burger, Text, useMantineColorScheme } from "@mantine/core";
 import { IconDownload, IconMoon, IconSun } from "@tabler/icons-react";
 import { useAuth } from "../hooks/useAuth";
-import { clearCreds } from "../../lib/persist";
-import { API_ENDPOINTS } from "../../lib/constants";
+import { clearCreds } from "../lib/persist";
+import { API_ENDPOINTS } from "../lib/constants";
 
 const appVersion = (window as any).__APP_VERSION__ ?? 'dev';
 

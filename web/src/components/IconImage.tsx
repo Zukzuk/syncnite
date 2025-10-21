@@ -1,6 +1,6 @@
 import React from "react";
-import { isIcoPath, icoToPngDataUrl } from "../../lib/utils";
-import { GRID } from "../../lib/constants";
+import { isIcoPath, icoToPngDataUrl } from "../lib/utils";
+import { GRID } from "../lib/constants";
 
 type Props = { 
   src: string; 

@@ -1,11 +1,11 @@
 import React from "react";
 import { Stack, Group, Select, Button, FileButton, PasswordInput, Textarea, Text } from "@mantine/core";
-import { SectionCard } from "../components/ui/SectionCard";
-import { LoadingBar } from "../components/ui/LoadingBar";
-import { useZips } from "../components/hooks/useZips";
-import { useUpload } from "../components/hooks/useUpload";
-import { useBackupWatcher } from "../components/hooks/useBackupWatcher";
-import { useImporter } from "../components/hooks/useImporter";
+import { SectionCard } from "../components/SectionCard";
+import { LoadingBar } from "../components/LoadingBar";
+import { useZips } from "../hooks/useZips";
+import { useUpload } from "../hooks/useUpload";
+import { useBackupWatcher } from "../hooks/useBackupWatcher";
+import { useImporter } from "../hooks/useImporter";
 import { Phase } from "../lib/types";
 
 function useExportPhaseLabel(phase: Phase) {

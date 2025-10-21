@@ -2,9 +2,9 @@ import * as React from "react";
 import { ScrollArea, NavLink, Text } from "@mantine/core";
 import { Link, useLocation } from "react-router-dom";
 import { IconHome2, IconBooks, IconSettings, IconAB2, IconShield, IconUser } from "@tabler/icons-react";
-import { GRID } from "../../lib/constants";
 import { useAuth } from "../hooks/useAuth";
-import { fetchAdminStatus } from "../../lib/api";
+import { GRID } from "../lib/constants";
+import { fetchAdminStatus } from "../lib/api";
 
 export function AppNavbar() {
     const location = useLocation();

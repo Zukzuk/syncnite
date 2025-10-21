@@ -1,6 +1,6 @@
 import React from "react";
-import { Phase } from "../../lib/types";
-import { BackupImporter } from "../../services/BackupImporter";
+import { Phase } from "../lib/types";
+import { BackupImporter } from "../services/BackupImporter";
 
 type ImportUi = {
     busy: boolean;

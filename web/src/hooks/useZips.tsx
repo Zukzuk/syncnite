@@ -1,5 +1,5 @@
 import React from "react";
-import { listZips, ZipInfo } from "../../lib/api";
+import { listZips, ZipInfo } from "../lib/api";
 
 export function useZips() {
     const [zips, setZips] = React.useState<ZipInfo[]>([]);

@@ -1,6 +1,6 @@
 import { Paper, Stack, Button, rem } from "@mantine/core";
-import { LETTERS_LIST, Z_INDEX } from "../../lib/constants";
-import { getTheme } from "../../lib/utils";
+import { LETTERS_LIST, Z_INDEX } from "../lib/constants";
+import { getTheme } from "../lib/utils";
 
 export type AlphabeticalRailCounts = Record<string, number>;
 

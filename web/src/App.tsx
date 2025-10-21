@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { RouterProvider } from "react-router-dom";
 import { router } from "./router";
-import { AppErrorBoundary } from "./components/bounderies/AppErrorBoundary";
+import { AppErrorBoundary } from "./bounderies/AppErrorBoundary";
 import { startGlobalSse } from "./services/SseClient";
 
 export default function App() {

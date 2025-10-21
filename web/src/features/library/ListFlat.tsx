@@ -1,8 +1,8 @@
 import React from "react";
 import { Virtuoso } from "react-virtuoso";
 import type { VirtuosoHandle } from "react-virtuoso";
-import { GameRow } from "./GameRow";
-import { Scroller } from "../ui/Scroller";
+import { RowWrapper } from "./RowWrapper";
+import { Scroller } from "../../components/Scroller";
 import { Row } from "../hooks/useLibrary";
 
 type Props = {
@@ -19,7 +19,7 @@ type Props = {
   installedUpdatedAt?: string;
 };
 
-export function FlatList({
+export function ListFlat({
   virtuosoRef, scrollerRef, rows, topOffset, overscan, rangeChanged,
   openIds, everOpenedIds, onToggle, remountKey, installedUpdatedAt,
 }: Props) {
@@ -37,7 +37,7 @@ export function FlatList({
       itemContent={(index) => {
         const r = rows[index];
         return (
-          <GameRow
+          <RowWrapper
             key={`${r.id}|${installedUpdatedAt}`}
             {...r}
             topOffset={topOffset}

@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Stack, Card, Text, Code, Badge } from "@mantine/core";
-import { useAuth } from "../components/hooks/useAuth";
+import { useAuth } from "../hooks/useAuth";
 import { fetchAdminStatus } from "../lib/api";
 
 export default function AccountPage() {

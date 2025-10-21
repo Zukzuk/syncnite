@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Stack, Card, Text, Group, Badge, Divider, Code, Alert } from "@mantine/core";
 import { fetchAdminStatus } from "../lib/api";
-import { useAuth } from "../components/hooks/useAuth";
+import { useAuth } from "../hooks/useAuth";
 
 export default function AdminPage() {
     const { state } = useAuth({ pollMs: 0 });

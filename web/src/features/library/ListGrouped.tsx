@@ -1,9 +1,9 @@
 import React from "react";
 import { GroupedVirtuoso } from "react-virtuoso";
 import type { VirtuosoHandle } from "react-virtuoso";
-import { GameRow } from "./GameRow";
-import { AlphabeticalSeparatorRow } from "../ui/AlphabeticalSeparatorRow";
-import { Scroller } from "../ui/Scroller";
+import { RowWrapper } from "./RowWrapper";
+import { AlphabeticalSeparatorRow } from "../../components/AlphabeticalSeparatorRow";
+import { Scroller } from "../../components/Scroller";
 import { Row } from "../hooks/useLibrary";
 
 type Props = {
@@ -20,7 +20,7 @@ type Props = {
   installedUpdatedAt?: string;
 };
 
-export function GroupedList({
+export function ListGrouped({
   virtuosoRef, scrollerRef, groups, topOffset, overscan, rangeChanged,
   openIds, everOpenedIds, onToggle, remountKey, installedUpdatedAt,
 }: Props) {
@@ -45,7 +45,7 @@ export function GroupedList({
             const r = g.rows[i];
             const globalIndex = offset + i;
             return (
-              <GameRow
+              <RowWrapper
                 key={`${r.id}|${installedUpdatedAt}`}
                 { ...r }
                 topOffset={topOffset}

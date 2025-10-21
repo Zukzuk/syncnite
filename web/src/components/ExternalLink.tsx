@@ -1,9 +1,9 @@
 
 import React from "react";
 import { ActionIcon, Tooltip } from "@mantine/core";
-import { Row } from "../hooks/useLibrary";
 import { IconExternalLink } from "@tabler/icons-react";
-import { SOURCE_MAP } from "../../lib/constants";
+import { Row } from "../features/hooks/useLibrary";
+import { SOURCE_MAP } from "../lib/constants";
 
 type Props = Pick<Row, "link" | "title" | "source">;
 

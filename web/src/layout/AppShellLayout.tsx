@@ -1,8 +1,8 @@
 import React from "react";
 import { AppShell } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { AppHeader } from "../components/ui/AppHeader";
-import { AppNavbar } from "../components/ui/AppNavbar";
+import { AppHeader } from "./AppHeader";
+import { AppNavbar } from "./AppNavbar";
 import { GRID } from "../lib/constants";
 
 export default function AppShellLayout({

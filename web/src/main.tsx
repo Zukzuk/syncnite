@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import { BackupWatcher } from "./services/BackupWatcher";
 import { AppProviders } from "./theme";
+
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
 import "./main.scss";

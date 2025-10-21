@@ -1,6 +1,6 @@
 import React from "react";
 import { Box } from "@mantine/core";
-import { AlphabeticalRail } from "../ui/AlphabeticalRail";
+import { AlphabeticalRail } from "../../components/AlphabeticalRail";
 
 type Props = {
   isVisible: boolean;
@@ -9,7 +9,7 @@ type Props = {
   onJump: (letter: string) => void;
 };
 
-export function AlphabetRailOverlay({ isVisible, activeLetter, counts, onJump }: Props) {
+export function RailWrapper({ isVisible, activeLetter, counts, onJump }: Props) {
   if (!isVisible) return null;
   return (
     <Box style={{ display: "flex", alignItems: "stretch", pointerEvents: "none" }}>

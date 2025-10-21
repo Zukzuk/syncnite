@@ -1,18 +1,18 @@
 import React, { useState } from "react";
 import { Box, Flex, Text, Group, Badge, Tooltip, ActionIcon } from "@mantine/core";
-import { PlayActionOverlay } from "./PlayActionOverlay";
-import { IconImage } from "./IconImage";
-import { GRID } from "../../lib/constants";
-import { SourceIcon } from "./SourceIcon";
 import { IconCopy } from "@tabler/icons-react";
+import { GRID } from "../../lib/constants";
+import { IconActionOverlay } from "../../components/IconActionOverlay";
+import { IconImage } from "../../components/IconImage";
+import { ExternalLink } from "../../components/ExternalLink";
+import { IconSourceLink } from "../../components/IconSourceLink";
 import { Row } from "../hooks/useLibrary";
-import { ExternalLink } from "./ExternalLink";
 
 type Props = Row & {
     collapseOpen: boolean;
 };
 
-export function GameRowItem(props: Props) {
+export function RowItem(props: Props) {
     const { id, isInstalled, iconUrl, title, gameId, year,
         source, tags, series, link, isHidden, collapseOpen,
     } = props;
@@ -42,11 +42,11 @@ export function GameRowItem(props: Props) {
             {/* Icon */}
             <Flex align="center" gap={8} className={isHidden ? " is-dim" : ""} style={{ width: GRID.rowHeight }}>
                 <Box className="icon-wrap" style={{ position: "relative", width: GRID.smallBox, height: GRID.smallBox }}>
-                    <PlayActionOverlay installed={isInstalled} href={`playnite://play/${id}`} title={title}>
+                    <IconActionOverlay installed={isInstalled} href={`playnite://play/${id}`} title={title}>
                         <Box className="icon-base">
                             <IconImage src={iconUrl ?? ""} />
                         </Box>
-                    </PlayActionOverlay>
+                    </IconActionOverlay>
                 </Box>
             </Flex>
 
@@ -100,7 +100,7 @@ export function GameRowItem(props: Props) {
                     {/* External link */}
                     <ExternalLink source={source} link={link} title={title} />
                     {/* Source */}
-                    <SourceIcon source={source} gameId={gameId} link={link} />
+                    <IconSourceLink source={source} gameId={gameId} link={link} />
                 </Group>
             </Box>
 

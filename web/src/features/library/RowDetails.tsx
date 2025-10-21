@@ -9,7 +9,7 @@ type Props = {
     onToggle?: (e: React.MouseEvent) => void;
 };
 
-export function GameRowDetails({ title, coverUrl, collapseOpenDelayed, everOpened, onToggle }: Props) {
+export function RowDetails({ title, coverUrl, collapseOpenDelayed, everOpened, onToggle }: Props) {
     return (
         <Paper
             pl={0} pt="md" pr={6} pb={0}

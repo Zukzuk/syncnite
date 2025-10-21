@@ -1,11 +1,11 @@
 import React from "react";
 import { Box, Flex } from "@mantine/core";
 import { useElementSize } from "@mantine/hooks";
-import { StickyControls } from "./StickyControls";
-import { StickySort } from "./StickySort";
-import { AlphabetRailOverlay } from "./RailOverlay";
-import { GroupedList } from "./GroupedList";
-import { FlatList } from "./FlatList";
+import { RailWrapper } from "./RailWrapper";
+import { ListGrouped } from "./ListGrouped";
+import { ListFlat } from "./ListFlat";
+import { HeaderControls } from "./HeaderControls";
+import { HeaderSort } from "./HeaderSort";
 import { useLibraryState } from "../hooks/useLibraryState";
 import { useAlphabetGroups } from "../hooks/useAlphabetGroups";
 import { useAlphabetRail } from "../hooks/useAlphabetRail";
@@ -13,18 +13,23 @@ import { useCollapseOpenToggle } from "../hooks/useCollapseOpenToggle";
 import { useJumpToScroll } from "../hooks/useJumpToScroll";
 import { useRemountKeys } from "../hooks/useRemountKeys";
 import { LoadedData } from "../hooks/useLibrary";
+import { ViewMode } from "../../pages/LibraryPage";
 
 type Props = {
   data: LoadedData;
   onCountsChange?: (filtered: number, total: number) => void;
+  view: ViewMode;
+  setView: (view: ViewMode) => void;
   filteredCount: number;
   totalCount: number;
   installedUpdatedAt?: string;
 };
 
-export function LibraryList({
+export default function LibraryList({
   data,
   onCountsChange,
+  view,
+  setView,
   filteredCount,
   totalCount,
   installedUpdatedAt,
@@ -78,14 +83,19 @@ export function LibraryList({
 
   return (
     <Flex direction="column" h="100%" style={{ minHeight: 0 }}>
-      <StickyControls
+      <HeaderControls
         controlsRef={controlsRef as unknown as (el: HTMLElement | null) => void}
         filteredCount={filteredCount}
         totalCount={totalCount}
-        ui={{ ...ui, allSources: data.allSources, allTags: data.allTags, allSeries: data.allSeries }}
+        allSources={data.allSources}
+        allTags={data.allTags}
+        allSeries={data.allSeries}
+        view={view}
+        setView={setView}
+        {...ui}
       />
 
-      <StickySort
+      <HeaderSort
         headerRef={headerRef as unknown as (el: HTMLElement | null) => void}
         top={controlsH}
         sortKey={ui.sortKey}
@@ -95,7 +105,7 @@ export function LibraryList({
 
       <Box style={{ flex: 1, minHeight: 0, position: "relative", overflow: "hidden" }}>
         {isGrouped && groups ? (
-          <GroupedList
+          <ListGrouped
             virtuosoRef={virtuosoRef}
             scrollerRef={setScrollerEl}
             groups={groups}
@@ -109,7 +119,7 @@ export function LibraryList({
             installedUpdatedAt={installedUpdatedAt}
           />
         ) : (
-          <FlatList
+          <ListFlat
             virtuosoRef={virtuosoRef}
             scrollerRef={setScrollerEl}
             rows={derived.rowsSorted}
@@ -124,7 +134,7 @@ export function LibraryList({
           />
         )}
 
-        <AlphabetRailOverlay
+        <RailWrapper
           isVisible={!!isGrouped}
           activeLetter={activeLetter}
           counts={counts}

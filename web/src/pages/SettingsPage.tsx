@@ -4,7 +4,7 @@ import {
   Code, Alert, Divider, Anchor, Loader, List,
 } from "@mantine/core";
 import { effectiveLink } from "../lib/utils";
-import { LoadedData, loadLibrary, Row } from "../components/hooks/useLibrary";
+import { LoadedData, loadLibrary, Row } from "../features/hooks/useLibrary";
 
 function SampleValue({ row, field }: { row: Row; field: keyof Row }) {
   const v = row[field] as any;

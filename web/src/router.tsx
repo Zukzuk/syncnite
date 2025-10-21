@@ -8,8 +8,8 @@ import SettingsPage from "./pages/SettingsPage";
 import LoginPage from "./pages/LoginPage";
 import AdminPage from "./pages/AdminPage";
 import AccountPage from "./pages/AccountPage";
-import { useAuth } from "./components/hooks/useAuth";
-import { useAdminGate } from "./components/hooks/useAdminGate";
+import { useAuth } from "./hooks/useAuth";
+import { useAdminGate } from "./hooks/useAdminGate";
 import { clearCreds } from "./lib/persist";
 
 function WithShell({ hideSite = false }: { hideSite?: boolean }) {

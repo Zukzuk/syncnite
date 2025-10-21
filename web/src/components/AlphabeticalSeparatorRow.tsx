@@ -1,5 +1,5 @@
 import { Box } from '@mantine/core';
-import { Z_INDEX } from '../../lib/constants';
+import { Z_INDEX } from '../lib/constants';
 
 type Props = { bucket: string; top: number };
 
