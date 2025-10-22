@@ -1,17 +1,20 @@
 import * as React from "react";
-import { Box, Card, Flex, Image, Text } from "@mantine/core";
-import { VirtuosoGrid, type VirtuosoGridHandle } from "react-virtuoso";
+import { Box, Card, Flex, Group, Image, Text } from "@mantine/core";
+import { useElementSize } from "@mantine/hooks";
+import { VirtuosoGrid } from "react-virtuoso";
+import { HeaderControls } from "./HeaderControls";
+import { ViewMode } from "../../lib/types";
 import { Scroller } from "../../components/Scroller";
 import type { LoadedData, Row } from "../hooks/useLibrary";
-import { HeaderControls } from "./HeaderControls";
 import { useJumpToScroll } from "../hooks/useJumpToScroll";
 import { useCollapseOpenToggle } from "../hooks/useCollapseOpenToggle";
 import { useLibraryState } from "../hooks/useLibraryState";
-import { useElementSize } from "@mantine/hooks";
 import { useAlphabetGroups } from "../hooks/useAlphabetGroups";
 import { useAlphabetRail } from "../hooks/useAlphabetRail";
 import { useRemountKeys } from "../hooks/useRemountKeys";
-import { ViewMode } from "../../pages/LibraryPage";
+import { ExternalLink } from "../../components/ExternalLink";
+import { IconSourceLink } from "../../components/IconSourceLink";
+import { CopyTitle } from "../../components/CopyTitle";
 
 type Props = {
     data: LoadedData;
@@ -127,7 +130,7 @@ export default function LibraryGrid({
                 setView={setView}
                 {...ui}
             />
-            
+
             <Box style={{ flex: 1, minHeight: 0, position: "relative", overflow: "hidden" }}>
                 <VirtuosoGrid
                     ref={virtuosoRef as any}
@@ -147,6 +150,7 @@ export default function LibraryGrid({
 // Minimal Mantine Card for a single cover — kept intentionally bare.
 function CoverCard({ row }: { row: Row }) {
     const src = row.coverUrl || row.iconUrl || "";
+
     return (
         <Card withBorder p={2} radius="sm">
             <div style={{ position: "relative", aspectRatio: "23 / 32" }}>
@@ -167,9 +171,28 @@ function CoverCard({ row }: { row: Row }) {
             <Text size="sm" m={6} lineClamp={2} title={row.title} fw={600} h={40}>
                 {row.title}
             </Text>
-            {row.year && (
-                <Text m={6} mt={0} style={{ fontSize: 13 }}>{row.year}</Text>
-            )}
+            <Box
+                m={6}
+                mt={0}
+                style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    position: "relative",
+                }}
+            >
+                <Box className={row.isHidden ? " is-dim" : ""}>
+                    {row.year && <Text style={{ fontSize: 13 }}>{row.year}</Text>}
+                </Box>
+
+                <Box className={row.isHidden ? " is-dim" : ""}>
+                    <Group gap={6} align="center" wrap="nowrap" style={{ justifyContent: "center" }}>
+                        <CopyTitle title={row.title} year={row.year} />
+                        <ExternalLink source={row.source} link={row.link} title={row.title} />
+                        <IconSourceLink source={row.source} gameId={row.gameId} link={row.link} />
+                    </Group>
+                </Box>
+            </Box>
         </Card>
     );
 }

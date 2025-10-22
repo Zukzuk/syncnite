@@ -3,7 +3,7 @@ import { Group, MultiSelect, Switch, Text, Stack, Flex, rem, Box, SegmentedContr
 import { SearchInput } from "../../components/SearchInput";
 import { SOURCE_MAP, Z_INDEX } from "../../lib/constants";
 import { getTheme } from "../../lib/utils";
-import { ViewMode } from "../../pages/LibraryPage";
+import { ViewMode } from "../../lib/types";
 
 type Props = {
   controlsRef: (el: HTMLElement | null) => void;

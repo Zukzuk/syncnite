@@ -217,7 +217,7 @@ export function myAbandonwareLink(title: string): string {
 export function playniteAction(id: string): string {
   return `playnite://playnite/start/${encodeURIComponent(id)}`;
 }
-
+// deprecated
 export function effectiveLink(
   r: { url: string | null; source: string; title: string; tags: string[] }
 ): string | null {

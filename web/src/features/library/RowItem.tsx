@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { Box, Flex, Text, Group, Badge, Tooltip, ActionIcon } from "@mantine/core";
-import { IconCopy } from "@tabler/icons-react";
 import { GRID } from "../../lib/constants";
 import { IconActionOverlay } from "../../components/IconActionOverlay";
 import { IconImage } from "../../components/IconImage";
 import { ExternalLink } from "../../components/ExternalLink";
 import { IconSourceLink } from "../../components/IconSourceLink";
 import { Row } from "../hooks/useLibrary";
+import { CopyTitle } from "../../components/CopyTitle";
 
 type Props = Row & {
     collapseOpen: boolean;
@@ -71,20 +71,7 @@ export function RowItem(props: Props) {
                 <Box style={{ marginLeft: "auto" }} />
 
                 {/* Copy title */}
-                {title && (
-                    <Tooltip label={copied ? "Copied!" : "Copy title"} withArrow position="top">
-                        <ActionIcon
-                            aria-label={`Copy ${title}`}
-                            onClick={handleCopy}
-                            onMouseDown={(e) => e.stopPropagation()}
-                            variant="subtle"
-                            size="xs"
-                            style={{ lineHeight: 0 }}
-                        >
-                            <IconCopy size={18} stroke={2} />
-                        </ActionIcon>
-                    </Tooltip>
-                )}
+                <CopyTitle title={title} year={year} />
             </Flex>
 
             {/* Year */}

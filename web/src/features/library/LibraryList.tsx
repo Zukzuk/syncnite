@@ -1,6 +1,7 @@
 import React from "react";
 import { Box, Flex } from "@mantine/core";
 import { useElementSize } from "@mantine/hooks";
+import { ViewMode } from "../../lib/types";
 import { RailWrapper } from "./RailWrapper";
 import { ListGrouped } from "./ListGrouped";
 import { ListFlat } from "./ListFlat";
@@ -13,7 +14,6 @@ import { useCollapseOpenToggle } from "../hooks/useCollapseOpenToggle";
 import { useJumpToScroll } from "../hooks/useJumpToScroll";
 import { useRemountKeys } from "../hooks/useRemountKeys";
 import { LoadedData } from "../hooks/useLibrary";
-import { ViewMode } from "../../pages/LibraryPage";
 
 type Props = {
   data: LoadedData;
