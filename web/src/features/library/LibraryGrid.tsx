@@ -15,6 +15,8 @@ import { useRemountKeys } from "../hooks/useRemountKeys";
 import { ExternalLink } from "../../components/ExternalLink";
 import { IconSourceLink } from "../../components/IconSourceLink";
 import { CopyTitle } from "../../components/CopyTitle";
+import { HeaderSort } from "./HeaderSort";
+import { GRID } from "../../lib/constants";
 
 type Props = {
     data: LoadedData;
@@ -131,6 +133,15 @@ export default function LibraryGrid({
                 {...ui}
             />
 
+            <HeaderSort
+                headerRef={headerRef as unknown as (el: HTMLElement | null) => void}
+                top={controlsH}
+                sortKey={ui.sortKey}
+                sortDir={ui.sortDir}
+                onToggleSort={ui.toggleSort}
+                gridColumns={GRID.colsGrid}
+            />
+             
             <Box style={{ flex: 1, minHeight: 0, position: "relative", overflow: "hidden" }}>
                 <VirtuosoGrid
                     ref={virtuosoRef as any}

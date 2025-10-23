@@ -1,4 +1,4 @@
-import { Box } from "@mantine/core";
+import { Box, Paper, UnstyledButton, Text, useMantineTheme, rem } from "@mantine/core";
 import type { SortDir, SortKey } from "../../lib/types";
 import { GRID, Z_INDEX } from "../../lib/constants";
 
@@ -8,62 +8,90 @@ type Props = {
   sortKey: SortKey;
   sortDir: SortDir;
   onToggleSort: (k: SortKey) => void;
+  gridColumns?: string;
 };
 
 export function HeaderSort(props: Props) {
-  const { headerRef, sortKey, sortDir, onToggleSort, top } = props;
+  const { headerRef, sortKey, sortDir, onToggleSort, top, gridColumns } = props;
+  const theme = useMantineTheme();
+
   const label = (base: string, key: SortKey) =>
     sortKey === key ? `${base} ${sortDir === "asc" ? "▲" : "▼"}` : base;
 
+  // For a11y: map to aria-sort values
+  const ariaSort = (key: SortKey): React.AriaAttributes["aria-sort"] =>
+    sortKey !== key ? "none" : sortDir === "asc" ? "ascending" : "descending";
+
   return (
-    <Box style={{ position: "sticky", top, zIndex: Z_INDEX.stickyHeader }}>
-      <div
+    <Box pos="sticky" style={{ top, zIndex: Z_INDEX.stickyHeader }}>
+      <Paper
         ref={headerRef}
+        radius={0}
+        withBorder
         style={{
           background: "var(--mantine-color-body)",
-          borderTop: "1px solid var(--mantine-color-default-border)",
-          borderBottom: "1px solid var(--mantine-color-default-border)",
+          borderTop: `1px solid var(--mantine-color-default-border)`,
+          borderBottom: `1px solid var(--mantine-color-default-border)`,
+          borderLeft: "none",
+          borderRight: "none",
         }}
       >
-        <div
-          className="library-header"
+        <Box
           style={{
             display: "grid",
-            gridTemplateColumns: GRID.cols,
+            gridTemplateColumns: gridColumns,
             height: GRID.smallBox,
             alignItems: "center",
-            gap: 12,
+            gap: rem(12),
+            padding: `0 ${rem(16)} 0 ${rem(12)}`,
             fontWeight: 600,
-            padding: "0 16px 0 12px",
           }}
+          role="row"
         >
-          <div />
-          <div
-            style={{ cursor: "pointer", textAlign: "left" }}
+          {/* spacer column */}
+          <Box role="columnheader" aria-hidden="true" />
+
+          <UnstyledButton
             onClick={() => onToggleSort("title")}
+            role="columnheader"
+            aria-sort={ariaSort("title")}
+            aria-label="Sort by Title"
+            style={{ textAlign: "left", cursor: "pointer" }}
           >
-            {label("Title", "title")}
-          </div>
-          <div
-            style={{ cursor: "pointer", textAlign: "center" }}
+            <Text fw={600}>{label("Title", "title")}</Text>
+          </UnstyledButton>
+
+          <UnstyledButton
             onClick={() => onToggleSort("year")}
+            role="columnheader"
+            aria-sort={ariaSort("year")}
+            aria-label="Sort by Year"
+            style={{ textAlign: "center", cursor: "pointer" }}
           >
-            {label("Year", "year")}
-          </div>
-          <div
-            style={{ cursor: "pointer", textAlign: "center" }}
+            <Text fw={600}>{label("Year", "year")}</Text>
+          </UnstyledButton>
+
+          <UnstyledButton
             onClick={() => onToggleSort("source")}
+            role="columnheader"
+            aria-sort={ariaSort("source")}
+            aria-label="Sort by Platform"
+            style={{ textAlign: "center", cursor: "pointer" }}
           >
-            {label("Platform", "source")}
-          </div>
-          <div
-            style={{ cursor: "pointer", textAlign: "left" }}
+            <Text fw={600}>{label("Platform", "source")}</Text>
+          </UnstyledButton>
+
+          <UnstyledButton
             onClick={() => onToggleSort("series")}
+            role="columnheader"
+            aria-sort={ariaSort("series")}
+            aria-label="Sort by Series"
+            style={{ textAlign: "left", cursor: "pointer" }}
           >
-            {label("Series", "series")}
-          </div>
-        </div>
-      </div>
+            <Text fw={600}>{label("Series", "series")}</Text>
+          </UnstyledButton>
+        </Box>
+      </Paper>
     </Box>
   );
 }

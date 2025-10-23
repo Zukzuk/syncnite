@@ -52,6 +52,7 @@ export function ListGrouped({
                 collapseOpen={openIds.has(r.id)}
                 everOpened={everOpenedIds.has(r.id)}
                 onToggle={() => onToggle(r.id, globalIndex)}
+                isGroupedList={true}
               />
             );
           }

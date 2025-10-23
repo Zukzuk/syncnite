@@ -44,6 +44,7 @@ export function ListFlat({
             collapseOpen={openIds.has(r.id)}
             everOpened={everOpenedIds.has(r.id)}
             onToggle={() => onToggle(r.id, index)}
+            isGroupedList={false}
           />
         );
       }}

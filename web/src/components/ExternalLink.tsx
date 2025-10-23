@@ -24,7 +24,7 @@ export const ExternalLink = React.memo(function ExternalLink({
                 onClick={(e) => e.stopPropagation()}
                 variant="subtle"
                 size="sm"
-                style={{ lineHeight: 0 }}
+                style={{ lineHeight: 0, height: "100%", display: "flex", alignItems: "center" }}
             >
                 <IconExternalLink size={18} stroke={2} />
             </ActionIcon>

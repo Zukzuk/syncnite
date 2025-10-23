@@ -28,14 +28,16 @@ export const CopyTitle = React.memo(function CopyTitle({
     return (
         <Tooltip label={copied ? "Copied!" : "Copy title"} withArrow position="top">
             <ActionIcon
+                component="a"
+                rel="noopener"
                 aria-label={`Copy ${title}`}
                 onClick={handleCopy}
                 onMouseDown={(e) => e.stopPropagation()}
                 variant="subtle"
-                size="xs"
-                style={{ lineHeight: 0 }}
+                size="sm"
+                style={{ lineHeight: 0, height: "100%", display: "flex", alignItems: "center" }}
             >
-                <IconCopy size={18} stroke={2} />
+                <IconCopy size={18} stroke={2}  />
             </ActionIcon>
         </Tooltip>
     );

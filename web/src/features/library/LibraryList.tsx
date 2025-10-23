@@ -14,6 +14,7 @@ import { useCollapseOpenToggle } from "../hooks/useCollapseOpenToggle";
 import { useJumpToScroll } from "../hooks/useJumpToScroll";
 import { useRemountKeys } from "../hooks/useRemountKeys";
 import { LoadedData } from "../hooks/useLibrary";
+import { GRID } from "../../lib/constants";
 
 type Props = {
   data: LoadedData;
@@ -101,6 +102,7 @@ export default function LibraryList({
         sortKey={ui.sortKey}
         sortDir={ui.sortDir}
         onToggleSort={ui.toggleSort}
+        gridColumns={GRID.colsList}
       />
 
       <Box style={{ flex: 1, minHeight: 0, position: "relative", overflow: "hidden" }}>

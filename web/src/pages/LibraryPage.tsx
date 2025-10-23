@@ -17,43 +17,47 @@ export default function LibraryPage() {
         defaultValue: "list",
     });
 
-    return (
-        <Stack gap="lg" style={{ height: "100%", minHeight: 0 }}>
-            {data ? (
-                <Box style={{ height: `calc(100vh - ${GRID.rowHeight}px)` }}>
-                    {view === "grid" ? (
-                        <LibraryGrid
-                            data={data}
-                            onCountsChange={(f, t) => {
-                                setFiltered(f);
-                                setTotal(t);
-                            }}
-                            view={view}
-                            setView={setView}
-                            filteredCount={filtered}
-                            totalCount={total}
-                            installedUpdatedAt={installedUpdatedAt || ""}
-                        />
-                    ) : (
-                        <LibraryList
-                            data={data}
-                            onCountsChange={(f, t) => {
-                                setFiltered(f);
-                                setTotal(t);
-                            }}
-                            view={view}
-                            setView={setView}
-                            filteredCount={filtered}
-                            totalCount={total}
-                            installedUpdatedAt={installedUpdatedAt || ""}
-                        />
-                    )}
-                </Box>
-            ) : (
+    if (!data) {
+        return (
+            <Stack gap="lg" style={{ height: "100%", minHeight: 0 }}>
                 <Center w={`calc(100vw - ${GRID.menuWidth}px)`} h={`calc(100vh - ${GRID.rowHeight}px)`}>
                     <Loader size="lg" />
                 </Center>
-            )}
+            </Stack>
+        );
+    }
+
+    return (
+        <Stack gap="lg" style={{ height: "100%", minHeight: 0 }}>
+            <Box style={{ height: `calc(100vh - ${GRID.rowHeight}px)` }}>
+                {view === "grid" ? (
+                    <LibraryGrid
+                        data={data}
+                        onCountsChange={(f, t) => {
+                            setFiltered(f);
+                            setTotal(t);
+                        }}
+                        view={view}
+                        setView={setView}
+                        filteredCount={filtered}
+                        totalCount={total}
+                        installedUpdatedAt={installedUpdatedAt || ""}
+                    />
+                ) : (
+                    <LibraryList
+                        data={data}
+                        onCountsChange={(f, t) => {
+                            setFiltered(f);
+                            setTotal(t);
+                        }}
+                        view={view}
+                        setView={setView}
+                        filteredCount={filtered}
+                        totalCount={total}
+                        installedUpdatedAt={installedUpdatedAt || ""}
+                    />
+                )}
+            </Box>
         </Stack>
     );
 }

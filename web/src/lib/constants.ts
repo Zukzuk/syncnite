@@ -18,10 +18,11 @@ export const API_ENDPOINTS = {
 }
 
 export const GRID = {
-  cols: "56px minmax(0, 55%) 60px 95px minmax(0, 1fr)",
+  colsList: "40px minmax(0, 55%) 60px 95px minmax(0, 1fr)",
+  colsGrid: "0px 60px 60px 95px minmax(0, 1fr)",
   rowHeight: 56,
+  smallBox: 38,
   menuWidth: 160,
-  smallBox: 40,
 } as const;
 
 export const Z_INDEX = {
@@ -64,16 +65,16 @@ export const FALLBACK_ICON =
   );
 
 export const SOURCE_MAP: Record<string, { platform: string; online: string; label: string }> = {
-  "steam": {platform: "steam://", online: "https://store.steampowered.com", label: "Steampowered" },
-  "gog": {platform: "goggalaxy://", online: "https://www.gog.com", label: "Good Old Games" },
-  "ubisoft connect": {platform: "uplay://", online: "https://www.ubisoft.com", label: "Ubisoft Connect" },
-  "ea app": {platform: "ealaunch://", online: "https://www.ea.com/origin", label: "EA App" },
-  "battle.net": {platform: "battlenet://", online: "https://www.battle.net", label: "Battle.net" },
-  "epic": {platform: "com.epicgames.launcher://", online: "https://www.epicgames.com", label: "Epic Games" },
-  "xbox": {platform: "xbox://", online: "https://www.xbox.com", label: "XBox" },
-  "humble": {platform: "humble://", online: "https://www.humblebundle.com", label: "Humble Bundle" },
-  "nintendo": {platform: "nintendo://", online: "https://www.nintendo.com", label: "Nintendo" },
-  "microsoft store": {platform: "ms-windows-store://", online: "https://apps.microsoft.com", label: "Microsoft Store" },
+  "steam": { platform: "steam://", online: "https://store.steampowered.com", label: "Steampowered" },
+  "gog": { platform: "goggalaxy://", online: "https://www.gog.com", label: "Good Old Games" },
+  "ubisoft connect": { platform: "uplay://", online: "https://www.ubisoft.com", label: "Ubisoft Connect" },
+  "ea app": { platform: "ealaunch://", online: "https://www.ea.com/origin", label: "EA App" },
+  "battle.net": { platform: "battlenet://", online: "https://www.battle.net", label: "Battle.net" },
+  "epic": { platform: "com.epicgames.launcher://", online: "https://www.epicgames.com", label: "Epic Games" },
+  "xbox": { platform: "xbox://", online: "https://www.xbox.com", label: "XBox" },
+  "humble": { platform: "humble://", online: "https://www.humblebundle.com", label: "Humble Bundle" },
+  "nintendo": { platform: "nintendo://", online: "https://www.nintendo.com", label: "Nintendo" },
+  "microsoft store": { platform: "ms-windows-store://", online: "https://apps.microsoft.com", label: "Microsoft Store" },
 };
 
 export const COOKIE = {

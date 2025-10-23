@@ -16,31 +16,18 @@ export function RowItem(props: Props) {
     const { id, isInstalled, iconUrl, title, gameId, year,
         source, tags, series, link, isHidden, collapseOpen,
     } = props;
-    const [copied, setCopied] = useState(false);
-
-    const handleCopy = async (e: React.MouseEvent) => {
-        e.stopPropagation();
-        try {
-            await navigator.clipboard.writeText(`${title} ${year ? year : ""}`.trim());
-            setCopied(true);
-            window.setTimeout(() => setCopied(false), 1200);
-        } catch {
-            // no-op: we could surface a toast if the host app has one
-        }
-    };
 
     return (
         <Box
             style={{
                 display: "grid",
-                gridTemplateColumns: GRID.cols,
+                gridTemplateColumns: GRID.colsList,
                 alignItems: "center",
                 gap: 12,
                 height: GRID.rowHeight,
             }}
         >
-            {/* Icon */}
-            <Flex align="center" gap={8} className={isHidden ? " is-dim" : ""} style={{ width: GRID.rowHeight }}>
+            <Flex align="center" gap={8} className={isHidden ? " is-dim" : ""} style={{ width: GRID.smallBox }}>
                 <Box className="icon-wrap" style={{ position: "relative", width: GRID.smallBox, height: GRID.smallBox }}>
                     <IconActionOverlay installed={isInstalled} href={`playnite://play/${id}`} title={title}>
                         <Box className="icon-base">
@@ -50,12 +37,11 @@ export function RowItem(props: Props) {
                 </Box>
             </Flex>
 
-            {/* Title + copy */}
-            <Flex align="center" gap={8} className={isHidden ? " is-dim" : ""} style={{ minWidth: 0 }}>
+            <Flex gap={8} className={isHidden ? " is-dim" : ""} style={{ minWidth: 0 }}>
                 <Text
                     fw={600}
                     title={title}
-                    className="game-title"
+                    className="item-title"
                     style={{
                         overflow: "hidden",
                         textOverflow: "ellipsis",
@@ -68,31 +54,25 @@ export function RowItem(props: Props) {
                 </Text>
 
                 {/* push utility icons to the far right */}
-                <Box style={{ marginLeft: "auto" }} />
-
-                {/* Copy title */}
-                <CopyTitle title={title} year={year} />
+                <Box style={{ marginLeft: "auto" }}>
+                    <CopyTitle title={title} year={year} />
+                </Box>
             </Flex>
 
-            {/* Year */}
             <Box className={isHidden ? " is-dim" : ""} ta="center">
                 {year && (
                     <Text style={{ fontSize: 14 }}>{year}</Text>
                 )}
             </Box>
 
-            {/* Source + link */}
-            <Box className={isHidden ? " is-dim" : ""} ta="center">
-                <Group gap={6} align="center" wrap="nowrap" style={{ justifyContent: "center" }}>
-                    {/* External link */}
+            <Box className={isHidden ? " is-dim" : ""}>
+                <Group gap={6} wrap="nowrap" style={{ justifyContent: "center" }}>
                     <ExternalLink source={source} link={link} title={title} />
-                    {/* Source */}
                     <IconSourceLink source={source} gameId={gameId} link={link} />
                 </Group>
             </Box>
 
-            {/* Series */}
-            <Flex align="center" gap={8} className={isHidden ? " is-dim" : ""} style={{ minWidth: 0 }}>
+            <Flex gap={8} className={isHidden ? " is-dim" : ""} style={{ minWidth: 0 }}>
                 <Text
                     fw={600}
                     title={title}
@@ -107,7 +87,6 @@ export function RowItem(props: Props) {
                 </Text>
             </Flex>
 
-            {/* Tags */}
             {/* <Box className={isHidden ? " is-dim" : ""} style={{ display: collapseOpen ? "none" : undefined }}>
                 <Group gap={6} align="center" wrap="wrap" style={{ maxHeight: GRID.rowHeight, overflow: "hidden" }}>
                     {(tags ?? []).map((t) => (

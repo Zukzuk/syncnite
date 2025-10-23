@@ -1,46 +1,51 @@
 import React from "react";
-import { Group, Image, Paper } from "@mantine/core";
+import { Collapse, Group, Image, Paper } from "@mantine/core";
+import { useDelayedFlag } from "../hooks/useDelayedFlag";
 
 type Props = {
     title: string;
     coverUrl: string | null;
-    collapseOpenDelayed: boolean;
+    collapseOpen: boolean;
     everOpened: boolean;
     onToggle?: (e: React.MouseEvent) => void;
 };
 
-export function RowDetails({ title, coverUrl, collapseOpenDelayed, everOpened, onToggle }: Props) {
+export function RowDetails({ title, coverUrl, collapseOpen, everOpened, onToggle }: Props) {
+    const collapseOpenDelayed = useDelayedFlag({ active: collapseOpen, delayMs: 140 });
+
     return (
-        <Paper
-            pl={0} pt="md" pr={6} pb={0}
-            ml={0} mt={0} mr={48} mb="lg"
-            onClick={(e) => {
-                e.stopPropagation();
-                onToggle?.(e);
-            }}
-            style={{
-                backgroundColor: "transparent",
-                opacity: collapseOpenDelayed ? 1 : 0,
-                transform: collapseOpenDelayed ? "translateY(0)" : "translateY(12px)",
-                willChange: "opacity, transform",
-                transitionProperty: "opacity, transform",
-                transitionDuration: "220ms, 260ms",
-                transitionTimingFunction: "ease, ease",
-            }}
-        >
-            <Group align="start" gap="md" wrap="nowrap" pb={0}>
-                {everOpened && coverUrl ? (
-                    <Image
-                        src={coverUrl}
-                        alt={`${title} cover`}
-                        w={220}
-                        mb="md"
-                        radius="md"
-                        fit="cover"
-                        loading="lazy"
-                    />
-                ) : null}
-            </Group>
-        </Paper>
+        <Collapse in={collapseOpen} transitionDuration={140}>
+            <Paper
+                pl={0} pt="md" pr={6} pb={0}
+                ml={0} mt={0} mr={48} mb="lg"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onToggle?.(e);
+                }}
+                style={{
+                    backgroundColor: "transparent",
+                    opacity: collapseOpenDelayed ? 1 : 0,
+                    transform: collapseOpenDelayed ? "translateY(0)" : "translateY(12px)",
+                    willChange: "opacity, transform",
+                    transitionProperty: "opacity, transform",
+                    transitionDuration: "220ms, 260ms",
+                    transitionTimingFunction: "ease, ease",
+                }}
+            >
+                <Group align="start" gap="md" wrap="nowrap" pb={0}>
+                    {everOpened && coverUrl ? (
+                        <Image
+                            src={coverUrl}
+                            alt={`${title} cover`}
+                            w={220}
+                            mb="md"
+                            radius="md"
+                            fit="cover"
+                            loading="lazy"
+                        />
+                    ) : null}
+                </Group>
+            </Paper>
+        </Collapse>
     );
 }
