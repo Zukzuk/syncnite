@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.17.4](https://github.com/Zukzuk/syncnite/compare/v1.17.3...v1.17.4) (2025-10-24)
+
+
+### Bug Fixes
+
+* added expand logic to grid ([29362dc](https://github.com/Zukzuk/syncnite/commit/29362dcee5b6c338bee73ab8c758299f678dd757))
+
 ### [1.17.3](https://github.com/Zukzuk/syncnite/compare/v1.17.2...v1.17.3) (2025-10-23)
 
 ### [1.17.2](https://github.com/Zukzuk/syncnite/compare/v1.17.0...v1.17.2) (2025-10-22)
