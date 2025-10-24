@@ -4,10 +4,10 @@ import {
   Code, Alert, Divider, Anchor, Loader, List,
 } from "@mantine/core";
 import { effectiveLink } from "../lib/utils";
-import { LoadedData, loadLibrary, Row } from "../features/hooks/useLibrary";
+import { LoadedData, loadLibrary, Item } from "../features/hooks/useLibrary";
 
-function SampleValue({ row, field }: { row: Row; field: keyof Row }) {
-  const v = row[field] as any;
+function SampleValue({ item, field }: { item: Item; field: keyof Item }) {
+  const v = item[field] as any;
   if (v == null) return <Text className="is-dim">null</Text>;
   if (Array.isArray(v)) return <Code>{v.slice(0, 5).join(", ")}{v.length > 5 ? " …" : ""}</Code>;
   if (typeof v === "object") return <Text className="is-dim">(object)</Text>;
@@ -31,14 +31,14 @@ export default function SettingsPage() {
     (async () => setData(await loadLibrary()))();
   }, []);
 
-  const sample: Row | null = data?.rows?.[0] ?? null;
+  const sample: Item | null = data?.items?.[0] ?? null;
   const primaryHref = sample ? (sample.link ?? effectiveLink({ url: sample.link, source: sample.source, title: sample.title, tags: sample.tags })) : null;
   const actionHref = sample ? `playnite://playnite/start/${encodeURIComponent(sample.id)}` : null;
 
   // NOTE: This list mirrors the Row type from web/src/lib/types.ts.
   // If you add/remove a field on Row, update this array.
   const FIELDS: Array<{
-    key: keyof Row;
+    key: keyof Item;
     type: string;
     desc: string;
     sourceHint?: string;
@@ -71,8 +71,8 @@ export default function SettingsPage() {
         <>
           <Card withBorder>
             <Group justify="space-between" mb="xs">
-              <Text fw={600}>Game data fields (Row)</Text>
-              <Badge variant="light">{data.rows.length.toLocaleString()} games</Badge>
+              <Text fw={600}>Game data fields (Item)</Text>
+              <Badge variant="light">{data.items.length.toLocaleString()} games</Badge>
             </Group>
             <Table striped highlightOnHover verticalSpacing="xs" horizontalSpacing="md">
               <Table.Thead>
@@ -93,7 +93,7 @@ export default function SettingsPage() {
                     <Table.Td className="is-dim">{f.sourceHint ?? "—"}</Table.Td>
                     <Table.Td>
                       {sample ? (
-                        <SampleValue row={sample} field={f.key} />
+                        <SampleValue item={sample} field={f.key} />
                       ) : (
                         <Text className="is-dim">—</Text>
                       )}
@@ -114,13 +114,13 @@ export default function SettingsPage() {
               <List.Item>
                 <Text>
                   <b>Title link</b>: {primaryHref ? <Anchor href={primaryHref} target="_blank" rel="noopener">{primaryHref}</Anchor> : <span className="is-dim">(none)</span>}
-                  <span className="is-dim"> (from <Code>row.url</Code> or <Code>effectiveLink()</Code>)</span>
+                  <span className="is-dim"> (from <Code>item.url</Code> or <Code>effectiveLink()</Code>)</span>
                 </Text>
               </List.Item>
               <List.Item>
                 <Text>
                   <b>Play/Install action</b>: {actionHref ? <Anchor href={actionHref}>{actionHref}</Anchor> : <span className="is-dim">(—)</span>}
-                  <span className="is-dim"> (computed as <Code>playnite://playnite/start/{"${row.id}"}</Code>)</span>
+                  <span className="is-dim"> (computed as <Code>playnite://playnite/start/{"${item.id}"}</Code>)</span>
                 </Text>
               </List.Item>
             </List>

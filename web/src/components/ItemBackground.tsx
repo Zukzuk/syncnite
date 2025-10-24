@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Box } from "@mantine/core";
-import { useDelayedFlag } from "../hooks/useDelayedFlag";
+import { useDelayedFlag } from "../features/hooks/useDelayedFlag";
 
 type Props = {
     bgUrl: string | null;
@@ -9,7 +9,7 @@ type Props = {
     everOpened: boolean;
 };
 
-export function RowBackground({ bgUrl, collapseOpen, everOpened }: Props) {
+export function ItemBackground({ bgUrl, collapseOpen, everOpened }: Props) {
     const collapseOpenDelayed = useDelayedFlag({ active: collapseOpen, delayMs: 140 });
 
     if (!collapseOpen && !everOpened || !bgUrl) {

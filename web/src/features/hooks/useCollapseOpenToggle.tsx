@@ -11,6 +11,7 @@ export function useCollapseOpenToggle(): UseReturn {
   const [everOpenedIds, setEverOpenedIds] = React.useState<Set<string>>(new Set());
 
   const toggleOpen = React.useCallback((id: string, onOpen?: () => void) => {
+
     setOpenIds(prev => {
       const next = new Set(prev);
       const willOpen = !next.has(id);
@@ -22,12 +23,14 @@ export function useCollapseOpenToggle(): UseReturn {
       }
       return next;
     });
+
     setEverOpenedIds(prev => {
       if (prev.has(id)) return prev;
       const next = new Set(prev);
       next.add(id);
       return next;
     });
+    
   }, []);
 
   return { openIds, everOpenedIds, toggleOpen };

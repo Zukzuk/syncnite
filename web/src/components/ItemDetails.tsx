@@ -1,6 +1,6 @@
 import React from "react";
 import { Collapse, Group, Image, Paper } from "@mantine/core";
-import { useDelayedFlag } from "../hooks/useDelayedFlag";
+import { useDelayedFlag } from "../features/hooks/useDelayedFlag";
 
 type Props = {
     title: string;
@@ -10,7 +10,7 @@ type Props = {
     onToggle?: (e: React.MouseEvent) => void;
 };
 
-export function RowDetails({ title, coverUrl, collapseOpen, everOpened, onToggle }: Props) {
+export function ItemDetails({ title, coverUrl, collapseOpen, everOpened, onToggle }: Props) {
     const collapseOpenDelayed = useDelayedFlag({ active: collapseOpen, delayMs: 140 });
 
     return (

@@ -2,10 +2,10 @@
 import React from "react";
 import { ActionIcon, Tooltip } from "@mantine/core";
 import { IconExternalLink } from "@tabler/icons-react";
-import { Row } from "../features/hooks/useLibrary";
+import { Item } from "../features/hooks/useLibrary";
 import { SOURCE_MAP } from "../lib/constants";
 
-type Props = Pick<Row, "link" | "title" | "source">;
+type Props = Pick<Item, "link" | "title" | "source">;
 
 export const ExternalLink = React.memo(function ExternalLink({
     link,

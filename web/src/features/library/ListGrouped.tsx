@@ -1,15 +1,15 @@
 import React from "react";
 import { GroupedVirtuoso } from "react-virtuoso";
 import type { VirtuosoHandle } from "react-virtuoso";
-import { RowWrapper } from "./RowWrapper";
+import { Item } from "../hooks/useLibrary";
 import { AlphabeticalSeparatorRow } from "../../components/AlphabeticalSeparatorRow";
 import { Scroller } from "../../components/Scroller";
-import { Row } from "../hooks/useLibrary";
+import { ExpandableItemWrapper } from "../../components/ExpandableItem";
 
 type Props = {
   virtuosoRef: React.RefObject<VirtuosoHandle>;
   scrollerRef: (ref: HTMLElement | Window | null) => void;
-  groups: { title: string; rows: Row[] }[];
+  groups: { title: string; items: Item[] }[];
   topOffset: number;
   overscan: { top: number; bottom: number };
   rangeChanged: (range: { startIndex: number; endIndex: number }) => void;
@@ -31,33 +31,37 @@ export function ListGrouped({
       style={{ height: "100%" }}
       components={{ Scroller }}
       scrollerRef={scrollerRef}
-      groupCounts={groups.map(g => g.rows.length)}
+      groupCounts={groups.map(g => g.items.length)}
       increaseViewportBy={overscan}
       rangeChanged={rangeChanged}
+      // computeItemKey={(_index, r: any) => `${r.id}|${installedUpdatedAt}`} //TODO: why not working here?
       groupContent={(index) => (
-        <AlphabeticalSeparatorRow bucket={groups[index].title} top={topOffset || 0} />
+        <AlphabeticalSeparatorRow
+          bucket={groups[index].title}
+          top={topOffset || 0}
+        />
       )}
       itemContent={(index) => {
         let i = index;
         let offset = 0;
         for (const g of groups) {
-          if (i < g.rows.length) {
-            const r = g.rows[i];
+          if (i < g.items.length) {
+            const item = g.items[i];
             const globalIndex = offset + i;
             return (
-              <RowWrapper
-                key={`${r.id}|${installedUpdatedAt}`}
-                { ...r }
+              <ExpandableItemWrapper
+                item={item}
+                collapseOpen={openIds.has(item.id)}
+                everOpened={everOpenedIds.has(item.id)}
                 topOffset={topOffset}
-                collapseOpen={openIds.has(r.id)}
-                everOpened={everOpenedIds.has(r.id)}
-                onToggle={() => onToggle(r.id, globalIndex)}
                 isGroupedList={true}
+                layout="list"
+                onToggle={() => onToggle(item.id, globalIndex)}
               />
             );
           }
-          i -= g.rows.length;
-          offset += g.rows.length;
+          i -= g.items.length;
+          offset += g.items.length;
         }
         return null;
       }}

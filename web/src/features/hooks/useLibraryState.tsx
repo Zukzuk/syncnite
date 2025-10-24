@@ -2,15 +2,15 @@ import * as React from "react";
 import type { SortKey, SortDir } from "../../lib/types";
 import { orderedLetters } from "../../lib/utils";
 import { CookieState, loadStateFromCookie, saveStateToCookie } from "../../lib/persist";
-import { Row } from "./useLibrary";
+import { Item } from "./useLibrary";
 
 export type WithBucket = {
-  row: Row;
+  item: Item;
   bucket: string
 };
 
 type UseParams = {
-  rows: Row[];
+  items: Item[];
 };
 
 type UseReturn = {
@@ -35,12 +35,12 @@ type UseReturn = {
   derived: {
     filteredCount: number;
     totalCount: number;
-    rowsSorted: Row[];
+    itemsSorted: Item[];
     withBuckets: WithBucket[];
   };
 };
 
-export function useLibraryState({ rows }: UseParams): UseReturn {
+export function useLibraryState({ items }: UseParams): UseReturn {
   const cookieState = React.useMemo(loadStateFromCookie, []);
   const [q, setQ] = React.useState<string>(cookieState.q);
   const [sources, setSources] = React.useState<string[]>(cookieState.sources);
@@ -64,7 +64,7 @@ export function useLibraryState({ rows }: UseParams): UseReturn {
   const filteredSorted = React.useMemo(() => {
     const qv = q.toLowerCase().trim();
 
-    const pass = rows.filter((r) =>
+    const pass = items.filter((r) =>
       // sources: match any of selected
       (!sources.length || sources.includes(r.source)) &&
       // tags/series: match any of selected
@@ -93,7 +93,7 @@ export function useLibraryState({ rows }: UseParams): UseReturn {
       // keep numeric for comparisons; value only used when !empty
       return { empty, n: empty ? 0 : y as number };
     };
-    const titleKey = (r: Row) => strKey(r.sortingName || r.title);
+    const titleKey = (r: Item) => strKey(r.sortingName || r.title);
 
     pass.sort((a, b) => {
       // Choose primary key
@@ -112,9 +112,9 @@ export function useLibraryState({ rows }: UseParams): UseReturn {
 
       const pickKey = () => {
         if (sortKey === "title") return titleKey;
-        if (sortKey === "source") return (r: Row) => strKey(r.source);
-        if (sortKey === "tags") return (r: Row) => arrKey(r.tags);
-        if (sortKey === "series") return (r: Row) => arrKey(r.series);
+        if (sortKey === "source") return (r: Item) => strKey(r.source);
+        if (sortKey === "tags") return (r: Item) => arrKey(r.tags);
+        if (sortKey === "series") return (r: Item) => arrKey(r.series);
         return titleKey;
       };
 
@@ -136,7 +136,7 @@ export function useLibraryState({ rows }: UseParams): UseReturn {
     });
 
     return pass;
-  }, [q, sources, tags, series, showHidden, installedOnly, sortKey, sortDir, rows]);
+  }, [q, sources, tags, series, showHidden, installedOnly, sortKey, sortDir, items]);
 
   return {
     ui: {
@@ -150,10 +150,10 @@ export function useLibraryState({ rows }: UseParams): UseReturn {
     },
     derived: {
       filteredCount: filteredSorted.length,
-      totalCount: rows.length,
-      rowsSorted: filteredSorted,
+      totalCount: items.length,
+      itemsSorted: filteredSorted,
       withBuckets: filteredSorted.map(
-        (row) => ({ row, bucket: orderedLetters(row.title, row.sortingName) })
+        (item) => ({ item, bucket: orderedLetters(item.title, item.sortingName) })
       ),
     },
   };

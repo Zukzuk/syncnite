@@ -1,14 +1,14 @@
 import React from "react";
 import { Virtuoso } from "react-virtuoso";
 import type { VirtuosoHandle } from "react-virtuoso";
-import { RowWrapper } from "./RowWrapper";
+import { Item } from "../hooks/useLibrary";
 import { Scroller } from "../../components/Scroller";
-import { Row } from "../hooks/useLibrary";
+import { ExpandableItemWrapper } from "../../components/ExpandableItem";
 
 type Props = {
   virtuosoRef: React.RefObject<VirtuosoHandle>;
   scrollerRef: (ref: HTMLElement | Window | null) => void;
-  rows: Row[];
+  items: Item[];
   topOffset: number;
   overscan: { top: number; bottom: number };
   rangeChanged: (range: { startIndex: number; endIndex: number }) => void;
@@ -20,7 +20,7 @@ type Props = {
 };
 
 export function ListFlat({
-  virtuosoRef, scrollerRef, rows, topOffset, overscan, rangeChanged,
+  virtuosoRef, scrollerRef, items, topOffset, overscan, rangeChanged,
   openIds, everOpenedIds, onToggle, remountKey, installedUpdatedAt,
 }: Props) {
   return (
@@ -30,21 +30,21 @@ export function ListFlat({
       style={{ height: "100%" }}
       components={{ Scroller }}
       scrollerRef={scrollerRef}
-      data={rows}
+      data={items}
       increaseViewportBy={overscan}
       rangeChanged={rangeChanged}
-      computeItemKey={(_index, r: any) => `${r.id}|${installedUpdatedAt}`}
+      computeItemKey={(_index, item: any) => `${item.id}|${installedUpdatedAt}`}
       itemContent={(index) => {
-        const r = rows[index];
+        const item = items[index];
         return (
-          <RowWrapper
-            key={`${r.id}|${installedUpdatedAt}`}
-            {...r}
+          <ExpandableItemWrapper
+            item={item}
+            collapseOpen={openIds.has(item.id)}
+            everOpened={everOpenedIds.has(item.id)}
             topOffset={topOffset}
-            collapseOpen={openIds.has(r.id)}
-            everOpened={everOpenedIds.has(r.id)}
-            onToggle={() => onToggle(r.id, index)}
             isGroupedList={false}
+            layout="list"
+            onToggle={() => onToggle(item.id, index)}
           />
         );
       }}

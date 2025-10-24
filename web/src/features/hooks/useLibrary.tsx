@@ -10,13 +10,13 @@ import { useRefreshLibrary } from "./useRefreshLibrary";
 import { useLocalInstalled } from "./useLocalInstalled";
 
 export type LoadedData = {
-    rows: Row[];
+    items: Item[];
     allSources: string[];
     allTags: string[];
     allSeries: string[];
 };
 
-export type Row = {
+export type Item = {
     id: string;
     title: string;
     sortingName: string | null;
@@ -150,8 +150,8 @@ export async function loadLibrary(): Promise<LoadedData> {
     // prefetch installed set (case-insensitive ids)
     const isInstalledSet = await fetchInstalledList(email);
 
-    // build rows
-    const rows: Row[] = await Promise.all(games.map(async (g) => {
+    // build items
+    const items: Item[] = await Promise.all(games.map(async (g) => {
         const id = g.Id;
         const gameId = getGameId(g.GameId);
         const title = getGameTitle(g.Name);
@@ -174,11 +174,11 @@ export async function loadLibrary(): Promise<LoadedData> {
     }));
 
     // all unique sources/tags/series (alphabetically sorted)
-    const allSources = Array.from(new Set(rows.map((r) => r.source).filter(Boolean))).sort();
-    const allTags = Array.from(new Set(rows.flatMap((r) => r.tags).filter(Boolean))).sort();
-    const allSeries = Array.from(new Set(rows.flatMap((r) => r.series).filter(Boolean))).sort();
+    const allSources = Array.from(new Set(items.map((r) => r.source).filter(Boolean))).sort();
+    const allTags = Array.from(new Set(items.flatMap((r) => r.tags).filter(Boolean))).sort();
+    const allSeries = Array.from(new Set(items.flatMap((r) => r.series).filter(Boolean))).sort();
 
-    return { rows, allSources, allTags, allSeries };
+    return { items, allSources, allTags, allSeries };
 }
 
 /**
@@ -211,11 +211,11 @@ export function useLibrary({ pollMs }: UseParams): UseReturn {
         if (!installedSet || !installedUpdatedAt) return;
         setData((prev) => {
             if (!prev) return prev;
-            const rows = prev.rows.map((r) => ({
+            const items = prev.items.map((r) => ({
                 ...r,
                 installed: installedSet.has(r.id.toLowerCase()),
             }));
-            return { ...prev, rows };
+            return { ...prev, items };
         });
     }, [installedUpdatedAt, installedSet]);
 

@@ -1,21 +1,21 @@
-import React, { useState } from "react";
-import { Box, Flex, Text, Group, Badge, Tooltip, ActionIcon } from "@mantine/core";
-import { GRID } from "../../lib/constants";
-import { IconActionOverlay } from "../../components/IconActionOverlay";
-import { IconImage } from "../../components/IconImage";
-import { ExternalLink } from "../../components/ExternalLink";
-import { IconSourceLink } from "../../components/IconSourceLink";
-import { Row } from "../hooks/useLibrary";
-import { CopyTitle } from "../../components/CopyTitle";
+import { Box, Flex, Text, Group, } from "@mantine/core";
+import { GRID } from "../lib/constants";
+import { Item } from "../features/hooks/useLibrary";
+import { IconActionOverlay } from "./IconActionOverlay";
+import { IconImage } from "./IconImage";
+import { ExternalLink } from "./ExternalLink";
+import { IconSourceLink } from "./IconSourceLink";
+import { CopyTitle } from "./CopyTitle";
 
-type Props = Row & {
+type Props = {
+    item: Item;
     collapseOpen: boolean;
 };
 
-export function RowItem(props: Props) {
+export function RowItem({ item, collapseOpen }: Props) {
     const { id, isInstalled, iconUrl, title, gameId, year,
-        source, tags, series, link, isHidden, collapseOpen,
-    } = props;
+        source, tags, series, link, isHidden,
+    } = item;
 
     return (
         <Box

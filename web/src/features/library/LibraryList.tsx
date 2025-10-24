@@ -2,6 +2,7 @@ import React from "react";
 import { Box, Flex } from "@mantine/core";
 import { useElementSize } from "@mantine/hooks";
 import { ViewMode } from "../../lib/types";
+import { GRID } from "../../lib/constants";
 import { RailWrapper } from "./RailWrapper";
 import { ListGrouped } from "./ListGrouped";
 import { ListFlat } from "./ListFlat";
@@ -14,7 +15,6 @@ import { useCollapseOpenToggle } from "../hooks/useCollapseOpenToggle";
 import { useJumpToScroll } from "../hooks/useJumpToScroll";
 import { useRemountKeys } from "../hooks/useRemountKeys";
 import { LoadedData } from "../hooks/useLibrary";
-import { GRID } from "../../lib/constants";
 
 type Props = {
   data: LoadedData;
@@ -63,7 +63,7 @@ export default function LibraryList({
   const { groups, isGrouped, flatItems } = useAlphabetGroups({
     sortKey: ui.sortKey,
     withBuckets: derived.withBuckets,
-    rowsSorted: derived.rowsSorted,
+    itemsSorted: derived.itemsSorted,
   });
 
   const { counts, activeLetter, handleJump, rangeChanged } = useAlphabetRail(
@@ -124,7 +124,7 @@ export default function LibraryList({
           <ListFlat
             virtuosoRef={virtuosoRef}
             scrollerRef={setScrollerEl}
-            rows={derived.rowsSorted}
+            items={derived.itemsSorted}
             topOffset={controlsH + headerH}
             overscan={overscan}
             rangeChanged={rangeChanged}

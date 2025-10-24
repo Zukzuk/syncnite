@@ -5,7 +5,7 @@ import { LETTERS } from "../../lib/constants";
 import { orderedLetters } from "../../lib/utils";
 import type { AlphabeticalRailCounts } from "../../components/AlphabeticalRail";
 import { AlphabeticalGroup } from "./useAlphabetGroups";
-import { Row } from "./useLibrary";
+import { Item } from "./useLibrary";
 
 type Range = { 
     startIndex: number; 
@@ -15,7 +15,7 @@ type Range = {
 type UseParams = {
     isGrouped: boolean;
     groups: AlphabeticalGroup[] | null;
-    flatItems: Row[];
+    flatItems: Item[];
     virtuosoRef: React.RefObject<VirtuosoHandle>;
 };
 
@@ -59,8 +59,8 @@ export function useAlphabetRail({isGrouped, groups, flatItems, virtuosoRef }: Us
         for (const g of groups) {
             const L = orderedLetters(g.title);
             if (firstIndex[L] === -1) firstIndex[L] = running;
-            counts[L] = (counts[L] ?? 0) + g.rows.length;
-            running += g.rows.length;
+            counts[L] = (counts[L] ?? 0) + g.items.length;
+            running += g.items.length;
         }
         return { groupFirstItemIndex: firstIndex, groupCounts: counts, totalItems: running };
     }, [groups]);
@@ -116,8 +116,8 @@ export function useAlphabetRail({isGrouped, groups, flatItems, virtuosoRef }: Us
             if (isGrouped && groups && groups.length) {
                 let i = idx;
                 for (const g of groups) {
-                    if (i < g.rows.length) return orderedLetters(g.title);
-                    i -= g.rows.length;
+                    if (i < g.items.length) return orderedLetters(g.title);
+                    i -= g.items.length;
                 }
                 return null;
             }
