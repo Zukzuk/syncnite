@@ -2,7 +2,7 @@
 import React from "react";
 import { ActionIcon, Tooltip } from "@mantine/core";
 import { IconCopy } from "@tabler/icons-react";
-import { Item } from "../features/hooks/useLibrary";
+import { Item } from "../features/library/hooks/useLibrary";
 
 type Props = Pick<Item, "title" | "year">;
 

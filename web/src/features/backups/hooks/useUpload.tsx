@@ -1,6 +1,6 @@
 import React from "react";
-import { BackupUploader } from "../services/BackupUploader";
-import { LogBus } from "../services/LogBus";
+import { BackupUploader } from "../BackupUploader";
+import { LogBus } from "../../../services/LogBus";
 
 export function useUpload({ onZipsChanged }: { onZipsChanged?: (name?: string) => void } = {}) {
     const [busy, setBusy] = React.useState(false);

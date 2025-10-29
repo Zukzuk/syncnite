@@ -1,5 +1,5 @@
 import * as React from "react";
-import { orderedLetters } from "../../lib/utils";
+import { orderedLetters } from "../../../lib/utils";
 import { Item } from "./useLibrary";
 import { WithBucket } from "./useLibraryState";
 

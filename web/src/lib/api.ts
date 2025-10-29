@@ -1,5 +1,5 @@
 import axios from "axios";
-import { StreamProgress } from "../services/BackupImporter";
+import { StreamProgress } from "../features/backups/BackupImporter";
 import { API_ENDPOINTS } from "./constants";
 import { getCreds } from "./persist";
 
@@ -16,6 +16,15 @@ export type ZipInfo = {
   size: number;
   mtime: number
 };
+
+export async function post(path: string, body: any) {
+  const r = await fetch(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  return r.json();
+}
 
 // Axios instance with base URL and credentials
 export const api = axios.create({
@@ -137,33 +146,29 @@ export async function listLibrary(): Promise<LibraryItem[]> {
   return r.json();
 }
 
-// Verify admin credentials are valid
-export async function verifyAdmin(): Promise<boolean> {
-  const c = getCreds();
-  if (!c) return false;
-  try {
-    const r = await fetch(API_ENDPOINTS.ADMIN_VERIFY, {
-      headers: {
-        "x-auth-email": c.email,
-        "x-auth-password": c.password,
-      },
-      cache: "no-store",
-    });
-    const j = await r.json();
-    return !!j?.ok;
-  } catch {
-    return false;
-  }
+export async function verifySession(): Promise<{ ok: boolean; email?: string; role?: string }> {
+  const creds = getCreds();
+  if (!creds) return { ok: false };
+
+  const r = await fetch(API_ENDPOINTS.VERIFY, {
+    headers: {
+      "x-auth-email": creds.email,
+      "x-auth-password": creds.password,
+    },
+  });
+
+  if (!r.ok) return { ok: false };
+  const j = await r.json();
+  return { ok: true, email: j.email ?? creds.email, role: j.role ?? creds.role };
 }
 
 // Fetch whether an admin user exists, and if so their email
 export async function fetchAdminStatus(): Promise<{
   hasAdmin: boolean;
-  admin: string | null
 }> {
-  const r = await fetch(API_ENDPOINTS.ADMIN_STATUS, { cache: "no-store" });
+  const r = await fetch(API_ENDPOINTS.STATUS, { cache: "no-store" });
   const j = await r.json();
-  return { hasAdmin: !!j?.hasAdmin, admin: (j?.admin ?? null) as string | null };
+  return { hasAdmin: !!j?.hasAdmin };
 }
 
 // Register a new admin user
@@ -190,7 +195,7 @@ export async function loginUser(
   ok: boolean;
   error?: string
 }> {
-  const r = await fetch(API_ENDPOINTS.ADMIN_LOGIN, {
+  const r = await fetch(API_ENDPOINTS.LOGIN, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email: email.trim().toLowerCase(), password }),

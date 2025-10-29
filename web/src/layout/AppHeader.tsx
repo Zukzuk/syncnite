@@ -1,7 +1,6 @@
 import { Group, Title, ActionIcon, Button, Tooltip, Burger, Text, useMantineColorScheme } from "@mantine/core";
 import { IconDownload, IconMoon, IconSun } from "@tabler/icons-react";
 import { useAuth } from "../hooks/useAuth";
-import { clearCreds } from "../lib/persist";
 import { API_ENDPOINTS } from "../lib/constants";
 
 const appVersion = (window as any).__APP_VERSION__ ?? 'dev';
@@ -13,7 +12,7 @@ type Props = {
 
 export function AppHeader({ opened, onToggleNav }: Props) {
     const { colorScheme, setColorScheme } = useMantineColorScheme();
-    const { state } = useAuth({ pollMs: 0 });
+    const { state, logout } = useAuth({ pollMs: 0 });
 
     return (
         <Group h="100%" px="md" justify="space-between">
@@ -25,8 +24,8 @@ export function AppHeader({ opened, onToggleNav }: Props) {
 
             <Group gap="sm">
                 {/* Download extension button */}
-                <Tooltip 
-                    withArrow 
+                <Tooltip
+                    withArrow
                     label={`Download SyncniteBridge v${appVersion} (.pext)`}
                     style={{ fontSize: 10 }}
                 >
@@ -47,7 +46,7 @@ export function AppHeader({ opened, onToggleNav }: Props) {
                     {state.loggedIn ? (
                         <>
                             <Text size="xs" className="is-dim">{state.email}</Text>
-                            <Button size="xs" variant="light" onClick={() => clearCreds()}>Logout</Button>
+                            <Button size="xs" variant="light" onClick={logout}>Logout</Button>
                         </>
                     ) : null}
                 </Group>

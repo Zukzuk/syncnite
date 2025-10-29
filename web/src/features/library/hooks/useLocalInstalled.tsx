@@ -1,5 +1,5 @@
 import * as React from "react";
-import { fetchUser } from "../../lib/persist";
+import { fetchUser } from "../../../lib/persist";
 
 type UseParams = {
     pollMs: number;

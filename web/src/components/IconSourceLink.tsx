@@ -2,7 +2,7 @@ import React from "react";
 import { ActionIcon, Tooltip } from "@mantine/core";
 import { iconForSource, sourceProtocolLink } from "../lib/utils";
 import { SOURCE_MAP } from "../lib/constants";
-import { Item } from "../features/hooks/useLibrary";
+import { Item } from "../features/library/hooks/useLibrary";
 
 type Props = Pick<Item, "source" | "gameId" | "link">;
 

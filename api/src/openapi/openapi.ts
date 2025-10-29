@@ -238,7 +238,7 @@
  *                   event: progress
  *                   data: {"phase":"copy","percent":42}
  *
- *   /accounts/register:
+ *   /accounts/register/admin:
  *     post:
  *       summary: Register admin
  *       tags: [Accounts]
@@ -269,6 +269,37 @@
  *               schema:
  *                 $ref: '#/components/schemas/ErrorResponse'
  *
+ *   /accounts/register/user:
+ *     post:
+ *       summary: Register user
+ *       tags: [Accounts]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 email:
+ *                   type: string
+ *                 password:
+ *                   type: string
+ *       responses:
+ *       responses:
+ *         200:
+ *           description: Registered.
+ *           content:
+ *             application/json:
+ *               schema: { type: object, properties: { ok: { type: boolean, example: true } } }
+ *         201:
+ *           description: Registered.
+ *         409:
+ *           description: User already exists.
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 $ref: '#/components/schemas/ErrorResponse'
+ *
  *   /accounts/login:
  *     post:
  *       summary: Log in
@@ -293,7 +324,20 @@
  *
  *   /accounts/verify:
  *     get:
- *       summary: Verify credentials
+ *       summary: Verify User credentials
+ *       tags: [Accounts]
+ *       security:
+ *         - XAuthEmail: []
+ *         - XAuthPassword: []
+ *       responses:
+ *         200:
+ *           description: Verified.
+ *         401:
+ *           $ref: '#/components/responses/Error401'
+ * 
+ *   /accounts/verify/admin:
+ *     get:
+ *       summary: Verify Admin credentials
  *       tags: [Accounts]
  *       security:
  *         - XAuthEmail: []

@@ -1,7 +1,7 @@
 import { notifications } from "@mantine/notifications";
-import { uploadZip } from "../lib/api";
-import { LAST_UP_KEY, STATE_KEY, NOTIF_UPLOAD_ID } from "../lib/constants";
-import { LogBus } from "./LogBus";
+import { uploadZip } from "../../lib/api";
+import { LAST_UP_KEY, STATE_KEY, NOTIF_UPLOAD_ID } from "../../lib/constants";
+import { LogBus } from "../../services/LogBus";
 
 type BackupUploadState = {
     running: boolean;

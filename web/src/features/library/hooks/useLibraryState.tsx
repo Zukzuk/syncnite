@@ -1,7 +1,7 @@
 import * as React from "react";
-import type { SortKey, SortDir } from "../../lib/types";
-import { orderedLetters } from "../../lib/utils";
-import { CookieState, loadStateFromCookie, saveStateToCookie } from "../../lib/persist";
+import type { SortKey, SortDir } from "../../../lib/types";
+import { orderedLetters } from "../../../lib/utils";
+import { CookieState, loadStateFromCookie, saveStateToCookie } from "../../../lib/persist";
 import { Item } from "./useLibrary";
 
 export type WithBucket = {

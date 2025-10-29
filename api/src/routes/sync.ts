@@ -1,12 +1,12 @@
 import express from "express";
 import multer from "multer";
 import { SyncService } from "../services/SyncService";
-import { requireAdmin } from "../middleware/requireAdmin";
+import { requireAdminSession } from "../middleware/requireAuth";
 import { UPLOADS_DIR } from "../constants";
 import { rootLog } from "../logger";
 
 const router = express.Router();
-router.use(requireAdmin);
+router.use(requireAdminSession);
 const syncUpload = multer({ dest: UPLOADS_DIR });
 const syncService = new SyncService();
 const log = rootLog.child("route:sync");

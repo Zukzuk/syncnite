@@ -3,7 +3,7 @@ import { Stack, Loader, Box, Center } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { GRID } from "../lib/constants";
 import { ViewMode } from "../lib/types";
-import { useLibrary } from "../features/hooks/useLibrary";
+import { useLibrary } from "../features/library/hooks/useLibrary";
 import LibraryList from "../features/library/LibraryList";
 import LibraryGrid from "../features/library/LibraryGrid";
 

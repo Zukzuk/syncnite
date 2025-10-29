@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Box } from "@mantine/core";
-import { useDelayedFlag } from "../features/hooks/useDelayedFlag";
+import { useDelayedFlag } from "../features/library/hooks/useDelayedFlag";
 
 type Props = {
     bgUrl: string | null;

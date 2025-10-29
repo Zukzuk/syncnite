@@ -8,13 +8,13 @@ import { ListGrouped } from "./ListGrouped";
 import { ListFlat } from "./ListFlat";
 import { HeaderControls } from "./HeaderControls";
 import { HeaderSort } from "./HeaderSort";
-import { useLibraryState } from "../hooks/useLibraryState";
-import { useAlphabetGroups } from "../hooks/useAlphabetGroups";
-import { useAlphabetRail } from "../hooks/useAlphabetRail";
-import { useCollapseOpenToggle } from "../hooks/useCollapseOpenToggle";
-import { useJumpToScroll } from "../hooks/useJumpToScroll";
-import { useRemountKeys } from "../hooks/useRemountKeys";
-import { LoadedData } from "../hooks/useLibrary";
+import { useLibraryState } from "./hooks/useLibraryState";
+import { useAlphabetGroups } from "./hooks/useAlphabetGroups";
+import { useAlphabetRail } from "./hooks/useAlphabetRail";
+import { useCollapseOpenToggle } from "./hooks/useCollapseOpenToggle";
+import { useJumpToScroll } from "./hooks/useJumpToScroll";
+import { useRemountKeys } from "./hooks/useRemountKeys";
+import { LoadedData } from "./hooks/useLibrary";
 
 type Props = {
   data: LoadedData;

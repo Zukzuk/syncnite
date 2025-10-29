@@ -1,5 +1,5 @@
 import React from "react";
-import { BackupWatcher, BackupWatchState } from "../services/BackupWatcher";
+import { BackupWatcher, BackupWatchState } from "../BackupWatcher";
 
 export function useBackupWatcher() {
     const [state, setState] = React.useState<BackupWatchState | null>(null);

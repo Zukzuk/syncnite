@@ -43,6 +43,7 @@ export interface GameReleaseDate {
 export interface Game {
   // identity
   Id: string;
+  _id: { $guid: string };
   Name: string;
   SortingName?: string;
 

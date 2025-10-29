@@ -3,8 +3,10 @@ import multer from "multer";
 import { BackupService } from "../services/BackupService";
 import { UPLOADS_DIR } from "../constants";
 import { rootLog } from "../logger";
+import { requireAdminSession } from "../middleware/requireAuth";
 
 const router = express.Router();
+router.use(requireAdminSession);
 const upload = multer({ dest: UPLOADS_DIR });
 const backupService = new BackupService();
 const log = rootLog.child("route:backup");

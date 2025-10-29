@@ -2,7 +2,7 @@ import React, { useCallback } from "react";
 import { Box } from "@mantine/core";
 import { GRID } from "../lib/constants";
 import { ViewMode } from "../lib/types";
-import { Item } from "../features/hooks/useLibrary";
+import { Item } from "../features/library/hooks/useLibrary";
 import { ItemDetails } from "./ItemDetails";
 import { ItemBackground } from "./ItemBackground";
 import { RowItem } from "./RowItem";

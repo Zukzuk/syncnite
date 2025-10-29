@@ -1,6 +1,6 @@
-import { DB_KEY, IDB_DB, IDB_STORE } from "../lib/constants";
+import { DB_KEY, IDB_DB, IDB_STORE } from "../../lib/constants";
 import { BackupUploader } from "./BackupUploader";
-import { LogBus } from "./LogBus";
+import { LogBus } from "../../services/LogBus";
 
 type ZipMeta = { 
     name: string; 

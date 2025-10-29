@@ -2,17 +2,16 @@ import * as React from "react";
 import { Box, Flex } from "@mantine/core";
 import { useElementSize } from "@mantine/hooks";
 import { VirtuosoGrid } from "react-virtuoso";
-
 import { ViewMode } from "../../lib/types";
 import { ExpandableItemWrapper } from "../../components/ExpandableItem";
-import type { LoadedData } from "../hooks/useLibrary";
-import { useJumpToScroll } from "../hooks/useJumpToScroll";
-import { useCollapseOpenToggle } from "../hooks/useCollapseOpenToggle";
-import { useLibraryState } from "../hooks/useLibraryState";
-import { useRemountKeys } from "../hooks/useRemountKeys";
+import { Scroller } from "../../components/Scroller";
+import type { LoadedData } from "./hooks/useLibrary";
+import { useJumpToScroll } from "./hooks/useJumpToScroll";
+import { useCollapseOpenToggle } from "./hooks/useCollapseOpenToggle";
+import { useLibraryState } from "./hooks/useLibraryState";
+import { useRemountKeys } from "./hooks/useRemountKeys";
 import { HeaderControls } from "./HeaderControls";
 import { HeaderSort } from "./HeaderSort";
-import { Scroller } from "../../components/Scroller";
 
 type Props = {
     data: LoadedData;

@@ -1,7 +1,7 @@
 import React from "react";
 import { GroupedVirtuoso } from "react-virtuoso";
 import type { VirtuosoHandle } from "react-virtuoso";
-import { Item } from "../hooks/useLibrary";
+import { Item } from "./hooks/useLibrary";
 import { AlphabeticalSeparatorRow } from "../../components/AlphabeticalSeparatorRow";
 import { Scroller } from "../../components/Scroller";
 import { ExpandableItemWrapper } from "../../components/ExpandableItem";

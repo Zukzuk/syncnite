@@ -1,9 +1,9 @@
 import * as React from "react";
 import type { VirtuosoHandle } from "react-virtuoso";
-import type { Letter } from "../../lib/types";
-import { LETTERS } from "../../lib/constants";
-import { orderedLetters } from "../../lib/utils";
-import type { AlphabeticalRailCounts } from "../../components/AlphabeticalRail";
+import type { Letter } from "../../../lib/types";
+import { LETTERS } from "../../../lib/constants";
+import { orderedLetters } from "../../../lib/utils";
+import type { AlphabeticalRailCounts } from "../../../components/AlphabeticalRail";
 import { AlphabeticalGroup } from "./useAlphabetGroups";
 import { Item } from "./useLibrary";
 

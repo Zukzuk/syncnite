@@ -3,9 +3,9 @@ import { Stack, Group, Select, Button, FileButton, PasswordInput, Textarea, Text
 import { SectionCard } from "../components/SectionCard";
 import { LoadingBar } from "../components/LoadingBar";
 import { useZips } from "../hooks/useZips";
-import { useUpload } from "../hooks/useUpload";
-import { useBackupWatcher } from "../hooks/useBackupWatcher";
-import { useImporter } from "../hooks/useImporter";
+import { useUpload } from "../features/backups/hooks/useUpload";
+import { useBackupWatcher } from "../features/backups/hooks/useBackupWatcher";
+import { useImporter } from "../features/backups/hooks/useImporter";
 import { Phase } from "../lib/types";
 
 function useExportPhaseLabel(phase: Phase) {

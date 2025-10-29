@@ -1,6 +1,6 @@
 import { Box, Flex, Text, Group, } from "@mantine/core";
 import { GRID } from "../lib/constants";
-import { Item } from "../features/hooks/useLibrary";
+import { Item } from "../features/library/hooks/useLibrary";
 import { IconActionOverlay } from "./IconActionOverlay";
 import { IconImage } from "./IconImage";
 import { ExternalLink } from "./ExternalLink";

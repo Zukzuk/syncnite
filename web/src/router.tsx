@@ -4,7 +4,6 @@ import AppShellLayout from "./layout/AppShellLayout";
 import HomePage from "./pages/HomePage";
 import LibraryPage from "./pages/LibraryPage";
 import BridgePage from "./pages/BridgePage";
-import SettingsPage from "./pages/SettingsPage";
 import LoginPage from "./pages/LoginPage";
 import AdminPage from "./pages/AdminPage";
 import AccountPage from "./pages/AccountPage";
@@ -35,7 +34,7 @@ function LoggedInOnly() {
 function AdminOnly() {
   const { state } = useAuth({ pollMs: 0 });
   if (!state.ready) return null;
-  return state.loggedIn ? <Outlet /> : <Navigate to="/login" replace />;
+  return state.loggedIn && state.role === "admin" ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
 function AdminGate() {
@@ -80,14 +79,14 @@ export const router = createBrowserRouter([
               { path: "/", element: <HomePage /> },
               { path: "/library", element: <LibraryPage /> },
               { path: "/bridge", element: <BridgePage /> },
-              { path: "/settings", element: <SettingsPage /> },
               { path: "/account", element: <AccountPage /> },
             ],
           },
           {
-            path: "/admin",
-            element: <LoggedInOnly />,
-            children: [{ element: <AdminOnly />, children: [{ index: true, element: <AdminPage /> }] }],
+            element: <AdminOnly />,
+            children: [
+              { path: "/admin", element:  <AdminPage /> }
+            ],
           },
           { path: "*", element: <Navigate to="/" replace /> },
         ],

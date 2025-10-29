@@ -8,11 +8,16 @@ export const API_ENDPOINTS = {
   ZIP_LIST: "/api/zips",
   // Extension management
   DOWNLOAD_EXTENSION: "/api/extension/download",
+  // Account management
+  LOGIN: "/api/accounts/login",
+  STATUS: "/api/accounts/status",
+  VERIFY: "/api/accounts/verify",
+  // User account management
+  USER_REGISTER: "/api/accounts/register/user",
   // Admin account management
-  ADMIN_VERIFY: "/api/accounts/verify",
-  ADMIN_STATUS: "/api/accounts/status",
-  ADMIN_REGISTER: "/api/accounts/register",
-  ADMIN_LOGIN: "/api/accounts/login",
+  ADMIN_REGISTER: "/api/accounts/register/admin",
+  ADMIN_VERIFY: "/api/accounts/verify/admin",
+
   // Backup management
   BACKUP_UPLOAD: "/api/backup/upload",
 }
@@ -101,6 +106,8 @@ export const LETTERS = [...LETTERS_LIST] as const;
 export const KEY_EMAIL = "sb_email";
 
 export const KEY_PASS = "sb_password";
+
+export const KEY_ROLE = "sb_role";
 
 export const EVT = "sb:auth-changed";
 

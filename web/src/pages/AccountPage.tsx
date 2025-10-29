@@ -1,20 +1,10 @@
 import * as React from "react";
 import { Stack, Card, Text, Code, Badge } from "@mantine/core";
 import { useAuth } from "../hooks/useAuth";
-import { fetchAdminStatus } from "../lib/api";
 
 export default function AccountPage() {
     const { state } = useAuth({ pollMs: 0 });
-    const [adminEmail, setAdminEmail] = React.useState<string | null>(null);
-
-    React.useEffect(() => {
-        (async () => {
-            const s = await fetchAdminStatus();
-            setAdminEmail(s.admin);
-        })();
-    }, []);
-
-    const isAdmin = state.email && adminEmail && state.email.toLowerCase() === adminEmail.toLowerCase();
+    const isAdmin = state.role === "admin";
 
     return (
         <Stack p="md" gap="lg">

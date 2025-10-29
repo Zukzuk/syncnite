@@ -8,6 +8,4 @@ export type SortDir = "asc" | "desc";
 
 export type Phase = "unzip" | "copy" | null;
 
-export type TabKey = "login" | "register";
-
 export type ViewMode = "list" | "grid";

@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
-import { BackupWatcher } from "./services/BackupWatcher";
+import { BackupWatcher } from "./features/backups/BackupWatcher";
 import { AppProviders } from "./theme";
 
 import "@mantine/core/styles.css";

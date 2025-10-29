@@ -1,11 +1,10 @@
 import * as React from "react";
-import type { Game, GameJson, GameSourceJson, TagJson, SeriesJson, GameLink, GameReleaseDate } from "../../types/playnite";
-import { FILES } from "../../lib/constants";
-import { fetchUser, tryFetchJson, tryLoadMany } from "../../lib/persist";
-import {
-    buildIconUrl, findSourcishLink, normalizePath, extractYear,
+import type { Game, GameJson, GameSourceJson, TagJson, SeriesJson, GameLink, GameReleaseDate } from "../../../types/playnite";
+import { FILES } from "../../../lib/constants";
+import { fetchUser, tryFetchJson, tryLoadMany } from "../../../lib/persist";
+import { buildIconUrl, findSourcishLink, normalizePath, extractYear,
     sourcishLinkFallback, hasEmulatorTag, myAbandonwareLink, buildAssetUrl,
-} from "../../lib/utils";
+} from "../../../lib/utils";
 import { useRefreshLibrary } from "./useRefreshLibrary";
 import { useLocalInstalled } from "./useLocalInstalled";
 
@@ -39,6 +38,10 @@ type UseReturn = {
     data: LoadedData | null;
     installedUpdatedAt: string | null;
 };
+
+function getPlayniteId(g: Game): string {
+    return g.Id || g._id.$guid;
+}
 
 function getGameId(id: string | null | undefined): string | null {
     return id ? String(id) : null;
@@ -151,8 +154,8 @@ export async function loadLibrary(): Promise<LoadedData> {
     const isInstalledSet = await fetchInstalledList(email);
 
     // build items
-    const items: Item[] = await Promise.all(games.map(async (g) => {
-        const id = g.Id;
+    const items: Item[] = games.map((g) => {
+        const id = getPlayniteId(g);
         const gameId = getGameId(g.GameId);
         const title = getGameTitle(g.Name);
         const sortingName = getSortingName(g.SortingName, g.Name);
@@ -171,7 +174,7 @@ export async function loadLibrary(): Promise<LoadedData> {
             series, isHidden, link, iconUrl, year,
             isInstalled, coverUrl, bgUrl
         };
-    }));
+    });
 
     // all unique sources/tags/series (alphabetically sorted)
     const allSources = Array.from(new Set(items.map((r) => r.source).filter(Boolean))).sort();

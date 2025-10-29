@@ -2,7 +2,7 @@ import { Box, Group, Image, Text } from "@mantine/core";
 import { CopyTitle } from "./CopyTitle";
 import { ExternalLink } from "./ExternalLink";
 import { IconSourceLink } from "./IconSourceLink";
-import { Item } from "../features/hooks/useLibrary";
+import { Item } from "../features/library/hooks/useLibrary";
 
 type Props = {
     item: Item;

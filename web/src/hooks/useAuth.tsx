@@ -1,20 +1,20 @@
 import * as React from "react";
-import { getCreds, setCreds, clearCreds } from "../lib/persist";
-import { verifyAdmin } from "../lib/api";
+import { clearCreds } from "../lib/persist";
+import { verifySession } from "../lib/api";
 
 type AuthState = {
   ready: boolean;
   loggedIn: boolean;
   email: string | null;
+  role: string | null;
 };
 
-type UseParams = { 
-  pollMs: number; 
+type UseParams = {
+  pollMs: number;
 };
 
 type UseReturn = {
   state: AuthState;
-  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
 };
 
@@ -23,15 +23,16 @@ export function useAuth({ pollMs }: UseParams): UseReturn {
     ready: false,
     loggedIn: false,
     email: null,
+    role: null,
   });
 
   const refresh = React.useCallback(async () => {
-    const c = getCreds();
-    const ok = await verifyAdmin();
+    const v = await verifySession();
     setState({
       ready: true,
-      loggedIn: ok,
-      email: ok && c ? c.email : null,
+      loggedIn: v.ok,
+      email: v.email || null,
+      role: v.role || null,
     });
   }, []);
 
@@ -49,16 +50,10 @@ export function useAuth({ pollMs }: UseParams): UseReturn {
     };
   }, [refresh, pollMs]);
 
-  const login = React.useCallback(async (email: string, password: string) => {
-    setCreds(email, password);
-    await refresh();
-    return true;
-  }, [refresh]);
-
   const logout = React.useCallback(() => {
     clearCreds();
-    setState({ ready: true, loggedIn: false, email: null });
+    setState({ ready: true, loggedIn: false, email: null, role: null });
   }, []);
 
-  return { state, login, logout };
+  return { state, logout };
 }

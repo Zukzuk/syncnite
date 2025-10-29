@@ -1,5 +1,5 @@
 import * as React from "react";
-import { FILES } from "../../lib/constants";
+import { FILES } from "../../../lib/constants";
 
 type UseParams = {
     pollMs: number;

@@ -4,8 +4,10 @@ import { UPLOADS_DIR } from "../constants";
 import { rootLog } from "../logger";
 import { createSSE } from "../sse";
 import { SyncBus } from "../services/EventBusService";
+import { requireSession } from "../middleware/requireAuth";
 
 const router = express.Router();
+// router.use(requireSession);
 const listZipsService = new ListZipsService(UPLOADS_DIR);
 const log = rootLog.child("route:app");
 

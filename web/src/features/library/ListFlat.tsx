@@ -1,7 +1,7 @@
 import React from "react";
 import { Virtuoso } from "react-virtuoso";
 import type { VirtuosoHandle } from "react-virtuoso";
-import { Item } from "../hooks/useLibrary";
+import { Item } from "./hooks/useLibrary";
 import { Scroller } from "../../components/Scroller";
 import { ExpandableItemWrapper } from "../../components/ExpandableItem";
 
