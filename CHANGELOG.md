@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.18.0](https://github.com/zukzuk/playnite-viewer/compare/v1.17.4...v1.18.0) (2025-10-29)
+
+
+### Features
+
+* added user login and better admin auth\ ([531d5c1](https://github.com/zukzuk/playnite-viewer/commit/531d5c1c69721f68a4d5cc791dcda25360c0c3c9))
+
 ### [1.17.4](https://github.com/Zukzuk/syncnite/compare/v1.17.3...v1.17.4) (2025-10-24)
 
 
