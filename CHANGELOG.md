@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.18.2](https://github.com/Zukzuk/syncnite/compare/v1.18.1...v1.18.2) (2025-10-31)
+
+
+### Bug Fixes
+
+* fixed logging textarea ([f415df5](https://github.com/Zukzuk/syncnite/commit/f415df5ec5f3c32e2a70940253433314aa754454))
+
 ### [1.18.1](https://github.com/Zukzuk/syncnite/compare/v1.18.0...v1.18.1) (2025-10-31)
 
 ## [1.18.0](https://github.com/zukzuk/playnite-viewer/compare/v1.17.4...v1.18.0) (2025-10-29)
