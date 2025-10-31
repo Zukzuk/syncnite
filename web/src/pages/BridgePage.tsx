@@ -3,6 +3,7 @@ import { Stack, Group, Select, Button, FileButton, PasswordInput, Textarea, Text
 import { SectionCard } from "../components/SectionCard";
 import { LoadingBar } from "../components/LoadingBar";
 import { useZips } from "../hooks/useZips";
+import { useLogBus } from "../hooks/useLogBus";
 import { useUpload } from "../features/backups/hooks/useUpload";
 import { useBackupWatcher } from "../features/backups/hooks/useBackupWatcher";
 import { useImporter } from "../features/backups/hooks/useImporter";
@@ -17,7 +18,6 @@ function useExportPhaseLabel(phase: Phase) {
 export default function BridgePage() {
     const { zips, selected, setSelected, refresh } = useZips();
 
-
     const upload = useUpload({
         onZipsChanged: async (name) => {
             await refresh();
@@ -28,6 +28,7 @@ export default function BridgePage() {
     const watcher = useBackupWatcher();
     const importer = useImporter();
     const exportPhaseLabel = useExportPhaseLabel(importer.phase);
+    const logBus = useLogBus();
 
     return (
         <Stack gap="lg" p="md">
@@ -86,10 +87,23 @@ export default function BridgePage() {
                 <LoadingBar label={exportPhaseLabel} percent={importer.percent} subtext={importer.subtext} />
             </SectionCard>
 
-            <SectionCard title="Logs">
-                <Textarea value={importer.logs} maxRows={10} autosize styles={{ input: { fontFamily: "ui-monospace, Menlo, Consolas, monospace" } }} />
+            <SectionCard
+                title="Logs"
+                right={
+                    <Button variant="subtle" onClick={logBus.clear} aria-label="Clear logs">
+                        Clear
+                    </Button>
+                }
+            >
+                <Textarea
+                    value={logBus.text}
+                    maxRows={10}
+                    autosize
+                    styles={{ input: { fontFamily: "ui-monospace, Menlo, Consolas, monospace" } }}
+                />
                 <Text size="xs" className="is-dim">Newest on top</Text>
             </SectionCard>
+
         </Stack>
     );
 }
