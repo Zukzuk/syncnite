@@ -5,6 +5,7 @@ import { Item } from "./hooks/useLibrary";
 import { AlphabeticalSeparatorRow } from "../../components/AlphabeticalSeparatorRow";
 import { Scroller } from "../../components/Scroller";
 import { ExpandableItemWrapper } from "../../components/ExpandableItem";
+import { GRID } from "../../lib/constants";
 
 type Props = {
   virtuosoRef: React.RefObject<VirtuosoHandle>;
@@ -24,6 +25,10 @@ export function ListGrouped({
   virtuosoRef, scrollerRef, groups, topOffset, overscan, rangeChanged,
   openIds, everOpenedIds, onToggle, remountKey, installedUpdatedAt,
 }: Props) {
+  // ensure scroll position is maintained on layout changes
+  const openWidth = `calc(100vw - ${GRID.menuWidth}px - 12px - 15px)`;
+  const openHeight = `calc(100vh - ${topOffset}px - 38px - ${GRID.smallBox}px - 12px)`;
+
   return (
     <GroupedVirtuoso
       ref={virtuosoRef}
@@ -54,7 +59,8 @@ export function ListGrouped({
                 collapseOpen={openIds.has(item.id)}
                 everOpened={everOpenedIds.has(item.id)}
                 topOffset={topOffset}
-                isGroupedList={true}
+                openWidth={openWidth}
+                openHeight={openHeight}
                 layout="list"
                 onToggle={() => onToggle(item.id, globalIndex)}
               />

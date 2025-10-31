@@ -1,10 +1,7 @@
 import * as React from "react";
 import { LogBus } from "../services/LogBus";
 
-/**
- * React hook to consume the global LogBus as a single textarea-friendly string.
- * Keeps newest-first ordering and updates in real time.
- */
+// React hook to manage and provide log bus information.
 export function useLogBus() {
     const [lines, setLines] = React.useState<string[]>(() => LogBus.get());
 

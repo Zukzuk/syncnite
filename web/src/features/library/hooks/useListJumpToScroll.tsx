@@ -13,7 +13,7 @@ type UseReturn = {
 };
 
 /** Hook to manage scrolling to a specific row */
-export function useJumpToScroll({headerH}: UseParams): UseReturn {
+export function useListJumpToScroll({headerH}: UseParams): UseReturn {
   const virtuosoRef = React.useRef<VirtuosoHandle>(null);
   const scrollerElRef = React.useRef<HTMLDivElement | null>(null);
 

@@ -12,6 +12,7 @@ bin
 ComicInfo.xml
 .config
 **/public/*.md
+reports/
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json

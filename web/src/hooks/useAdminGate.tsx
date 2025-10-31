@@ -12,6 +12,7 @@ type UseReturn = {
   hasAdmin: boolean 
 };
 
+// React hook to manage and provide admin gate status.
 export function useAdminGate({ pollMs }: UseParams): UseReturn {
   const [hasAdmin, setHasAdmin] = React.useState<boolean>(true);
   const [loaded, setLoaded] = React.useState(false);

@@ -12,7 +12,7 @@ import { useLibraryState } from "./hooks/useLibraryState";
 import { useAlphabetGroups } from "./hooks/useAlphabetGroups";
 import { useAlphabetRail } from "./hooks/useAlphabetRail";
 import { useCollapseOpenToggle } from "./hooks/useCollapseOpenToggle";
-import { useJumpToScroll } from "./hooks/useJumpToScroll";
+import { useListJumpToScroll } from "./hooks/useListJumpToScroll";
 import { useRemountKeys } from "./hooks/useRemountKeys";
 import { LoadedData } from "./hooks/useLibrary";
 
@@ -40,7 +40,7 @@ export default function LibraryList({
   const { ref: controlsRef, height: controlsH } = useElementSize();
   const { ref: headerRef, height: headerH } = useElementSize();
   const { openIds, everOpenedIds, toggleOpen } = useCollapseOpenToggle();
-  const { virtuosoRef, setScrollerEl, scrollRowIntoView } = useJumpToScroll({ headerH });
+  const { virtuosoRef, setScrollerEl, scrollRowIntoView } = useListJumpToScroll({ headerH });
 
   React.useEffect(() => {
     onCountsChange?.(derived.filteredCount, derived.totalCount);

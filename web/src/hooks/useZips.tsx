@@ -1,6 +1,7 @@
 import React from "react";
 import { listZips, ZipInfo } from "../lib/api";
 
+// React hook to manage and provide zip file information.
 export function useZips() {
     const [zips, setZips] = React.useState<ZipInfo[]>([]);
     const [selected, setSelected] = React.useState<string | null>(null);

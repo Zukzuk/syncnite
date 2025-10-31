@@ -1,6 +1,5 @@
 import React, { useCallback } from "react";
 import { Box } from "@mantine/core";
-import { GRID } from "../lib/constants";
 import { ViewMode } from "../lib/types";
 import { Item } from "../features/library/hooks/useLibrary";
 import { ItemDetails } from "./ItemDetails";
@@ -8,23 +7,24 @@ import { ItemBackground } from "./ItemBackground";
 import { RowItem } from "./RowItem";
 import { GridItem } from "./GridItem";
 
-type ExpandableItemWrapperProps = {
+type Props = {
     item: Item;
     collapseOpen: boolean;
     everOpened: boolean;
     topOffset: number;
-    isGroupedList?: boolean;
+    openWidth: string;
+    openHeight: string;
     layout: ViewMode;
     onToggle: () => void;
 };
 
-export function ExpandableItemWrapper(props: ExpandableItemWrapperProps) {
+export function ExpandableItemWrapper(props: Props) {
     const {
         item,
         collapseOpen,
         everOpened,
-        topOffset,
-        isGroupedList = false,
+        openWidth,
+        openHeight,
         layout,
         onToggle,
     } = props;
@@ -71,9 +71,6 @@ export function ExpandableItemWrapper(props: ExpandableItemWrapperProps) {
         borderRadius: 4,
         padding: 2,
     };
-
-    const openWidth = `calc(100vw - ${GRID.menuWidth}px - 12px - 15px)`;
-    const openHeight = `calc(100vh - ${topOffset}px ${isGroupedList ? "- 38px" : ""} - ${GRID.smallBox}px - 12px)`;
 
     return (
         <Box

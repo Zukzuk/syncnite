@@ -12,6 +12,7 @@ import { useAbsoluteGridLayout } from "./hooks/useAbsoluteGridLayout";
 import { useVirtualWindow } from "./hooks/useVirtualWindow";
 import { ViewMode } from "../../lib/types";
 import { GRID } from "../../lib/constants";
+import { useGridJumpToScroll } from "./hooks/useGridJumpToScroll";
 
 type Props = {
     data: LoadedData;
@@ -43,7 +44,6 @@ export default function AbsoluteGrid({
     const { ref: headerRef, height: headerH } = useElementSize();
     const { openIds, everOpenedIds, toggleOpen } = useCollapseOpenToggle();
 
-    // scroller + jump helpers
     const containerRef = useRef<HTMLDivElement | null>(null);
 
     // counts effect like LibraryList
@@ -59,6 +59,15 @@ export default function AbsoluteGrid({
         gap,
         itemsLen: items.length,
     });
+
+    const { scrollItemIntoView } = useGridJumpToScroll({ containerRef, positions });
+
+    const onToggleGridIndex = React.useCallback(
+        (id: string, absoluteIndex: number) => {
+            toggleOpen(id, () => requestAnimationFrame(() => scrollItemIntoView(absoluteIndex)));
+        },
+        [toggleOpen, scrollItemIntoView]
+    );
 
     // virtual windowing
     const { visibleRange } = useVirtualWindow(containerRef, {
@@ -86,6 +95,11 @@ export default function AbsoluteGrid({
         sortKey: ui.sortKey,
         sortDir: ui.sortDir,
     });
+
+    // ensure scroll position is maintained on layout changes
+    const openWidth = `calc(100vw - ${GRID.menuWidth}px - 12px - 15px)`;
+    const openHeight = `calc(100vh - ${topOffset}px - ${GRID.smallBox}px - 12px)`;
+
     return (
         <Flex key={flatKey} direction="column" style={{ width: "100%", height: "100%" }}>
             <HeaderControls
@@ -123,6 +137,7 @@ export default function AbsoluteGrid({
                     const { left, top } = positions[absoluteIndex] ?? { left: 0, top: 0 };
                     const isOpen = openIds.has(item.id);
                     const wasOpened = everOpenedIds.has(item.id);
+
                     return (
                         <Box
                             key={`${String(item.id)}|${installedUpdatedAt ?? ""}`}
@@ -130,15 +145,16 @@ export default function AbsoluteGrid({
                             tabIndex={0}
                             style={{
                                 position: "absolute",
-                                left,
-                                top,
-                                width: cardWidth,
-                                height: cardHeight,
+                                left: (isOpen || wasOpened) ? 0 : left,
+                                top: (isOpen || wasOpened) ? 0 : top,
+                                width: (isOpen || wasOpened) ? openWidth : cardWidth,
+                                height: (isOpen || wasOpened) ? openHeight : cardHeight,
                                 boxSizing: "border-box",
                                 display: "flex",
                                 flexDirection: "column",
                                 overflow: "hidden",
                                 zIndex: isOpen ? 2 : 1,
+                                backgroundColor: "var(--mantine-color-default-background)",
                             }}
                         >
                             <ExpandableItemWrapper
@@ -146,9 +162,10 @@ export default function AbsoluteGrid({
                                 collapseOpen={isOpen}
                                 everOpened={wasOpened}
                                 topOffset={topOffset}
-                                isGroupedList={false}
+                                openWidth={openWidth}
+                                openHeight={openHeight}
                                 layout="grid"
-                                onToggle={() => { }}
+                                onToggle={() => onToggleGridIndex(item.id, absoluteIndex)}
                             />
                         </Box>
                     );
