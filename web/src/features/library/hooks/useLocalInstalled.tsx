@@ -10,11 +10,7 @@ type UseReturn = {
     updatedAt: string | null
 };
 
-/**
- * Hook that polls .Installed.json every `pollMs` ms.
- * - Returns { set, updatedAt } when used for reading
- * - Or may be called just for side-effects: useLocalInstalled(4000)
- */
+/** Hook to manage local installed state */
 export function useLocalInstalled({ pollMs }: UseParams): UseReturn {
     const [state, setState] = React.useState<UseReturn>({ set: null, updatedAt: null });
 

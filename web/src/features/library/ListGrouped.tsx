@@ -34,7 +34,7 @@ export function ListGrouped({
       groupCounts={groups.map(g => g.items.length)}
       increaseViewportBy={overscan}
       rangeChanged={rangeChanged}
-      // computeItemKey={(_index, r: any) => `${r.id}|${installedUpdatedAt}`} //TODO: why not working here?
+      // computeItemKey={(_index, item: any) => `${item.id}|${installedUpdatedAt}`}
       groupContent={(index) => (
         <AlphabeticalSeparatorRow
           bucket={groups[index].title}

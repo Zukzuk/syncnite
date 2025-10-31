@@ -4,7 +4,6 @@ import { GRID, Z_INDEX } from "../../lib/constants";
 
 type Props = {
   headerRef: (el: HTMLElement | null) => void;
-  top: number;
   sortKey: SortKey;
   sortDir: SortDir;
   onToggleSort: (k: SortKey) => void;
@@ -12,7 +11,7 @@ type Props = {
 };
 
 export function HeaderSort(props: Props) {
-  const { headerRef, sortKey, sortDir, onToggleSort, top, gridColumns } = props;
+  const { headerRef, sortKey, sortDir, onToggleSort, gridColumns } = props;
   const theme = useMantineTheme();
 
   const label = (base: string, key: SortKey) =>
@@ -23,7 +22,7 @@ export function HeaderSort(props: Props) {
     sortKey !== key ? "none" : sortDir === "asc" ? "ascending" : "descending";
 
   return (
-    <Box pos="sticky" style={{ top, zIndex: Z_INDEX.stickyHeader }}>
+    <Box pos="relative" style={{ zIndex: Z_INDEX.stickyHeader }}>
       <Paper
         ref={headerRef}
         radius={0}

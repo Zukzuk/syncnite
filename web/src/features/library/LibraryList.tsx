@@ -98,7 +98,6 @@ export default function LibraryList({
 
       <HeaderSort
         headerRef={headerRef as unknown as (el: HTMLElement | null) => void}
-        top={controlsH}
         sortKey={ui.sortKey}
         sortDir={ui.sortDir}
         onToggleSort={ui.toggleSort}

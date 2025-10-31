@@ -136,6 +136,7 @@ function getBgUrl(bg: string | null | undefined): string | null {
     return bg ? buildAssetUrl(bg) : null;
 }
 
+/** Load the library data */
 export async function loadLibrary(): Promise<LoadedData> {
     // load raw data
     const games = await tryLoadMany<GameJson>(FILES.games, []);

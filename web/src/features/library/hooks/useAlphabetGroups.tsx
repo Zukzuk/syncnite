@@ -20,6 +20,7 @@ type UseReturn = {
     flatItems: Item[];
 };
 
+/** Group items by their alphabetical title */
 export function useAlphabetGroups({ sortKey, withBuckets, itemsSorted }: UseParams): UseReturn {
     const groups = React.useMemo<AlphabeticalGroup[] | null>(() => {
         if (sortKey !== "title" || !withBuckets || withBuckets.length === 0) {

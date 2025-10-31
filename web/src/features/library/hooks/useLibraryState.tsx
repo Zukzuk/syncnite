@@ -40,6 +40,7 @@ type UseReturn = {
   };
 };
 
+/** Hook to manage library state */
 export function useLibraryState({ items }: UseParams): UseReturn {
   const cookieState = React.useMemo(loadStateFromCookie, []);
   const [q, setQ] = React.useState<string>(cookieState.q);

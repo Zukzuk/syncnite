@@ -1,17 +1,17 @@
-import * as React from "react";
+import React, { useCallback, useLayoutEffect, useRef } from "react";
 import { Box, Flex } from "@mantine/core";
 import { useElementSize } from "@mantine/hooks";
-import { VirtuosoGrid } from "react-virtuoso";
-import { ViewMode } from "../../lib/types";
-import { ExpandableItemWrapper } from "../../components/ExpandableItem";
-import { Scroller } from "../../components/Scroller";
-import type { LoadedData } from "./hooks/useLibrary";
-import { useJumpToScroll } from "./hooks/useJumpToScroll";
-import { useCollapseOpenToggle } from "./hooks/useCollapseOpenToggle";
-import { useLibraryState } from "./hooks/useLibraryState";
-import { useRemountKeys } from "./hooks/useRemountKeys";
-import { HeaderControls } from "./HeaderControls";
 import { HeaderSort } from "./HeaderSort";
+import { HeaderControls } from "./HeaderControls";
+import { ExpandableItemWrapper } from "../../components/ExpandableItem";
+import { useLibraryState } from "./hooks/useLibraryState";
+import type { LoadedData } from "./hooks/useLibrary";
+import { useCollapseOpenToggle } from "./hooks/useCollapseOpenToggle";
+import { useRemountKeys } from "./hooks/useRemountKeys";
+import { useAbsoluteGridLayout } from "./hooks/useAbsoluteGridLayout";
+import { useVirtualWindow } from "./hooks/useVirtualWindow";
+import { ViewMode } from "../../lib/types";
+import { GRID } from "../../lib/constants";
 
 type Props = {
     data: LoadedData;
@@ -23,7 +23,7 @@ type Props = {
     installedUpdatedAt?: string;
 };
 
-export default function LibraryGrid({
+export default function AbsoluteGrid({
     data,
     onCountsChange,
     view,
@@ -33,174 +33,48 @@ export default function LibraryGrid({
     installedUpdatedAt,
 }: Props) {
     const overscan = { top: 600, bottom: 800 } as const;
-
-    // derived / filtered items
+    const cardWidth = 160;
+    const cardHeight = 300;
+    const gap = 4;
+    const padding = 2;
     const { ui, derived } = useLibraryState(data);
     const items = derived.itemsSorted;
-
-    // header heights for computing topOffset passed into ExpandableItemWrapper
     const { ref: controlsRef, height: controlsH } = useElementSize();
     const { ref: headerRef, height: headerH } = useElementSize();
-
-    // open-state
     const { openIds, everOpenedIds, toggleOpen } = useCollapseOpenToggle();
 
-    // virtuoso helpers
-    const { virtuosoRef, setScrollerEl, scrollRowIntoView } = useJumpToScroll({
-        headerH,
-    });
+    // scroller + jump helpers
+    const containerRef = useRef<HTMLDivElement | null>(null);
 
-    // let parent know counts
+    // counts effect like LibraryList
     React.useEffect(() => {
         onCountsChange?.(derived.filteredCount, derived.totalCount);
     }, [derived.filteredCount, derived.totalCount, onCountsChange]);
 
-    // --- Scroll lock logic refs ---
-    // We need to:
-    // - detect user scroll while something is open
-    // - close everything
-    // - prevent that specific scroll movement
-    //
-    // We also need to *not* instantly close right after opening (because we
-    // call scrollRowIntoView which itself scrolls).
+    // layout and virtualization
+    const { cols, strideY, positions, containerHeight, viewportH } = useAbsoluteGridLayout(containerRef, {
+        padding,
+        cardWidth,
+        cardHeight,
+        gap,
+        itemsLen: items.length,
+    });
 
-    // ref to the actual scrollable element Virtuoso uses
-    const scrollerElRef = React.useRef<HTMLElement | null>(null);
+    // virtual windowing
+    const { visibleRange } = useVirtualWindow(containerRef, {
+        overscan,
+        padding,
+        strideY,
+        cols,
+        itemsLen: items.length,
+        containerHeight,
+        viewportH,
+    });
 
-    // timestamp after which scroll is allowed to trigger close
-    // when we open an item, we set this ~200ms in the future to ignore that initial programmatic scroll
-    const ignoreScrollUntilRef = React.useRef<number>(0);
+    // top offset like LibraryList (controls + header)
+    const topOffset = controlsH + headerH;
 
-    // true if we currently have "scroll lock" armed (i.e. something is open)
-    const scrollLockArmedRef = React.useRef<boolean>(false);
-
-    // the scrollTop we want to snap back to if user tries to scroll while open
-    const baselineScrollTopRef = React.useRef<number>(0);
-
-    // guard so we don't re-entrantly handle scroll while we're in the middle of closing
-    const closingInProgressRef = React.useRef<boolean>(false);
-
-    // Hook Virtuoso's scrollerRef so we also capture the element locally
-    const handleSetScrollerEl = React.useCallback(
-        (el: HTMLElement | null) => {
-            scrollerElRef.current = el;
-            setScrollerEl(el);
-        },
-        [setScrollerEl]
-    );
-
-    // Close ALL open cards
-    const closeAllOpenCards = React.useCallback(() => {
-        if (openIds.size === 0) return;
-        const idsToClose = Array.from(openIds);
-        idsToClose.forEach((id) => {
-            // toggleOpen will close an already-open id
-            toggleOpen(id);
-        });
-    }, [openIds, toggleOpen]);
-
-    // When user toggles a grid card
-    const onToggleGrid = React.useCallback(
-        (id: string, index: number) => {
-            toggleOpen(id, () => {
-                // This callback only runs when we OPEN the card (not when we close),
-                // based on your hook's semantics.
-
-                // 1. Set a small grace window so programmatic scroll doesn't instantly close it.
-                ignoreScrollUntilRef.current = performance.now() + 200;
-
-                // 2. After scrollRowIntoView runs and settles, record baselineScrollTop
-                requestAnimationFrame(() => {
-                    scrollRowIntoView(index, false);
-
-                    // capture baseline scrollTop on next frame when we're positioned
-                    requestAnimationFrame(() => {
-                        if (scrollerElRef.current) {
-                            baselineScrollTopRef.current =
-                                scrollerElRef.current.scrollTop;
-                        }
-                    });
-                });
-            });
-        },
-        [toggleOpen, scrollRowIntoView]
-    );
-
-    // Keep scrollLockArmedRef + baselineScrollTopRef updated when openIds changes
-    React.useEffect(() => {
-        if (openIds.size > 0) {
-            scrollLockArmedRef.current = true;
-            // if for some reason we didn't already capture baseline (e.g. openIds restored),
-            // snapshot it now.
-            if (scrollerElRef.current) {
-                if (!baselineScrollTopRef.current) {
-                    baselineScrollTopRef.current =
-                        scrollerElRef.current.scrollTop;
-                }
-            }
-        } else {
-            scrollLockArmedRef.current = false;
-            baselineScrollTopRef.current = 0;
-        }
-    }, [openIds]);
-
-    // Attach our scroll interception logic to the scroller element
-    // Attach our scroll interception logic to the scroller element
-    React.useEffect(() => {
-        const el = scrollerElRef.current;
-        if (!el) return;
-
-        function handleScroll() {
-            // re-check on every scroll in case el was detached
-            const node = scrollerElRef.current;
-            if (!node) return;
-
-            const now = performance.now();
-
-            // if nothing is open or we're already in the middle of closing, do nothing
-            if (
-                !scrollLockArmedRef.current ||
-                closingInProgressRef.current
-            ) {
-                return;
-            }
-
-            // If we're within grace period after opening, ignore (let the bounce settle)
-            if (now < ignoreScrollUntilRef.current) {
-                // also update baseline to the most recent "settled" scrollTop
-                baselineScrollTopRef.current = node.scrollTop;
-                return;
-            }
-
-            // At this point:
-            // - something is open
-            // - user is now trying to scroll
-            // → we close everything AND cancel this scroll attempt
-
-            closingInProgressRef.current = true;
-
-            // close all open cards
-            closeAllOpenCards();
-
-            // snap scrollTop back to where it was before the user's wheel/touch
-            const baseline = baselineScrollTopRef.current;
-            node.scrollTop = baseline ?? 0;
-
-            // small async clear so future scrolls work again if user scrolls after close
-            requestAnimationFrame(() => {
-                closingInProgressRef.current = false;
-                // lock is now disarmed because openIds will be empty after closeAllOpenCards
-            });
-        }
-
-        el.addEventListener("scroll", handleScroll, { passive: true });
-        return () => {
-            el.removeEventListener("scroll", handleScroll);
-        };
-    }, [closeAllOpenCards]);
-
-
-    // force VirtuosoGrid remount when filters/sort/etc change
+    // remount on filter/sort change like LibraryList
     const { flatKey } = useRemountKeys({
         filteredCount: derived.filteredCount,
         q: ui.q,
@@ -212,71 +86,10 @@ export default function LibraryGrid({
         sortKey: ui.sortKey,
         sortDir: ui.sortDir,
     });
-
-    // VirtuosoGrid components
-    const List = React.useMemo(() => {
-        const Comp = React.forwardRef<
-            HTMLDivElement,
-            React.HTMLAttributes<HTMLDivElement> & { context?: unknown }
-        >((props, ref) => {
-            const { style, children, ...rest } = props;
-            return (
-                <div
-                    {...rest}
-                    ref={ref}
-                    style={{
-                        ...(style || {}),
-                        display: "grid",
-                        gridTemplateColumns:
-                            "repeat(auto-fill, minmax(140px, 1fr))",
-                        gap: 12,
-                        alignContent: "start",
-                        boxSizing: "border-box",
-                    }}
-                >
-                    {children}
-                </div>
-            );
-        });
-
-        Comp.displayName = "CoverGridList";
-        return Comp;
-    }, []);
-
-    const Item = React.useMemo(() => {
-        const Comp = React.forwardRef<
-            HTMLDivElement,
-            React.HTMLAttributes<HTMLDivElement> & { context?: unknown }
-        >((props, ref) => {
-            const firstChild = React.Children.toArray(props.children)[0] as any;
-            const isOpen =
-                firstChild &&
-                firstChild.props &&
-                firstChild.props.collapseOpen === true;
-
-            const { style, ...rest } = props;
-
-            return (
-                <div
-                    {...rest}
-                    ref={ref}
-                    style={{
-                        ...(style || {}),
-                        ...(isOpen ? { gridColumn: "1 / -1" } : null),
-                    }}
-                />
-            );
-        });
-
-        Comp.displayName = "CoverGridItem";
-        return Comp;
-    }, []);
-
     return (
-        <Flex direction="column" h="100%" style={{ minHeight: 0 }}>
-            {/* Filters / view / counts / etc */}
+        <Flex key={flatKey} direction="column" style={{ width: "100%", height: "100%" }}>
             <HeaderControls
-                controlsRef={controlsRef as any}
+                controlsRef={controlsRef as unknown as (el: HTMLElement | null) => void}
                 filteredCount={filteredCount}
                 totalCount={totalCount}
                 allSources={data.allSources}
@@ -287,55 +100,59 @@ export default function LibraryGrid({
                 {...ui}
             />
 
-            {/* Sort row under the controls */}
             <HeaderSort
-                headerRef={headerRef as any}
-                top={controlsH}
+                headerRef={headerRef as unknown as (el: HTMLElement | null) => void}
                 sortKey={ui.sortKey}
                 sortDir={ui.sortDir}
                 onToggleSort={ui.toggleSort}
-                gridColumns={"repeat(auto-fill, minmax(140px, 1fr))"}
+                gridColumns={GRID.colsList}
             />
 
-            {/* Scroll region */}
             <Box
-                style={{
-                    flex: 1,
-                    minHeight: 0,
-                    position: "relative",
-                    overflow: "hidden",
-                }}
+                ref={containerRef}
+                style={{ position: "relative", width: "100%", flex: 1, height: "100%", overflow: "auto" }}
+                aria-label="absolute-grid"
+                role="list"
             >
-                <VirtuosoGrid
-                    ref={virtuosoRef as any}
-                    key={flatKey}
-                    style={{ height: "100%" }}
-                    totalCount={items.length}
-                    components={{ Scroller, List, Item }}
-                    computeItemKey={(index) =>
-                        `${items[index].id}|${installedUpdatedAt ?? ""}`
-                    }
-                    increaseViewportBy={overscan}
-                    scrollerRef={handleSetScrollerEl}
-                    // we no longer need rangeChanged to drive close logic
-                    itemContent={(index) => {
-                        const item = items[index];
-                        const isOpen = openIds.has(item.id);
-                        const wasOpened = everOpenedIds.has(item.id);
+                {/* Spacer to apply full non-virtualized grid height to the scroll area */}
+                <Box aria-hidden style={{ width: "100%", height: containerHeight }} />
 
-                        return (
+                {/* Visible window */}
+                {items.slice(visibleRange.startIndex, visibleRange.endIndex).map((item: any, i: number) => {
+                    const absoluteIndex = visibleRange.startIndex + i;
+                    const { left, top } = positions[absoluteIndex] ?? { left: 0, top: 0 };
+                    const isOpen = openIds.has(item.id);
+                    const wasOpened = everOpenedIds.has(item.id);
+                    return (
+                        <Box
+                            key={`${String(item.id)}|${installedUpdatedAt ?? ""}`}
+                            role="listitem"
+                            tabIndex={0}
+                            style={{
+                                position: "absolute",
+                                left,
+                                top,
+                                width: cardWidth,
+                                height: cardHeight,
+                                boxSizing: "border-box",
+                                display: "flex",
+                                flexDirection: "column",
+                                overflow: "hidden",
+                                zIndex: isOpen ? 2 : 1,
+                            }}
+                        >
                             <ExpandableItemWrapper
                                 item={item}
                                 collapseOpen={isOpen}
                                 everOpened={wasOpened}
-                                topOffset={controlsH + headerH}
+                                topOffset={topOffset}
                                 isGroupedList={false}
                                 layout="grid"
-                                onToggle={() => onToggleGrid(item.id, index)}
+                                onToggle={() => { }}
                             />
-                        );
-                    }}
-                />
+                        </Box>
+                    );
+                })}
             </Box>
         </Flex>
     );

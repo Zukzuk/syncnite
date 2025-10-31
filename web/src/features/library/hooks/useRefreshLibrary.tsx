@@ -10,10 +10,7 @@ type UseReturn = {
     updatedAt: string | null
 };
 
-/**
- * Poll /data/manifest.json and bump a version when it changes.
- * No window events needed.
- */
+/** Hook to manage library refresh state */
 export function useRefreshLibrary({ pollMs }: UseParams): UseReturn {
     const [version, setVersion] = React.useState(0);``
     const [updatedAt, setUpdatedAt] = React.useState<string | null>(null);

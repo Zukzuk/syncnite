@@ -7,6 +7,7 @@ type UseParams = {
 
 type UseReturn = boolean;
 
+/** Hook to manage a delayed flag state */
 export function useDelayedFlag({ active, delayMs }: UseParams): UseReturn {
     const [flag, setFlag] = React.useState(false);
 
