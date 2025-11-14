@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.20.0](https://github.com/Zukzuk/syncnite/compare/v1.19.0...v1.20.0) (2025-11-14)
+
+
+### Features
+
+* added better sync logic ([fcb4cda](https://github.com/Zukzuk/syncnite/commit/fcb4cda918d35a13755133f4e641116c5d0aed85))
+
 ## [1.19.0](https://github.com/Zukzuk/syncnite/compare/v1.18.3...v1.19.0) (2025-11-14)
 
 
