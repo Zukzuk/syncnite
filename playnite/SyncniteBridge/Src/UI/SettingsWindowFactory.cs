@@ -60,7 +60,8 @@ namespace SyncniteBridge.UI
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // API base
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Creds
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Form save
-            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Actions
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Action
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Action
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Footer
 
             // Divider helper
@@ -267,66 +268,68 @@ namespace SyncniteBridge.UI
             root.Children.Add(formSavePanel);
 
             // 6) Actions: Push / Sync with descriptions
-            var actions = new Grid { Margin = new Thickness(0, 2, 0, 12) };
-            actions.ColumnDefinitions.Add(
+            var action1 = new Grid { Margin = new Thickness(0, 2, 0, 12) };
+            action1.ColumnDefinitions.Add(
                 new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
             );
-            actions.ColumnDefinitions.Add(
+            var action2 = new Grid { Margin = new Thickness(0, 2, 0, 12) };
+            action2.ColumnDefinitions.Add(
                 new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
             );
 
             // Push installed
-            var pushPanel = new StackPanel
-            {
-                Orientation = Orientation.Vertical,
-                Margin = new Thickness(0, 0, 16, 0),
-            };
+            var pushPanel = new StackPanel { Orientation = Orientation.Horizontal };
 
             btnPush = new Button
             {
                 Content = "Push installed",
-                Width = 160,
-                Margin = new Thickness(0, 0, 0, 4),
+                Width = 120,
+                Margin = new Thickness(0, 0, 12, 0),
             };
             btnPush.Click += (s, e) => onPushInstalled?.Invoke();
 
             var pushText = new TextBlock
             {
-                Text = "Send only the list of installed games to the Syncnite server.",
+                Text = "Push list of installed games.",
                 TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 8, 0, 0),
             };
             ThemeHelpers.SetThemeTextBrush(pushText);
 
             pushPanel.Children.Add(btnPush);
             pushPanel.Children.Add(pushText);
             Grid.SetColumn(pushPanel, 0);
-            actions.Children.Add(pushPanel);
+            action1.Children.Add(pushPanel);
 
-            // Sync library (hard)
-            var syncPanel = new StackPanel { Orientation = Orientation.Vertical };
+            Grid.SetRow(action1, 5);
+            root.Children.Add(action1);
+
+            // Sync library
+            var syncPanel = new StackPanel { Orientation = Orientation.Horizontal };
 
             btnSync = new Button
             {
-                Content = "Sync library (hard)",
-                Width = 160,
-                Margin = new Thickness(0, 0, 0, 4),
+                Content = "Sync library",
+                Width = 120,
+                Margin = new Thickness(0, 0, 12, 0),
             };
             btnSync.Click += (s, e) => onSyncLibrary?.Invoke();
 
             var syncText = new TextBlock
             {
-                Text = "Run a full library sync and re-upload media (resets lastManifest.json).",
+                Text = "Run a full library sync and re-upload media.",
                 TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 8, 0, 0),
             };
             ThemeHelpers.SetThemeTextBrush(syncText);
 
             syncPanel.Children.Add(btnSync);
             syncPanel.Children.Add(syncText);
             Grid.SetColumn(syncPanel, 1);
-            actions.Children.Add(syncPanel);
+            action2.Children.Add(syncPanel);
 
-            Grid.SetRow(actions, 5);
-            root.Children.Add(actions);
+            Grid.SetRow(action2, 6);
+            root.Children.Add(action2);
 
             // 7) Footer: Save & Close / Cancel
             var footer = new StackPanel
@@ -353,7 +356,7 @@ namespace SyncniteBridge.UI
             footer.Children.Add(btnSaveAndClose);
             footer.Children.Add(btnCancel);
 
-            Grid.SetRow(footer, 6);
+            Grid.SetRow(footer, 7);
             root.Children.Add(footer);
 
             // initial health + live updates (after controls created so we can toggle buttons)

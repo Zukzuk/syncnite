@@ -22,7 +22,7 @@ export function useLocalInstalled({ pollMs }: UseParams): UseReturn {
                 const email = fetchUser();
                 if (!email) { setState({ set: null, updatedAt: null }); return; }
 
-                const url = `/data/installed/${email.toLowerCase()}.Installed.json?v=${Date.now()}`;
+                const url = `/data/installed/${email.toLowerCase()}.installed.json?v=${Date.now()}`;
                 const r = await fetch(url, { cache: "no-cache" });
                 if (!r.ok) return;
 

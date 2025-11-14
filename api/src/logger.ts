@@ -10,7 +10,6 @@ const threshold: number = levelOrder[env] ?? levelOrder.info;
 
 export type Logger = {
     level: Level;
-
     // INTERNAL logging (adds [api] + scopes)
     error: (...a: any[]) => void;
     warn: (...a: any[]) => void;
@@ -20,7 +19,6 @@ export type Logger = {
     /**
      * Raw ingestion: sanitize payload, KEEP sender's prefix/line if provided,
      * apply level threshold, then log via single console sink.
-     *
      * Returns number of ingested events.
      */
     raw: (payload: unknown) => number;
@@ -136,9 +134,7 @@ function emitRaw(level: Level, line: string, meta?: Record<string, unknown>) {
     }
 }
 
-/**
- * The root logger instance. Create child loggers via `.child(scope)`.
- */
+// Root logger instance
 export const rootLog: Logger = (function create(scopes: string[] = []): Logger {
     return {
         level: env,

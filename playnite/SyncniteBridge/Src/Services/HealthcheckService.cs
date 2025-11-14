@@ -20,7 +20,7 @@ namespace SyncniteBridge.Services
 
         private readonly IPlayniteAPI api;
         private readonly ILogger log = LogManager.GetLogger();
-        private readonly HttpClientEx http;
+        private readonly ExtensionHttpClient http;
         private readonly Timer timer;
         private string pingUrl;
         private bool lastOk;
@@ -34,7 +34,7 @@ namespace SyncniteBridge.Services
             this.api = api;
             this.pingUrl = pingUrl;
             this.blog = blog;
-            http = new HttpClientEx(blog);
+            http = new ExtensionHttpClient(blog);
             timer = new Timer(AppConstants.HealthcheckIntervalMs) { AutoReset = true };
             timer.Elapsed += async (s, e) => await TickAsync();
         }

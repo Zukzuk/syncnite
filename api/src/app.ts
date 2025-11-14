@@ -1,9 +1,9 @@
 import express from "express";
 import fs from "node:fs";
 import path from "node:path";
+import type { Request, Response } from "express";
 import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
-import type { Request, Response } from "express";
 import syncRouter from "./routes/sync";
 import accountsRouter from "./routes/accounts";
 import generalRouter from "./routes/general";

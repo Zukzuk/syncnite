@@ -81,7 +81,7 @@ export class SyncService {
         const safeEmail = email.trim().toLowerCase().replace(/[\\/:*?"<>|]/g, "_");
         const outDir = join(DATA_DIR, "installed");
         await fs.mkdir(outDir, { recursive: true });
-        const outPath = join(outDir, `${safeEmail}.Installed.json`);
+        const outPath = join(outDir, `${safeEmail}.installed.json`);
 
         // Write to disk
         log.debug(`Writing Installed list to ${outPath}`);

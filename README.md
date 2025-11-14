@@ -126,7 +126,7 @@ Docs available at:
 | `/uploads` | Uploaded Playnite ZIPs |
 | `/data` | Processed JSON + media |
 | `/data/manifest.json` | Current manifest built from `/data/libraryfiles` |
-| `/data/installed/*.Installed.json` | Installed list pushed from Playnite |
+| `/data/installed/*.installed.json` | Installed list pushed from Playnite |
 | `/extension` | Packaged `.pext` extension served by `/api/extension/download` |
 
 ---

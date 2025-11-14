@@ -124,7 +124,7 @@ async function fetchInstalledList(email: string | null): Promise<Set<string> | n
     let localInstalledSet: Set<string> | null = null;
     if (email) {
         const localInstalled = await fetchJson(
-            `/data/installed/${email.toLowerCase()}.Installed.json`
+            `/data/installed/${email.toLowerCase()}.installed.json`
         );
         if (Array.isArray(localInstalled?.installed)) {
             localInstalledSet = new Set(

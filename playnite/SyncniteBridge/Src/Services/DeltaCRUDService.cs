@@ -30,10 +30,16 @@ namespace SyncniteBridge.Services
 
         private Func<bool> isHealthy = () => true;
 
-        private readonly HttpClientEx http;
+        private readonly ExtensionHttpClient http;
         private readonly SnapshotService snapshot;
         private readonly LocalStateScanService scanner;
         private readonly MediaChangeService mediaChanges = new MediaChangeService();
+
+        private readonly object libEventLock = new object();
+        private readonly object mediaEventLock = new object();
+        private DateTime lastLibEventTime = DateTime.MinValue;
+        private DateTime lastMediaEventTime = DateTime.MinValue;
+        private const int RapidEventThresholdMs = 100;
 
         public DeltaCRUDService(
             IPlayniteAPI api,
@@ -47,7 +53,7 @@ namespace SyncniteBridge.Services
             this.dataRoot = dataRoot ?? "";
             this.syncUrl = (syncUrl ?? "").TrimEnd('/');
 
-            http = new HttpClientEx(blog);
+            http = new ExtensionHttpClient(blog);
 
             var myExtDataDir = Path.Combine(api.Paths.ExtensionsDataPath, AppConstants.GUID);
             Directory.CreateDirectory(myExtDataDir);
@@ -173,19 +179,6 @@ namespace SyncniteBridge.Services
                     debounceMs = AppConstants.DebounceMs_Sync,
                 }
             );
-
-            Task.Run(() =>
-            {
-                if (isHealthy())
-                {
-                    blog?.Info("startup", "Health healthy → trigger CRUD sync");
-                    Trigger();
-                }
-                else
-                {
-                    blog?.Debug("sync", "Skipped trigger: unhealthy");
-                }
-            });
         }
 
         /// <summary>
@@ -264,14 +257,36 @@ namespace SyncniteBridge.Services
         private void OnLibraryChanged(object s, FileSystemEventArgs e)
         {
             dbDirty = true;
+            lock (libEventLock)
+            {
+                var now = DateTime.UtcNow;
+                if ((now - lastLibEventTime).TotalMilliseconds < RapidEventThresholdMs)
+                {
+                    blog?.Debug("sync", "Rapid library change event - skipping duplicate Trigger");
+                    return;
+                }
+                lastLibEventTime = now;
+            }
             Trigger();
         }
 
         private void OnMediaChanged(object s, FileSystemEventArgs e)
         {
             var top = PathHelpers.GetTopLevelMediaFolderFromPath(dataRoot, e.FullPath);
-            if (!string.IsNullOrWhiteSpace(top))
-                mediaChanges.Add(top!);
+            lock (mediaEventLock)
+            {
+                var now = DateTime.UtcNow;
+                if (!string.IsNullOrWhiteSpace(top))
+                {
+                    mediaChanges.Add(top);
+                }
+                if ((now - lastMediaEventTime).TotalMilliseconds < RapidEventThresholdMs)
+                {
+                    blog?.Debug("sync", "Rapid media change event - skipping duplicate Trigger");
+                    return;
+                }
+                lastMediaEventTime = now;
+            }
             Trigger();
         }
 
@@ -381,7 +396,7 @@ namespace SyncniteBridge.Services
                 .ToArray();
 
             m.installed.count = installedIds.Length;
-            m.installed.hash = HashUtil.Sha1(string.Join(",", installedIds));
+            m.installed.hash = Crypto.Sha1(string.Join(",", installedIds));
             return m;
         }
 
@@ -471,7 +486,7 @@ namespace SyncniteBridge.Services
             }
         }
 
-        // use HttpClientEx for delta
+        // use ExtensionHttpClient for delta
         private Task<DeltaResponse?> PostDeltaAsync(ClientInventory inventory) =>
             http.GetDeltaAsync<DeltaResponse>(syncUrl, inventory);
 

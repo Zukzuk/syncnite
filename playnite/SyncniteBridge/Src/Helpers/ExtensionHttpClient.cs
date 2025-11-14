@@ -10,15 +10,15 @@ namespace SyncniteBridge.Helpers
     /// <summary>
     /// Extended HTTP client for Syncnite operations.
     /// </summary>
-    internal sealed class HttpClientEx
+    internal sealed class ExtensionHttpClient
     {
         private readonly HttpClient http;
         private readonly BridgeLogger? blog;
 
         /// <summary>
-        /// Create a new HttpClientEx.
+        /// Create a new ExtensionHttpClient.
         /// </summary>
-        public HttpClientEx(BridgeLogger? blog, TimeSpan? timeout = null)
+        public ExtensionHttpClient(BridgeLogger? blog, TimeSpan? timeout = null)
         {
             this.blog = blog;
             http = new HttpClient { Timeout = timeout ?? TimeSpan.FromMinutes(5) };
@@ -239,7 +239,7 @@ namespace SyncniteBridge.Helpers
                     bytes = ms.ToArray();
                 }
 
-                var hash = precomputedHash ?? HashUtil.Sha1(Convert.ToBase64String(bytes));
+                var hash = precomputedHash ?? Crypto.Sha1(Convert.ToBase64String(bytes));
                 using var content = new ByteArrayContent(bytes);
                 content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 

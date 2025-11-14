@@ -63,7 +63,8 @@ namespace SyncniteBridge.Helpers
                     http.DefaultRequestHeaders.Add("X-Auth-Password", password);
             }
             catch
-            { /* non-fatal */
+            { 
+                /* non-fatal */
             }
         }
 
@@ -81,6 +82,7 @@ namespace SyncniteBridge.Helpers
                         clients.RemoveAt(i);
                         continue;
                     }
+
                     Stamp(http);
                 }
             }
