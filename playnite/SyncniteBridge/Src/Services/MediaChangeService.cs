@@ -25,19 +25,6 @@ namespace SyncniteBridge.Services
         }
 
         /// <summary>
-        /// Snapshot and clear the dirty set.
-        /// </summary>
-        public List<string> SnapshotAndClear()
-        {
-            lock (gate)
-            {
-                var list = new List<string>(folders);
-                folders.Clear();
-                return list;
-            }
-        }
-
-        /// <summary>
         /// Snapshot the dirty set.
         /// </summary>
         public List<string> Snapshot()

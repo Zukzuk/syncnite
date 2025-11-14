@@ -1,12 +1,13 @@
 import * as React from "react";
-import type { Game, GameJson, GameSourceJson, TagJson, SeriesJson, GameLink, GameReleaseDate } from "../../../types/playnite";
-import { FILES } from "../../../lib/constants";
-import { fetchUser, tryFetchJson, tryLoadMany } from "../../../lib/persist";
+import type { Game, GameLink, GameReleaseDate, Series, Source, Tag } from "../../../types/playnite";
+import { fetchUser } from "../../../lib/persist";
+import { loadDbCollection } from "../../../lib/api";
 import { buildIconUrl, findSourcishLink, normalizePath, extractYear,
     sourcishLinkFallback, hasEmulatorTag, myAbandonwareLink, buildAssetUrl,
 } from "../../../lib/utils";
 import { useRefreshLibrary } from "./useRefreshLibrary";
 import { useLocalInstalled } from "./useLocalInstalled";
+import { COLLECTIONS } from "../../../lib/constants";
 
 export type LoadedData = {
     items: Item[];
@@ -40,7 +41,7 @@ type UseReturn = {
 };
 
 function getPlayniteId(g: Game): string {
-    return g.Id || g._id.$guid;
+    return g.Id;
 }
 
 function getGameId(id: string | null | undefined): string | null {
@@ -106,11 +107,23 @@ function expandSeriesNames(ids: string[] | undefined, seriesById: Map<string, st
     return ids.map((id) => seriesById.get(id)).filter(Boolean) as string[];
 }
 
+// Fetch JSON with no-cache, return null on error
+async function fetchJson(url: string): Promise<any | null> {
+  try {
+    const r = await fetch(url, { cache: "no-cache" });
+    if (!r.ok) return null;
+    const text = await r.text();
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
 // Prefetch the local Installed.json (case-insensitive ids)
 async function fetchInstalledList(email: string | null): Promise<Set<string> | null> {
     let localInstalledSet: Set<string> | null = null;
     if (email) {
-        const localInstalled = await tryFetchJson(
+        const localInstalled = await fetchJson(
             `/data/installed/${email.toLowerCase()}.Installed.json`
         );
         if (Array.isArray(localInstalled?.installed)) {
@@ -139,10 +152,10 @@ function getBgUrl(bg: string | null | undefined): string | null {
 /** Load the library data */
 export async function loadLibrary(): Promise<LoadedData> {
     // load raw data
-    const games = await tryLoadMany<GameJson>(FILES.games, []);
-    const tags = await tryLoadMany<TagJson>(FILES.tags, []);
-    const sources = await tryLoadMany<GameSourceJson>(FILES.sources, []);
-    const series = await tryLoadMany<SeriesJson>(FILES.series, []);
+    const games = await loadDbCollection<Game>(COLLECTIONS.games);
+    const tags = await loadDbCollection<Tag>(COLLECTIONS.tags);
+    const sources = await loadDbCollection<Source>(COLLECTIONS.sources);
+    const series = await loadDbCollection<Series>(COLLECTIONS.series);
 
     // index maps (Id -> Name)
     const tagById = new Map<string, string>(tags.map((t) => [t.Id, t.Name]));

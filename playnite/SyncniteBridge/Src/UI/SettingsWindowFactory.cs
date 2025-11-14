@@ -1,21 +1,19 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using Playnite.SDK;
 using SyncniteBridge.Constants;
 using SyncniteBridge.Helpers;
 
-namespace SyncniteBridge
+namespace SyncniteBridge.UI
 {
     /// <summary>
     /// Builds and shows the settings window for the Syncnite Bridge extension.
     /// </summary>
     public static class SettingsWindowFactory
     {
-
         /// <summary>
         /// Build and show the settings window.
         /// </summary>
@@ -28,7 +26,6 @@ namespace SyncniteBridge
             Action<string> onSaveApiBase,
             Action onPushInstalled,
             Action onSyncLibrary,
-            // NEW:
             string initialEmail,
             string initialPassword,
             Action<string, string> onSaveCredentials
@@ -49,11 +46,20 @@ namespace SyncniteBridge
             ThemeHelpers.HookThemeBackground(win);
             ThemeHelpers.HookThemeForeground(win);
 
+            // shared state for local functions
+            bool isHealthy = false;
+            TextBox tbApi = null!;
+            TextBox tbEmail = null!;
+            PasswordBox tbPass = null!;
+            Button btnPush = null!;
+            Button btnSync = null!;
+
             var root = new Grid { Margin = new Thickness(16) };
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Header
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Divider
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // API base
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Creds
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Form save
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Actions
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Footer
 
@@ -95,11 +101,10 @@ namespace SyncniteBridge
             };
             ThemeHelpers.SetThemeTextBrush(statusText);
 
-            /// <summary>
-            /// Render the health status.
-            /// </summary>
             void RenderStatus(bool healthy)
             {
+                isHealthy = healthy;
+
                 if (healthy)
                 {
                     if (
@@ -128,26 +133,6 @@ namespace SyncniteBridge
                 }
             }
 
-            // initial status
-            var initialHealthy = string.Equals(
-                getHealthText?.Invoke(),
-                AppConstants.HealthStatusHealthy,
-                StringComparison.OrdinalIgnoreCase
-            );
-            RenderStatus(initialHealthy);
-
-            // live updates
-            Action<bool> handler = ok => win.Dispatcher.Invoke(() => RenderStatus(ok));
-            subscribeHealth?.Invoke(handler);
-            win.Closed += (s, e) =>
-            {
-                try
-                {
-                    unsubscribeHealth?.Invoke(handler);
-                }
-                catch { }
-            };
-
             Grid.SetColumn(dot, 0);
             header.Children.Add(dot);
             Grid.SetColumn(statusText, 1);
@@ -160,13 +145,12 @@ namespace SyncniteBridge
             Grid.SetRow(div, 1);
             root.Children.Add(div);
 
-            // 3) API row: label + input + save
+            // 3) API row: label + input (no button here; saving is below)
             var apiRow = new Grid { Margin = new Thickness(0, 0, 0, 10) };
             apiRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(150) }); // label
             apiRow.ColumnDefinitions.Add(
                 new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
             ); // input
-            apiRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto }); // button
 
             var apiLabel = new TextBlock
             {
@@ -177,7 +161,7 @@ namespace SyncniteBridge
             Grid.SetColumn(apiLabel, 0);
             apiRow.Children.Add(apiLabel);
 
-            var tbApi = new TextBox
+            tbApi = new TextBox
             {
                 Text = initialApiBase ?? "",
                 MinWidth = 420,
@@ -185,17 +169,6 @@ namespace SyncniteBridge
             };
             Grid.SetColumn(tbApi, 1);
             apiRow.Children.Add(tbApi);
-
-            var btnSaveApi = new Button
-            {
-                Content = "Save",
-                Width = 90,
-                Margin = new Thickness(8, 0, 0, 0),
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            btnSaveApi.Click += (s, e) => onSaveApiBase?.Invoke(tbApi.Text?.Trim());
-            Grid.SetColumn(btnSaveApi, 2);
-            apiRow.Children.Add(btnSaveApi);
 
             Grid.SetRow(apiRow, 2);
             root.Children.Add(apiRow);
@@ -205,9 +178,6 @@ namespace SyncniteBridge
             creds.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             creds.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
-            /// <summary>
-            /// Make a labeled row.
-            /// </summary>
             Grid MakeRow(string label, UIElement input)
             {
                 var r = new Grid { Margin = new Thickness(0, 0, 0, 8) };
@@ -228,14 +198,10 @@ namespace SyncniteBridge
                 return r;
             }
 
-            var tbEmail = new TextBox
-            {
-                Text = initialEmail ?? "",
-                Margin = new Thickness(0, 2, 0, 0),
-            };
+            tbEmail = new TextBox { Text = initialEmail ?? "", Margin = new Thickness(0, 2, 0, 0) };
             var rowEmail = MakeRow("Admin Email", tbEmail);
 
-            var tbPass = new PasswordBox
+            tbPass = new PasswordBox
             {
                 Password = initialPassword ?? "",
                 Margin = new Thickness(0, 2, 0, 0),
@@ -250,50 +216,170 @@ namespace SyncniteBridge
             Grid.SetRow(creds, 3);
             root.Children.Add(creds);
 
-            // 5) Actions: Push / Sync
-            var actions = new StackPanel
+            // helper: save full form (API + creds)
+            void SaveAll()
+            {
+                onSaveApiBase?.Invoke(tbApi.Text?.Trim());
+                onSaveCredentials?.Invoke(tbEmail.Text?.Trim() ?? "", tbPass.Password ?? "");
+            }
+
+            // helper: enable / disable action buttons
+            void RefreshActionButtons()
+            {
+                if (
+                    btnPush == null
+                    || btnSync == null
+                    || tbApi == null
+                    || tbEmail == null
+                    || tbPass == null
+                )
+                    return;
+
+                var hasUrl = !string.IsNullOrWhiteSpace(tbApi.Text);
+                var hasEmail = !string.IsNullOrWhiteSpace(tbEmail.Text);
+                var hasPass = !string.IsNullOrWhiteSpace(tbPass.Password);
+
+                var enabled = isHealthy && hasUrl && hasEmail && hasPass;
+
+                btnPush.IsEnabled = enabled;
+                btnSync.IsEnabled = enabled;
+            }
+
+            // refresh actions when user edits fields
+            tbApi.TextChanged += (s, e) => RefreshActionButtons();
+            tbEmail.TextChanged += (s, e) => RefreshActionButtons();
+            tbPass.PasswordChanged += (s, e) => RefreshActionButtons();
+
+            // 5) Form Save button (does NOT close window)
+            var formSavePanel = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                Margin = new Thickness(0, 2, 0, 12),
+                HorizontalAlignment = HorizontalAlignment.Right,
+                Margin = new Thickness(0, 0, 0, 12),
             };
-            var btnPush = new Button
+
+            var btnSaveForm = new Button { Content = "Save", Width = 100 };
+            btnSaveForm.Click += (s, e) => SaveAll();
+
+            formSavePanel.Children.Add(btnSaveForm);
+
+            Grid.SetRow(formSavePanel, 4);
+            root.Children.Add(formSavePanel);
+
+            // 6) Actions: Push / Sync with descriptions
+            var actions = new Grid { Margin = new Thickness(0, 2, 0, 12) };
+            actions.ColumnDefinitions.Add(
+                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
+            );
+            actions.ColumnDefinitions.Add(
+                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
+            );
+
+            // Push installed
+            var pushPanel = new StackPanel
+            {
+                Orientation = Orientation.Vertical,
+                Margin = new Thickness(0, 0, 16, 0),
+            };
+
+            btnPush = new Button
             {
                 Content = "Push installed",
-                Width = 140,
-                Margin = new Thickness(0, 0, 8, 0),
+                Width = 160,
+                Margin = new Thickness(0, 0, 0, 4),
             };
             btnPush.Click += (s, e) => onPushInstalled?.Invoke();
-            var btnSync = new Button { Content = "Sync now", Width = 120 };
+
+            var pushText = new TextBlock
+            {
+                Text = "Send only the list of installed games to the Syncnite server.",
+                TextWrapping = TextWrapping.Wrap,
+            };
+            ThemeHelpers.SetThemeTextBrush(pushText);
+
+            pushPanel.Children.Add(btnPush);
+            pushPanel.Children.Add(pushText);
+            Grid.SetColumn(pushPanel, 0);
+            actions.Children.Add(pushPanel);
+
+            // Sync library (hard)
+            var syncPanel = new StackPanel { Orientation = Orientation.Vertical };
+
+            btnSync = new Button
+            {
+                Content = "Sync library (hard)",
+                Width = 160,
+                Margin = new Thickness(0, 0, 0, 4),
+            };
             btnSync.Click += (s, e) => onSyncLibrary?.Invoke();
-            actions.Children.Add(btnPush);
-            actions.Children.Add(btnSync);
-            Grid.SetRow(actions, 4);
+
+            var syncText = new TextBlock
+            {
+                Text = "Run a full library sync and re-upload media (resets lastManifest.json).",
+                TextWrapping = TextWrapping.Wrap,
+            };
+            ThemeHelpers.SetThemeTextBrush(syncText);
+
+            syncPanel.Children.Add(btnSync);
+            syncPanel.Children.Add(syncText);
+            Grid.SetColumn(syncPanel, 1);
+            actions.Children.Add(syncPanel);
+
+            Grid.SetRow(actions, 5);
             root.Children.Add(actions);
 
-            // 6) Footer: Save creds + Close
+            // 7) Footer: Save & Close / Cancel
             var footer = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
                 HorizontalAlignment = HorizontalAlignment.Right,
             };
-            var btnSaveCreds = new Button
+
+            var btnSaveAndClose = new Button
             {
-                Content = "Save",
-                Width = 100,
+                Content = "Save and close",
+                Width = 120,
                 Margin = new Thickness(0, 0, 8, 0),
             };
-            btnSaveCreds.Click += (s, e) =>
+            btnSaveAndClose.Click += (s, e) =>
             {
-                onSaveCredentials?.Invoke(tbEmail.Text?.Trim() ?? "", tbPass.Password ?? "");
+                SaveAll();
                 win.Close();
             };
-            var btnClose = new Button { Content = "Close", Width = 100 };
-            btnClose.Click += (s, e) => win.Close();
-            footer.Children.Add(btnSaveCreds);
-            footer.Children.Add(btnClose);
 
-            Grid.SetRow(footer, 5);
+            var btnCancel = new Button { Content = "Cancel", Width = 100 };
+            btnCancel.Click += (s, e) => win.Close();
+
+            footer.Children.Add(btnSaveAndClose);
+            footer.Children.Add(btnCancel);
+
+            Grid.SetRow(footer, 6);
             root.Children.Add(footer);
+
+            // initial health + live updates (after controls created so we can toggle buttons)
+            var initialHealthy = string.Equals(
+                getHealthText?.Invoke(),
+                AppConstants.HealthStatusHealthy,
+                StringComparison.OrdinalIgnoreCase
+            );
+            RenderStatus(initialHealthy);
+            RefreshActionButtons();
+
+            Action<bool> handler = ok =>
+                win.Dispatcher.Invoke(() =>
+                {
+                    RenderStatus(ok);
+                    RefreshActionButtons();
+                });
+            subscribeHealth?.Invoke(handler);
+            win.Closed += (s, e) =>
+            {
+                try
+                {
+                    unsubscribeHealth?.Invoke(handler);
+                }
+                catch { }
+            };
 
             win.Content = root;
             win.SizeToContent = SizeToContent.WidthAndHeight;

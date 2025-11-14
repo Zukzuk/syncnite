@@ -37,7 +37,7 @@ namespace SyncniteBridge.Services
 
             AuthHeaders.Apply(http);
 
-            debounce = new System.Timers.Timer(AppConstants.DebounceMs_Pusher)
+            debounce = new System.Timers.Timer(AppConstants.DebounceMs_PushInstalled)
             {
                 AutoReset = false,
             };

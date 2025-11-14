@@ -1,5 +1,6 @@
 import express from "express";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
 import type { Request, Response } from "express";
@@ -14,40 +15,41 @@ import { createOpenApiMockRouter } from "./openapi/mocks";
 
 export function createApp() {
     const app = express();
-    const APP_VERSION = process.env.APP_VERSION ?? 'dev';
+
+    // env APP_VERSION, else root package.json, else "dev"
+    const rootPkgPath = path.resolve(__dirname, "..", "..", "package.json");
+    let pkgVersion = "dev";
+    try {
+        pkgVersion = JSON.parse(fs.readFileSync(rootPkgPath, "utf8")).version ?? "dev";
+    } catch { /* fall back */ }
+    const APP_VERSION = process.env.APP_VERSION ?? pkgVersion;
 
     // trust proxy if running behind nginx
     app.set("trust proxy", true);
-
     // basic request logging (method, url, status, ms)
     app.use(requestLogger());
-
     // increase JSON body size limit for large backups
     app.use(express.json({ limit: "50mb" }));
 
     // Swagger/OpenAPI setup
     const swaggerSpec = swaggerJsdoc({
         definition: {
-            openapi: "3.0.0",
-            info: { title: "Syncnite Web API", version: APP_VERSION, description: "API for Syncnite and extension integration" },
+            openapi: "3.1.0",
+            urls: ["/api"],
+            info: {
+                title: "Syncnite Web API",
+                version: APP_VERSION,
+                description: "API for Syncnite and extension integration",
+            },
             components: {
                 securitySchemes: {
-                    XAuthEmail: {
-                        type: "apiKey",
-                        in: "header",
-                        name: "x-auth-email",
-                        description: "Admin email for header auth"
-                    },
-                    XAuthPassword: {
-                        type: "apiKey",
-                        in: "header",
-                        name: "x-auth-password",
-                        description: "Admin password for header auth"
-                    }
+                    XAuthEmail: { type: "apiKey", in: "header", name: "x-auth-email", description: "Admin email for header auth" },
+                    XAuthPassword: { type: "apiKey", in: "header", name: "x-auth-password", description: "Admin password for header auth" },
                 },
-            }
+            },
         },
-        apis: [path.join(__dirname, "/openapi/spec.{ts,js}")],
+        // Load YAML + TS/JS (see below)
+        apis: [path.join(__dirname, "/openapi/**/*.{yaml,yml}")]
     });
     app.get("/api/docs.json", (_req, res) => res.json(swaggerSpec));
     app.use(
@@ -57,16 +59,8 @@ export function createApp() {
             swaggerOptions: {
                 persistAuthorization: true,
                 authAction: {
-                    XAuthEmail: {
-                        name: "x-auth-email",
-                        schema: { type: "apiKey", in: "header", name: "x-auth-email" },
-                        value: "dave.timmerman@gmail.com",
-                    },
-                    XAuthPassword: {
-                        name: "x-auth-password",
-                        schema: { type: "apiKey", in: "header", name: "x-auth-password" },
-                        value: "xxxx",
-                    },
+                    XAuthEmail: { name: "x-auth-email", schema: { type: "apiKey", in: "header", name: "x-auth-email" }, value: "dave.timmerman@gmail.com" },
+                    XAuthPassword: { name: "x-auth-password", schema: { type: "apiKey", in: "header", name: "x-auth-password" }, value: "xxxx" },
                 },
             },
         })
@@ -107,7 +101,6 @@ export function createApp() {
             app.use("/api", mockRouter);
         });
     }
-
 
     // routes
     app.use("/api", generalRouter);

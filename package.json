@@ -13,7 +13,6 @@
     "build": "npm run build:version && npm -ws --if-present run build && npm run build:ext && npm run codebase",
     "push": "node scripts/git-push.js",
     "release": "node scripts/docker-release.js",
-    "i:all": "npm i --workspaces --include-workspace-root",
     "lint": "npm -ws --if-present run lint",
     "test": "npm -ws --if-present run test",
     "e2e:up": "docker compose -f docker-compose.yml -f docker-compose.e2e.yml up -d web api e2e-report",

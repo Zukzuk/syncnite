@@ -10,7 +10,7 @@ namespace SyncniteBridge.Services
 {
     /// <summary>
     /// Knows how to read current local state: DB ticks, media folder mtimes,
-    /// and build the manifest payload we embed into the ZIP.
+    /// and build the snapshot.
     /// </summary>
     internal sealed class LocalStateScanService
     {
@@ -31,7 +31,7 @@ namespace SyncniteBridge.Services
         /// <summary>
         /// Build a lightweight snapshot of current local state for diffing.
         /// </summary>
-        public StoreSnapshotService.ManifestSnapshot BuildSnapshot()
+        public SnapshotService.Snapshot BuildSnapshot()
         {
             blog?.Debug(
                 "scan",
@@ -54,109 +54,12 @@ namespace SyncniteBridge.Services
                 new { dbTicks, mediaFolders = mediaVersions.Count }
             );
 
-            return new StoreSnapshotService.ManifestSnapshot
+            return new SnapshotService.Snapshot
             {
                 UpdatedAt = DateTime.UtcNow.ToString("o"),
                 DbTicks = dbTicks,
                 MediaVersions = mediaVersions,
             };
-        }
-
-        /// <summary>
-        /// Build a view of the local manifest: DB files, media folders, installed signature.
-        /// </summary>
-        public (
-            Dictionary<string, (long size, long mtimeMs)> Json,
-            List<string> MediaFolders,
-            (int count, string hash) Installed
-        ) BuildLocalManifestView()
-        {
-            blog?.Debug("scan", "Building local manifest view");
-
-            var json = new Dictionary<string, (long, long)>(StringComparer.OrdinalIgnoreCase);
-            var mediaFolders = new List<string>();
-
-            // DB files → size + mtimeMs
-            try
-            {
-                var libDir = Path.Combine(dataRoot, AppConstants.LibraryDirName);
-                foreach (
-                    var path in Directory.EnumerateFiles(
-                        libDir,
-                        "*.db",
-                        SearchOption.TopDirectoryOnly
-                    )
-                )
-                {
-                    var fi = new FileInfo(path);
-                    var mtimeMs = new DateTimeOffset(fi.LastWriteTimeUtc).ToUnixTimeMilliseconds();
-                    json[Path.GetFileName(path)] = (fi.Length, mtimeMs);
-                }
-                blog?.Debug("scan", "DB summary collected", new { files = json.Count });
-            }
-            catch (Exception ex)
-            {
-                blog?.Warn("scan", "Failed to collect DB summary", new { err = ex.Message });
-            }
-
-            // top-level media folders under library/files
-            try
-            {
-                var mediaRoot = Path.Combine(dataRoot, AppConstants.LibraryFilesDirName);
-                if (Directory.Exists(mediaRoot))
-                {
-                    foreach (
-                        var d in Directory.GetDirectories(
-                            mediaRoot,
-                            "*",
-                            SearchOption.TopDirectoryOnly
-                        )
-                    )
-                    {
-                        var name = Path.GetFileName(d);
-                        if (!string.IsNullOrWhiteSpace(name))
-                            mediaFolders.Add(name);
-                    }
-                }
-                blog?.Debug("scan", "Media folders listed", new { folders = mediaFolders.Count });
-            }
-            catch (Exception ex)
-            {
-                blog?.Warn("scan", "Failed to enumerate media folders", new { err = ex.Message });
-            }
-
-            // installed signature (count + hash)
-            List<string> installedIds;
-            try
-            {
-                installedIds =
-                    api.Database.Games?.Where(g => g.IsInstalled)
-                        .Select(g => g.Id.ToString().ToLowerInvariant())
-                        .OrderBy(s => s, StringComparer.Ordinal)
-                        .ToList() ?? new List<string>();
-            }
-            catch (Exception ex)
-            {
-                // Very defensive: database access exceptions shouldn’t crash the scan
-                installedIds = new List<string>();
-                blog?.Warn("scan", "Failed to enumerate installed games", new { err = ex.Message });
-            }
-
-            var installedHash = HashUtil.Sha1(string.Join("\n", installedIds));
-            var installed = (installedIds.Count, installedHash);
-
-            blog?.Debug(
-                "scan",
-                "Local manifest view built",
-                new
-                {
-                    jsonFiles = json.Count,
-                    mediaFolders = mediaFolders.Count,
-                    installedCount = installed.Item1,
-                }
-            );
-
-            return (json, mediaFolders, installed);
         }
 
         /// <summary>

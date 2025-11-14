@@ -139,13 +139,13 @@ export function processZipStream({
   };
 }
 
-
 // Fetch list of library items
 export async function listLibrary(): Promise<LibraryItem[]> {
   const r = await fetch(API_ENDPOINTS.LIBRARY_LIST, { cache: "no-store" });
   return r.json();
 }
 
+// Verify current session credentials
 export async function verifySession(): Promise<{ ok: boolean; email?: string; role?: string }> {
   const creds = getCreds();
   if (!creds) return { ok: false };
@@ -201,4 +201,25 @@ export async function loginUser(
     body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
   });
   return r.json();
+}
+
+// Load a DB collection via the sync API
+export async function loadDbCollection<T>(collection: string): Promise<T[]> {
+  const url = `/api/sync/collection/${encodeURIComponent(collection)}`;
+  try {
+    const creds = getCreds();
+    if (!creds) throw new Error("No credentials");
+
+    const r = await fetch(url, {
+      headers: {
+        "x-auth-email": creds.email,
+        "x-auth-password": creds.password,
+      },
+    });
+    const text = await r.text();
+    return JSON.parse(text);
+  } catch (e) {
+    console.error("Failed to load DB collection:", e);
+    return [];
+  }
 }

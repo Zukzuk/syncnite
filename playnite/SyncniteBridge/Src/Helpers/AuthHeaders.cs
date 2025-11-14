@@ -5,7 +5,8 @@ using System.Net.Http;
 namespace SyncniteBridge.Helpers
 {
     /// <summary>
-    /// Central place to set auth once and have it automatically applied to every HttpClient we use.
+    /// Central place to set auth once and have it automatically 
+    /// applied to every HttpClient we use.
     /// </summary>
     internal static class AuthHeaders
     {
@@ -15,7 +16,7 @@ namespace SyncniteBridge.Helpers
         // Keep weak refs so disposed clients don’t leak.
         private static readonly List<WeakReference<HttpClient>> clients =
             new List<WeakReference<HttpClient>>();
-        
+
         /// <summary>
         /// Set the email and password to be used for authentication.
         /// </summary>
@@ -84,11 +85,5 @@ namespace SyncniteBridge.Helpers
                 }
             }
         }
-
-        /// <summary>
-        /// Whether email or password is missing.
-        /// </summary>
-        public static bool MissingCredentials =>
-            string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password);
     }
 }

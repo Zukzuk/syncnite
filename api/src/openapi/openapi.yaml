@@ -1,0 +1,796 @@
+openapi: 3.1.0
+servers:
+  - url: /api
+
+tags:
+  - name: App
+  - name: Accounts
+  - name: Backup
+  - name: Sync
+  - name: Extension
+
+components:
+  securitySchemes:
+    XAuthEmail:
+      type: apiKey
+      in: header
+      name: x-auth-email
+      description: Admin/user email for header auth
+    XAuthPassword:
+      type: apiKey
+      in: header
+      name: x-auth-password
+      description: Admin/user password for header auth
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+        error: { type: string }
+    AuthInfo:
+      type: object
+      properties:
+        email: { type: string }
+        role:
+          type: string
+          enum: [admin, user, unknown]
+    ZipFile:
+      type: object
+      properties:
+        name: { type: string }
+        size: { type: integer }
+        mtime: { type: number, description: "Modified time (ms since epoch)" }
+    InstalledPush:
+      type: object
+      properties:
+        installed:
+          type: array
+          items: { type: string }
+      required: [installed]
+    DeltaRequest:
+      type: object
+      properties:
+        json:
+          type: object
+          additionalProperties:
+            type: array
+            items: { type: string }
+        installed:
+          type: object
+          nullable: true
+          properties:
+            count: { type: integer }
+            hash: { type: string }
+    DeltaResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+        delta:
+          type: object
+          properties:
+            toUpsert:
+              type: object
+              additionalProperties:
+                type: array
+                items: { type: string }
+            toDelete:
+              type: object
+              additionalProperties:
+                type: array
+                items: { type: string }
+    EntityBody:
+      type: object
+      additionalProperties: true
+
+paths:
+  /sse:
+    get:
+      tags: [App]
+      summary: Server-Sent Events (logs/progress)
+      description: Text/event-stream channel used by the web app.
+      responses:
+        "200":
+          description: Event stream
+
+  /log:
+    post:
+      tags: [App]
+      summary: Client log upload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "204":
+          description: Accepted
+        "400":
+          description: Invalid payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /zips:
+    get:
+      tags: [Backup]
+      summary: List uploaded backup zips
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ZipFile"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /accounts/register/admin:
+    post:
+      tags: [Accounts]
+      summary: Register first admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                password: { type: string }
+              required: [email, password]
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Missing fields
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Admin exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /accounts/register/user:
+    post:
+      tags: [Accounts]
+      summary: Register user (requires an existing admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                password: { type: string }
+              required: [email, password]
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Missing fields
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: No admin yet
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: User exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /accounts/login:
+    post:
+      tags: [Accounts]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                password: { type: string }
+              required: [email, password]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  email: { type: string }
+                  role:
+                    type: string
+                    enum: [admin, user, unknown]
+        "400":
+          description: Missing fields
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /accounts/status:
+    get:
+      tags: [Accounts]
+      summary: Whether any admin exists
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  hasAdmin: { type: boolean }
+
+  /accounts/verify:
+    get:
+      tags: [Accounts]
+      summary: Verify user session
+      security:
+        - XAuthEmail: []
+          XAuthPassword: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthInfo"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /accounts/verify/admin:
+    get:
+      tags: [Accounts]
+      summary: Verify admin session
+      security:
+        - XAuthEmail: []
+          XAuthPassword: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthInfo"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden (admin required)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /backup/upload:
+    post:
+      tags: [Backup]
+      summary: Upload a Playnite backup zip
+      security:
+        - XAuthEmail: []
+          XAuthPassword: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+              required: [file]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  file: { type: string }
+        "400":
+          description: No file
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /backup/process:
+    post:
+      tags: [Backup]
+      summary: Validate/extract zip and import into /data (overwrite-only)
+      description: Runs the import pipeline and emits logs/progress to `/api/sse`.
+      security:
+        - XAuthEmail: []
+          XAuthPassword: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                filename:
+                  type: string
+                  description: "Name of previously uploaded .zip"
+                password:
+                  type: string
+                  description: "Optional LiteDB password"
+                  nullable: true
+              required: [filename]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+        "400":
+          description: Bad request (e.g., missing/invalid filename)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error during processing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /extension/download:
+    get:
+      tags: [Extension]
+      summary: Download the Syncnite Bridge extension package
+      responses:
+        "200":
+          description: Package stream
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /sync/ping:
+    get:
+      tags: [Sync v2]
+      summary: Ping v2
+      security:
+        - XAuthEmail: []
+          XAuthPassword: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  version: { type: string }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /sync/installed:
+    post:
+      tags: [Sync v2]
+      summary: Push installed game IDs (minimal)
+      security:
+        - XAuthEmail: []
+          XAuthPassword: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InstalledPush"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  count: { type: integer }
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /sync/delta:
+    post:
+      tags: [Sync v2]
+      summary: Compute server delta
+      security:
+        - XAuthEmail: []
+          XAuthPassword: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeltaRequest"
+      responses:
+        "200":
+          description: Delta
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeltaResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden (admin required)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /sync/{collection}/{id}:
+    parameters:
+      - name: collection
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+            - games
+            - companies
+            - tags
+            - sources
+            - platforms
+            - genres
+            - categories
+            - features
+            - series
+            - regions
+            - ageratings
+            - completionstatuses
+            - filterpresets
+            - importexclusions
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      tags: [Sync v2]
+      summary: Create entity (idempotent)
+      security:
+        - XAuthEmail: []
+          XAuthPassword: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EntityBody"
+      responses:
+        "201":
+          description: Created
+        "204":
+          description: Already identical
+        "409":
+          description: Exists with different content
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden (admin required)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    put:
+      tags: [Sync v2]
+      summary: Upsert entity (idempotent)
+      security:
+        - XAuthEmail: []
+          XAuthPassword: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EntityBody"
+      responses:
+        "201":
+          description: Created
+        "200":
+          description: Updated
+        "204":
+          description: No change
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden (admin required)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      tags: [Sync v2]
+      summary: Delete entity (idempotent)
+      security:
+        - XAuthEmail: []
+          XAuthPassword: []
+      responses:
+        "204":
+          description: Deleted or absent
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden (admin required)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /sync/media/{path}:
+    put:
+      tags: [Sync v2]
+      summary: Upload media (binary)
+      description: >
+        Upload a media file into the libraryfiles tree. **Note:** encode slashes in
+        `{path}` if your tooling cannot send wildcard path segments (e.g. `%2F`).
+      security:
+        - XAuthEmail: []
+          XAuthPassword: []
+      parameters:
+        - name: path
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Created
+        "200":
+          description: Overwritten
+        "204":
+          description: No change (size/hash match)
+        "400":
+          description: Invalid path or empty body
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden (admin required)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /sync/collection/{collection}:
+    get:
+      tags: [Sync v2]
+      summary: List all entities in a collection
+      description: >
+        Returns all JSON rows for the given collection from the server-side
+        database. The result is a deterministically sorted array.
+      security:
+        - XAuthEmail: []
+          XAuthPassword: []
+      parameters:
+        - name: collection
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - games
+              - companies
+              - tags
+              - sources
+              - platforms
+              - genres
+              - categories
+              - features
+      responses:
+        "200":
+          description: Collection items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EntityBody"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /sync/snapshot:
+    post:
+      tags: [Sync v2]
+      summary: Push full snapshot
+      description: >
+        Push a full snapshot object for the current user. The server stores it
+        as `snapshot/snapshot.json` and annotates it with audit metadata
+        (updatedAt, source, pushedBy, serverUpdatedAt).
+      security:
+        - XAuthEmail: []
+          XAuthPassword: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EntityBody"
+      responses:
+        "200":
+          description: Snapshot stored
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+        "400":
+          description: Bad request (invalid snapshot or missing email)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden (admin required)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"

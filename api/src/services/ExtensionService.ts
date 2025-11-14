@@ -7,8 +7,8 @@ export class ExtensionService {
     private readonly extensionFile = "/extension/latest.pext";
 
     /**
-     * Resolves the latest packaged extension (.pext) for download.
-     * @returns The file path and download name of the latest extension package.
+     * Gets the latest extension package file path and download name.
+     * @return An object containing the file path and download name.
      */
     getLatest(): { filePath: string; downloadName: string } {
         // Milestone: resolve latest

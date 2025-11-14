@@ -10,9 +10,14 @@ type UseReturn = {
     updatedAt: string | null
 };
 
-/** Hook to manage library refresh state */
+/**
+ * Unified source of truth for the library data.
+ * - Loads games/tags/sources 1:1 (no shape coercions)
+ * - Updates when /data/snapshot/snapshot.json changes
+ * - Patches "installed" quickly when local Installed.json changes
+ */
 export function useRefreshLibrary({ pollMs }: UseParams): UseReturn {
-    const [version, setVersion] = React.useState(0);``
+    const [version, setVersion] = React.useState(0);
     const [updatedAt, setUpdatedAt] = React.useState<string | null>(null);
     const lastRef = React.useRef<string>("");
 
@@ -20,7 +25,7 @@ export function useRefreshLibrary({ pollMs }: UseParams): UseReturn {
         let stop = false;
         async function tick() {
             try {
-                const r = await fetch(`${FILES.manifest}?v=${Date.now()}`, { cache: "no-store" });
+                const r = await fetch(`${FILES.snapshot}?v=${Date.now()}`, { cache: "no-store" });
                 if (r.ok) {
                     const txt = await r.text();
                     if (txt.trim().startsWith("{") && txt !== lastRef.current) {
@@ -28,7 +33,11 @@ export function useRefreshLibrary({ pollMs }: UseParams): UseReturn {
                         setVersion(v => v + 1);
                         try {
                             const parsed = JSON.parse(txt);
-                            setUpdatedAt(typeof parsed?.updatedAt === "string" ? parsed.updatedAt : new Date().toISOString());
+                            const ua =
+                                typeof parsed?.updatedAt === "string"
+                                    ? parsed.updatedAt
+                                    : new Date().toISOString();
+                            setUpdatedAt(ua);
                         } catch {
                             setUpdatedAt(new Date().toISOString());
                         }

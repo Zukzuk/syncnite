@@ -41,6 +41,7 @@ RUN apk add --no-cache p7zip icu-libs
 # Bring built API and dependencies
 COPY --from=api-build /app/node_modules ./node_modules
 COPY --from=api-build /app/api/dist ./api/dist
+COPY api/src/openapi/openapi.yaml ./api/dist/openapi/openapi.yaml
 
 # Bring PlayniteImport (self-contained musl binary)
 COPY --from=dump-build /out/PlayniteImport ./api/PlayniteImport

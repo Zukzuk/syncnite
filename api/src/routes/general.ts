@@ -4,10 +4,8 @@ import { UPLOADS_DIR } from "../constants";
 import { rootLog } from "../logger";
 import { createSSE } from "../sse";
 import { SyncBus } from "../services/EventBusService";
-import { requireSession } from "../middleware/requireAuth";
 
 const router = express.Router();
-// router.use(requireSession);
 const listZipsService = new ListZipsService(UPLOADS_DIR);
 const log = rootLog.child("route:app");
 
@@ -21,6 +19,19 @@ router.get("/zips", async (_req, res) => {
         log.error("zips: failed:", String(e?.message || e));
         res.status(500).json({ ok: false, error: String(e?.message || e) });
     }
+});
+
+router.post("/log", async (req, res) => {
+  try {
+    const count = log.raw(req.body);
+    if (!count) return res.status(400).json({ ok: false, error: "invalid payload" });
+    
+    log.debug("sync/log accepted", { count });
+    return res.sendStatus(204);
+  } catch (e) {
+    log.error("sync/log failed", { err: (e as Error).message });
+    return res.status(400).json({ ok: false, error: "invalid log payload" });
+  }
 });
 
 router.get("/sse", (req, res) => {

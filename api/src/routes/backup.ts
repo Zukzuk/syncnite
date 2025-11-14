@@ -6,12 +6,11 @@ import { rootLog } from "../logger";
 import { requireAdminSession } from "../middleware/requireAuth";
 
 const router = express.Router();
-router.use(requireAdminSession);
 const upload = multer({ dest: UPLOADS_DIR });
 const backupService = new BackupService();
 const log = rootLog.child("route:backup");
 
-router.post("/upload", upload.single("file"), async (req, res) => {
+router.post("/upload", requireAdminSession, upload.single("file"), async (req, res) => {
   log.info("upload: incoming");
 
   try {
@@ -34,7 +33,7 @@ router.post("/upload", upload.single("file"), async (req, res) => {
   }
 });
 
-router.post("/process", async (req, res) => {
+router.post("/process", requireAdminSession, async (req, res) => {
   const filename = String(req.body?.filename ?? "");
   const password = String(req.body?.password ?? "");
 

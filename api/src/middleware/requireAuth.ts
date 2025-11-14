@@ -26,9 +26,10 @@ export async function requireSession(
         return res.status(401).json({ ok: false, error: "unauthorized" });
     }
 
+    const role = await AccountsService.getRole(email);
     req.auth = {
         email,
-        role: await AccountsService.getRole(email),
+        role,
     };
 
     next();
@@ -62,7 +63,7 @@ export async function requireAdminSession(
 
     req.auth = {
         email,
-        role: "admin",
+        role,
     };
 
     next();

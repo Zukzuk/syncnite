@@ -47,6 +47,12 @@ async function writeUser(acc: Account) {
 }
 
 export const AccountsService = {
+    /** 
+     * Registers an admin account. Fails if an admin already exists.
+     * @param email
+     * @param password
+     * @return { ok: true } on success, { ok: false, error: string } on failure
+     */
     async registerAdmin(email: string, password: string): Promise<{ ok: true } | { ok: false; error: string }> {
         await ensureDir();
         // check if an admin already exists
@@ -55,7 +61,13 @@ export const AccountsService = {
         await writeAdmin({ email, password });
         return { ok: true };
     },
-
+    
+    /**
+     * Registers a user account. Fails if no admin exists or if the user already exists.
+     * @param email
+     * @param password
+     * @return { ok: true } on success, { ok: false, error: string } on failure
+     */
     async registerUser(email: string, password: string): Promise<{ ok: true } | { ok: false; error: string }> {
         await ensureDir();
         // require that an admin already exists
@@ -68,17 +80,32 @@ export const AccountsService = {
         return { ok: true };
     },
 
+    /**
+     * Logs in a user by verifying email and password.
+     * @param email
+     * @param password
+     * @return true if login is successful, false otherwise
+     */
     async login(email: string, password: string): Promise<boolean> {
         if (!email || !password) return false;
         const acc = await readAccount(email);
         return !!acc && acc.password === password;
     },
 
+    /**
+     * Checks if at least one admin account exists.
+     * @return true if an admin exists, false otherwise
+     */
     async hasAdmin(): Promise<boolean> {
         const admins = await listAdmins();
         return admins.length ? true : false
     },
 
+    /**
+     * Gets the role of a user by email.
+     * @param email
+     * @return "admin", "user", or "unknown"
+     */
     async getRole(email: string): Promise<Role> {
         const fileName = await getFilenameByEmail(email);
         if (!fileName) return "unknown";

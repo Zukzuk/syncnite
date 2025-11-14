@@ -10,20 +10,6 @@ namespace SyncniteBridge.Helpers
     internal static class ThemeHelpers
     {
         /// <summary>
-        /// Try to apply the given style to the element.
-        /// </summary>
-        public static void TryStyle(FrameworkElement el, string styleKey)
-        {
-            try
-            {
-                var s = el.FindResource(styleKey) as Style;
-                if (s != null)
-                    el.Style = s;
-            }
-            catch { }
-        }
-
-        /// <summary>
         /// Hook theme background to the given Window.
         /// </summary>
         public static void HookThemeBackground(Window w)

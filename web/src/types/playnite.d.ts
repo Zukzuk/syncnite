@@ -1,34 +1,25 @@
-/** series.Series.json */
 export interface Series {
   Id: string;
   Name: string;
 }
-export type SeriesJson = Series[];
 
-/** sources.GameSource.json */
-export interface GameSource {
+export interface Source {
   Id: string;
   Name: string;
 }
-export type GameSourceJson = GameSource[];
 
-/** tags.Tag.json */
 export interface Tag {
   Id: string;
   Name: string;
 }
-export type TagJson = Tag[];
 
-/** platforms.Platform.json */
 export interface Platform {
   Id: string;
   Name: string;
   /** Some exports may include an icon path. */
   Icon?: string | null;
 }
-export type PlatformJson = Platform[];
 
-/** Common subtypes used in games.Game.json */
 export interface GameLink {
   Name: string;
   Url: string;
@@ -39,11 +30,9 @@ export interface GameReleaseDate {
   ReleaseDate: string;
 }
 
-/** games.Game.json */
 export interface Game {
   // identity
   Id: string;
-  _id: { $guid: string };
   Name: string;
   SortingName?: string;
 
@@ -96,9 +85,8 @@ export interface Game {
   Description?: string | null;
   Notes?: string | null;
 
-  // links/actions/roms (actions/roms omitted from sample exports, keep optional)
+  // links/actions/roms
   Links?: GameLink[];
-  // GameActions?: unknown[];
-  // Roms?: unknown[];
+  GameActions?: unknown[]; 
+  Roms?: unknown[];   
 }
-export type GameJson = Game[];

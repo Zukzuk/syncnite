@@ -50,18 +50,18 @@ export function clearCreds() {
   } catch {}
 }
 
-export function readCookie(name: string): string | null {
+function readCookie(name: string): string | null {
   if (typeof document === "undefined") return null;
   const m = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
   return m ? decodeURIComponent(m[1]) : null;
 }
 
-export function writeCookie(name: string, value: string, maxAgeSeconds = 60 * 60 * 24 * 180) {
+function writeCookie(name: string, value: string, maxAgeSeconds = 60 * 60 * 24 * 180) {
   if (typeof document === "undefined") return;
   document.cookie = `${name}=${encodeURIComponent(value)}; Max-Age=${maxAgeSeconds}; Path=/; SameSite=Lax`;
 }
 
-export function jsonGet<T>(key: string, fallback: T): T {
+function jsonGet<T>(key: string, fallback: T): T {
   try {
     const raw = readCookie(key);
     if (!raw) return fallback;
@@ -71,7 +71,7 @@ export function jsonGet<T>(key: string, fallback: T): T {
   }
 }
 
-export function jsonSet<T>(key: string, value: T) {
+function jsonSet<T>(key: string, value: T) {
   try {
     writeCookie(key, JSON.stringify(value));
   } catch {
@@ -93,34 +93,4 @@ export function loadStateFromCookie(): CookieState {
 
 export function saveStateToCookie(s: CookieState) {
   jsonSet(COOKIE.libraryState, s);
-}
-
-export async function getJson<T>(path: string): Promise<T> {
-  const sep = path.includes("?") ? "&" : "?";
-  const url = `${path}${sep}v=${Date.now()}`;   // cache-bust
-  const r = await fetch(url, { cache: "no-store" });
-  if (!r.ok) throw new Error(`${path} -> ${r.status}`);
-  return r.json();
-}
-
-export async function tryLoadMany<T>(candidates: string[], fallback: T): Promise<T> {
-  for (const c of candidates) {
-    try { return await getJson<T>(c); } catch { /* try next */ }
-  }
-  return fallback;
-}
-
-export async function tryFetchJson(url: string): Promise<any | null> {
-  try {
-    const r = await fetch(url, { cache: "no-cache" });
-    if (!r.ok) return null;
-    const ct = (r.headers.get("content-type") || "").toLowerCase();
-    const text = await r.text();
-    // If nginx gave us index.html instead of JSON, bail.
-    const looksHtml = ct.includes("text/html") || text.trim().startsWith("<");
-    if (looksHtml) return null;
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
 }

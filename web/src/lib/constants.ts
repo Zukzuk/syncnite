@@ -39,24 +39,8 @@ export const Z_INDEX = {
 } as const;
 
 export const BASE = "/data";
-
 export const FILES = {
-  meta: `${BASE}/meta.json`,
-  manifest: `${BASE}/manifest.json`,
-  games: [`${BASE}/games.Game.json`],
-  companies: [`${BASE}/companies.Company.json`],
-  tags: [`${BASE}/tags.Tag.json`],
-  sources: [`${BASE}/sources.GameSource.json`],
-  platforms: [`${BASE}/platforms.Platform.json`],
-  genres: [`${BASE}/genres.Genre.json`],
-  categories: [`${BASE}/categories.Category.json`],
-  features: [`${BASE}/features.Feature.json`],
-  series: [`${BASE}/series.Series.json`],
-  regions: [`${BASE}/regions.Region.json`],
-  ageRatings: [`${BASE}/ageratings.AgeRating.json`],
-  completionStatuses: [`${BASE}/completionstatuses.CompletionStatus.json`],
-  filterPresets: [`${BASE}/filterpresets.FilterPreset.json`],
-  importExclusions: [`${BASE}/importexclusions.ImportExclusion.json`]
+  snapshot: `${BASE}/snapshot/snapshot.json`,
 };
 
 export const FALLBACK_ICON =
@@ -102,6 +86,23 @@ export const MAX_LINES = 1000;
 export const LETTERS_LIST = ["#", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
 
 export const LETTERS = [...LETTERS_LIST] as const;
+
+export const COLLECTIONS = {
+  games: "games",
+  companies: "companies",
+  tags: "tags",
+  sources: "sources",
+  platforms: "platforms",
+  genres: "genres",
+  categories:"categories",
+  features: "features", 
+  series: "series",
+  regions: "regions",
+  ageratings: "ageratings",
+  completionstatuses: "completionstatuses",
+  filterpresets: "filterpresets",
+  importexclusions: "importexclusions",
+} as const;
 
 export const KEY_EMAIL = "sb_email";
 

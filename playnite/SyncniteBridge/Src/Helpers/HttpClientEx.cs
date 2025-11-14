@@ -1,10 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Threading.Tasks;
-using SyncniteBridge.Helpers;
 
 namespace SyncniteBridge.Helpers
 {
@@ -13,52 +12,6 @@ namespace SyncniteBridge.Helpers
     /// </summary>
     internal sealed class HttpClientEx
     {
-        /// <summary>
-        /// Response from sync upload.
-        /// </summary>
-        private sealed class SyncResp
-        {
-            public bool ok { get; set; }
-        }
-
-        /// <summary>
-        /// Remote JSON file info.
-        /// </summary>
-        public sealed class RemoteJsonFile
-        {
-            public long size { get; set; }
-            public long mtimeMs { get; set; }
-        }
-
-        /// <summary>
-        /// Remote installed info.
-        /// </summary>
-        public sealed class RemoteInstalled
-        {
-            public int count { get; set; }
-            public string hash { get; set; } = string.Empty;
-        }
-
-        /// <summary>
-        /// Remote manifest structure.
-        /// </summary>
-        public sealed class RemoteManifest
-        {
-            public Dictionary<string, RemoteJsonFile> json { get; set; } =
-                new(StringComparer.OrdinalIgnoreCase);
-            public RemoteInstalled installed { get; set; } = new();
-        }
-
-        /// <summary>
-        /// Remote manifest wrapper structure.
-        /// </summary>
-        public sealed class RemoteManifestWrapper
-        {
-            public bool ok { get; set; }
-            public string generatedAt { get; set; } = string.Empty;
-            public RemoteManifest manifest { get; set; } = new();
-        }
-
         private readonly HttpClient http;
         private readonly BridgeLogger? blog;
 
@@ -88,85 +41,233 @@ namespace SyncniteBridge.Helpers
             }
         }
 
-        /// <summary>
-        /// Upload ZIP from disk to sync endpoint (sparse progress).
-        /// </summary>
-        public async Task<bool> SyncZipAsync(string syncUrl, string zipPath)
+        private static string Combine(string baseUrl, string path)
         {
-            var fi = new FileInfo(zipPath);
-            var total = fi.Exists ? fi.Length : -1;
+            baseUrl = (baseUrl ?? string.Empty).TrimEnd('/');
+            path = (path ?? string.Empty).TrimStart('/');
+            return baseUrl + "/" + path;
+        }
 
-            blog?.Info("sync", "upload start");
-            blog?.Debug(
-                "sync",
-                "upload info",
-                new { size = total, name = Path.GetFileName(zipPath) }
-            );
-
-            using (var content = new MultipartFormDataContent())
-            using (var fs = File.OpenRead(zipPath))
+        /// <summary>
+        /// POST /sync/snapshot with serialized snapshot JSON. Returns true on 2xx.
+        /// </summary>
+        public async Task<bool> UploadSnapshotAsync(string baseSyncUrl, object snapshot)
+        {
+            var url = Combine(baseSyncUrl, "snapshot");
+            try
             {
-                var upBuckets = new PercentBuckets(step: 10);
-                var fileContent = new ProgressableStreamContent(
-                    fs,
-                    total,
-                    (sent, len) =>
-                    {
-                        if (len > 0)
+                var json = Playnite.SDK.Data.Serialization.ToJson(snapshot);
+                using var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var resp = await http.PostAsync(url, content).ConfigureAwait(false);
+                if (!resp.IsSuccessStatusCode)
+                {
+                    blog?.Warn(
+                        "http",
+                        "snapshot upload failed (non-OK)",
+                        new
                         {
-                            var pct = (int)Math.Max(0, Math.Min(100, (sent * 100L) / len));
-                            if (upBuckets.ShouldEmit(pct, out var b))
-                            {
-                                blog?.Info("progress", "uploading");
-                                blog?.Debug(
-                                    "progress",
-                                    "uploading",
-                                    new { phase = "upload", percent = b }
-                                );
-                            }
+                            url,
+                            status = (int)resp.StatusCode,
+                            reason = resp.ReasonPhrase,
                         }
-                    }
-                );
-
-                content.Add(fileContent, "file", Path.GetFileName(zipPath));
-
-                try
-                {
-                    var resp = await http.PostAsync(syncUrl, content).ConfigureAwait(false);
-                    var body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
-
-                    if (!resp.IsSuccessStatusCode)
-                    {
-                        blog?.Warn(
-                            "http",
-                            "upload non-OK",
-                            new { status = (int)resp.StatusCode, reason = resp.ReasonPhrase }
-                        );
-                        return false;
-                    }
-
-                    blog?.Debug(
-                        "progress",
-                        "upload complete",
-                        new { phase = "upload", percent = 100 }
                     );
-                    blog?.Info("sync", "upload done");
-
-                    try
-                    {
-                        var obj = Playnite.SDK.Data.Serialization.FromJson<SyncResp>(body);
-                        return obj != null && obj.ok;
-                    }
-                    catch
-                    {
-                        return true; // accept 200 without JSON body
-                    }
-                }
-                catch (Exception ex)
-                {
-                    blog?.Warn("http", "upload failed", new { err = ex.Message });
                     return false;
                 }
+
+                blog?.Debug("http", "snapshot uploaded", new { url });
+                return true;
+            }
+            catch (Exception ex)
+            {
+                blog?.Warn("http", "snapshot upload error", new { url, err = ex.Message });
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// POST /sync/delta with serialized inventory JSON. Returns T or null.
+        /// </summary>
+        public async Task<T?> PostJsonAsync<T>(string url, string json)
+            where T : class
+        {
+            try
+            {
+                using var content = new StringContent(
+                    json,
+                    System.Text.Encoding.UTF8,
+                    "application/json"
+                );
+                var resp = await http.PostAsync(url, content).ConfigureAwait(false);
+                var body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                if (!resp.IsSuccessStatusCode)
+                {
+                    blog?.Warn(
+                        "http",
+                        "post json non-OK",
+                        new
+                        {
+                            url,
+                            status = (int)resp.StatusCode,
+                            reason = resp.ReasonPhrase,
+                        }
+                    );
+                    return null;
+                }
+                return Playnite.SDK.Data.Serialization.FromJson<T>(body);
+            }
+            catch (Exception ex)
+            {
+                blog?.Warn("http", "post json failed", new { url, err = ex.Message });
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Convenience: POST /{baseSyncUrl}/delta with inventory object.
+        /// </summary>
+        public Task<T?> GetDeltaAsync<T>(string baseSyncUrl, object inventory)
+            where T : class
+        {
+            var url = Combine(baseSyncUrl, "delta");
+            var json = Playnite.SDK.Data.Serialization.ToJson(inventory);
+            return PostJsonAsync<T>(url, json);
+        }
+
+        /// <summary>
+        /// PUT /{baseSyncUrl}/{collection}/{id} (entity JSON). Returns true on 2xx.
+        /// </summary>
+        public async Task<bool> UpsertEntityAsync(
+            string baseSyncUrl,
+            string collection,
+            string id,
+            string jsonBody
+        )
+        {
+            var url = Combine(baseSyncUrl, $"{collection}/{id}");
+            try
+            {
+                using var content = new StringContent(
+                    jsonBody,
+                    System.Text.Encoding.UTF8,
+                    "application/json"
+                );
+                var resp = await http.PutAsync(url, content).ConfigureAwait(false);
+                if (!resp.IsSuccessStatusCode)
+                {
+                    blog?.Warn(
+                        "http",
+                        "upsert non-OK",
+                        new
+                        {
+                            url,
+                            status = (int)resp.StatusCode,
+                            reason = resp.ReasonPhrase,
+                        }
+                    );
+                    return false;
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                blog?.Warn("http", "upsert failed", new { url, err = ex.Message });
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// DELETE /{baseSyncUrl}/{collection}/{id}. Returns true on 2xx.
+        /// </summary>
+        public async Task<bool> DeleteEntityAsync(string baseSyncUrl, string collection, string id)
+        {
+            var url = Combine(baseSyncUrl, $"{collection}/{id}");
+            try
+            {
+                var resp = await http.DeleteAsync(url).ConfigureAwait(false);
+                if (!resp.IsSuccessStatusCode)
+                {
+                    blog?.Warn(
+                        "http",
+                        "delete non-OK",
+                        new
+                        {
+                            url,
+                            status = (int)resp.StatusCode,
+                            reason = resp.ReasonPhrase,
+                        }
+                    );
+                    return false;
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                blog?.Warn("http", "delete failed", new { url, err = ex.Message });
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// PUT /{baseSyncUrl}/media/{relativePath} with raw bytes and x-hash header. Returns true on 2xx.
+        /// </summary>
+        public async Task<bool> UploadMediaAsync(
+            string baseSyncUrl,
+            string relativePath,
+            string fullPath,
+            string? precomputedHash = null
+        )
+        {
+            if (!File.Exists(fullPath))
+                return false;
+
+            // Normalize path and encode each segment, but keep "/" as separator
+            var normalized = relativePath.Replace('\\', '/').Trim('/');
+            var segments = normalized.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+            var encodedSegments = Array.ConvertAll(segments, Uri.EscapeDataString);
+            var encodedPath = string.Join("/", encodedSegments);
+
+            var url = Combine(baseSyncUrl, $"media/{encodedPath}");
+
+            try
+            {
+                byte[] bytes;
+                using (var fs = File.OpenRead(fullPath))
+                using (var ms = new MemoryStream())
+                {
+                    await fs.CopyToAsync(ms).ConfigureAwait(false);
+                    bytes = ms.ToArray();
+                }
+
+                var hash = precomputedHash ?? HashUtil.Sha1(Convert.ToBase64String(bytes));
+                using var content = new ByteArrayContent(bytes);
+                content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+
+                var req = new HttpRequestMessage(HttpMethod.Put, url) { Content = content };
+                req.Headers.TryAddWithoutValidation("x-hash", hash);
+
+                var resp = await http.SendAsync(req).ConfigureAwait(false);
+                if (!resp.IsSuccessStatusCode)
+                {
+                    blog?.Warn(
+                        "http",
+                        "media non-OK",
+                        new
+                        {
+                            url,
+                            status = (int)resp.StatusCode,
+                            reason = resp.ReasonPhrase,
+                        }
+                    );
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                blog?.Warn("http", "media upload failed", new { url, err = ex.Message });
+                return false;
             }
         }
     }

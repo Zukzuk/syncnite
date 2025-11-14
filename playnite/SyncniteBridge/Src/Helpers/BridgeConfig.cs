@@ -1,12 +1,11 @@
 using System.IO;
 using Playnite.SDK.Data;
 using SyncniteBridge.Constants;
-using SyncniteBridge.Helpers;
 
-namespace SyncniteBridge
+namespace SyncniteBridge.Helpers
 {
     /// <summary>
-    /// Configuration settings for the bridge, 
+    /// Configuration settings for the bridge,
     /// persisted under ExtensionsData/<GUID>/
     /// </summary>
     internal sealed class BridgeConfig

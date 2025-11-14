@@ -16,7 +16,7 @@ namespace SyncniteBridge.Services
         public string StatusText =>
             lastOk ? AppConstants.HealthStatusHealthy : AppConstants.HealthStatusUnreachable;
         public bool IsHealthy => lastOk;
-        public event Action<bool> StatusChanged; // new status (true=healthy)
+        public event Action<bool> StatusChanged = delegate { };
 
         private readonly IPlayniteAPI api;
         private readonly ILogger log = LogManager.GetLogger();

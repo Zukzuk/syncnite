@@ -14,20 +14,12 @@ RUN npm run -w web build
 # -------- Runtime stage --------
 FROM nginx:alpine
 
-# Your nginx config (should listen on 3003 and proxy /api → api:3004 if needed)
-COPY web/nginx.conf /etc/nginx/conf.d/default.conf
-
-# Static build output
 COPY --from=build /app/web/dist/ /usr/share/nginx/html/
-
-# Entrypoint that writes /usr/share/nginx/html/env.js with APP_VERSION
+COPY web/default.conf /etc/nginx/conf.d/default.conf
 COPY web/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
 
 EXPOSE 3003
-
-# Default can be overridden by compose
 ARG APP_VERSION=dev
 ENV APP_VERSION=$APP_VERSION
-
 ENTRYPOINT ["/entrypoint.sh"]

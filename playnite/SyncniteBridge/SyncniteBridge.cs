@@ -6,6 +6,7 @@ using Playnite.SDK.Plugins;
 using SyncniteBridge.Constants;
 using SyncniteBridge.Helpers;
 using SyncniteBridge.Services;
+using SyncniteBridge.UI;
 
 namespace SyncniteBridge
 {
@@ -17,12 +18,12 @@ namespace SyncniteBridge
         public override Guid Id { get; } = Guid.Parse(AppConstants.GUID);
 
         private readonly ILogger logger = LogManager.GetLogger();
-        private BridgeLogger? blog;
-        private PushInstalledService pusher;
-        private BridgeConfig config;
         private readonly string configPath;
-        private DeltaSyncService deltaSync;
+        private BridgeConfig config;
+        private BridgeLogger blog;
         private HealthcheckService health;
+        private PushInstalledService pushInstalled;
+        private DeltaCRUDService deltaSync;
 
         /// <summary>
         /// Create a new SyncniteBridge plugin instance.
@@ -31,7 +32,7 @@ namespace SyncniteBridge
             : base(api)
         {
             configPath = Path.Combine(GetPluginUserDataPath(), AppConstants.ConfigFileName);
-            config = BridgeConfig.Load(configPath);
+            config = BridgeConfig.Load(configPath) ?? new BridgeConfig();
             AuthHeaders.Set(config.AuthEmail, config.GetAuthPassword());
             blog = new BridgeLogger(config.ApiBase, BridgeVersion.Current, config.LogLevel);
 
@@ -54,16 +55,16 @@ namespace SyncniteBridge
             health.Start();
 
             // Push installed (independent path)
-            pusher = new PushInstalledService(
+            pushInstalled = new PushInstalledService(
                 api,
                 Combine(config.ApiBase, AppConstants.Path_Syncnite_Push),
                 blog
             );
-            pusher.SetHealthProvider(() => health.IsHealthy);
+            pushInstalled.SetHealthProvider(() => health.IsHealthy);
 
-            // Delta sync (ZIP upload)
+            // Delta sync (CRUD)
             var syncUrl = Combine(config.ApiBase, AppConstants.Path_Syncnite_Sync);
-            deltaSync = new DeltaSyncService(api, syncUrl, GetDefaultPlayniteDataRoot(), blog);
+            deltaSync = new DeltaCRUDService(api, syncUrl, GetDefaultPlayniteDataRoot(), blog);
             deltaSync.SetHealthProvider(() => health.IsHealthy);
 
             // When health flips to healthy, kick once
@@ -72,7 +73,7 @@ namespace SyncniteBridge
                 if (ok)
                 {
                     blog.Info("startup", "Health became healthy → triggering push+sync");
-                    pusher.Trigger();
+                    pushInstalled.Trigger();
                     deltaSync.Trigger();
                 }
                 else
@@ -112,9 +113,11 @@ namespace SyncniteBridge
             return string.Empty;
         }
 
+#pragma warning disable CS8603
         public override ISettings GetSettings(bool firstRunSettings) => null;
 
         public override UserControl GetSettingsView(bool firstRunSettings) => null;
+#pragma warning restore CS8603
 
         /// <summary>
         /// Get main menu items.
@@ -169,10 +172,10 @@ namespace SyncniteBridge
                                         AppConstants.Path_Syncnite_Ping
                                     );
 
-                                    pusher?.UpdateEndpoint(pushUrl);
-                                    deltaSync?.UpdateEndpoints(syncUrl);
-                                    health?.UpdateEndpoint(pingUrl);
-                                    blog?.UpdateApiBase(config.ApiBase);
+                                    pushInstalled.UpdateEndpoint(pushUrl);
+                                    deltaSync.UpdateEndpoints(syncUrl);
+                                    health.UpdateEndpoint(pingUrl);
+                                    blog.UpdateApiBase(config.ApiBase);
 
                                     blog.Info("config", "ApiBase updated");
                                     blog.Debug(
@@ -183,18 +186,18 @@ namespace SyncniteBridge
 
                                     if (health.IsHealthy)
                                     {
-                                        pusher?.PushNow();
-                                        deltaSync?.Trigger();
+                                        pushInstalled.PushNow();
+                                        deltaSync.Trigger();
                                     }
                                 },
                                 onPushInstalled: () =>
                                 {
-                                    pusher?.PushNow();
+                                    pushInstalled.PushNow();
                                     blog.Info("push", "Manual push requested");
                                 },
                                 onSyncLibrary: () =>
                                 {
-                                    deltaSync?.Trigger();
+                                    deltaSync.HardSync();
                                     blog.Info("sync", "Manual sync requested");
                                 },
                                 initialEmail: config.AuthEmail,
@@ -207,10 +210,10 @@ namespace SyncniteBridge
                                     AuthHeaders.Set(config.AuthEmail, config.GetAuthPassword());
 
                                     // Optional UX: if creds just became valid and server is healthy, kick once.
-                                    if (health?.IsHealthy == true)
+                                    if (health.IsHealthy == true)
                                     {
-                                        pusher?.PushNow();
-                                        deltaSync?.Trigger();
+                                        pushInstalled.PushNow();
+                                        deltaSync.Trigger();
                                     }
                                 }
                             );
@@ -229,23 +232,23 @@ namespace SyncniteBridge
             base.Dispose();
             try
             {
-                pusher?.Dispose();
+                pushInstalled.Dispose();
             }
             catch { }
             try
             {
-                deltaSync?.Dispose();
+                deltaSync.Dispose();
             }
             catch { }
             try
             {
-                health?.Dispose();
+                health.Dispose();
             }
             catch { }
             try
             {
-                blog?.Info("shutdown", "SyncniteBridge disposing");
-                blog?.Dispose();
+                blog.Info("shutdown", "SyncniteBridge disposing");
+                blog.Dispose();
             }
             catch { }
         }

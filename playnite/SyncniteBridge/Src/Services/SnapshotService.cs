@@ -9,17 +9,17 @@ namespace SyncniteBridge.Services
 {
     /// <summary>
     /// Persists the last successful upload snapshot
-    /// under ExtensionsData/<GUID>/lastManifest.json.
+    /// under ExtensionsData/<GUID>/snapshot.json.
     /// </summary>
-    internal sealed class StoreSnapshotService
+    internal sealed class SnapshotService
     {
         private readonly string path;
         private readonly BridgeLogger? blog;
-        
+
         /// <summary>
         /// Snapshot structure.
         /// </summary>
-        internal sealed class ManifestSnapshot
+        internal sealed class Snapshot
         {
             public string UpdatedAt { get; set; } = "";
             public long DbTicks { get; set; } = 0;
@@ -28,9 +28,9 @@ namespace SyncniteBridge.Services
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="StoreSnapshotService"/> class.
+        /// Initializes a new instance of the <see cref="SnapshotService"/> class.
         /// </summary>
-        public StoreSnapshotService(string extensionsDataPath, BridgeLogger? blog = null)
+        public SnapshotService(string extensionsDataPath, BridgeLogger? blog = null)
         {
             Directory.CreateDirectory(extensionsDataPath ?? ".");
             path = Path.Combine(extensionsDataPath ?? ".", AppConstants.SnapshotFileName);
@@ -42,20 +42,18 @@ namespace SyncniteBridge.Services
         /// <summary>
         /// Load the last saved snapshot from disk.
         /// </summary>
-        public ManifestSnapshot Load()
+        public Snapshot Load()
         {
             try
             {
                 if (!File.Exists(path))
                 {
                     blog?.Debug("snapshot", "No existing snapshot on disk", new { path });
-                    return new ManifestSnapshot();
+                    return new Snapshot();
                 }
 
                 var json = File.ReadAllText(path);
-                var s =
-                    Playnite.SDK.Data.Serialization.FromJson<ManifestSnapshot>(json)
-                    ?? new ManifestSnapshot();
+                var s = Playnite.SDK.Data.Serialization.FromJson<Snapshot>(json) ?? new Snapshot();
 
                 blog?.Debug(
                     "snapshot",
@@ -73,14 +71,14 @@ namespace SyncniteBridge.Services
             catch (Exception ex)
             {
                 blog?.Warn("snapshot", "Failed to load snapshot", new { path, err = ex.Message });
-                return new ManifestSnapshot();
+                return new Snapshot();
             }
         }
 
         /// <summary>
         /// Save the snapshot to disk.
         /// </summary>
-        public void Save(ManifestSnapshot snapshot)
+        public void Save(Snapshot snapshot)
         {
             try
             {
@@ -102,6 +100,29 @@ namespace SyncniteBridge.Services
             catch (Exception ex)
             {
                 blog?.Warn("snapshot", "Failed to save snapshot", new { path, err = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Delete the snapshot from disk.
+        /// </summary>
+        public void Delete()
+        {
+            try
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                    blog?.Info("snapshot", "Snapshot deleted", new { path });
+                }
+                else
+                {
+                    blog?.Debug("snapshot", "No snapshot to delete", new { path });
+                }
+            }
+            catch (Exception ex)
+            {
+                blog?.Warn("snapshot", "Failed to delete snapshot", new { path, err = ex.Message });
             }
         }
     }

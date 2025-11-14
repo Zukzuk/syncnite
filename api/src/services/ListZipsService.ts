@@ -18,7 +18,6 @@ export class ListZipsService {
      * @returns list of .zip files in UPLOADS_DIR, sorted by mtime descending
      */
     async get(): Promise<ZipFile[]> {
-        // Milestone: start scan
         log.info(`Scanning UPLOADS_DIR for .zip files…`, { uploadsDir: this.uploadsDir });
 
         const files = await fs.readdir(this.uploadsDir, { withFileTypes: true });
@@ -39,7 +38,6 @@ export class ListZipsService {
         }
 
         zips.sort((a, b) => b.mtime - a.mtime);
-        // Milestone: done
         log.info(`Returning ${zips.length} zip file(s), sorted by mtime desc`);
         return zips;
     }
