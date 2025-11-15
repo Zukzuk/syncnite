@@ -17,6 +17,9 @@ namespace SyncniteBridge
     {
         public override Guid Id { get; } = Guid.Parse(AppConstants.GUID);
 
+        private static bool s_initialized = false;
+        private static readonly object s_initLock = new();
+
         private readonly ILogger logger = LogManager.GetLogger();
         private readonly string configPath;
         private BridgeConfig config;
@@ -26,12 +29,33 @@ namespace SyncniteBridge
         private PushDeltaService pushSync;
         private PullDeltaService pullSync;
 
+        private readonly bool isActiveInstance = false;
+
         /// <summary>
         /// Create a new SyncniteBridge plugin instance.
         /// </summary>
         public SyncniteBridge(IPlayniteAPI api)
             : base(api)
         {
+            // ---- Singleton guard ----
+            lock (s_initLock)
+            {
+                if (s_initialized)
+                {
+                    // Secondary instance: do not initialize anything heavy
+                    logger.Warn(
+                        "[ext][singleton][WARN] Second SyncniteBridge instance detected, skipping initialization."
+                    );
+                    Properties = new GenericPluginProperties { HasSettings = false };
+                    return;
+                }
+
+                s_initialized = true;
+                isActiveInstance = true;
+            }
+
+            // ---- Real initialization (first/active instance only) ----
+
             configPath = Path.Combine(GetPluginUserDataPath(), AppConstants.ConfigFileName);
             config = BridgeConfig.Load(configPath) ?? new BridgeConfig();
             AuthHeaders.Set(config.AuthEmail, config.GetAuthPassword());
@@ -68,6 +92,7 @@ namespace SyncniteBridge
             var syncUrl = Combine(config.ApiBase, AppConstants.Path_Sync_Crud);
             pushSync = new PushDeltaService(api, syncUrl, GetDefaultPlayniteDataRoot(), blog);
             pushSync.SetHealthProvider(() => health.IsHealthy);
+
             // Pull sync for user mode
             pullSync = new PullDeltaService(api, syncUrl, GetDefaultPlayniteDataRoot(), blog);
             pullSync.SetHealthProvider(() => health.IsHealthy);
@@ -135,6 +160,12 @@ namespace SyncniteBridge
             GetMainMenuItemsArgs args
         )
         {
+            // Secondary instance: no menu
+            if (!isActiveInstance)
+            {
+                return Array.Empty<MainMenuItem>();
+            }
+
             return new[]
             {
                 new MainMenuItem
@@ -239,7 +270,7 @@ namespace SyncniteBridge
                         }
                         catch (Exception ex)
                         {
-                            blog.Error("ui", "Failed to open settings window", err: ex.Message);
+                            blog?.Error("ui", "Failed to open settings window", err: ex.Message);
                         }
                     },
                 },
@@ -252,25 +283,30 @@ namespace SyncniteBridge
         public override void Dispose()
         {
             base.Dispose();
+
+            // Only active instance owns resources
+            if (!isActiveInstance)
+                return;
+
             try
             {
-                pushInstalled.Dispose();
+                pushInstalled?.Dispose();
             }
             catch { }
             try
             {
-                pushSync.Dispose();
+                pushSync?.Dispose();
             }
             catch { }
             try
             {
-                health.Dispose();
+                health?.Dispose();
             }
             catch { }
             try
             {
-                blog.Info("shutdown", "SyncniteBridge disposing");
-                blog.Dispose();
+                blog?.Info("shutdown", "SyncniteBridge disposing");
+                blog?.Dispose();
             }
             catch { }
         }

@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 
 namespace SyncniteBridge.Constants
 {
@@ -46,5 +47,11 @@ namespace SyncniteBridge.Constants
         public const string ConfigFileName = "config.json";
         public const string SnapshotFileName = "snapshot.json";
         public const string StateFileName = "state.json";
+
+        // Sync locks
+        internal static class SyncLocks
+        {
+            public static readonly SemaphoreSlim GlobalSyncLock = new SemaphoreSlim(1, 1);
+        }
     }
 }

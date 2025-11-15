@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Playnite.SDK;
 using Playnite.SDK.Models;
@@ -74,81 +75,93 @@ namespace SyncniteBridge.Services
                 return;
             }
 
-            blog.Info("pull", "Starting pull sync from server");
-
-            var prev = store.Load();
-
-            // 1) Fetch collections from server
-            var games =
-                await http.GetCollectionAsync<ServerGameRow>(syncUrl, "games").ConfigureAwait(false)
-                ?? Array.Empty<ServerGameRow>();
-
-            var tags =
-                await http.GetCollectionAsync<ServerNamedRow>(syncUrl, "tags").ConfigureAwait(false)
-                ?? Array.Empty<ServerNamedRow>();
-            var sources =
-                await http.GetCollectionAsync<ServerNamedRow>(syncUrl, "sources")
-                    .ConfigureAwait(false) ?? Array.Empty<ServerNamedRow>();
-            var platforms =
-                await http.GetCollectionAsync<ServerNamedRow>(syncUrl, "platforms")
-                    .ConfigureAwait(false) ?? Array.Empty<ServerNamedRow>();
-            var genres =
-                await http.GetCollectionAsync<ServerNamedRow>(syncUrl, "genres")
-                    .ConfigureAwait(false) ?? Array.Empty<ServerNamedRow>();
-            var categories =
-                await http.GetCollectionAsync<ServerNamedRow>(syncUrl, "categories")
-                    .ConfigureAwait(false) ?? Array.Empty<ServerNamedRow>();
-            var features =
-                await http.GetCollectionAsync<ServerNamedRow>(syncUrl, "features")
-                    .ConfigureAwait(false) ?? Array.Empty<ServerNamedRow>();
-
-            // 2) Build new state hashes
-            var next = new ServerStateStore.State();
-
-            next.Hashes["games"] = BuildHashMap(games.Select(g => (g.Id, HashGame(g))));
-            next.Hashes["tags"] = BuildHashMap(tags.Select(t => (t.Id, HashNamed(t.Name))));
-            next.Hashes["sources"] = BuildHashMap(sources.Select(t => (t.Id, HashNamed(t.Name))));
-            next.Hashes["platforms"] = BuildHashMap(
-                platforms.Select(t => (t.Id, HashNamed(t.Name)))
-            );
-            next.Hashes["genres"] = BuildHashMap(genres.Select(t => (t.Id, HashNamed(t.Name))));
-            next.Hashes["categories"] = BuildHashMap(
-                categories.Select(t => (t.Id, HashNamed(t.Name)))
-            );
-            next.Hashes["features"] = BuildHashMap(features.Select(t => (t.Id, HashNamed(t.Name))));
-
-            // Media list from games
-            foreach (var g in games)
+            await AppConstants.SyncLocks.GlobalSyncLock.WaitAsync().ConfigureAwait(false);
+            try
             {
-                if (!string.IsNullOrWhiteSpace(g.Icon))
-                    next.MediaPaths.Add(g.Icon);
-                if (!string.IsNullOrWhiteSpace(g.CoverImage))
-                    next.MediaPaths.Add(g.CoverImage);
-                if (!string.IsNullOrWhiteSpace(g.BackgroundImage))
-                    next.MediaPaths.Add(g.BackgroundImage);
+                blog.Info("pull", "Starting pull sync from server");
+
+                var prev = store.Load();
+
+                // 1) Fetch collections from server
+                var games =
+                    await http.GetCollectionAsync<ServerGameRow>(syncUrl, "games")
+                        .ConfigureAwait(false) ?? Array.Empty<ServerGameRow>();
+
+                var tags =
+                    await http.GetCollectionAsync<ServerNamedRow>(syncUrl, "tags")
+                        .ConfigureAwait(false) ?? Array.Empty<ServerNamedRow>();
+                var sources =
+                    await http.GetCollectionAsync<ServerNamedRow>(syncUrl, "sources")
+                        .ConfigureAwait(false) ?? Array.Empty<ServerNamedRow>();
+                var platforms =
+                    await http.GetCollectionAsync<ServerNamedRow>(syncUrl, "platforms")
+                        .ConfigureAwait(false) ?? Array.Empty<ServerNamedRow>();
+                var genres =
+                    await http.GetCollectionAsync<ServerNamedRow>(syncUrl, "genres")
+                        .ConfigureAwait(false) ?? Array.Empty<ServerNamedRow>();
+                var categories =
+                    await http.GetCollectionAsync<ServerNamedRow>(syncUrl, "categories")
+                        .ConfigureAwait(false) ?? Array.Empty<ServerNamedRow>();
+                var features =
+                    await http.GetCollectionAsync<ServerNamedRow>(syncUrl, "features")
+                        .ConfigureAwait(false) ?? Array.Empty<ServerNamedRow>();
+
+                // 2) Build new state hashes
+                var next = new ServerStateStore.State();
+
+                next.Hashes["games"] = BuildHashMap(games.Select(g => (g.Id, HashGame(g))));
+                next.Hashes["tags"] = BuildHashMap(tags.Select(t => (t.Id, HashNamed(t.Name))));
+                next.Hashes["sources"] = BuildHashMap(
+                    sources.Select(t => (t.Id, HashNamed(t.Name)))
+                );
+                next.Hashes["platforms"] = BuildHashMap(
+                    platforms.Select(t => (t.Id, HashNamed(t.Name)))
+                );
+                next.Hashes["genres"] = BuildHashMap(genres.Select(t => (t.Id, HashNamed(t.Name))));
+                next.Hashes["categories"] = BuildHashMap(
+                    categories.Select(t => (t.Id, HashNamed(t.Name)))
+                );
+                next.Hashes["features"] = BuildHashMap(
+                    features.Select(t => (t.Id, HashNamed(t.Name)))
+                );
+
+                // Media list from games
+                foreach (var g in games)
+                {
+                    if (!string.IsNullOrWhiteSpace(g.Icon))
+                        next.MediaPaths.Add(g.Icon);
+                    if (!string.IsNullOrWhiteSpace(g.CoverImage))
+                        next.MediaPaths.Add(g.CoverImage);
+                    if (!string.IsNullOrWhiteSpace(g.BackgroundImage))
+                        next.MediaPaths.Add(g.BackgroundImage);
+                }
+
+                // 3) Compute & apply DB delta
+                await ApplyDbDeltaAsync(
+                        prev,
+                        next,
+                        games,
+                        tags,
+                        sources,
+                        platforms,
+                        genres,
+                        categories,
+                        features
+                    )
+                    .ConfigureAwait(false);
+
+                // 4) Compute & apply media delta
+                await ApplyMediaDeltaAsync(prev, next, games).ConfigureAwait(false);
+
+                // 5) Save state
+                store.Save(next);
+
+                blog.Info("pull", "Pull sync completed");
             }
-
-            // 3) Compute & apply DB delta
-            await ApplyDbDeltaAsync(
-                    prev,
-                    next,
-                    games,
-                    tags,
-                    sources,
-                    platforms,
-                    genres,
-                    categories,
-                    features
-                )
-                .ConfigureAwait(false);
-
-            // 4) Compute & apply media delta
-            await ApplyMediaDeltaAsync(prev, next, games).ConfigureAwait(false);
-
-            // 5) Save state
-            store.Save(next);
-
-            blog.Info("pull", "Pull sync completed");
+            finally
+            {
+                AppConstants.SyncLocks.GlobalSyncLock.Release();
+            }
         }
 
         /// <summary>
@@ -389,7 +402,7 @@ namespace SyncniteBridge.Services
         /// <summary>
         /// Upsert named rows into the database.
         /// </summary>
-        private async Task UpsertNamedAsync(
+        private Task UpsertNamedAsync(
             string collection,
             ServerNamedRow[] rows,
             ServerStateStore.State prev,
@@ -580,6 +593,8 @@ namespace SyncniteBridge.Services
                     }
                     break;
             }
+
+            return Task.CompletedTask;
         }
 
         /// <summary>

@@ -309,12 +309,15 @@ namespace SyncniteBridge.Services
         /// </summary>
         private async Task DebouncedAsync()
         {
+            await AppConstants.SyncLocks.GlobalSyncLock.WaitAsync().ConfigureAwait(false);
             try
             {
                 if (isRunning)
-                    return;
+                    return; // extra safety against weird reentrancy
+
                 if (!dirtyFlag && !dbDirty && localState.DirtyMediaFolderCount == 0)
                     return;
+
                 if (!isHealthy())
                 {
                     blog?.Debug("sync", "Abort: became unhealthy");
@@ -327,6 +330,7 @@ namespace SyncniteBridge.Services
             finally
             {
                 isRunning = false;
+                AppConstants.SyncLocks.GlobalSyncLock.Release();
             }
         }
 

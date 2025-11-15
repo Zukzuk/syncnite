@@ -53,7 +53,7 @@ namespace SyncniteBridge.Services
 
             lock (gate)
             {
-                dirtyMediaFolders.Add(topLevelFolder);
+                dirtyMediaFolders.Add(topLevelFolder!);
             }
         }
 
