@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -26,6 +27,16 @@ namespace SyncniteBridge.Helpers
         }
 
         /// <summary>
+        /// Combine base URL and path segments into a full URL.
+        /// </summary>
+        private static string Combine(string baseUrl, string path)
+        {
+            baseUrl = (baseUrl ?? string.Empty).TrimEnd('/');
+            path = (path ?? string.Empty).TrimStart('/');
+            return baseUrl + "/" + path;
+        }
+
+        /// <summary>
         /// Ping the given URL; returns true on 200 OK.
         /// </summary>
         public async Task<bool> PingAsync(string url)
@@ -41,11 +52,62 @@ namespace SyncniteBridge.Helpers
             }
         }
 
-        private static string Combine(string baseUrl, string path)
+        /// <summary>
+        /// Check if current credentials are admin by calling /accounts/verify/admin.
+        /// Returns:
+        ///   true  → admin
+        ///   false → user or forbidden
+        ///   null  → network / unexpected error
+        /// </summary>
+        public async Task<bool?> IsAdminAsync(string url)
         {
-            baseUrl = (baseUrl ?? string.Empty).TrimEnd('/');
-            path = (path ?? string.Empty).TrimStart('/');
-            return baseUrl + "/" + path;
+            try
+            {
+                var resp = await http.GetAsync(url).ConfigureAwait(false);
+
+                if (resp.StatusCode == HttpStatusCode.OK)
+                {
+                    // requireAdminSession succeeded
+                    return true;
+                }
+
+                if (
+                    resp.StatusCode == HttpStatusCode.Forbidden
+                    || resp.StatusCode == HttpStatusCode.Unauthorized
+                )
+                {
+                    // credentials valid but not admin OR bad credentials
+                    blog?.Debug(
+                        "http",
+                        "verify/admin non-admin/forbidden",
+                        new
+                        {
+                            url,
+                            status = (int)resp.StatusCode,
+                            reason = resp.ReasonPhrase,
+                        }
+                    );
+                    return false;
+                }
+
+                blog?.Warn(
+                    "http",
+                    "verify/admin unexpected status",
+                    new
+                    {
+                        url,
+                        status = (int)resp.StatusCode,
+                        reason = resp.ReasonPhrase,
+                    }
+                );
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                blog?.Warn("http", "verify/admin failed", new { url, err = ex.Message });
+                return null;
+            }
         }
 
         /// <summary>
@@ -268,6 +330,85 @@ namespace SyncniteBridge.Helpers
             {
                 blog?.Warn("http", "media upload failed", new { url, err = ex.Message });
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// GET /{baseSyncUrl}/collection/{collection}.
+        /// Returns deserialized array of T or null on error.
+        /// </summary>
+        public async Task<T[]?> GetCollectionAsync<T>(string baseSyncUrl, string collection)
+            where T : class
+        {
+            var url = Combine(baseSyncUrl, $"collection/{collection}");
+            try
+            {
+                var resp = await http.GetAsync(url).ConfigureAwait(false);
+                var body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                if (!resp.IsSuccessStatusCode)
+                {
+                    blog?.Warn(
+                        "http",
+                        "collection non-OK",
+                        new
+                        {
+                            url,
+                            status = (int)resp.StatusCode,
+                            reason = resp.ReasonPhrase,
+                        }
+                    );
+                    return null;
+                }
+
+                return Playnite.SDK.Data.Serialization.FromJson<T[]>(body);
+            }
+            catch (Exception ex)
+            {
+                blog?.Warn("http", "collection failed", new { url, err = ex.Message });
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// GET /{baseSyncUrl}/media/{relativePath}.
+        /// Returns raw bytes or null on error / 404.
+        /// </summary>
+        public async Task<byte[]?> DownloadMediaAsync(string baseSyncUrl, string relativePath)
+        {
+            // Normalize and encode each segment to mirror upload encoding
+            var normalized = (relativePath ?? string.Empty).Replace('\\', '/').Trim('/');
+            var segments = normalized.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+            var encodedSegments = Array.ConvertAll(segments, Uri.EscapeDataString);
+            var encodedPath = string.Join("/", encodedSegments);
+
+            var url = Combine(baseSyncUrl, $"media/{encodedPath}");
+
+            try
+            {
+                var resp = await http.GetAsync(url).ConfigureAwait(false);
+                if (!resp.IsSuccessStatusCode)
+                {
+                    blog?.Debug(
+                        "http",
+                        "media download non-OK",
+                        new
+                        {
+                            url,
+                            status = (int)resp.StatusCode,
+                            reason = resp.ReasonPhrase,
+                        }
+                    );
+
+                    return null;
+                }
+
+                return await resp.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                blog?.Warn("http", "media download failed", new { url, err = ex.Message });
+                return null;
             }
         }
     }

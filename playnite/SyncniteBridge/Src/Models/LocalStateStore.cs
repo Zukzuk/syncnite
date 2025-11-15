@@ -1,36 +1,24 @@
+// Services/LocalStateSnapshotStore.cs
 using System;
-using System.Collections.Generic;
 using System.IO;
-using Playnite.SDK;
 using SyncniteBridge.Constants;
 using SyncniteBridge.Helpers;
+using SyncniteBridge.Models;
 
 namespace SyncniteBridge.Services
 {
     /// <summary>
-    /// Persists the last successful upload snapshot
-    /// under ExtensionsData/<GUID>/snapshot.json.
+    /// Stores and retrieves local state snapshots to/from disk.
     /// </summary>
-    internal sealed class SnapshotService
+    internal sealed class LocalStateStore
     {
         private readonly string path;
         private readonly BridgeLogger? blog;
 
         /// <summary>
-        /// Snapshot structure.
+        /// Creates a new LocalStateStore instance.
         /// </summary>
-        internal sealed class Snapshot
-        {
-            public string UpdatedAt { get; set; } = "";
-            public long DbTicks { get; set; } = 0;
-            public Dictionary<string, long> MediaVersions { get; set; } =
-                new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SnapshotService"/> class.
-        /// </summary>
-        public SnapshotService(string extensionsDataPath, BridgeLogger? blog = null)
+        public LocalStateStore(string extensionsDataPath, BridgeLogger? blog = null)
         {
             Directory.CreateDirectory(extensionsDataPath ?? ".");
             path = Path.Combine(extensionsDataPath ?? ".", AppConstants.SnapshotFileName);
@@ -40,20 +28,22 @@ namespace SyncniteBridge.Services
         }
 
         /// <summary>
-        /// Load the last saved snapshot from disk.
+        /// Loads the local state snapshot from disk.
         /// </summary>
-        public Snapshot Load()
+        public LocalStateSnapshot Load()
         {
             try
             {
                 if (!File.Exists(path))
                 {
                     blog?.Debug("snapshot", "No existing snapshot on disk", new { path });
-                    return new Snapshot();
+                    return new LocalStateSnapshot();
                 }
 
                 var json = File.ReadAllText(path);
-                var s = Playnite.SDK.Data.Serialization.FromJson<Snapshot>(json) ?? new Snapshot();
+                var s =
+                    Playnite.SDK.Data.Serialization.FromJson<LocalStateSnapshot>(json)
+                    ?? new LocalStateSnapshot();
 
                 blog?.Debug(
                     "snapshot",
@@ -71,14 +61,14 @@ namespace SyncniteBridge.Services
             catch (Exception ex)
             {
                 blog?.Warn("snapshot", "Failed to load snapshot", new { path, err = ex.Message });
-                return new Snapshot();
+                return new LocalStateSnapshot();
             }
         }
 
         /// <summary>
-        /// Save the snapshot to disk.
+        /// Saves the local state snapshot to disk.
         /// </summary>
-        public void Save(Snapshot snapshot)
+        public void Save(LocalStateSnapshot snapshot)
         {
             try
             {
@@ -104,7 +94,7 @@ namespace SyncniteBridge.Services
         }
 
         /// <summary>
-        /// Delete the snapshot from disk.
+        /// Deletes the local state snapshot from disk.
         /// </summary>
         public void Delete()
         {

@@ -37,10 +37,7 @@ namespace SyncniteBridge.Services
 
             AuthHeaders.Apply(http);
 
-            debounce = new System.Timers.Timer(AppConstants.DebounceMs_PushInstalled)
-            {
-                AutoReset = false,
-            };
+            debounce = new System.Timers.Timer(AppConstants.Debounce_Ms) { AutoReset = false };
             debounce.Elapsed += (s, e) => _ = PushInstalledAsync();
 
             api.Database.Games.ItemCollectionChanged += (s, e) => Trigger();
@@ -127,7 +124,7 @@ namespace SyncniteBridge.Services
                 return;
             }
 
-            CancellationTokenSource cts = null;
+            CancellationTokenSource? cts = null; // ✅ make nullable
             try
             {
                 // cancel/replace any in-flight push
@@ -144,7 +141,6 @@ namespace SyncniteBridge.Services
                 var payload = BuildPayload();
                 var content = new StringContent(payload, Encoding.UTF8, "application/json");
 
-                // Milestone: starting push
                 blog?.Info("push", "Pushing installed list");
 
                 using var req = new HttpRequestMessage(HttpMethod.Post, endpoint)
@@ -153,7 +149,7 @@ namespace SyncniteBridge.Services
                 };
 
                 var sendTask = http.SendAsync(req, ct);
-                var timeoutTask = Task.Delay(AppConstants.PushTimeoutMs, ct);
+                var timeoutTask = Task.Delay(AppConstants.PushInstalledTimeout_Ms, ct);
                 var completed = await Task.WhenAny(sendTask, timeoutTask).ConfigureAwait(false);
                 if (completed != sendTask)
                 {
@@ -165,7 +161,7 @@ namespace SyncniteBridge.Services
                     blog?.Warn(
                         "push",
                         "Push timed out",
-                        new { timeoutMs = AppConstants.PushTimeoutMs }
+                        new { timeoutMs = AppConstants.PushInstalledTimeout_Ms }
                     );
                     return;
                 }
@@ -173,7 +169,6 @@ namespace SyncniteBridge.Services
                 var resp = await sendTask.ConfigureAwait(false);
                 resp.EnsureSuccessStatusCode();
 
-                // Milestone: push ok
                 int count = api.Database.Games.Count(g => g.IsInstalled);
                 blog?.Info("push", "Push OK");
                 blog?.Debug("push", "Push details", new { count });
@@ -189,6 +184,9 @@ namespace SyncniteBridge.Services
             }
         }
 
+        /// <summary>
+        /// Dispose resources.
+        /// </summary>
         public void Dispose()
         {
             try

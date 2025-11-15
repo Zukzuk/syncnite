@@ -250,6 +250,31 @@ router.put(
     }
 );
 
+router.get("/media/*", requireSession, async (req, res) => {
+    try {
+        const tail = req.params[0] ?? "";
+        const abs = safeJoinMedia(MEDIA_ROOT, tail); // already defined above
+
+        const st = await fileStatOrNull(abs);        // already defined above
+        if (!st || !st.isFile()) {
+            return res.status(404).json({ ok: false, error: "not_found" });
+        }
+
+        // Let Express stream the file with correct headers
+        return res.sendFile(abs, (err) => {
+            if (err) {
+                log.warn("media get failed", { err: String(err?.message ?? err), tail });
+                if (!res.headersSent) {
+                    res.status(500).json({ ok: false, error: "media_stream_error" });
+                }
+            }
+        });
+    } catch (e: any) {
+        log.warn("media get failed", { err: String(e?.message ?? e) });
+        return res.status(400).json({ ok: false, error: String(e?.message ?? e) });
+    }
+});
+
 router.get("/collection/:collection", requireSession, async (req, res) => {
     try {
         const collection = sanitizeCollection(req.params.collection);

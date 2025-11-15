@@ -30,18 +30,34 @@ function resolveStartDir(input) {
 
 const rootDir = resolveStartDir(rawArg);
 
-// ---------- dynamic output name ----------
-function makeOutputFile(arg) {
-  if (!arg) return path.join(repoRoot, "scripts", "codebase.txt");
-
-  // take the last path segment as folder name
-  const lastSeg = path.basename(arg.replace(/[/\\]+$/, "")); // remove trailing slash/backslash first
-  const safeSeg = lastSeg || "root";
-
-  return path.join(repoRoot, "scripts", `codebase_${safeSeg}.txt`);
+function makeTimestamp() {
+  return Date.now(); // e.g. 1731674385123
 }
 
-const outputFile = makeOutputFile(rawArg);
+/**
+ * Returns:
+ *  - outputFile: full path to the new file (with timestamp)
+ *  - familyPrefix: filename prefix used to identify older versions for the same target
+ */
+function makeOutputFile(arg) {
+  // take the last path segment as folder name
+  const lastSeg = arg
+    ? path.basename(arg.replace(/[/\\]+$/, "")) // remove trailing slash/backslash first
+    : "";
+  const safeSeg = lastSeg || "root";
+
+  const baseName = `codebase_${safeSeg}`; // logical “target”
+  const timestamp = makeTimestamp();
+  const fileName = `${baseName}_${timestamp}.txt`;
+  const familyPrefix = `${baseName}_`; // used to find old versions
+
+  return {
+    outputFile: path.join(repoRoot, "scripts", fileName),
+    familyPrefix,
+  };
+}
+
+const { outputFile, familyPrefix } = makeOutputFile(rawArg);
 
 // ---------- filters ----------
 const ignoreDirs = new Set([
@@ -106,10 +122,33 @@ function collectFiles(dir) {
   }
 }
 
+/** delete older versions of the same target in the output folder */
+function cleanupOldOutputs(dir, familyPrefix, keepFileName) {
+  if (!fs.existsSync(dir)) return;
+
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+
+  for (const entry of entries) {
+    if (!entry.isFile()) continue;
+    const name = entry.name;
+
+    // only touch files of the same "family"
+    if (!name.startsWith(familyPrefix) || !name.endsWith(".txt")) continue;
+    if (name === keepFileName) continue; // don't delete the current one
+
+    const fullPath = path.join(dir, name);
+    fs.unlinkSync(fullPath);
+  }
+}
+
 // ---------- run ----------
 fs.mkdirSync(path.dirname(outputFile), { recursive: true });
 collectFiles(rootDir);
 fs.writeFileSync(outputFile, result, "utf-8");
 
+// delete old versions for the same target *after* writing the new one
+cleanupOldOutputs(path.dirname(outputFile), familyPrefix, path.basename(outputFile));
+
 console.log(`✅ Samengevoegd naar ${outputFile}`);
+console.log(`🧹 Oude versies voor doel '${familyPrefix}' opgeschoond in ${path.dirname(outputFile)}`);
 console.log(`🔎 Bronstart: ${rootDir}`);

@@ -14,7 +14,7 @@ namespace SyncniteBridge.Services
     /// Orchestrates CRUD + media binary sync using /sync endpoints.
     /// Preserves: watchers, debounce, health-gating, notifications, snapshots.
     /// </summary>
-    internal sealed class DeltaCRUDService : IDisposable
+    internal sealed class PushDeltaService : IDisposable
     {
         private readonly IPlayniteAPI api;
         private readonly BridgeLogger? blog;
@@ -31,9 +31,8 @@ namespace SyncniteBridge.Services
         private Func<bool> isHealthy = () => true;
 
         private readonly ExtensionHttpClient http;
-        private readonly SnapshotService snapshot;
-        private readonly LocalStateScanService scanner;
-        private readonly MediaChangeService mediaChanges = new MediaChangeService();
+        private readonly LocalStateStore snapshotStore;
+        private readonly LocalStateService localState;
 
         private readonly object libEventLock = new object();
         private readonly object mediaEventLock = new object();
@@ -41,7 +40,10 @@ namespace SyncniteBridge.Services
         private DateTime lastMediaEventTime = DateTime.MinValue;
         private const int RapidEventThresholdMs = 100;
 
-        public DeltaCRUDService(
+        /// <summary>
+        /// Constructs a new instance of the PushDeltaService.
+        /// </summary>
+        public PushDeltaService(
             IPlayniteAPI api,
             string syncUrl,
             string dataRoot,
@@ -55,10 +57,10 @@ namespace SyncniteBridge.Services
 
             http = new ExtensionHttpClient(blog);
 
-            var myExtDataDir = Path.Combine(api.Paths.ExtensionsDataPath, AppConstants.GUID);
-            Directory.CreateDirectory(myExtDataDir);
-            snapshot = new SnapshotService(myExtDataDir, blog);
-            scanner = new LocalStateScanService(api, this.dataRoot, blog);
+            var extDataDir = Path.Combine(api.Paths.ExtensionsDataPath, AppConstants.GUID);
+            Directory.CreateDirectory(extDataDir);
+            snapshotStore = new LocalStateStore(extDataDir, blog);
+            localState = new LocalStateService(api, this.dataRoot, blog);
 
             var libDir = Path.Combine(this.dataRoot, AppConstants.LibraryDirName);
             Directory.CreateDirectory(libDir);
@@ -102,9 +104,9 @@ namespace SyncniteBridge.Services
         /// <summary>
         /// Update sync base (…/api/sync)
         /// </summary>
-        public void UpdateEndpoints(string newSyncUrl)
+        public void UpdateEndpoints(string endpoint)
         {
-            syncUrl = (newSyncUrl ?? "").TrimEnd('/');
+            syncUrl = (endpoint ?? "").TrimEnd('/');
             blog?.Debug("sync", "CRUD endpoints updated", new { syncUrl });
         }
 
@@ -120,15 +122,17 @@ namespace SyncniteBridge.Services
         {
             try
             {
-                var prev = snapshot.Load();
-                var cur = scanner.BuildSnapshot();
+                var prev = snapshotStore.Load();
+                var cur = localState.BuildSnapshot(fullRescan: true); // full scan at startup
 
                 var firstRun = (prev.DbTicks == 0 && prev.MediaVersions.Count == 0);
                 if (firstRun)
                 {
                     dbDirty = true;
                     foreach (var name in cur.MediaVersions.Keys)
-                        mediaChanges.Add(name);
+                    {
+                        localState.MarkMediaFolderDirty(name);
+                    }
                     blog?.Info("sync", "Initial seed prepared (first run)");
                     blog?.Debug(
                         "sync",
@@ -149,10 +153,11 @@ namespace SyncniteBridge.Services
                         prev.MediaVersions.TryGetValue(name, out var oldVer);
                         if (curVer != oldVer)
                         {
-                            mediaChanges.Add(name);
+                            localState.MarkMediaFolderDirty(name);
                             changed++;
                         }
                     }
+
                     blog?.Debug(
                         "sync",
                         "Initial diff prepared",
@@ -176,7 +181,7 @@ namespace SyncniteBridge.Services
                 {
                     libraryDir = Path.Combine(dataRoot, AppConstants.LibraryDirName),
                     mediaDir = Path.Combine(dataRoot, AppConstants.LibraryFilesDirName),
-                    debounceMs = AppConstants.DebounceMs_Sync,
+                    debounceMs = AppConstants.Debounce_Ms,
                 }
             );
         }
@@ -186,25 +191,23 @@ namespace SyncniteBridge.Services
         /// </summary>
         public void HardSync()
         {
-            // 1) Delete snapshot.json so next snapshot is a fresh baseline
             try
             {
-                snapshot.Delete();
+                snapshotStore.Delete();
             }
             catch
             {
-                // non-fatal; we can still force a rescan
+                // non-fatal
             }
 
-            // 2) Mark DB + all media folders as dirty, similar to first run
             try
             {
-                var cur = scanner.BuildSnapshot();
+                var cur = localState.BuildSnapshot(fullRescan: true);
 
                 dbDirty = true;
                 foreach (var name in cur.MediaVersions.Keys)
                 {
-                    mediaChanges.Add(name);
+                    localState.MarkMediaFolderDirty(name);
                 }
 
                 blog?.Info("sync", "Hard sync prepared (snapshot reset)");
@@ -219,10 +222,12 @@ namespace SyncniteBridge.Services
                 blog?.Warn("sync", "Hard sync prep failed", new { err = ex.Message });
             }
 
-            // 3) Kick the normal sync pipeline (health-gated, debounced)
             Trigger();
         }
 
+        /// <summary>
+        /// Trigger a sync run (debounced).
+        /// </summary>
         public void Trigger()
         {
             if (!isHealthy())
@@ -231,10 +236,13 @@ namespace SyncniteBridge.Services
                 return;
             }
             dirtyFlag = true;
-            debounceTimer?.Change(AppConstants.DebounceMs_Sync, Timeout.Infinite);
+            debounceTimer?.Change(AppConstants.Debounce_Ms, Timeout.Infinite);
             blog?.Info("sync", "Manual/auto CRUD sync trigger queued");
         }
 
+        /// <summary>
+        /// Dispose watchers and timer.
+        /// </summary>
         public void Dispose()
         {
             try
@@ -254,6 +262,9 @@ namespace SyncniteBridge.Services
             catch { }
         }
 
+        /// <summary>
+        /// Library change event handler.
+        /// </summary>
         private void OnLibraryChanged(object s, FileSystemEventArgs e)
         {
             dbDirty = true;
@@ -270,6 +281,9 @@ namespace SyncniteBridge.Services
             Trigger();
         }
 
+        /// <summary>
+        /// Media change event handler.
+        /// </summary>
         private void OnMediaChanged(object s, FileSystemEventArgs e)
         {
             var top = PathHelpers.GetTopLevelMediaFolderFromPath(dataRoot, e.FullPath);
@@ -278,7 +292,7 @@ namespace SyncniteBridge.Services
                 var now = DateTime.UtcNow;
                 if (!string.IsNullOrWhiteSpace(top))
                 {
-                    mediaChanges.Add(top);
+                    localState.MarkMediaFolderDirty(top);
                 }
                 if ((now - lastMediaEventTime).TotalMilliseconds < RapidEventThresholdMs)
                 {
@@ -290,13 +304,16 @@ namespace SyncniteBridge.Services
             Trigger();
         }
 
+        /// <summary>
+        /// Debounced async handler.
+        /// </summary>
         private async Task DebouncedAsync()
         {
             try
             {
                 if (isRunning)
                     return;
-                if (!dirtyFlag && !dbDirty && mediaChanges.Count == 0)
+                if (!dirtyFlag && !dbDirty && localState.DirtyMediaFolderCount == 0)
                     return;
                 if (!isHealthy())
                 {
@@ -305,7 +322,7 @@ namespace SyncniteBridge.Services
                 }
 
                 isRunning = true;
-                await RunCrudSyncIfNeededAsync().ConfigureAwait(false);
+                await PushCrudAsync().ConfigureAwait(false);
             }
             finally
             {
@@ -313,8 +330,10 @@ namespace SyncniteBridge.Services
             }
         }
 
-        // ------------------------- CRUD core -------------------------
-
+        /// <summary>
+        /// Build client inventory and post to /delta, then apply returned delta.
+        /// Also upload dirty media folders.
+        /// </summary>
         private sealed class ClientInventory
         {
             public Dictionary<string, string[]> json { get; set; } =
@@ -329,6 +348,9 @@ namespace SyncniteBridge.Services
             }
         }
 
+        /// <summary>
+        /// Delta response from server.
+        /// </summary>
         private sealed class DeltaResponse
         {
             public bool ok { get; set; }
@@ -343,6 +365,9 @@ namespace SyncniteBridge.Services
             }
         }
 
+        /// <summary>
+        /// Build client inventory from Playnite DB.
+        /// </summary>
         private ClientInventory BuildClientInventory()
         {
             var m = new ClientInventory();
@@ -400,12 +425,17 @@ namespace SyncniteBridge.Services
             return m;
         }
 
-        private async Task RunCrudSyncIfNeededAsync()
+        /// <summary>
+        /// Perform the push CRUD sync: delta + media uploads + snapshot update.
+        /// </summary>
+        private async Task PushCrudAsync()
         {
             var swTotal = System.Diagnostics.Stopwatch.StartNew();
             try
             {
-                var mediaFolders = mediaChanges.Snapshot();
+                // Snapshot dirty folders WITHOUT clearing them; clearing is done by BuildSnapshot(false)
+                var mediaFolders = localState.DirtyMediaFoldersSnapshot();
+
                 if (!dbDirty && mediaFolders.Count == 0)
                 {
                     blog?.Debug("sync", "Up-to-date; no CRUD work needed");
@@ -425,11 +455,10 @@ namespace SyncniteBridge.Services
                     dbDirty = false;
                 }
 
-                // 2) Media uploads
+                // 2) Media uploads for the dirty top-level folders we saw at start
                 if (mediaFolders.Count > 0)
                 {
                     await UploadMediaFoldersAsync(mediaFolders).ConfigureAwait(false);
-                    mediaChanges.Clear();
                 }
 
                 blog?.Info("sync", "CRUD sync complete");
@@ -441,9 +470,13 @@ namespace SyncniteBridge.Services
 
                 try
                 {
-                    var snap = scanner.BuildSnapshot();
-                    blog?.Debug("sync", "Saved snapshot");
-                    // Push snapshot to server (fire-and-forget-ish, but we await for logging)
+                    // 3) Refresh local snapshot & clear processed dirty flags
+                    var snap = localState.BuildSnapshot(fullRescan: false);
+
+                    // Persist locally
+                    snapshotStore.Save(snap);
+
+                    // Push snapshot to server (same JSON shape as before)
                     var pushed = await http.UploadSnapshotAsync(syncUrl, snap)
                         .ConfigureAwait(false);
                     if (!pushed)
@@ -460,7 +493,7 @@ namespace SyncniteBridge.Services
                 }
                 catch (Exception ex)
                 {
-                    blog?.Warn("sync", "Failed to save snapshot", new { err = ex.Message });
+                    blog?.Warn("sync", "Failed to save/upload snapshot", new { err = ex.Message });
                 }
 
                 if (dirtyFlag)
@@ -486,10 +519,15 @@ namespace SyncniteBridge.Services
             }
         }
 
-        // use ExtensionHttpClient for delta
+        /// <summary>
+        /// Post client inventory to /delta and get delta response.
+        /// </summary>
         private Task<DeltaResponse?> PostDeltaAsync(ClientInventory inventory) =>
             http.GetDeltaAsync<DeltaResponse>(syncUrl, inventory);
 
+        /// <summary>
+        /// Apply the delta response to local Playnite DB.
+        /// </summary>
         private async Task ApplyDbDeltaAsync(DeltaResponse.Delta delta)
         {
             // Upserts
@@ -520,6 +558,9 @@ namespace SyncniteBridge.Services
             }
         }
 
+        /// <summary>
+        /// Build JSON for an entity by collection and ID.
+        /// </summary>
         private string? BuildEntityJson(string collection, string id)
         {
             // Map Playnite entities to a stable JSON schema the server expects.
@@ -690,6 +731,9 @@ namespace SyncniteBridge.Services
             return null;
         }
 
+        /// <summary>
+        /// Upload dirty media folders.
+        /// </summary>
         private async Task UploadMediaFoldersAsync(List<string> topLevelFolders)
         {
             var mediaRoot = Path.Combine(dataRoot, AppConstants.LibraryFilesDirName);
@@ -727,6 +771,9 @@ namespace SyncniteBridge.Services
             }
         }
 
+        /// <summary>
+        /// Combine base URL and path segments.
+        /// </summary>
         private static string Combine(string baseUrl, string path)
         {
             baseUrl = (baseUrl ?? string.Empty).TrimEnd('/');

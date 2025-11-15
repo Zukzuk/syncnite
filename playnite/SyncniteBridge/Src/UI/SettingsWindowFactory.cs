@@ -21,6 +21,7 @@ namespace SyncniteBridge.UI
             IPlayniteAPI api,
             string initialApiBase,
             Func<string> getHealthText,
+            Func<bool> getIsAdmin,
             Action<Action<bool>> subscribeHealth,
             Action<Action<bool>> unsubscribeHealth,
             Action<string> onSaveApiBase,
@@ -40,8 +41,7 @@ namespace SyncniteBridge.UI
                 }
             );
 
-            var appVer = BridgeVersion.Current;
-            win.Title = AppConstants.SettingsTitle + " (v" + appVer + ")";
+            win.Title = AppConstants.AppName + " Settings (v" + BridgeVersion.Current + ")";
 
             ThemeHelpers.HookThemeBackground(win);
             ThemeHelpers.HookThemeForeground(win);
@@ -53,6 +53,7 @@ namespace SyncniteBridge.UI
             PasswordBox tbPass = null!;
             Button btnPush = null!;
             Button btnSync = null!;
+            TextBlock roleText = null!;
 
             var root = new Grid { Margin = new Thickness(16) };
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Header
@@ -85,8 +86,9 @@ namespace SyncniteBridge.UI
 
             // 1) Header with status dot + text
             var header = new Grid { Margin = new Thickness(0, 0, 0, 4) };
-            header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto }); // dot
+            header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto }); // status
+            header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto }); // role
 
             var dot = new Ellipse
             {
@@ -101,6 +103,14 @@ namespace SyncniteBridge.UI
                 FontWeight = FontWeights.SemiBold,
             };
             ThemeHelpers.SetThemeTextBrush(statusText);
+
+            roleText = new TextBlock
+            {
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(8, 0, 0, 0),
+                FontStyle = FontStyles.Italic,
+            };
+            ThemeHelpers.SetThemeTextBrush(roleText);
 
             void RenderStatus(bool healthy)
             {
@@ -132,12 +142,38 @@ namespace SyncniteBridge.UI
                     }
                     statusText.Text = AppConstants.HealthStatusUnreachable;
                 }
+
+                try
+                {
+                    // if unreachable, we can hide the role; adjust if you prefer it always visible
+                    if (healthy)
+                    {
+                        var isAdmin = getIsAdmin?.Invoke() == true;
+                        roleText.Text = isAdmin ? "admin" : "user";
+                        roleText.Visibility = Visibility.Visible;
+                    }
+                    else
+                    {
+                        roleText.Text = "";
+                        roleText.Visibility = Visibility.Collapsed;
+                    }
+                }
+                catch
+                {
+                    roleText.Text = "";
+                    roleText.Visibility = Visibility.Collapsed;
+                }
             }
 
             Grid.SetColumn(dot, 0);
             header.Children.Add(dot);
+
             Grid.SetColumn(statusText, 1);
             header.Children.Add(statusText);
+
+            Grid.SetColumn(roleText, 2);
+            header.Children.Add(roleText);
+
             Grid.SetRow(header, 0);
             root.Children.Add(header);
 
@@ -220,7 +256,7 @@ namespace SyncniteBridge.UI
             // helper: save full form (API + creds)
             void SaveAll()
             {
-                onSaveApiBase?.Invoke(tbApi.Text?.Trim());
+                onSaveApiBase?.Invoke(tbApi.Text?.Trim() ?? "");
                 onSaveCredentials?.Invoke(tbEmail.Text?.Trim() ?? "", tbPass.Password ?? "");
             }
 

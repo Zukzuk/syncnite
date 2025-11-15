@@ -16,6 +16,7 @@ namespace SyncniteBridge.Services
         public string StatusText =>
             lastOk ? AppConstants.HealthStatusHealthy : AppConstants.HealthStatusUnreachable;
         public bool IsHealthy => lastOk;
+        public bool IsAdmin => lastIsAdmin;
         public event Action<bool> StatusChanged = delegate { };
 
         private readonly IPlayniteAPI api;
@@ -23,19 +24,27 @@ namespace SyncniteBridge.Services
         private readonly ExtensionHttpClient http;
         private readonly Timer timer;
         private string pingUrl;
+        private string verifyAdminUrl;
         private bool lastOk;
+        private bool lastIsAdmin;
         private readonly BridgeLogger? blog;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="HealthcheckService"/> class.
+        /// Creates a new HealthcheckService instance.
         /// </summary>
-        public HealthcheckService(IPlayniteAPI api, string pingUrl, BridgeLogger? blog = null)
+        public HealthcheckService(
+            IPlayniteAPI api,
+            string pingUrl,
+            string verifyAdminUrl,
+            BridgeLogger? blog = null
+        )
         {
             this.api = api;
             this.pingUrl = pingUrl;
+            this.verifyAdminUrl = verifyAdminUrl;
             this.blog = blog;
             http = new ExtensionHttpClient(blog);
-            timer = new Timer(AppConstants.HealthcheckIntervalMs) { AutoReset = true };
+            timer = new Timer(AppConstants.HealthcheckInterval_Ms) { AutoReset = true };
             timer.Elapsed += async (s, e) => await TickAsync();
         }
 
@@ -54,19 +63,20 @@ namespace SyncniteBridge.Services
                 blog?.Debug(
                     "health",
                     "First check in ms",
-                    new { pingUrl, intervalMs = AppConstants.HealthcheckIntervalMs }
+                    new { pingUrl, intervalMs = AppConstants.HealthcheckInterval_Ms }
                 );
                 await TickAsync().ConfigureAwait(false);
             });
         }
 
         /// <summary>
-        /// Update the ping endpoint URL.
+        /// Update ping + verify/admin endpoints.
         /// </summary>
-        public void UpdateEndpoint(string newPingUrl)
+        public void UpdateEndpoints(string newPingUrl, string newVerifyAdminUrl)
         {
             pingUrl = newPingUrl;
-            blog?.Debug("health", "Ping endpoint updated", new { pingUrl });
+            verifyAdminUrl = newVerifyAdminUrl;
+            blog?.Debug("health", "Health endpoints updated", new { pingUrl, verifyAdminUrl });
             _ = TickAsync();
         }
 
@@ -75,32 +85,50 @@ namespace SyncniteBridge.Services
         /// </summary>
         private async Task TickAsync()
         {
+            // 1) Reachability (ping)
             var ok = await http.PingAsync(pingUrl).ConfigureAwait(false);
-            if (ok != lastOk)
+            bool isAdminNow = false;
+
+            if (ok && !string.IsNullOrWhiteSpace(verifyAdminUrl))
             {
-                lastOk = ok;
-                var msg = ok ? AppConstants.HealthMsgHealthy : AppConstants.HealthMsgUnreachable;
-                var type = ok ? NotificationType.Info : NotificationType.Error;
-                api.Notifications.Add(AppConstants.Notif_Health, msg, type);
-
-                if (ok)
-                {
-                    blog?.Info("health", "server healthy");
-                    blog?.Debug("health", "server reachable", new { pingUrl });
-                }
-                else
-                {
-                    blog?.Warn("health", "server unreachable", new { pingUrl });
-                }
-
-                try
-                {
-                    StatusChanged?.Invoke(ok);
-                }
-                catch { }
+                // 2) Role check via /accounts/verify/admin
+                var res = await http.IsAdminAsync(verifyAdminUrl).ConfigureAwait(false);
+                isAdminNow = res == true;
             }
+
+            var statusChanged = ok != lastOk;
+            var roleChanged = isAdminNow != lastIsAdmin;
+
+            if (!statusChanged && !roleChanged)
+            {
+                return; // nothing changed; avoid noisy events
+            }
+
+            lastOk = ok;
+            lastIsAdmin = isAdminNow;
+
+            var msg = ok ? AppConstants.HealthMsgHealthy : AppConstants.HealthMsgUnreachable;
+            var type = ok ? NotificationType.Info : NotificationType.Error;
+            api.Notifications.Add(AppConstants.Notif_Health, msg, type);
+
+            if (ok)
+            {
+                var mode = isAdminNow ? "admin" : "user";
+                blog?.Info("health", $"server healthy ({mode} mode)");
+                blog?.Debug("health", "server reachable", new { pingUrl, isAdmin = isAdminNow });
+            }
+            else
+            {
+                blog?.Warn("health", "server unreachable");
+            }
+
+            // Consumers read IsHealthy + IsAdmin if they care
+            StatusChanged(ok);
         }
 
+        /// <summary>
+        /// Dispose the service.
+        /// </summary>
         public void Dispose()
         {
             try

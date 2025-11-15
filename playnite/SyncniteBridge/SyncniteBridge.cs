@@ -23,7 +23,8 @@ namespace SyncniteBridge
         private BridgeLogger blog;
         private HealthcheckService health;
         private PushInstalledService pushInstalled;
-        private DeltaCRUDService deltaSync;
+        private PushDeltaService pushSync;
+        private PullDeltaService pullSync;
 
         /// <summary>
         /// Create a new SyncniteBridge plugin instance.
@@ -50,39 +51,53 @@ namespace SyncniteBridge
             );
 
             // Health service (source of truth for connectivity)
-            var pingUrl = Combine(config.ApiBase, AppConstants.Path_Syncnite_Ping);
-            health = new HealthcheckService(api, pingUrl, blog);
+            var pingUrl = Combine(config.ApiBase, AppConstants.Path_Sync_Ping);
+            var verifyAdminUrl = Combine(config.ApiBase, AppConstants.Path_Accounts_VerifyAdmin);
+            health = new HealthcheckService(api, pingUrl, verifyAdminUrl, blog);
             health.Start();
 
             // Push installed (independent path)
             pushInstalled = new PushInstalledService(
                 api,
-                Combine(config.ApiBase, AppConstants.Path_Syncnite_Push),
+                Combine(config.ApiBase, AppConstants.Path_Sync_Installed),
                 blog
             );
             pushInstalled.SetHealthProvider(() => health.IsHealthy);
 
-            // Delta sync (CRUD)
-            var syncUrl = Combine(config.ApiBase, AppConstants.Path_Syncnite_Sync);
-            deltaSync = new DeltaCRUDService(api, syncUrl, GetDefaultPlayniteDataRoot(), blog);
-            deltaSync.SetHealthProvider(() => health.IsHealthy);
+            // Delta sync (push/pull)
+            var syncUrl = Combine(config.ApiBase, AppConstants.Path_Sync_Crud);
+            pushSync = new PushDeltaService(api, syncUrl, GetDefaultPlayniteDataRoot(), blog);
+            pushSync.SetHealthProvider(() => health.IsHealthy);
+            // Pull sync for user mode
+            pullSync = new PullDeltaService(api, syncUrl, GetDefaultPlayniteDataRoot(), blog);
+            pullSync.SetHealthProvider(() => health.IsHealthy);
 
             // When health flips to healthy, kick once
             health.StatusChanged += ok =>
             {
-                if (ok)
+                if (!ok)
                 {
-                    blog.Info("startup", "Health became healthy → triggering push+sync");
+                    blog.Warn("startup", "Health became unhealthy → suspend sync");
+                    return;
+                }
+
+                if (health.IsAdmin)
+                {
+                    // Admin mode → push + admin delta
+                    blog.Info("startup", "healthy in ADMIN mode → triggering push+sync");
                     pushInstalled.Trigger();
-                    deltaSync.Trigger();
+                    pushSync.Trigger();
                 }
                 else
                 {
-                    blog.Warn("startup", "Health became unhealthy → suspend push+sync");
+                    // User mode → pull changes from server into Playnite
+                    blog.Info("startup", "healthy in USER mode → triggering pull sync");
+                    pushInstalled.Trigger();
+                    _ = pullSync.pullOnceAsync(); // fire-and-forget, handles its own logging
                 }
             };
 
-            deltaSync.Start();
+            pushSync.Start();
 
             Properties = new GenericPluginProperties { HasSettings = true };
         }
@@ -113,14 +128,8 @@ namespace SyncniteBridge
             return string.Empty;
         }
 
-#pragma warning disable CS8603
-        public override ISettings GetSettings(bool firstRunSettings) => null;
-
-        public override UserControl GetSettingsView(bool firstRunSettings) => null;
-#pragma warning restore CS8603
-
         /// <summary>
-        /// Get main menu items.
+        /// Get main menu items for the plugin.
         /// </summary>
         public override System.Collections.Generic.IEnumerable<MainMenuItem> GetMainMenuItems(
             GetMainMenuItemsArgs args
@@ -130,8 +139,8 @@ namespace SyncniteBridge
             {
                 new MainMenuItem
                 {
-                    Description = AppConstants.MenuTitle,
-                    Action = _ =>
+                    Description = AppConstants.AppName + " Settings",
+                    Action = args =>
                     {
                         try
                         {
@@ -139,6 +148,7 @@ namespace SyncniteBridge
                                 PlayniteApi,
                                 initialApiBase: config.ApiBase,
                                 getHealthText: () => health?.StatusText ?? "unknown",
+                                getIsAdmin: () => health?.IsAdmin == true,
                                 subscribeHealth: cb =>
                                 {
                                     if (health != null)
@@ -156,25 +166,31 @@ namespace SyncniteBridge
                                         : newBase.Trim();
                                     if (!string.IsNullOrEmpty(nb) && !nb.EndsWith("/"))
                                         nb += "/";
+
                                     config.ApiBase = nb;
                                     BridgeConfig.Save(configPath, config);
 
                                     var syncUrl = Combine(
                                         config.ApiBase,
-                                        AppConstants.Path_Syncnite_Sync
+                                        AppConstants.Path_Sync_Crud
                                     );
                                     var pushUrl = Combine(
                                         config.ApiBase,
-                                        AppConstants.Path_Syncnite_Push
+                                        AppConstants.Path_Sync_Installed
                                     );
                                     var pingUrl = Combine(
                                         config.ApiBase,
-                                        AppConstants.Path_Syncnite_Ping
+                                        AppConstants.Path_Sync_Ping
+                                    );
+                                    var verifyAdminUrl = Combine(
+                                        config.ApiBase,
+                                        AppConstants.Path_Accounts_VerifyAdmin
                                     );
 
                                     pushInstalled.UpdateEndpoint(pushUrl);
-                                    deltaSync.UpdateEndpoints(syncUrl);
-                                    health.UpdateEndpoint(pingUrl);
+                                    pushSync.UpdateEndpoints(syncUrl);
+                                    pullSync.UpdateEndpoint(syncUrl);
+                                    health.UpdateEndpoints(pingUrl, verifyAdminUrl);
                                     blog.UpdateApiBase(config.ApiBase);
 
                                     blog.Info("config", "ApiBase updated");
@@ -187,7 +203,7 @@ namespace SyncniteBridge
                                     if (health.IsHealthy)
                                     {
                                         pushInstalled.PushNow();
-                                        deltaSync.Trigger();
+                                        pushSync.Trigger();
                                     }
                                 },
                                 onPushInstalled: () =>
@@ -197,7 +213,7 @@ namespace SyncniteBridge
                                 },
                                 onSyncLibrary: () =>
                                 {
-                                    deltaSync.HardSync();
+                                    pushSync.HardSync();
                                     blog.Info("sync", "Manual sync requested");
                                 },
                                 initialEmail: config.AuthEmail,
@@ -213,7 +229,10 @@ namespace SyncniteBridge
                                     if (health.IsHealthy == true)
                                     {
                                         pushInstalled.PushNow();
-                                        deltaSync.Trigger();
+                                        if (health.IsAdmin)
+                                            pushSync.Trigger();
+                                        else
+                                            _ = pullSync.pullOnceAsync(); // fire-and-forget
                                     }
                                 }
                             );
@@ -227,6 +246,9 @@ namespace SyncniteBridge
             };
         }
 
+        /// <summary>
+        /// Dispose resources on plugin unload.
+        /// </summary>
         public override void Dispose()
         {
             base.Dispose();
@@ -237,7 +259,7 @@ namespace SyncniteBridge
             catch { }
             try
             {
-                deltaSync.Dispose();
+                pushSync.Dispose();
             }
             catch { }
             try

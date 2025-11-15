@@ -13,26 +13,24 @@ namespace SyncniteBridge.Constants
         // Default API base
         public const string DefaultApiBase = "http://localhost:3003/api/";
 
-        // Server endpoints (v2 CRUD)
-        public const string Path_Syncnite_Sync = "sync";
-        public const string Path_Syncnite_Push = "sync/installed";
-        public const string Path_Syncnite_Ping = "sync/ping";
-        public const string Path_Syncnite_Log = "log";
-
         // Common app names/labels
         public const string AppName = "SyncniteBridge";
-        public const string SettingsTitle = "Syncnite Bridge Settings";
-        public const string MenuTitle = "Syncnite Bridge";
+
+        // Server endpoints (v2 CRUD)
+        public const string Path_Sync_Log = "log";
+        public const string Path_Sync_Crud = "sync";
+        public const string Path_Sync_Installed = "sync/installed";
+        public const string Path_Sync_Ping = "sync/ping";
+        public const string Path_Accounts_VerifyAdmin = "accounts/verify/admin";
 
         // Playnite data layout
         public const string LibraryDirName = "library";
         public const string LibraryFilesDirName = "library/files";
 
         // Timing
-        public const int DebounceMs_Sync = 1200;
-        public const int DebounceMs_PushInstalled = 1200;
-        public const int HealthcheckIntervalMs = 60_000;
-        public const int PushTimeoutMs = 20_000;
+        public const int Debounce_Ms = 1200;
+        public const int HealthcheckInterval_Ms = 20_000;
+        public const int PushInstalledTimeout_Ms = 20_000;
 
         // Notifications
         public const string Notif_Health = "SyncniteBridge_health";
@@ -47,5 +45,6 @@ namespace SyncniteBridge.Constants
         // Config file
         public const string ConfigFileName = "config.json";
         public const string SnapshotFileName = "snapshot.json";
+        public const string StateFileName = "state.json";
     }
 }

@@ -21,8 +21,8 @@
     "build:ext": "node scripts/build-extension.js",
     "build:version": "node scripts/set-version.js",
     "clean": "node scripts/clean.js",
-    "codebase": "node scripts/codebase.js",
-    "changes": "node scripts/changes.js"
+    "codebase": "node scripts/codebase.mjs",
+    "changes": "node scripts/changes.mjs"
   },
   "devDependencies": {
     "@types/node": "^20.19.13",

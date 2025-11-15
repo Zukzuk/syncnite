@@ -27,14 +27,15 @@ namespace SyncniteBridge.Helpers
     internal sealed class BridgeLogger : IDisposable
     {
         private const int MaxBatch = 32;
-        private const int SendTimeoutMs = 10_000;
-        private const int MaxDrainMs = 1500;
-        private const int BaseBackoffMs = 500;
+        private const int SendTimeout_Ms = 10_000;
+        private const int MaxDrain_Ms = 1500;
+        private const int BaseBackoff_Ms = 500;
+        private const int FailureBackoff_Ms = 8000;
 
         private readonly ILogger plog = LogManager.GetLogger();
         private readonly HttpClient http = new HttpClient
         {
-            Timeout = TimeSpan.FromMilliseconds(SendTimeoutMs),
+            Timeout = TimeSpan.FromMilliseconds(SendTimeout_Ms),
         };
         private readonly BlockingCollection<string> q = new BlockingCollection<string>(
             new ConcurrentQueue<string>()
@@ -51,7 +52,7 @@ namespace SyncniteBridge.Helpers
         /// </summary>
         public BridgeLogger(string apiBase, string version, string level = "info")
         {
-            endpoint = Combine(apiBase, AppConstants.Path_Syncnite_Log);
+            endpoint = Combine(apiBase, AppConstants.Path_Sync_Log);
             ver = version ?? "dev";
             threshold = Parse(level);
             worker = Task.Run(() => PumpAsync(cts.Token));
@@ -62,7 +63,7 @@ namespace SyncniteBridge.Helpers
         /// Update the API base URL.
         /// </summary>
         public void UpdateApiBase(string apiBase) =>
-            endpoint = Combine(apiBase, AppConstants.Path_Syncnite_Log);
+            endpoint = Combine(apiBase, AppConstants.Path_Sync_Log);
 
         /// <summary>
         /// Update the logging level.
@@ -191,7 +192,10 @@ namespace SyncniteBridge.Helpers
                 catch
                 {
                     failures++;
-                    var backoff = Math.Min(BaseBackoffMs * (1 << Math.Min(failures, 5)), 8000);
+                    var backoff = Math.Min(
+                        BaseBackoff_Ms * (1 << Math.Min(failures, 5)),
+                        FailureBackoff_Ms
+                    );
                     try
                     {
                         await Task.Delay(backoff, ct).ConfigureAwait(false);
@@ -201,6 +205,9 @@ namespace SyncniteBridge.Helpers
             }
         }
 
+        /// <summary>
+        /// Dispose the logger.
+        /// </summary>
         public void Dispose()
         {
             try
@@ -211,7 +218,7 @@ namespace SyncniteBridge.Helpers
             try
             {
                 var sw = System.Diagnostics.Stopwatch.StartNew();
-                while (sw.ElapsedMilliseconds < MaxDrainMs && q.Count > 0)
+                while (sw.ElapsedMilliseconds < MaxDrain_Ms && q.Count > 0)
                     Thread.Sleep(50);
             }
             catch { }
