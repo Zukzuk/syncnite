@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading;
 using System.Windows.Controls;
 using Playnite.SDK;
 using Playnite.SDK.Plugins;
@@ -30,6 +31,7 @@ namespace SyncniteBridge
         private ChangeDetectionService dbEvents = null!;
 
         private readonly bool isActiveInstance = false;
+        private readonly Timer? pullTimer = null;
 
         /// <summary>
         /// Create a new SyncniteBridge plugin instance.
@@ -100,6 +102,14 @@ namespace SyncniteBridge
             pullSync = new PullDeltaService(api, syncUrl, GetDefaultPlayniteDataRoot(), blog);
             pullSync.SetHealthProvider(() => health.IsHealthy);
 
+            // periodic pull every 60_000 ms (1 minute), initially disabled
+            pullTimer = new Timer(
+                _ => pullSync.pullOnceAsync().ConfigureAwait(false),
+                null,
+                Timeout.Infinite,
+                Timeout.Infinite
+            );
+
             // Central DB change router -> fan out to installed + delta push
             dbEvents = new ChangeDetectionService(api, blog);
             dbEvents.GamesInstalledChanged += (s, e) => pushInstalled.OnInstalledChanged(e.Games);
@@ -112,6 +122,12 @@ namespace SyncniteBridge
                 if (!ok)
                 {
                     blog.Warn("startup", "Health became unhealthy → suspend sync");
+                    try
+                    {
+                        pullTimer?.Change(Timeout.Infinite, Timeout.Infinite);
+                    }
+                    catch { }
+
                     return;
                 }
 
@@ -129,6 +145,15 @@ namespace SyncniteBridge
                     pushInstalled.Trigger();
                     _ = pullSync.pullOnceAsync(); // fire-and-forget, handles its own logging
                 }
+
+                try
+                {
+                    pullTimer?.Change(
+                        AppConstants.PushSyncInterval_Ms,
+                        AppConstants.PushSyncInterval_Ms
+                    );
+                }
+                catch { }
             };
 
             pushSync.Start();
@@ -297,6 +322,11 @@ namespace SyncniteBridge
             if (!isActiveInstance)
                 return;
 
+            try
+            {
+                pullTimer?.Dispose();
+            }
+            catch { }
             try
             {
                 pushInstalled?.Dispose();

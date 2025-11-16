@@ -116,8 +116,23 @@ namespace SyncniteBridge.UI
             {
                 isHealthy = healthy;
 
-                if (healthy)
+                // Ask health service for the current text so we can detect mismatch.
+                var text = getHealthText?.Invoke() ?? AppConstants.HealthStatusUnreachable;
+
+                var isHealthyText = string.Equals(
+                    text,
+                    AppConstants.HealthStatusHealthy,
+                    StringComparison.OrdinalIgnoreCase
+                );
+
+                var isVersionMismatch = text.StartsWith(
+                    AppConstants.HealthStatusVersionMismatch,
+                    StringComparison.OrdinalIgnoreCase
+                );
+
+                if (isHealthyText && healthy)
                 {
+                    // Green – fully healthy
                     if (
                         !ThemeHelpers.TrySetDynamicBrush(dot, Shape.FillProperty, "SuccessBrush")
                         && !ThemeHelpers.TrySetDynamicBrush(
@@ -129,10 +144,18 @@ namespace SyncniteBridge.UI
                     {
                         dot.Fill = new SolidColorBrush(Color.FromRgb(0x22, 0xC5, 0x44)); // green
                     }
-                    statusText.Text = AppConstants.HealthStatusHealthy;
+                }
+                else if (isVersionMismatch)
+                {
+                    // Orange – reachable but version mismatch
+                    if (!ThemeHelpers.TrySetDynamicBrush(dot, Shape.FillProperty, "WarningBrush"))
+                    {
+                        dot.Fill = new SolidColorBrush(Color.FromRgb(0xF9, 0xA8, 0x25)); // orange-ish
+                    }
                 }
                 else
                 {
+                    // Red – unreachable / other hard failure
                     if (
                         !ThemeHelpers.TrySetDynamicBrush(dot, Shape.FillProperty, "ErrorBrush")
                         && !ThemeHelpers.TrySetDynamicBrush(dot, Shape.FillProperty, "WarningBrush")
@@ -140,16 +163,17 @@ namespace SyncniteBridge.UI
                     {
                         dot.Fill = new SolidColorBrush(Color.FromRgb(0xE5, 0x50, 0x35)); // red
                     }
-                    statusText.Text = AppConstants.HealthStatusUnreachable;
                 }
+
+                statusText.Text = text;
 
                 try
                 {
-                    // if unreachable, we can hide the role; adjust if you prefer it always visible
-                    if (healthy)
+                    // Only show role if we're actually reachable (healthy or mismatch).
+                    if (isHealthyText || isVersionMismatch)
                     {
-                        var isAdmin = getIsAdmin?.Invoke() == true;
-                        roleText.Text = isAdmin ? "admin" : "user";
+                        var isAdminNow = getIsAdmin?.Invoke() == true;
+                        roleText.Text = isAdminNow ? "admin" : "user";
                         roleText.Visibility = Visibility.Visible;
                     }
                     else

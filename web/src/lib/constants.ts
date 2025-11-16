@@ -83,6 +83,8 @@ export const COOKIE_DEFAULTS: CookieState = {
 
 export const MAX_LINES = 1000;
 
+export const INTERVAL_MS = 5000;
+
 export const LETTERS_LIST = ["#", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
 
 export const LETTERS = [...LETTERS_LIST] as const;

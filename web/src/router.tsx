@@ -10,6 +10,7 @@ import AccountPage from "./pages/AccountPage";
 import { useAuth } from "./hooks/useAuth";
 import { useAdminGate } from "./hooks/useAdminGate";
 import { clearCreds } from "./lib/persist";
+import { INTERVAL_MS } from "./lib/constants";
 
 function WithShell({ hideSite = false }: { hideSite?: boolean }) {
   return (
@@ -38,7 +39,7 @@ function AdminOnly() {
 }
 
 function AdminGate() {
-  const { hideSite, loaded, hasAdmin } = useAdminGate({ pollMs: 4000 });
+  const { hideSite, loaded, hasAdmin } = useAdminGate({ pollMs: INTERVAL_MS });
   if (!loaded) return null;
   if (!hasAdmin) {
     return (

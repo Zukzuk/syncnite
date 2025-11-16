@@ -1,7 +1,7 @@
 import React from "react";
 import { Stack, Loader, Box, Center } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
-import { GRID } from "../lib/constants";
+import { GRID, INTERVAL_MS } from "../lib/constants";
 import { ViewMode } from "../lib/types";
 import { useLibrary } from "../features/library/hooks/useLibrary";
 import LibraryList from "../features/library/LibraryList";
@@ -10,7 +10,7 @@ import LibraryGrid from "../features/library/LibraryGrid";
 export default function LibraryPage() {
     const [filtered, setFiltered] = React.useState(0);
     const [total, setTotal] = React.useState(0);
-    const { data, installedUpdatedAt } = useLibrary({ pollMs: 4000 });
+    const { data, installedUpdatedAt } = useLibrary({ pollMs: INTERVAL_MS });
 
     const [view, setView] = useLocalStorage<ViewMode>({
         key: "library.view",

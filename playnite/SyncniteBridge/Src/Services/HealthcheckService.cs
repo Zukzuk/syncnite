@@ -13,9 +13,57 @@ namespace SyncniteBridge.Services
     /// </summary>
     internal sealed class HealthcheckService : IDisposable
     {
-        public string StatusText =>
-            lastOk ? AppConstants.HealthStatusHealthy : AppConstants.HealthStatusUnreachable;
-        public bool IsHealthy => lastOk;
+        private enum HealthState
+        {
+            Unreachable,
+            VersionMismatch,
+            Healthy,
+        }
+
+        public string StatusText
+        {
+            get
+            {
+                switch (lastState)
+                {
+                    case HealthState.Healthy:
+                        return AppConstants.HealthStatusHealthy;
+
+                    case HealthState.VersionMismatch:
+                        // Always start with the base label so the UI can detect the state.
+                        var baseLabel = AppConstants.HealthStatusVersionMismatch;
+
+                        if (
+                            string.IsNullOrEmpty(lastServerVersion)
+                            || string.IsNullOrEmpty(lastExtVersion)
+                        )
+                        {
+                            return baseLabel;
+                        }
+
+                        var cmp = CompareVersions(lastServerVersion, lastExtVersion);
+                        if (cmp < 0)
+                        {
+                            // server older than extension
+                            return $"{baseLabel} (server {lastServerVersion}, extension {lastExtVersion} – please update server)";
+                        }
+                        else if (cmp > 0)
+                        {
+                            // extension older than server
+                            return $"{baseLabel} (server {lastServerVersion}, extension {lastExtVersion} – please update extension)";
+                        }
+
+                        return baseLabel;
+
+                    default:
+                        return AppConstants.HealthStatusUnreachable;
+                }
+            }
+        }
+
+        // Only "fully healthy" (reachable + version match) counts as healthy for sync.
+        public bool IsHealthy => lastState == HealthState.Healthy;
+
         public bool IsAdmin => lastIsAdmin;
         public event Action<bool> StatusChanged = delegate { };
 
@@ -25,8 +73,12 @@ namespace SyncniteBridge.Services
         private readonly Timer timer;
         private string pingUrl;
         private string verifyAdminUrl;
-        private bool lastOk;
+
+        private HealthState lastState = HealthState.Unreachable;
         private bool lastIsAdmin;
+        private string? lastServerVersion;
+        private string? lastExtVersion;
+
         private readonly BridgeLogger? blog;
 
         /// <summary>
@@ -85,18 +137,51 @@ namespace SyncniteBridge.Services
         /// </summary>
         private async Task TickAsync()
         {
-            // 1) Reachability (ping)
-            var ok = await http.PingAsync(pingUrl).ConfigureAwait(false);
-            bool isAdminNow = false;
+            // 1) Reachability + server version from /ping
+            var (reachable, serverVersionRaw) = await http.PingWithVersionAsync(pingUrl)
+                .ConfigureAwait(false);
 
-            if (ok && !string.IsNullOrWhiteSpace(verifyAdminUrl))
+            var extVersionRaw = BridgeVersion.Current;
+            var serverVersion = NormalizeVersion(serverVersionRaw);
+            var extVersion = NormalizeVersion(extVersionRaw);
+
+            bool versionsMatch = false;
+            bool hasBothVersions =
+                !string.IsNullOrEmpty(serverVersion) && !string.IsNullOrEmpty(extVersion);
+
+            if (reachable && hasBothVersions)
             {
-                // 2) Role check via /accounts/verify/admin
+                versionsMatch = string.Equals(
+                    serverVersion,
+                    extVersion,
+                    StringComparison.OrdinalIgnoreCase
+                );
+            }
+
+            // 2) Admin check only if the server is reachable (even if version-mismatched)
+            bool isAdminNow = false;
+            if (reachable && !string.IsNullOrWhiteSpace(verifyAdminUrl))
+            {
                 var res = await http.IsAdminAsync(verifyAdminUrl).ConfigureAwait(false);
                 isAdminNow = res == true;
             }
 
-            var statusChanged = ok != lastOk;
+            // 3) Compute new health state
+            HealthState newState;
+            if (!reachable)
+            {
+                newState = HealthState.Unreachable;
+            }
+            else if (versionsMatch)
+            {
+                newState = HealthState.Healthy;
+            }
+            else
+            {
+                newState = HealthState.VersionMismatch;
+            }
+
+            var statusChanged = newState != lastState;
             var roleChanged = isAdminNow != lastIsAdmin;
 
             if (!statusChanged && !roleChanged)
@@ -104,26 +189,120 @@ namespace SyncniteBridge.Services
                 return; // nothing changed; avoid noisy events
             }
 
-            lastOk = ok;
+            lastState = newState;
             lastIsAdmin = isAdminNow;
+            lastServerVersion = serverVersion;
+            lastExtVersion = extVersion;
 
-            var msg = ok ? AppConstants.HealthMsgHealthy : AppConstants.HealthMsgUnreachable;
-            var type = ok ? NotificationType.Info : NotificationType.Error;
+            // 4) Notifications
+            string msg;
+            NotificationType type;
+
+            switch (newState)
+            {
+                case HealthState.Healthy:
+                    msg = AppConstants.HealthMsgHealthy;
+                    type = NotificationType.Info;
+                    break;
+
+                case HealthState.VersionMismatch:
+                    // Decide who is "old" if we can compare
+                    if (hasBothVersions)
+                    {
+                        var cmp = CompareVersions(serverVersion, extVersion);
+                        if (cmp < 0)
+                        {
+                            msg =
+                                $"{AppConstants.AppName}: old server version ({serverVersion}) – extension is {extVersion}, please update the server.";
+                        }
+                        else if (cmp > 0)
+                        {
+                            msg =
+                                $"{AppConstants.AppName}: old extension version ({extVersion}) – server is {serverVersion}, please update the extension.";
+                        }
+                        else
+                        {
+                            msg = AppConstants.HealthMsgVersionMismatch;
+                        }
+                    }
+                    else
+                    {
+                        msg = AppConstants.HealthMsgVersionMismatch;
+                    }
+
+                    type = NotificationType.Error; // Playnite doesn't have a "warning" notification type
+                    break;
+
+                default:
+                    msg = AppConstants.HealthMsgUnreachable;
+                    type = NotificationType.Error;
+                    break;
+            }
+
             api.Notifications.Add(AppConstants.Notif_Health, msg, type);
 
-            if (ok)
+            // 5) Logging
+            if (newState == HealthState.Healthy)
             {
                 var mode = isAdminNow ? "admin" : "user";
-                blog?.Info("health", $"server healthy ({mode} mode)");
-                blog?.Debug("health", "server reachable", new { pingUrl, isAdmin = isAdminNow });
+                log.Info($"[SyncniteBridge] Server healthy ({mode} mode, v{serverVersion})");
+                blog?.Info(
+                    "health",
+                    "Server healthy",
+                    new
+                    {
+                        mode,
+                        serverVersion,
+                        extensionVersion = extVersion,
+                    }
+                );
+            }
+            else if (newState == HealthState.VersionMismatch)
+            {
+                log.Warn(
+                    $"[SyncniteBridge] Version mismatch. Server={serverVersionRaw}, Extension={extVersionRaw}"
+                );
+                blog?.Warn(
+                    "health",
+                    "Version mismatch",
+                    new { serverVersion = serverVersionRaw, extensionVersion = extVersionRaw }
+                );
             }
             else
             {
-                blog?.Warn("health", "server unreachable");
+                log.Warn("[SyncniteBridge] Server unreachable");
+                blog?.Warn("health", "Server unreachable", new { url = pingUrl });
             }
 
-            // Consumers read IsHealthy + IsAdmin if they care
-            StatusChanged(ok);
+            // Only report "healthy" to listeners when we are fully healthy (reachable + version match).
+            StatusChanged.Invoke(IsHealthy);
+        }
+
+        private static string NormalizeVersion(string? v)
+        {
+            if (string.IsNullOrWhiteSpace(v))
+                return string.Empty;
+
+            v = v.Trim();
+
+            if (v.StartsWith("v", StringComparison.OrdinalIgnoreCase))
+                v = v.Substring(1);
+
+            return v;
+        }
+
+        private static int CompareVersions(string a, string b)
+        {
+            a = NormalizeVersion(a);
+            b = NormalizeVersion(b);
+
+            if (Version.TryParse(a, out var va) && Version.TryParse(b, out var vb))
+            {
+                return va.CompareTo(vb);
+            }
+
+            // Fallback: simple ordinal compare
+            return string.CompareOrdinal(a, b);
         }
 
         /// <summary>

@@ -25,10 +25,7 @@ namespace SyncniteBridge.Services
         private readonly ILogger log = LogManager.GetLogger();
         private CancellationTokenSource? pushCts;
         private readonly BridgeLogger? blog;
-        private readonly HttpClient http = new HttpClient
-        {
-            Timeout = TimeSpan.FromSeconds(AppConstants.PushInstalledTimeout_Ms / 1000),
-        };
+        private readonly HttpClient http = new HttpClient();
         private Func<bool> isHealthy = () => true;
 
         /// <summary>

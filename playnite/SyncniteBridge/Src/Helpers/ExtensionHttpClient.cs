@@ -37,19 +37,45 @@ namespace SyncniteBridge.Helpers
         }
 
         /// <summary>
-        /// Ping the given URL; returns true on 200 OK.
+        /// Ping the given URL and try to read a version from the JSON body:
+        /// { ok: true, version: "v1.22.3" }.
+        /// Returns (reachable, versionOrNull).
         /// </summary>
-        public async Task<bool> PingAsync(string url)
+        public async Task<(bool reachable, string? version)> PingWithVersionAsync(string url)
         {
             try
             {
                 var resp = await http.GetAsync(url).ConfigureAwait(false);
-                return resp.IsSuccessStatusCode;
+                if (!resp.IsSuccessStatusCode)
+                {
+                    return (false, null);
+                }
+
+                var body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                try
+                {
+                    // matches: { ok: true, version: "v1.22.3" }
+                    var dto = Playnite.SDK.Data.Serialization.FromJson<PingResponse>(body);
+                    return (true, dto?.version);
+                }
+                catch
+                {
+                    // 200 OK but no/invalid JSON – treat as reachable but unknown version
+                    return (true, null);
+                }
             }
             catch
             {
-                return false;
+                return (false, null);
             }
+        }
+
+        // internal DTO for /ping JSON
+        private sealed class PingResponse
+        {
+            public bool ok { get; set; }
+            public string? version { get; set; }
         }
 
         /// <summary>

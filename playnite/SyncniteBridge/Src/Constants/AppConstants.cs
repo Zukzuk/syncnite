@@ -30,8 +30,8 @@ namespace SyncniteBridge.Constants
 
         // Timing
         public const int Debounce_Ms = 1200;
-        public const int HealthcheckInterval_Ms = 20_000;
-        public const int PushInstalledTimeout_Ms = 20_000;
+        public const int HealthcheckInterval_Ms = 5_000;
+        public const int PushSyncInterval_Ms = 60_000;
 
         // Notifications
         public const string Notif_Health = "SyncniteBridge_health";
@@ -40,8 +40,11 @@ namespace SyncniteBridge.Constants
         // Health / status text + messages
         public const string HealthStatusHealthy = "healthy";
         public const string HealthStatusUnreachable = "unreachable";
+        public const string HealthStatusVersionMismatch = "version mismatch";
         public const string HealthMsgHealthy = AppName + ": server healthy";
         public const string HealthMsgUnreachable = AppName + ": server unreachable";
+        public const string HealthMsgVersionMismatch =
+            AppName + ": server/extension version mismatch";
 
         // Config file
         public const string ConfigFileName = "config.json";
