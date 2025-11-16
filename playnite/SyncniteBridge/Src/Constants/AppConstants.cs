@@ -17,7 +17,7 @@ namespace SyncniteBridge.Constants
         // Common app names/labels
         public const string AppName = "SyncniteBridge";
 
-        // Server endpoints (v2 CRUD)
+        // Server endpoints (CRUD)
         public const string Path_Sync_Log = "log";
         public const string Path_Sync_Crud = "sync";
         public const string Path_Sync_Installed = "sync/installed";

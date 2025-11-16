@@ -55,6 +55,17 @@ components:
           additionalProperties:
             type: array
             items: { type: string }
+        versions:
+          type: object
+          nullable: true
+          description: >
+            Optional per-entity metadata versions, keyed by collection then id.
+            Example: { "games": { "<id>": "<ticks>" }, ... }.
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: string
+              description: Client metadata version for the entity.
         installed:
           type: object
           nullable: true
@@ -101,8 +112,14 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              additionalProperties: true
+              # Single object or array of objects; server ignores unknown fields.
+              oneOf:
+                - type: object
+                  additionalProperties: true
+                - type: array
+                  items:
+                    type: object
+                    additionalProperties: true
       responses:
         "204":
           description: Accepted
@@ -150,6 +167,12 @@ paths:
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
         "400":
           description: Missing fields
           content:
@@ -180,6 +203,12 @@ paths:
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
         "400":
           description: Missing fields
           content:
@@ -368,7 +397,7 @@ paths:
                   description: "Name of previously uploaded .zip"
                 password:
                   type: string
-                  description: "Optional LiteDB password"
+                  description: "Optional LiteDB password (empty string allowed)"
                   nullable: true
               required: [filename]
       responses:
@@ -415,8 +444,8 @@ paths:
 
   /sync/ping:
     get:
-      tags: [Sync v2]
-      summary: Ping v2
+      tags: [Sync]
+      summary: Ping
       security:
         - XAuthEmail: []
           XAuthPassword: []
@@ -439,7 +468,7 @@ paths:
 
   /sync/installed:
     post:
-      tags: [Sync v2]
+      tags: [Sync]
       summary: Push installed game IDs (minimal)
       security:
         - XAuthEmail: []
@@ -475,8 +504,11 @@ paths:
 
   /sync/delta:
     post:
-      tags: [Sync v2]
+      tags: [Sync]
       summary: Compute server delta
+      description: >
+        Compute the delta between client-known ids and server state, optionally
+        using per-entity metadata versions to narrow upserts.
       security:
         - XAuthEmail: []
           XAuthPassword: []
@@ -540,8 +572,8 @@ paths:
         schema:
           type: string
     post:
-      tags: [Sync v2]
-      summary: Create entity (idempotent)
+      tags: [Sync]
+      summary: Create entity (idempotent on identical payload)
       security:
         - XAuthEmail: []
           XAuthPassword: []
@@ -554,8 +586,16 @@ paths:
       responses:
         "201":
           description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  id: { type: string }
+                  collection: { type: string }
         "204":
-          description: Already identical
+          description: Already identical (no-op)
         "409":
           description: Exists with different content
           content:
@@ -582,7 +622,7 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
     put:
-      tags: [Sync v2]
+      tags: [Sync]
       summary: Upsert entity (idempotent)
       security:
         - XAuthEmail: []
@@ -596,10 +636,28 @@ paths:
       responses:
         "201":
           description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  id: { type: string }
+                  collection: { type: string }
+                  created: { type: boolean }
         "200":
           description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  id: { type: string }
+                  collection: { type: string }
+                  created: { type: boolean }
         "204":
-          description: No change
+          description: No change (payload identical)
         "400":
           description: Invalid input
           content:
@@ -620,7 +678,7 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
     delete:
-      tags: [Sync v2]
+      tags: [Sync]
       summary: Delete entity (idempotent)
       security:
         - XAuthEmail: []
@@ -648,8 +706,17 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /sync/media/{path}:
+    parameters:
+      - name: path
+        in: path
+        required: true
+        schema:
+          type: string
+          description: >
+            Relative path under the media root (libraryfiles). Encode slashes if
+            tooling cannot send wildcard segments (e.g. `%2F`).
     put:
-      tags: [Sync v2]
+      tags: [Sync]
       summary: Upload media (binary)
       description: >
         Upload a media file into the libraryfiles tree. **Note:** encode slashes in
@@ -657,12 +724,6 @@ paths:
       security:
         - XAuthEmail: []
           XAuthPassword: []
-      parameters:
-        - name: path
-          in: path
-          required: true
-          schema:
-            type: string
       requestBody:
         required: true
         content:
@@ -680,8 +741,22 @@ paths:
       responses:
         "201":
           description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  bytes: { type: integer, description: "Bytes written" }
         "200":
           description: Overwritten
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  bytes: { type: integer, description: "Bytes written" }
         "204":
           description: No change (size/hash match)
         "400":
@@ -702,10 +777,52 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+    get:
+      tags: [Sync]
+      summary: Download media (binary)
+      description: >
+        Download a media file from the libraryfiles tree. The `path` is the
+        relative path under the media root. Encode slashes in `{path}` if your
+        tooling cannot send wildcard path segments (e.g. `%2F`).
+      security:
+        - XAuthEmail: []
+          XAuthPassword: []
+      responses:
+        "200":
+          description: Media file stream
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "400":
+          description: Invalid path
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: File not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Error streaming media
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /sync/collection/{collection}:
     get:
-      tags: [Sync v2]
+      tags: [Sync]
       summary: List all entities in a collection
       description: >
         Returns all JSON rows for the given collection from the server-side
@@ -728,6 +845,12 @@ paths:
               - genres
               - categories
               - features
+              - series
+              - regions
+              - ageratings
+              - completionstatuses
+              - filterpresets
+              - importexclusions
       responses:
         "200":
           description: Collection items
@@ -752,7 +875,7 @@ paths:
 
   /sync/snapshot:
     post:
-      tags: [Sync v2]
+      tags: [Sync]
       summary: Push full snapshot
       description: >
         Push a full snapshot object for the current user. The server stores it
