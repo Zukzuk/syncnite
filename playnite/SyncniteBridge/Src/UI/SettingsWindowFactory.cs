@@ -276,10 +276,24 @@ namespace SyncniteBridge.UI
                 var hasEmail = !string.IsNullOrWhiteSpace(tbEmail.Text);
                 var hasPass = !string.IsNullOrWhiteSpace(tbPass.Password);
 
-                var enabled = isHealthy && hasUrl && hasEmail && hasPass;
+                var enabledByHealthAndForm = isHealthy && hasUrl && hasEmail && hasPass;
 
-                btnPush.IsEnabled = enabled;
-                btnSync.IsEnabled = enabled;
+                // Try to determine current role
+                var isAdminNow = false;
+                try
+                {
+                    isAdminNow = getIsAdmin?.Invoke() == true;
+                }
+                catch
+                {
+                    isAdminNow = false;
+                }
+
+                // Push installed is allowed for both roles
+                btnPush.IsEnabled = enabledByHealthAndForm;
+
+                // Full library sync should only be possible as admin
+                btnSync.IsEnabled = enabledByHealthAndForm && isAdminNow;
             }
 
             // refresh actions when user edits fields
@@ -349,7 +363,29 @@ namespace SyncniteBridge.UI
                 Width = 120,
                 Margin = new Thickness(0, 0, 12, 0),
             };
-            btnSync.Click += (s, e) => onSyncLibrary?.Invoke();
+            btnSync.Click += (s, e) =>
+            {
+                var isAdminNow = false;
+                try
+                {
+                    isAdminNow = getIsAdmin?.Invoke() == true;
+                }
+                catch
+                {
+                    isAdminNow = false;
+                }
+
+                if (!isAdminNow)
+                {
+                    api.Dialogs.ShowMessage(
+                        "You need to be logged in as an admin to run a full library sync.",
+                        AppConstants.AppName + " – Admin required"
+                    );
+                    return;
+                }
+
+                onSyncLibrary?.Invoke();
+            };
 
             var syncText = new TextBlock
             {

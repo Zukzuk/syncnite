@@ -19,15 +19,15 @@ namespace SyncniteBridge
 
         private static bool s_initialized = false;
         private static readonly object s_initLock = new();
-
         private readonly ILogger logger = LogManager.GetLogger();
-        private readonly string configPath;
-        private BridgeConfig config;
-        private BridgeLogger blog;
-        private HealthcheckService health;
-        private PushInstalledService pushInstalled;
-        private PushDeltaService pushSync;
-        private PullDeltaService pullSync;
+        private readonly string configPath = string.Empty;
+        private BridgeConfig config = null!;
+        private BridgeLogger blog = null!;
+        private HealthcheckService health = null!;
+        private PushInstalledService pushInstalled = null!;
+        private PushDeltaService pushSync = null!;
+        private PullDeltaService pullSync = null!;
+        private ChangeDetectionService dbEvents = null!;
 
         private readonly bool isActiveInstance = false;
 
@@ -90,12 +90,21 @@ namespace SyncniteBridge
 
             // Delta sync (push/pull)
             var syncUrl = Combine(config.ApiBase, AppConstants.Path_Sync_Crud);
-            pushSync = new PushDeltaService(api, syncUrl, GetDefaultPlayniteDataRoot(), blog);
-            pushSync.SetHealthProvider(() => health.IsHealthy);
 
-            // Pull sync for user mode
+            // Admin-only CRUD push
+            pushSync = new PushDeltaService(api, syncUrl, GetDefaultPlayniteDataRoot(), blog);
+            // Only considered "healthy" if server is reachable *and* this account is admin
+            pushSync.SetHealthProvider(() => health.IsHealthy && health.IsAdmin);
+
+            // Pull sync for user + admin
             pullSync = new PullDeltaService(api, syncUrl, GetDefaultPlayniteDataRoot(), blog);
             pullSync.SetHealthProvider(() => health.IsHealthy);
+
+            // Central DB change router -> fan out to installed + delta push
+            dbEvents = new ChangeDetectionService(api, blog);
+            dbEvents.GamesInstalledChanged += (s, e) => pushInstalled.OnInstalledChanged(e.Games);
+            dbEvents.GamesMetadataChanged += (s, e) => pushSync.OnMetadataChanged(e.Games);
+            dbEvents.GamesMediaChanged += (s, e) => pushSync.OnMediaChanged(e.Games);
 
             // When health flips to healthy, kick once
             health.StatusChanged += ok =>
@@ -301,6 +310,11 @@ namespace SyncniteBridge
             try
             {
                 health?.Dispose();
+            }
+            catch { }
+            try
+            {
+                dbEvents?.Dispose();
             }
             catch { }
             try

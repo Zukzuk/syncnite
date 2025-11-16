@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -6,14 +7,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using Playnite.SDK;
+using Playnite.SDK.Models;
 using SyncniteBridge.Constants;
 using SyncniteBridge.Helpers;
 
 namespace SyncniteBridge.Services
 {
     /// <summary>
-    /// Watches Playnite library for installed games changes,
-    /// and pushes the updated list to a remote endpoint.
+    /// Handles pushing the "installed" list to the server.
+    /// Triggered via ChangeDetection instead of directly wiring Playnite events here.
     /// </summary>
     internal sealed class PushInstalledService : IDisposable
     {
@@ -23,8 +25,11 @@ namespace SyncniteBridge.Services
         private readonly ILogger log = LogManager.GetLogger();
         private CancellationTokenSource? pushCts;
         private readonly BridgeLogger? blog;
-        private readonly HttpClient http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
-        private Func<bool> isHealthy = () => true; // injected
+        private readonly HttpClient http = new HttpClient
+        {
+            Timeout = TimeSpan.FromSeconds(AppConstants.PushInstalledTimeout_Ms / 1000),
+        };
+        private Func<bool> isHealthy = () => true;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PushInstalledService"/> class.
@@ -39,9 +44,15 @@ namespace SyncniteBridge.Services
 
             debounce = new System.Timers.Timer(AppConstants.Debounce_Ms) { AutoReset = false };
             debounce.Elapsed += (s, e) => _ = PushInstalledAsync();
+        }
 
-            api.Database.Games.ItemCollectionChanged += (s, e) => Trigger();
-            api.Database.Games.ItemUpdated += (s, e) => Trigger();
+        /// <summary>
+        /// Called by ChangeDetection whenever the installed list changes.
+        /// </summary>
+        public void OnInstalledChanged(IReadOnlyList<Game> _)
+        {
+            // We don't need the concrete list here – we always push the full installed set.
+            Trigger();
         }
 
         /// <summary>
@@ -124,7 +135,7 @@ namespace SyncniteBridge.Services
                 return;
             }
 
-            CancellationTokenSource? cts = null; // ✅ make nullable
+            CancellationTokenSource? cts = null;
             try
             {
                 // cancel/replace any in-flight push
@@ -134,6 +145,7 @@ namespace SyncniteBridge.Services
                     pushCts?.Dispose();
                 }
                 catch { }
+
                 pushCts = new CancellationTokenSource();
                 cts = pushCts;
                 var ct = cts.Token;
@@ -142,67 +154,48 @@ namespace SyncniteBridge.Services
                 var content = new StringContent(payload, Encoding.UTF8, "application/json");
 
                 blog?.Info("push", "Pushing installed list");
+                blog?.Debug("push", "Payload size", new { bytes = payload.Length, endpoint });
 
-                using var req = new HttpRequestMessage(HttpMethod.Post, endpoint)
+                var resp = await http.PostAsync(endpoint, content, ct).ConfigureAwait(false);
+                if (!resp.IsSuccessStatusCode)
                 {
-                    Content = content,
-                };
-
-                var sendTask = http.SendAsync(req, ct);
-                var timeoutTask = Task.Delay(AppConstants.PushInstalledTimeout_Ms, ct);
-                var completed = await Task.WhenAny(sendTask, timeoutTask).ConfigureAwait(false);
-                if (completed != sendTask)
-                {
-                    try
-                    {
-                        cts.Cancel();
-                    }
-                    catch { }
-                    blog?.Warn(
-                        "push",
-                        "Push timed out",
-                        new { timeoutMs = AppConstants.PushInstalledTimeout_Ms }
+                    var msg = $"Installed sync failed: {resp.StatusCode}";
+                    log.Warn($"[SyncniteBridge] {msg}");
+                    blog?.Warn("push", msg, new { status = resp.StatusCode });
+                    api.Notifications.Add(
+                        AppConstants.Notif_Sync_Error,
+                        msg,
+                        NotificationType.Error
                     );
                     return;
                 }
 
-                var resp = await sendTask.ConfigureAwait(false);
-                resp.EnsureSuccessStatusCode();
-
-                int count = api.Database.Games.Count(g => g.IsInstalled);
-                blog?.Info("push", "Push OK");
-                blog?.Debug("push", "Push details", new { count });
+                blog?.Info("push", "Installed list synced");
             }
-            catch (OperationCanceledException) { }
-            catch (HttpRequestException hex)
+            catch (TaskCanceledException)
             {
-                blog?.Warn("push", "Push HttpRequestException", new { err = hex.Message });
+                blog?.Debug("push", "Installed push cancelled (replaced by newer run)");
             }
             catch (Exception ex)
             {
-                blog?.Error("push", "Push error", err: ex.Message);
+                var msg = $"Installed sync failed: {ex.Message}";
+                log.Error(ex, "[SyncniteBridge] " + msg);
+                blog?.Error("push", "Installed sync failed", err: ex.Message);
+                api.Notifications.Add(AppConstants.Notif_Sync_Error, msg, NotificationType.Error);
             }
         }
 
-        /// <summary>
-        /// Dispose resources.
-        /// </summary>
         public void Dispose()
         {
             try
             {
-                debounce.Dispose();
+                debounce?.Dispose();
             }
             catch { }
             try
             {
                 pushCts?.Cancel();
                 pushCts?.Dispose();
-            }
-            catch { }
-            try
-            {
-                http.Dispose();
             }
             catch { }
         }

@@ -58,6 +58,24 @@ namespace SyncniteBridge.Services
         }
 
         /// <summary>
+        /// Marks *all* currently known media folders as dirty.
+        /// Used when we don't know exactly which folder changed (DB-driven).
+        /// </summary>
+        public void MarkAllMediaFoldersDirty()
+        {
+            lock (gate)
+            {
+                if (cachedMediaVersions.Count == 0)
+                    return;
+
+                foreach (var name in cachedMediaVersions.Keys)
+                {
+                    dirtyMediaFolders.Add(name);
+                }
+            }
+        }
+
+        /// <summary>
         /// Gets the count of dirty media folders.
         /// </summary>
         public int DirtyMediaFolderCount

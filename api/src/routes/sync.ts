@@ -10,6 +10,9 @@ import { SyncService } from "../services/SyncService";
 type ClientManifest = {
     // per collection → list of ids known client-side
     json?: Record<string, string[]>; // { "games": ["id1","id2",...], ... }
+    // optional per-entity metadata versions, e.g.
+    // { "games": { "<id>": <ticks> } }
+    versions?: Record<string, Record<string, string>>;
     // optional installed state summary (opaque to server for now)
     installed?: { count: number; hash?: string };
 };
@@ -144,14 +147,21 @@ router.post("/delta", requireAdminSession, async (req, res) => {
     try {
         const body = (req.body ?? {}) as ClientManifest;
         const incoming = body.json ?? {};
-        log.info(`incoming delta request for ${Object.keys(incoming).length} collections`);
+        const versions = body.versions ?? {};
+
+        log.info(
+            `incoming delta request for ${Object.keys(incoming).length} collections`
+        );
         log.debug("delta request", { collections: Object.keys(incoming) });
+
         const toUpsert: DeltaManifest["toUpsert"] = {};
         const toDelete: DeltaManifest["toDelete"] = {};
 
         for (const key of Object.keys(incoming)) {
             const collection = sanitizeCollection(key);
-            const idsFromClient = new Set((incoming[collection] ?? []).map(sanitizeId));
+            const idsFromClient = new Set(
+                (incoming[collection] ?? []).map(sanitizeId)
+            );
 
             const dir = join(DB_ROOT, collection);
             let serverIds: string[] = [];
@@ -160,14 +170,52 @@ router.post("/delta", requireAdminSession, async (req, res) => {
                 serverIds = entries
                     .filter((e) => e.isFile() && e.name.toLowerCase().endsWith(".json"))
                     .map((e) => e.name.replace(/\.json$/i, ""));
-            } catch { /* dir may not exist yet */ }
+            } catch {
+                /* dir may not exist yet */
+            }
 
             const serverSet = new Set(serverIds);
+            const versionsForCollection = versions[collection] ?? {};
 
             const upserts: string[] = [];
+
             for (const id of idsFromClient) {
-                log.debug(`checking upsert for id=${id}`);
-                if (!serverSet.has(id)) upserts.push(id);
+                log.debug(`checking upsert for collection=${collection} id=${id}`);
+
+                let needsUpsert = false;
+
+                if (!serverSet.has(id)) {
+                    // New on client
+                    needsUpsert = true;
+                } else {
+                    // Potential metadata change
+                    const clientVer = versionsForCollection[id];
+
+                    if (typeof clientVer === "string" && clientVer.length > 0) {
+                        try {
+                            const p = resolveDocPath(collection, id);
+                            const existing = await readJsonIfExists(p);
+                            const serverVer =
+                                existing && typeof existing.MetadataVersion === "string"
+                                    ? existing.MetadataVersion
+                                    : undefined;
+
+                            if (!serverVer || serverVer !== clientVer) {
+                                needsUpsert = true;
+                            }
+                        } catch (e: any) {
+                            log.warn("delta: version compare failed", {
+                                collection,
+                                id,
+                                err: String(e?.message ?? e),
+                            });
+                            // On error, stay conservative: don't upsert.
+                            // A future hard sync can repair this.
+                        }
+                    }
+                }
+
+                if (needsUpsert) upserts.push(id);
             }
 
             const deletes: string[] = [];
@@ -176,7 +224,9 @@ router.post("/delta", requireAdminSession, async (req, res) => {
                 if (!idsFromClient.has(id)) deletes.push(id);
             }
 
-            log.info(`delta for collection=${collection}: toUpsert=${upserts.length}, toDelete=${deletes.length}`);
+            log.info(
+                `delta for collection=${collection}: toUpsert=${upserts.length}, toDelete=${deletes.length}`
+            );
 
             if (upserts.length) toUpsert[collection] = upserts;
             if (deletes.length) toDelete[collection] = deletes;
