@@ -4,10 +4,10 @@ servers:
 
 tags:
   - name: App
-  - name: Accounts
-  - name: Backup
-  - name: Sync
   - name: Extension
+  - name: Accounts
+  - name: Sync
+  - name: Backup
 
 components:
   securitySchemes:
@@ -94,6 +94,27 @@ components:
       additionalProperties: true
 
 paths:
+
+  /zips:
+    get:
+      tags: [App]
+      summary: List uploaded backup zips
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ZipFile"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+                
   /sse:
     get:
       tags: [App]
@@ -130,19 +151,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /zips:
+  /extension/download:
     get:
-      tags: [Backup]
-      summary: List uploaded backup zips
+      tags: [Extension]
+      summary: Download the Syncnite Bridge extension package
       responses:
         "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/ZipFile"
+          description: Package stream
         "500":
           description: Server error
           content:
@@ -330,118 +345,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /backup/upload:
-    post:
-      tags: [Backup]
-      summary: Upload a Playnite backup zip
-      security:
-        - XAuthEmail: []
-          XAuthPassword: []
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  format: binary
-              required: [file]
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  ok: { type: boolean }
-                  file: { type: string }
-        "400":
-          description: No file
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "500":
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-  /backup/process:
-    post:
-      tags: [Backup]
-      summary: Validate/extract zip and import into /data (overwrite-only)
-      description: Runs the import pipeline and emits logs/progress to `/api/sse`.
-      security:
-        - XAuthEmail: []
-          XAuthPassword: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                filename:
-                  type: string
-                  description: "Name of previously uploaded .zip"
-                password:
-                  type: string
-                  description: "Optional LiteDB password (empty string allowed)"
-                  nullable: true
-              required: [filename]
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  ok: { type: boolean }
-        "400":
-          description: Bad request (e.g., missing/invalid filename)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "500":
-          description: Server error during processing
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-  /extension/download:
-    get:
-      tags: [Extension]
-      summary: Download the Syncnite Bridge extension package
-      responses:
-        "200":
-          description: Package stream
-        "500":
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
   /sync/ping:
     get:
       tags: [Sync]
@@ -544,6 +447,104 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /sync/snapshot:
+    post:
+      tags: [Sync]
+      summary: Push full snapshot
+      description: >
+        Push a full snapshot object for the current user. The server stores it
+        as `snapshot/snapshot.json` and annotates it with audit metadata
+        (updatedAt, source, pushedBy, serverUpdatedAt).
+      security:
+        - XAuthEmail: []
+          XAuthPassword: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EntityBody"
+      responses:
+        "200":
+          description: Snapshot stored
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+        "400":
+          description: Bad request (invalid snapshot or missing email)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden (admin required)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /sync/collection/{collection}:
+    get:
+      tags: [Sync]
+      summary: List all entities in a collection
+      description: >
+        Returns all JSON rows for the given collection from the server-side
+        database. The result is a deterministically sorted array.
+      security:
+        - XAuthEmail: []
+          XAuthPassword: []
+      parameters:
+        - name: collection
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - games
+              - companies
+              - tags
+              - sources
+              - platforms
+              - genres
+              - categories
+              - features
+              - series
+              - regions
+              - ageratings
+              - completionstatuses
+              - filterpresets
+              - importexclusions
+      responses:
+        "200":
+          description: Collection items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EntityBody"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /sync/{collection}/{id}:
     parameters:
       - name: collection
@@ -571,55 +572,6 @@ paths:
         required: true
         schema:
           type: string
-    post:
-      tags: [Sync]
-      summary: Create entity (idempotent on identical payload)
-      security:
-        - XAuthEmail: []
-          XAuthPassword: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/EntityBody"
-      responses:
-        "201":
-          description: Created
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  ok: { type: boolean }
-                  id: { type: string }
-                  collection: { type: string }
-        "204":
-          description: Already identical (no-op)
-        "409":
-          description: Exists with different content
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "400":
-          description: Invalid input
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "403":
-          description: Forbidden (admin required)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
 
     put:
       tags: [Sync]
@@ -715,6 +667,48 @@ paths:
           description: >
             Relative path under the media root (libraryfiles). Encode slashes if
             tooling cannot send wildcard segments (e.g. `%2F`).
+    get:
+      tags: [Sync]
+      summary: Download media (binary)
+      description: >
+        Download a media file from the libraryfiles tree. The `path` is the
+        relative path under the media root. Encode slashes in `{path}` if your
+        tooling cannot send wildcard path segments (e.g. `%2F`).
+      security:
+        - XAuthEmail: []
+          XAuthPassword: []
+      responses:
+        "200":
+          description: Media file stream
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "400":
+          description: Invalid path
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: File not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Error streaming media
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     put:
       tags: [Sync]
       summary: Upload media (binary)
@@ -777,110 +771,59 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-    get:
-      tags: [Sync]
-      summary: Download media (binary)
-      description: >
-        Download a media file from the libraryfiles tree. The `path` is the
-        relative path under the media root. Encode slashes in `{path}` if your
-        tooling cannot send wildcard path segments (e.g. `%2F`).
+
+  /backup/upload:
+    post:
+      tags: [Backup]
+      summary: Upload a Playnite backup zip
       security:
         - XAuthEmail: []
           XAuthPassword: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+              required: [file]
       responses:
         "200":
-          description: Media file stream
+          description: OK
           content:
-            application/octet-stream:
+            application/json:
               schema:
-                type: string
-                format: binary
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  file: { type: string }
         "400":
-          description: Invalid path
+          description: No file
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "404":
-          description: File not found
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "500":
-          description: Error streaming media
+          description: Server error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /sync/collection/{collection}:
-    get:
-      tags: [Sync]
-      summary: List all entities in a collection
-      description: >
-        Returns all JSON rows for the given collection from the server-side
-        database. The result is a deterministically sorted array.
-      security:
-        - XAuthEmail: []
-          XAuthPassword: []
-      parameters:
-        - name: collection
-          in: path
-          required: true
-          schema:
-            type: string
-            enum:
-              - games
-              - companies
-              - tags
-              - sources
-              - platforms
-              - genres
-              - categories
-              - features
-              - series
-              - regions
-              - ageratings
-              - completionstatuses
-              - filterpresets
-              - importexclusions
-      responses:
-        "200":
-          description: Collection items
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/EntityBody"
-        "400":
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-  /sync/snapshot:
+  /backup/process:
     post:
-      tags: [Sync]
-      summary: Push full snapshot
-      description: >
-        Push a full snapshot object for the current user. The server stores it
-        as `snapshot/snapshot.json` and annotates it with audit metadata
-        (updatedAt, source, pushedBy, serverUpdatedAt).
+      tags: [Backup]
+      summary: Validate/extract zip and import into /data (overwrite-only)
+      description: Runs the import pipeline and emits logs/progress to `/api/sse`.
       security:
         - XAuthEmail: []
           XAuthPassword: []
@@ -889,10 +832,19 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/EntityBody"
+              type: object
+              properties:
+                filename:
+                  type: string
+                  description: "Name of previously uploaded .zip"
+                password:
+                  type: string
+                  description: "Optional LiteDB password (empty string allowed)"
+                  nullable: true
+              required: [filename]
       responses:
         "200":
-          description: Snapshot stored
+          description: OK
           content:
             application/json:
               schema:
@@ -900,7 +852,7 @@ paths:
                 properties:
                   ok: { type: boolean }
         "400":
-          description: Bad request (invalid snapshot or missing email)
+          description: Bad request (e.g., missing/invalid filename)
           content:
             application/json:
               schema:
@@ -911,8 +863,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-        "403":
-          description: Forbidden (admin required)
+        "500":
+          description: Server error during processing
           content:
             application/json:
               schema:

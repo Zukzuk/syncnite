@@ -380,29 +380,6 @@ router.get("/collection/:collection", requireSession, async (req, res) => {
     }
 });
 
-router.post("/:collection/:id", requireAdminSession, async (req, res) => {
-    try {
-        const collection = sanitizeCollection(req.params.collection);
-        const id = sanitizeId(req.params.id);
-        const p = resolveDocPath(collection, id);
-
-        const existing = await readJsonIfExists(p);
-        if (existing && sameJson(existing, req.body)) {
-            return res.status(204).end(); // already identical
-        }
-        if (existing) {
-            // POST should not overwrite; treat as idempotent no-op if identical, else conflict
-            return res.status(409).json({ ok: false, error: "exists" });
-        }
-
-        await writeJson(p, req.body ?? {});
-        return res.status(201).json({ ok: true, id, collection });
-    } catch (e: any) {
-        log.warn("post entity failed", { err: String(e?.message ?? e) });
-        return res.status(400).json({ ok: false, error: String(e?.message ?? e) });
-    }
-});
-
 router.put("/:collection/:id", requireAdminSession, async (req, res) => {
     try {
         const collection = sanitizeCollection(req.params.collection);
