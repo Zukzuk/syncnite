@@ -8,7 +8,7 @@
     "scripts"
   ],
   "scripts": {
-    "up": "node scripts/up.js",
+    "up": "node scripts/docker-up.js",
     "commit": "cz",
     "build": "npm run build:version && npm -ws --if-present run build && npm run build:ext && npm run codebase",
     "push": "node scripts/git-push.js",
@@ -20,9 +20,9 @@
     "e2e:gate": "node scripts/e2e-gate.js",
     "build:ext": "node scripts/build-extension.js",
     "build:version": "node scripts/set-version.js",
-    "clean": "node scripts/clean.js",
-    "codebase": "node scripts/codebase.mjs",
-    "changes": "node scripts/changes.mjs"
+    "clean": "node scripts/util-clean.js",
+    "codebase": "node scripts/util-codebase.mjs",
+    "changes": "node scripts/util-changes.mjs"
   },
   "devDependencies": {
     "@types/node": "^20.19.13",

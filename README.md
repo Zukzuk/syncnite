@@ -83,24 +83,14 @@ npm run clean
 - Can upload library ZIP and trigger full import
 - Displays real-time progress and logs from the server
 
-### Setup instructions
-
+### Workflow
 1. Start your Syncnite server  
 2. Create an Admin account through the web UI  
 3. Download `latest.pext` from the web UI  
 4. Install the extension in Playnite  
 5. Open **Syncnite Bridge → Settings**, configure:
    - **API Base:** `http://<server>:3003/api/`
-   - **Admin email/password**
-
-### PullDelta workflow
-The Syncnite Bridge:
-1. Sends all client‑known IDs + metadata ticks  
-2. Server returns only:
-   - IDs to upsert
-   - IDs to delete
-   - Media differences  
-3. Extension uploads only the changed entities/media.
+   - **Admin/User email/password**
 
 ### Status Levels
 
@@ -120,11 +110,10 @@ The Syncnite Bridge:
 - Server cannot be reached, or `/ping` fails.
 - No sync operations run.
 
-## 🧠 API Overview (Updated)
+## 🧠 API Overview
 
 The API is fully documented via our OpenAPI spec.
 Documentation is served at:
-
 ```
 http://<server>:3003/api/docs
 ```
@@ -151,18 +140,6 @@ http://<server>:3003/api/docs
 
 - **Media storage**  
   All `libraryfiles` media is stored exactly like in Playnite.
-
-## 📂 Data Locations
-
-| Path | Description |
-|------|-------------|
-| `/uploads/` | Uploaded ZIP files |
-| `/data/` | All JSON + media |
-| `/data/libraryfiles/` | Raw Playnite media |
-| `/data/manifest.json` | Auto-generated manifest of media |
-| `/data/installed/*.json` | Installed games lists |
-| `/snapshots/snapshot.json` | Full JSON snapshot (admin‑push) |
-| `/extension/` | Built `.pext` distributed by the web UI |
 
 ## 💡 Notes
 

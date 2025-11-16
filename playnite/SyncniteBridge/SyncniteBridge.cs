@@ -98,9 +98,10 @@ namespace SyncniteBridge
             // Only considered "healthy" if server is reachable *and* this account is admin
             pushSync.SetHealthProvider(() => health.IsHealthy && health.IsAdmin);
 
-            // Pull sync for user + admin
+            // Non-admin users Pull sync
             pullSync = new PullDeltaService(api, syncUrl, GetDefaultPlayniteDataRoot(), blog);
-            pullSync.SetHealthProvider(() => health.IsHealthy);
+            // Only considered "healthy" if server is reachable AND this account is NOT admin
+            pullSync.SetHealthProvider(() => health.IsHealthy && !health.IsAdmin);
 
             // periodic pull every 60_000 ms (1 minute), initially disabled
             pullTimer = new Timer(
@@ -133,27 +134,34 @@ namespace SyncniteBridge
 
                 if (health.IsAdmin)
                 {
-                    // Admin mode → push + admin delta
+                    // Admin mode → push only, no periodic pull
                     blog.Info("startup", "healthy in ADMIN mode → triggering push+sync");
                     pushInstalled.Trigger();
                     pushSync.Trigger();
+
+                    try
+                    {
+                        // Ensure no pull polling while admin
+                        pullTimer?.Change(Timeout.Infinite, Timeout.Infinite);
+                    }
+                    catch { }
                 }
                 else
                 {
                     // User mode → pull changes from server into Playnite
                     blog.Info("startup", "healthy in USER mode → triggering pull sync");
                     pushInstalled.Trigger();
-                    _ = pullSync.pullOnceAsync(); // fire-and-forget, handles its own logging
-                }
+                    _ = pullSync.pullOnceAsync(); // fire-and-forget
 
-                try
-                {
-                    pullTimer?.Change(
-                        AppConstants.PushSyncInterval_Ms,
-                        AppConstants.PushSyncInterval_Ms
-                    );
+                    try
+                    {
+                        pullTimer?.Change(
+                            AppConstants.PushSyncInterval_Ms,
+                            AppConstants.PushSyncInterval_Ms
+                        );
+                    }
+                    catch { }
                 }
-                catch { }
             };
 
             pushSync.Start();
