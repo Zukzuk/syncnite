@@ -4,8 +4,6 @@
 Syncnite makes it possible to **share your Playnite library** — games, metadata, media, settings — with family members or across your own devices.  
 It provides a self‑hosted API, a web viewer, and a companion Playnite extension (**Syncnite Bridge**) that performs fast, incremental syncing based on the new *PullDelta* mechanism.
 
----
-
 ## ⭐ What Syncnite does
 
 ### ✔️ Serve your Playnite library on the web
@@ -27,8 +25,6 @@ It provides a self‑hosted API, a web viewer, and a companion Playnite extensio
 ### ✔️ Self‑host easily
 - Docker Compose stack (`api`, `web`, `.pext` builder)
 - Runs on any server, NAS, or even a local machine
-
----
 
 ## ⚙️ Developer workflows
 
@@ -69,8 +65,6 @@ npm run release
 npm run clean
 ```
 
----
-
 ## 🧩 Components
 
 | Component | Description |
@@ -79,8 +73,6 @@ npm run clean
 | **syncnite-web** | Web UI for browsing the library and downloading `.pext`. |
 | **PlayniteImport** | .NET 8 binary that converts Playnite LiteDB → structured JSON. |
 | **SyncniteBridge** | Playnite extension handling login, PullDelta, uploads, media sync. |
-
----
 
 ## 🚀 SyncniteBridge (A Playnite Extension)
 
@@ -101,7 +93,7 @@ npm run clean
    - **API Base:** `http://<server>:3003/api/`
    - **Admin email/password**
 
-### New PullDelta workflow
+### PullDelta workflow
 The Syncnite Bridge:
 1. Sends all client‑known IDs + metadata ticks  
 2. Server returns only:
@@ -110,7 +102,23 @@ The Syncnite Bridge:
    - Media differences  
 3. Extension uploads only the changed entities/media.
 
----
+### Status Levels
+
+**🟢 Green – Healthy**
+- Server reachable.
+- Server version matches extension version.
+- All sync operations (push/pull/delta) are enabled.
+
+**🟠 Orange – Version Mismatch**
+- Server reachable, but versions differ.
+- Sync operations are **blocked**.
+- The status message explains which side is outdated:
+  - *“old server version, please update server”*
+  - *“old extension version, please update extension”*
+
+**🔴 Red – Unreachable**
+- Server cannot be reached, or `/ping` fails.
+- No sync operations run.
 
 ## 🧠 API Overview (Updated)
 
@@ -120,8 +128,6 @@ Documentation is served at:
 ```
 http://<server>:3003/api/docs
 ```
-
----
 
 ## 🏗 Architecture Notes
 
@@ -146,8 +152,6 @@ http://<server>:3003/api/docs
 - **Media storage**  
   All `libraryfiles` media is stored exactly like in Playnite.
 
----
-
 ## 📂 Data Locations
 
 | Path | Description |
@@ -160,16 +164,12 @@ http://<server>:3003/api/docs
 | `/snapshots/snapshot.json` | Full JSON snapshot (admin‑push) |
 | `/extension/` | Built `.pext` distributed by the web UI |
 
----
-
 ## 💡 Notes
 
 - Large ZIP uploads supported (Express + Nginx tuned)
 - Syncnite Bridge uses **delta-first** sync for maximum speed
 - Server enforces admin-only modifications to library data
 - `/sync/media/*` supports both PUT (upload) and GET (download)
-
----
 
 ## 📜 License
 
