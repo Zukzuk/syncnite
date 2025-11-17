@@ -60,12 +60,11 @@ export function AppHeader({ opened, onToggleNav }: Props) {
                         style={{ fontSize: 10 }}
                     >
                         <Badge
-                            variant="dot"
                             size="sm"
                             radius="md"
                             color={connected ? "teal" : "gray"}
                         >
-                            {connected ? "Extension connected" : "Extension offline"}
+                            {connected ? "connected" : "offline"}
                         </Badge>
                     </Tooltip>
                 )}
