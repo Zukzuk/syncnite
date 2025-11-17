@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.23.4](https://github.com/Zukzuk/syncnite/compare/v1.23.3...v1.23.4) (2025-11-17)
+
+
+### Bug Fixes
+
+* added better header and better dockerfile ([d4c21a9](https://github.com/Zukzuk/syncnite/commit/d4c21a969a0259514236ff52730606befcee54d4))
+
 ### [1.23.3](https://github.com/Zukzuk/syncnite/compare/v1.23.2...v1.23.3) (2025-11-17)
 
 
