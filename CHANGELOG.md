@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.23.0](https://github.com/Zukzuk/syncnite/compare/v1.22.6...v1.23.0) (2025-11-17)
+
+
+### Features
+
+* added a connected badge to the web ([ce3afb0](https://github.com/Zukzuk/syncnite/commit/ce3afb048426c3ab4acf892d443bb72731ecc68d))
+
 ### [1.22.6](https://github.com/Zukzuk/syncnite/compare/v1.22.5...v1.22.6) (2025-11-16)
 
 
