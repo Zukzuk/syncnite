@@ -2,12 +2,12 @@ import { CookieState } from "./persist";
 
 export const API_ENDPOINTS = {
   // Fetch list of library items
-  LIBRARY_LIST: "/api/library",
   SSE: "/api/sse",
   ZIP_PROCESS: "/api/backup/process",
   ZIP_LIST: "/api/zips",
   // Extension management
-  DOWNLOAD_EXTENSION: "/api/extension/download",
+  EXTENSION_DOWNLOAD: "/api/extension/download",
+  EXTENSION_STATUS: "/api/sync/ping/status",
   // Account management
   LOGIN: "/api/accounts/login",
   STATUS: "/api/accounts/status",

@@ -3,14 +3,6 @@ import { StreamProgress } from "../features/backups/BackupImporter";
 import { API_ENDPOINTS } from "./constants";
 import { getCreds } from "./persist";
 
-type LibraryItem = {
-  id: string | number;
-  title: string;
-  platform?: string;
-  addedAt?: string;
-  playtimeMinutes?: number;
-};
-
 export type ZipInfo = {
   name: string;
   size: number;
@@ -139,12 +131,6 @@ export function processZipStream({
   };
 }
 
-// Fetch list of library items
-export async function listLibrary(): Promise<LibraryItem[]> {
-  const r = await fetch(API_ENDPOINTS.LIBRARY_LIST, { cache: "no-store" });
-  return r.json();
-}
-
 // Verify current session credentials
 export async function verifySession(): Promise<{ ok: boolean; email?: string; role?: string }> {
   const creds = getCreds();
@@ -187,22 +173,6 @@ export async function registerAdmin(
   return r.json();
 }
 
-// Login an existing user
-export async function loginUser(
-  email: string,
-  password: string
-): Promise<{
-  ok: boolean;
-  error?: string
-}> {
-  const r = await fetch(API_ENDPOINTS.LOGIN, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
-  });
-  return r.json();
-}
-
 // Load a DB collection via the sync API
 export async function loadDbCollection<T>(collection: string): Promise<T[]> {
   const url = `/api/sync/collection/${encodeURIComponent(collection)}`;
@@ -222,4 +192,31 @@ export async function loadDbCollection<T>(collection: string): Promise<T[]> {
     console.error("Failed to load DB collection:", e);
     return [];
   }
+}
+
+export async function fetchExtensionStatus(): Promise<{
+  ok: boolean;
+  connected: boolean;
+  lastPingAt: string | null;
+}> {
+  const creds = getCreds();
+  if (!creds) return { ok: false, connected: false, lastPingAt: null };
+
+  const r = await fetch(API_ENDPOINTS.EXTENSION_STATUS, {
+    headers: {
+      "x-auth-email": creds.email,
+      "x-auth-password": creds.password,
+    },
+  });
+
+  if (!r.ok) {
+    return { ok: false, connected: false, lastPingAt: null };
+  }
+
+  const j = await r.json();
+  return {
+    ok: !!j.ok,
+    connected: !!j.connected,
+    lastPingAt: j.lastPingAt ?? null,
+  };
 }

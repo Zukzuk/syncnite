@@ -1,17 +1,16 @@
 import { promises as fs } from "node:fs";
 import { join } from "node:path";
-import { ACC_DIR, ADMIN_SUFFIX, USER_SUFFIX } from "../constants";
-import { get } from "node:http";
+import { ACCOUNTS_ROOT, ADMIN_SUFFIX, USER_SUFFIX } from "../constants";
 
 export type Account = { email: string; password: string };
 export type Role = "admin" | "user" | "unknown";
 
 async function ensureDir() {
-    await fs.mkdir(ACC_DIR, { recursive: true });
+    await fs.mkdir(ACCOUNTS_ROOT, { recursive: true });
 }
 
 async function listAllAccounts(): Promise<string[]> {
-    try { return (await fs.readdir(ACC_DIR)); } catch { return []; }
+    try { return (await fs.readdir(ACCOUNTS_ROOT)); } catch { return []; }
 }
 
 async function listAdmins(): Promise<string[]> {
@@ -29,7 +28,7 @@ async function readAccount(email: string): Promise<Account | null> {
     try {
         const fileName = await getFilenameByEmail(email);
         if (!fileName) return null;
-        const raw = await fs.readFile(join(ACC_DIR, fileName), "utf8");
+        const raw = await fs.readFile(join(ACCOUNTS_ROOT, fileName), "utf8");
         const parsed = JSON.parse(raw);
         if (!parsed?.email || !parsed?.password) return null;
         return { email: String(parsed.email), password: String(parsed.password) };
@@ -38,12 +37,12 @@ async function readAccount(email: string): Promise<Account | null> {
 
 async function writeAdmin(acc: Account) {
     await ensureDir();
-    await fs.writeFile(join(ACC_DIR, `${acc.email}${ADMIN_SUFFIX}`), JSON.stringify(acc, null, 2), "utf8");
+    await fs.writeFile(join(ACCOUNTS_ROOT, `${acc.email}${ADMIN_SUFFIX}`), JSON.stringify(acc, null, 2), "utf8");
 }
 
 async function writeUser(acc: Account) {
     await ensureDir();
-    await fs.writeFile(join(ACC_DIR, `${acc.email}${USER_SUFFIX}`), JSON.stringify(acc, null, 2), "utf8");
+    await fs.writeFile(join(ACCOUNTS_ROOT, `${acc.email}${USER_SUFFIX}`), JSON.stringify(acc, null, 2), "utf8");
 }
 
 export const AccountsService = {

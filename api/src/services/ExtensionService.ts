@@ -1,10 +1,11 @@
+import { EXT_DIR } from "../constants";
 import { rootLog } from "../logger";
 
 const log = rootLog.child("extensionService");
 const APP_VERSION = process.env.APP_VERSION ?? "dev";
 
 export class ExtensionService {
-    private readonly extensionFile = "/extension/latest.pext";
+    private readonly extensionFile = `${EXT_DIR}/latest.pext`;
 
     /**
      * Gets the latest extension package file path and download name.

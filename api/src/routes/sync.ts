@@ -3,9 +3,10 @@ import multer from "multer";
 import { promises as fs } from "node:fs";
 import { join, dirname, resolve, sep } from "node:path";
 import { requireAdminSession, requireSession } from "../middleware/requireAuth";
-import { DATA_DIR } from "../constants";
+import { COLLECTIONS, DATA_DIR, DB_ROOT, MEDIA_ROOT, PING_CONNECTED_MS } from "../constants";
 import { rootLog } from "../logger";
 import { SyncService } from "../services/SyncService";
+import { AccountsService } from "../services/AccountsService";
 
 type ClientManifest = {
     // per collection → list of ids known client-side
@@ -27,26 +28,9 @@ type DeltaManifest = {
 const log = rootLog.child("route:sync2");
 const router = express.Router();
 const syncService = new SyncService();
-const DB_ROOT = join(DATA_DIR, "db");
-const MEDIA_ROOT = join(DATA_DIR, "libraryfiles");
-const COLLECTIONS = new Set([
-    "games",
-    "companies",
-    "tags",
-    "sources",
-    "platforms",
-    "genres",
-    "categories",
-    "features",
-    "series",
-    "regions",
-    "ageratings",
-    "completionstatuses",
-    "filterpresets",
-    "importexclusions",
-]);
-
 const mediaUpload = multer({ storage: multer.memoryStorage() });
+
+let LAST_PING = 0;
 
 async function ensureDir(p: string) {
     await fs.mkdir(p, { recursive: true });
@@ -105,9 +89,34 @@ function sameJson(a: any, b: any): boolean {
     try { return JSON.stringify(a) === JSON.stringify(b); } catch { return false; }
 }
 
+async function setConnectedLabel(email: string) {
+    try {
+
+        const role = await AccountsService.getRole(email);
+        if (role === "admin") LAST_PING = Date.now();
+    } catch {
+        LAST_PING = 0;
+    }
+}
+
 router.get("/ping", requireSession, (_req, res) => {
     const APP_VERSION = process.env.APP_VERSION ?? "dev";
+    const email = _req.auth?.email;
+    
+    setConnectedLabel(email as string); // fire and forget
+
     return res.json({ ok: true, version: `v${APP_VERSION}` });
+});
+
+router.get("/ping/status", requireSession, (req, res) => {
+    const now = Date.now();
+    const connected = !!LAST_PING && now - LAST_PING <= PING_CONNECTED_MS;
+
+    return res.json({
+        ok: true,
+        connected,
+        lastPingAt: LAST_PING ? new Date(LAST_PING).toISOString() : null,
+    });
 });
 
 router.post("/installed", requireSession, async (req, res) => {

@@ -1,7 +1,8 @@
-import { Group, Title, ActionIcon, Button, Tooltip, Burger, Text, useMantineColorScheme } from "@mantine/core";
+import { Group, Title, ActionIcon, Button, Tooltip, Burger, Text, useMantineColorScheme, Badge } from "@mantine/core";
 import { IconDownload, IconMoon, IconSun } from "@tabler/icons-react";
-import { useAuth } from "../hooks/useAuth";
 import { API_ENDPOINTS } from "../lib/constants";
+import { useAuth } from "../hooks/useAuth";
+import { useExtensionStatus } from "../hooks/useExtensionStatus";
 
 const appVersion = (window as any).__APP_VERSION__ ?? 'dev';
 
@@ -13,6 +14,9 @@ type Props = {
 export function AppHeader({ opened, onToggleNav }: Props) {
     const { colorScheme, setColorScheme } = useMantineColorScheme();
     const { state, logout } = useAuth({ pollMs: 0 });
+    const { connected, lastPingAt, loading } = useExtensionStatus(10_000);
+
+    const isAdmin = state.loggedIn && state.role === "admin";
 
     return (
         <Group h="100%" px="md" justify="space-between">
@@ -31,7 +35,7 @@ export function AppHeader({ opened, onToggleNav }: Props) {
                 >
                     <Button
                         component="a"
-                        href={API_ENDPOINTS.DOWNLOAD_EXTENSION}
+                        href={API_ENDPOINTS.EXTENSION_DOWNLOAD}
                         size="xs"
                         radius="md"
                         leftSection={<IconDownload size={16} />}
@@ -41,6 +45,30 @@ export function AppHeader({ opened, onToggleNav }: Props) {
                         Playnite extension
                     </Button>
                 </Tooltip>
+
+                {/* NEW: admin extension connection badge */}
+                {isAdmin && !loading && (
+                    <Tooltip
+                        withArrow
+                        label={
+                            connected
+                                ? lastPingAt
+                                    ? `Admin extension last ping: ${new Date(lastPingAt).toLocaleTimeString()}`
+                                    : "Admin extension is currently pinging the API"
+                                : "No recent ping from admin extension"
+                        }
+                        style={{ fontSize: 10 }}
+                    >
+                        <Badge
+                            variant="dot"
+                            size="sm"
+                            radius="md"
+                            color={connected ? "teal" : "gray"}
+                        >
+                            {connected ? "Extension connected" : "Extension offline"}
+                        </Badge>
+                    </Tooltip>
+                )}
 
                 <Group gap="sm">
                     {state.loggedIn ? (
