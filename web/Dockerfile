@@ -7,9 +7,10 @@ COPY web/package.json web/tsconfig.json web/index.html web/
 COPY web/vite.config.mts web/vite.config.mts
 COPY web/src web/src
 COPY web/public web/public
+COPY README.md web/public/README.md 
 
-RUN npm i --include-workspace-root=false --workspace web
-RUN npm run -w web build
+RUN npm ci --include-workspace-root=false --workspace web
+RUN npm run --workspace web build
 
 # -------- Runtime stage --------
 FROM nginx:alpine

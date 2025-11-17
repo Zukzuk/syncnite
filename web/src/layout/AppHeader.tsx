@@ -24,9 +24,7 @@ export function AppHeader({ opened, onToggleNav }: Props) {
                 {/* Hamburger menu for mobile */}
                 <Burger opened={opened} onClick={onToggleNav} hiddenFrom="sm" size="sm" />
                 <Title order={3}>Syncnite</Title>
-            </Group>
 
-            <Group gap="sm">
                 {/* Download extension button */}
                 <Tooltip
                     withArrow
@@ -45,16 +43,6 @@ export function AppHeader({ opened, onToggleNav }: Props) {
                         Playnite extension
                     </Button>
                 </Tooltip>
-
-                {/* User logout */}
-                <Group gap="sm">
-                    {state.loggedIn ? (
-                        <>
-                            <Button size="xs" variant="light" onClick={logout}>Logout</Button>
-                            <Text size="xs" className="is-dim">{state.email}</Text>
-                        </>
-                    ) : null}
-                </Group>
 
                 {/* User role badge */}
                 {isAdmin && !loading && (
@@ -78,7 +66,19 @@ export function AppHeader({ opened, onToggleNav }: Props) {
                         </Badge>
                     </Tooltip>
                 )}
+            </Group>
 
+            <Group gap="sm">
+                {/* User logout */}
+                <Group gap="sm">
+                    {state.loggedIn ? (
+                        <>
+                            <Text size="md" className="is-dim">{state.email}</Text>
+                            <Button size="xs" variant="light" onClick={logout}>Logout</Button>
+                        </>
+                    ) : null}
+                </Group>
+                
                 {/* Dark / light toggle */}
                 <ActionIcon
                     variant="subtle"
