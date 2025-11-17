@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.23.3](https://github.com/Zukzuk/syncnite/compare/v1.23.2...v1.23.3) (2025-11-17)
+
+
+### Bug Fixes
+
+* better header ([fd6b58c](https://github.com/Zukzuk/syncnite/commit/fd6b58c88dcc713c46830b4641e326d817f49715))
+
 ### [1.23.2](https://github.com/Zukzuk/syncnite/compare/v1.23.1...v1.23.2) (2025-11-17)
 
 
