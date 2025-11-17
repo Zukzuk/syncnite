@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.24.0](https://github.com/zukzuk/playnite-viewer/compare/v1.23.4...v1.24.0) (2025-11-17)
+
+
+### Features
+
+* added possibility to lock admin to ClientId and to release that admin ([0d9c3f9](https://github.com/zukzuk/playnite-viewer/commit/0d9c3f905db1a91dcbf94656081c2b4726974fe1))
+
 ### [1.23.4](https://github.com/Zukzuk/syncnite/compare/v1.23.3...v1.23.4) (2025-11-17)
 
 
