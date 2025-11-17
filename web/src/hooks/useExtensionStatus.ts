@@ -1,7 +1,7 @@
-// src/hooks/useExtensionStatus.ts
 import React from "react";
 import { fetchExtensionStatus } from "../lib/api";
 import { useAuth } from "./useAuth";
+import { INTERVAL_MS } from "../lib/constants";
 
 const DEFAULT_STATE = {
     connected: false,
@@ -9,7 +9,7 @@ const DEFAULT_STATE = {
     loading: true,
 };
 
-export function useExtensionStatus(pollMs: number = 10_000) {
+export function useExtensionStatus(pollMs: number = INTERVAL_MS) {
     const { state } = useAuth({ pollMs: 0 });
     const [status, setStatus] = React.useState(DEFAULT_STATE);
 
