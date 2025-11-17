@@ -45,6 +45,7 @@ export function createApp() {
                 securitySchemes: {
                     XAuthEmail: { type: "apiKey", in: "header", name: "x-auth-email", description: "Admin email for header auth" },
                     XAuthPassword: { type: "apiKey", in: "header", name: "x-auth-password", description: "Admin password for header auth" },
+                    XClientId: { type: "apiKey", in: "header", name: "x-client-id", description: "Client ID for identifying different clients" },
                 },
             },
         },
@@ -59,8 +60,9 @@ export function createApp() {
             swaggerOptions: {
                 persistAuthorization: true,
                 authAction: {
-                    XAuthEmail: { name: "x-auth-email", schema: { type: "apiKey", in: "header", name: "x-auth-email" }, value: "dave.timmerman@gmail.com" },
+                    XAuthEmail: { name: "x-auth-email", schema: { type: "apiKey", in: "header", name: "x-auth-email" }, value: "dave" },
                     XAuthPassword: { name: "x-auth-password", schema: { type: "apiKey", in: "header", name: "x-auth-password" }, value: "xxxx" },
+                    XClientId: { name: "x-client-id", schema: { type: "apiKey", in: "header", name: "x-client-id" }, value: "my-client-id" },
                 },
             },
         })

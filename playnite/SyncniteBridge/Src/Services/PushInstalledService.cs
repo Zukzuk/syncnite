@@ -157,7 +157,6 @@ namespace SyncniteBridge.Services
                 if (!resp.IsSuccessStatusCode)
                 {
                     var msg = $"Installed sync failed: {resp.StatusCode}";
-                    log.Warn($"[SyncniteBridge] {msg}");
                     blog?.Warn("push", msg, new { status = resp.StatusCode });
                     api.Notifications.Add(
                         AppConstants.Notif_Sync_Error,
@@ -176,7 +175,6 @@ namespace SyncniteBridge.Services
             catch (Exception ex)
             {
                 var msg = $"Installed sync failed: {ex.Message}";
-                log.Error(ex, "[SyncniteBridge] " + msg);
                 blog?.Error("push", "Installed sync failed", err: ex.Message);
                 api.Notifications.Add(AppConstants.Notif_Sync_Error, msg, NotificationType.Error);
             }

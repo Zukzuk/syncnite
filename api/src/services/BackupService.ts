@@ -28,14 +28,17 @@ async function cleanDir(dir: string) {
     }
 }
 
+// Ensure a directory exists
 async function ensureDir(p: string) {
     await fs.mkdir(p, { recursive: true });
 }
 
+// Check if directory exists
 async function dirExists(p: string): Promise<boolean> {
     try { return (await fs.stat(p)).isDirectory(); } catch { return false; }
 }
 
+// Check if file exists
 async function fileExists(p: string): Promise<boolean> {
     try { return (await fs.stat(p)).isFile(); } catch { return false; }
 }

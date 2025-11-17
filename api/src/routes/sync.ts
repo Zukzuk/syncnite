@@ -3,14 +3,14 @@ import multer from "multer";
 import { promises as fs } from "node:fs";
 import { join, dirname, resolve, sep } from "node:path";
 import { requireAdminSession, requireSession } from "../middleware/requireAuth";
-import { COLLECTIONS, DATA_DIR, DB_ROOT, MEDIA_ROOT, PING_CONNECTED_MS } from "../constants";
+import { COLLECTIONS, DB_ROOT, MEDIA_ROOT } from "../constants";
 import { rootLog } from "../logger";
 import { SyncService } from "../services/SyncService";
-import { AccountsService } from "../services/AccountsService";
 
 type ClientManifest = {
     // per collection → list of ids known client-side
-    json?: Record<string, string[]>; // { "games": ["id1","id2",...], ... }
+    // { "games": ["id1","id2",...], ... }
+    json?: Record<string, string[]>; 
     // optional per-entity metadata versions, e.g.
     // { "games": { "<id>": <ticks> } }
     versions?: Record<string, Record<string, string>>;
@@ -30,12 +30,12 @@ const router = express.Router();
 const syncService = new SyncService();
 const mediaUpload = multer({ storage: multer.memoryStorage() });
 
-let LAST_PING = 0;
-
+// Ensure a directory exists
 async function ensureDir(p: string) {
     await fs.mkdir(p, { recursive: true });
 }
 
+// Sanitize an entity ID
 function sanitizeId(id: string): string {
     // Keep it conservative: alnum, dash, underscore, and hex GUID braces/parentheses stripped
     const trimmed = String(id ?? "").trim();
@@ -45,16 +45,19 @@ function sanitizeId(id: string): string {
     return safe;
 }
 
+// Sanitize and validate a collection name
 function sanitizeCollection(col: string): string {
     const c = String(col ?? "").trim().toLowerCase();
     if (!COLLECTIONS.has(c)) throw new Error(`unknown collection: ${c}`);
     return c;
 }
 
+// Resolve the file path for a document
 function resolveDocPath(collection: string, id: string) {
     return join(DB_ROOT, collection, `${id}.json`);
 }
 
+// Read JSON from a file if it exists
 async function readJsonIfExists(p: string): Promise<any | null> {
     try {
         const buf = await fs.readFile(p, "utf8");
@@ -65,12 +68,14 @@ async function readJsonIfExists(p: string): Promise<any | null> {
     }
 }
 
+// Write JSON to a file
 async function writeJson(p: string, obj: any) {
     await ensureDir(dirname(p));
     const data = JSON.stringify(obj, null, 2);
     await fs.writeFile(p, data, "utf8");
 }
 
+// Safely join a media path
 function safeJoinMedia(root: string, urlTail: string) {
     // Accept /media/<any/relative/path> → map to MEDIA_ROOT/that/path
     const rel = urlTail.replace(/^\/+/, "");
@@ -81,43 +86,15 @@ function safeJoinMedia(root: string, urlTail: string) {
     return abs;
 }
 
+// Get file stats or null if not exists
 async function fileStatOrNull(p: string) {
     try { return await fs.stat(p); } catch { return null; }
 }
 
+// Compare two objects for JSON equality
 function sameJson(a: any, b: any): boolean {
     try { return JSON.stringify(a) === JSON.stringify(b); } catch { return false; }
 }
-
-async function setConnectedLabel(email: string) {
-    try {
-
-        const role = await AccountsService.getRole(email);
-        if (role === "admin") LAST_PING = Date.now();
-    } catch {
-        LAST_PING = 0;
-    }
-}
-
-router.get("/ping", requireSession, (_req, res) => {
-    const APP_VERSION = process.env.APP_VERSION ?? "dev";
-    const email = _req.auth?.email;
-    
-    setConnectedLabel(email as string); // fire and forget
-
-    return res.json({ ok: true, version: `v${APP_VERSION}` });
-});
-
-router.get("/ping/status", requireSession, (req, res) => {
-    const now = Date.now();
-    const connected = !!LAST_PING && now - LAST_PING <= PING_CONNECTED_MS;
-
-    return res.json({
-        ok: true,
-        connected,
-        lastPingAt: LAST_PING ? new Date(LAST_PING).toISOString() : null,
-    });
-});
 
 router.post("/installed", requireSession, async (req, res) => {
     try {

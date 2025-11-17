@@ -15,6 +15,9 @@ export type SseSink = {
     close: () => void;
 };
 
+/**
+ * Creates an SSE sink for the given response.
+ */
 export function createSSE(res: Response): SseSink {
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");

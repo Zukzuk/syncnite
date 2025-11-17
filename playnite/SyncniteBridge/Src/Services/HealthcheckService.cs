@@ -45,12 +45,12 @@ namespace SyncniteBridge.Services
                         if (cmp < 0)
                         {
                             // server older than extension
-                            return $"{baseLabel} (server {lastServerVersion}, extension {lastExtVersion} – please update server)";
+                            return $"{baseLabel} (server {lastServerVersion}, ext {lastExtVersion} – please update server)";
                         }
                         else if (cmp > 0)
                         {
                             // extension older than server
-                            return $"{baseLabel} (server {lastServerVersion}, extension {lastExtVersion} – please update extension)";
+                            return $"{baseLabel} (server {lastServerVersion}, ext {lastExtVersion} – please install new extension)";
                         }
 
                         return baseLabel;
@@ -63,7 +63,6 @@ namespace SyncniteBridge.Services
 
         // Only "fully healthy" (reachable + version match) counts as healthy for sync.
         public bool IsHealthy => lastState == HealthState.Healthy;
-
         public bool IsAdmin => lastIsAdmin;
         public event Action<bool> StatusChanged = delegate { };
 
@@ -73,12 +72,10 @@ namespace SyncniteBridge.Services
         private readonly Timer timer;
         private string pingUrl;
         private string verifyAdminUrl;
-
         private HealthState lastState = HealthState.Unreachable;
         private bool lastIsAdmin;
         private string? lastServerVersion;
         private string? lastExtVersion;
-
         private readonly BridgeLogger? blog;
 
         /// <summary>
@@ -245,7 +242,6 @@ namespace SyncniteBridge.Services
             if (newState == HealthState.Healthy)
             {
                 var mode = isAdminNow ? "admin" : "user";
-                log.Info($"[SyncniteBridge] Server healthy ({mode} mode, v{serverVersion})");
                 blog?.Info(
                     "health",
                     "Server healthy",
@@ -259,9 +255,6 @@ namespace SyncniteBridge.Services
             }
             else if (newState == HealthState.VersionMismatch)
             {
-                log.Warn(
-                    $"[SyncniteBridge] Version mismatch. Server={serverVersionRaw}, Extension={extVersionRaw}"
-                );
                 blog?.Warn(
                     "health",
                     "Version mismatch",
@@ -270,7 +263,6 @@ namespace SyncniteBridge.Services
             }
             else
             {
-                log.Warn("[SyncniteBridge] Server unreachable");
                 blog?.Warn("health", "Server unreachable", new { url = pingUrl });
             }
 

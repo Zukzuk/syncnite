@@ -14,6 +14,24 @@ router.post("/register/admin", async (req, res) => {
     res.json({ ok: true });
 });
 
+router.post("/admin/release", requireAdminSession, async (req, res) => {
+    const email = req.auth?.email;
+    if (!email) {
+        return res.status(400).json({ ok: false, error: "missing_auth" });
+    }
+
+    const r = await AccountsService.removeAdmin(email);
+    if (!r.ok) {
+        if (r.error === "not_admin") {
+            return res.status(409).json({ ok: false, error: "not_admin" });
+        }
+        return res.status(500).json({ ok: false, error: r.error });
+    }
+
+    // After this, there is no admin; new admin can be registered from the server.
+    return res.json({ ok: true });
+});
+
 router.post("/register/user", async (req, res) => {
     const email = String(req.body?.email || "").trim().toLowerCase();
     const password = String(req.body?.password || "");

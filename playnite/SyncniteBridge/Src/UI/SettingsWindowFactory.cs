@@ -17,6 +17,28 @@ namespace SyncniteBridge.UI
         /// <summary>
         /// Build and show the settings window.
         /// </summary>
+        /// <param name="api">Playnite API instance.</param>
+        /// <param name="initialApiBase">Initial API base URL.</param>
+        /// <param name="getHealthText">Returns the current health text.</param>
+        /// <param name="getIsAdmin">Returns true if the current session is admin.</param>
+        /// <param name="subscribeHealth">Subscribe to health changes (bool healthy).</param>
+        /// <param name="unsubscribeHealth">Unsubscribe health handler.</param>
+        /// <param name="onSaveApiBase">Callback when API base is saved.</param>
+        /// <param name="onPushInstalled">Callback to push installed games.</param>
+        /// <param name="onSyncLibrary">Callback to sync library.</param>
+        /// <param name="initialEmail">Initial email value.</param>
+        /// <param name="initialPassword">Initial password value.</param>
+        /// <param name="isAdminInstall">
+        /// True when this Playnite installation is the bound admin install.
+        /// </param>
+        /// <param name="onSaveCredentials">
+        /// Callback when credentials are saved (email, password).
+        /// </param>
+        /// <param name="onReleaseAdmin">
+        /// Callback when the user confirms "Release admin" in the UI.
+        /// Should call the API to delete/release the admin account and
+        /// reset local state (config, headers, etc.).
+        /// </param>
         public static void BuildAndShow(
             IPlayniteAPI api,
             string initialApiBase,
@@ -29,7 +51,9 @@ namespace SyncniteBridge.UI
             Action onSyncLibrary,
             string initialEmail,
             string initialPassword,
-            Action<string, string> onSaveCredentials
+            bool isAdminInstall,
+            Action<string, string> onSaveCredentials,
+            Action onReleaseAdmin
         )
         {
             var win = api.Dialogs.CreateWindow(
@@ -46,26 +70,30 @@ namespace SyncniteBridge.UI
             ThemeHelpers.HookThemeBackground(win);
             ThemeHelpers.HookThemeForeground(win);
 
-            // shared state for local functions
             bool isHealthy = false;
+
             TextBox tbApi = null!;
             TextBox tbEmail = null!;
             PasswordBox tbPass = null!;
             Button btnPush = null!;
             Button btnSync = null!;
+            Button btnSave = null!;
+            Button btnReleaseAdmin = null!;
             TextBlock roleText = null!;
+            TextBlock loginLockedInfo = null!;
+            Ellipse statusDot = null!;
+            TextBlock statusText = null!;
 
             var root = new Grid { Margin = new Thickness(16) };
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Header
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Divider
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // API base
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Creds
-            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Form save
-            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Action
-            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Action
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Save row
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Action 1
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Action 2
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Footer
 
-            // Divider helper
             UIElement MakeDivider(double mt = 10, double mb = 12)
             {
                 var div = new Border
@@ -79,139 +107,82 @@ namespace SyncniteBridge.UI
                     && !ThemeHelpers.TrySetDynamicBrush(div, Border.BackgroundProperty, "TextBrush")
                 )
                 {
-                    div.Background = new SolidColorBrush(Color.FromArgb(64, 255, 255, 255));
+                    div.Background = new SolidColorBrush(Color.FromRgb(120, 120, 120));
                 }
+
                 return div;
             }
 
-            // 1) Header with status dot + text
-            var header = new Grid { Margin = new Thickness(0, 0, 0, 4) };
-            header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto }); // dot
+            // HEADER
+            var header = new Grid { Margin = new Thickness(0, 0, 0, 8) };
+            header.ColumnDefinitions.Add(
+                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
+            ); // title
             header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto }); // status
             header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto }); // role
 
-            var dot = new Ellipse
+            var title = new TextBlock
             {
-                Width = 12,
-                Height = 12,
-                Margin = new Thickness(0, 0, 8, 0),
+                Text = AppConstants.AppName + " Settings",
+                FontSize = 18,
+                FontWeight = FontWeights.Bold,
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            var statusText = new TextBlock
+            ThemeHelpers.SetThemeTextBrush(title);
+            Grid.SetColumn(title, 0);
+            header.Children.Add(title);
+
+            var statusPanel = new StackPanel
             {
+                Orientation = Orientation.Horizontal,
                 VerticalAlignment = VerticalAlignment.Center,
-                FontWeight = FontWeights.SemiBold,
+                Margin = new Thickness(8, 0, 16, 0),
+            };
+
+            statusDot = new Ellipse
+            {
+                Width = 10,
+                Height = 10,
+                Margin = new Thickness(0, 0, 6, 0),
+                Fill = new SolidColorBrush(Color.FromRgb(140, 140, 140)),
+            };
+
+            statusText = new TextBlock
+            {
+                Text = AppConstants.HealthStatusUnreachable,
+                VerticalAlignment = VerticalAlignment.Center,
             };
             ThemeHelpers.SetThemeTextBrush(statusText);
 
+            statusPanel.Children.Add(statusDot);
+            statusPanel.Children.Add(statusText);
+            Grid.SetColumn(statusPanel, 1);
+            header.Children.Add(statusPanel);
+
             roleText = new TextBlock
             {
+                Text = "(role unknown)",
                 VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(8, 0, 0, 0),
                 FontStyle = FontStyles.Italic,
             };
             ThemeHelpers.SetThemeTextBrush(roleText);
-
-            void RenderStatus(bool healthy)
-            {
-                isHealthy = healthy;
-
-                // Ask health service for the current text so we can detect mismatch.
-                var text = getHealthText?.Invoke() ?? AppConstants.HealthStatusUnreachable;
-
-                var isHealthyText = string.Equals(
-                    text,
-                    AppConstants.HealthStatusHealthy,
-                    StringComparison.OrdinalIgnoreCase
-                );
-
-                var isVersionMismatch = text.StartsWith(
-                    AppConstants.HealthStatusVersionMismatch,
-                    StringComparison.OrdinalIgnoreCase
-                );
-
-                if (isHealthyText && healthy)
-                {
-                    // Green – fully healthy
-                    if (
-                        !ThemeHelpers.TrySetDynamicBrush(dot, Shape.FillProperty, "SuccessBrush")
-                        && !ThemeHelpers.TrySetDynamicBrush(
-                            dot,
-                            Shape.FillProperty,
-                            "CheckmarkBrush"
-                        )
-                    )
-                    {
-                        dot.Fill = new SolidColorBrush(Color.FromRgb(0x22, 0xC5, 0x44)); // green
-                    }
-                }
-                else if (isVersionMismatch)
-                {
-                    // Orange – reachable but version mismatch
-                    if (!ThemeHelpers.TrySetDynamicBrush(dot, Shape.FillProperty, "WarningBrush"))
-                    {
-                        dot.Fill = new SolidColorBrush(Color.FromRgb(0xF9, 0xA8, 0x25)); // orange-ish
-                    }
-                }
-                else
-                {
-                    // Red – unreachable / other hard failure
-                    if (
-                        !ThemeHelpers.TrySetDynamicBrush(dot, Shape.FillProperty, "ErrorBrush")
-                        && !ThemeHelpers.TrySetDynamicBrush(dot, Shape.FillProperty, "WarningBrush")
-                    )
-                    {
-                        dot.Fill = new SolidColorBrush(Color.FromRgb(0xE5, 0x50, 0x35)); // red
-                    }
-                }
-
-                statusText.Text = text;
-
-                try
-                {
-                    // Only show role if we're actually reachable (healthy or mismatch).
-                    if (isHealthyText || isVersionMismatch)
-                    {
-                        var isAdminNow = getIsAdmin?.Invoke() == true;
-                        roleText.Text = isAdminNow ? "admin" : "user";
-                        roleText.Visibility = Visibility.Visible;
-                    }
-                    else
-                    {
-                        roleText.Text = "";
-                        roleText.Visibility = Visibility.Collapsed;
-                    }
-                }
-                catch
-                {
-                    roleText.Text = "";
-                    roleText.Visibility = Visibility.Collapsed;
-                }
-            }
-
-            Grid.SetColumn(dot, 0);
-            header.Children.Add(dot);
-
-            Grid.SetColumn(statusText, 1);
-            header.Children.Add(statusText);
-
             Grid.SetColumn(roleText, 2);
             header.Children.Add(roleText);
 
             Grid.SetRow(header, 0);
             root.Children.Add(header);
 
-            // 2) Divider
+            // DIVIDER
             var div = MakeDivider();
             Grid.SetRow(div, 1);
             root.Children.Add(div);
 
-            // 3) API row: label + input (no button here; saving is below)
+            // API ROW
             var apiRow = new Grid { Margin = new Thickness(0, 0, 0, 10) };
-            apiRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(150) }); // label
+            apiRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(150) });
             apiRow.ColumnDefinitions.Add(
                 new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
-            ); // input
+            );
 
             var apiLabel = new TextBlock
             {
@@ -222,69 +193,233 @@ namespace SyncniteBridge.UI
             Grid.SetColumn(apiLabel, 0);
             apiRow.Children.Add(apiLabel);
 
-            tbApi = new TextBox
-            {
-                Text = initialApiBase ?? "",
-                MinWidth = 420,
-                Margin = new Thickness(0, 2, 0, 0),
-            };
+            tbApi = new TextBox { Text = initialApiBase ?? "" };
+            ThemeHelpers.SetThemeTextBrush(tbApi);
             Grid.SetColumn(tbApi, 1);
             apiRow.Children.Add(tbApi);
 
             Grid.SetRow(apiRow, 2);
             root.Children.Add(apiRow);
 
-            // 4) Credentials group: Email + Password
-            var creds = new Grid { Margin = new Thickness(0, 0, 0, 10) };
-            creds.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            creds.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            // CREDS ROW
+            var credsRow = new Grid { Margin = new Thickness(0, 0, 0, 6) };
+            credsRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(150) });
+            credsRow.ColumnDefinitions.Add(
+                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
+            );
+            credsRow.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // email
+            credsRow.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // pass
 
-            Grid MakeRow(string label, UIElement input)
+            var emailLabel = new TextBlock
             {
-                var r = new Grid { Margin = new Thickness(0, 0, 0, 8) };
-                r.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(150) });
-                r.ColumnDefinitions.Add(
-                    new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
-                );
-                var lb = new TextBlock
+                Text = "Email",
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            ThemeHelpers.SetThemeTextBrush(emailLabel);
+            Grid.SetRow(emailLabel, 0);
+            Grid.SetColumn(emailLabel, 0);
+            credsRow.Children.Add(emailLabel);
+
+            tbEmail = new TextBox { Text = initialEmail ?? "", Margin = new Thickness(0, 0, 0, 4) };
+            ThemeHelpers.SetThemeTextBrush(tbEmail);
+            Grid.SetRow(tbEmail, 0);
+            Grid.SetColumn(tbEmail, 1);
+            credsRow.Children.Add(tbEmail);
+
+            var passLabel = new TextBlock
+            {
+                Text = "Password",
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            ThemeHelpers.SetThemeTextBrush(passLabel);
+            Grid.SetRow(passLabel, 1);
+            Grid.SetColumn(passLabel, 0);
+            credsRow.Children.Add(passLabel);
+
+            tbPass = new PasswordBox { Margin = new Thickness(0, 0, 0, 0) };
+            if (!string.IsNullOrEmpty(initialPassword))
+                tbPass.Password = initialPassword;
+            Grid.SetRow(tbPass, 1);
+            Grid.SetColumn(tbPass, 1);
+            credsRow.Children.Add(tbPass);
+
+            Grid.SetRow(credsRow, 3);
+            root.Children.Add(credsRow);
+
+            // INFO under creds (lock explanation)
+            loginLockedInfo = new TextBlock
+            {
+                Margin = new Thickness(150, 4, 0, 0),
+                FontStyle = FontStyles.Italic,
+                TextWrapping = TextWrapping.Wrap,
+                Visibility = Visibility.Collapsed,
+                Text =
+                    "Admin login is locked to this installation. "
+                    + "You can change the password, but not the email.",
+            };
+            ThemeHelpers.SetThemeTextBrush(loginLockedInfo);
+            Grid.SetRow(loginLockedInfo, 3);
+            root.Children.Add(loginLockedInfo);
+
+            // SAVE + RELEASE ROW
+            var saveRow = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Margin = new Thickness(150, 10, 0, 10),
+            };
+
+            btnSave = new Button
+            {
+                Content = "Save settings",
+                Width = 120,
+                Margin = new Thickness(0, 0, 12, 0),
+            };
+            saveRow.Children.Add(btnSave);
+
+            btnReleaseAdmin = new Button
+            {
+                Content = "Release admin",
+                Width = 130,
+                Margin = new Thickness(0, 0, 0, 0),
+                Visibility = Visibility.Collapsed, // shown only when admin
+            };
+            saveRow.Children.Add(btnReleaseAdmin);
+
+            Grid.SetRow(saveRow, 4);
+            root.Children.Add(saveRow);
+
+            // ACTION: Push installed
+            var action1 = new Grid { Margin = new Thickness(0, 10, 0, 4) };
+            action1.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            action1.ColumnDefinitions.Add(
+                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
+            );
+
+            var pushPanel = new StackPanel { Orientation = Orientation.Horizontal };
+
+            btnPush = new Button
+            {
+                Content = "Push installed",
+                Width = 120,
+                Margin = new Thickness(0, 0, 12, 0),
+            };
+            pushPanel.Children.Add(btnPush);
+
+            var pushText = new TextBlock
+            {
+                Text = "Push list of installed games.",
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 8, 0, 0),
+            };
+            ThemeHelpers.SetThemeTextBrush(pushText);
+            pushPanel.Children.Add(pushText);
+
+            Grid.SetColumn(pushPanel, 0);
+            action1.Children.Add(pushPanel);
+            Grid.SetRow(action1, 5);
+            root.Children.Add(action1);
+
+            // ACTION: Sync library
+            var action2 = new Grid { Margin = new Thickness(0, 4, 0, 10) };
+            action2.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            action2.ColumnDefinitions.Add(
+                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
+            );
+
+            var syncPanel = new StackPanel { Orientation = Orientation.Horizontal };
+
+            btnSync = new Button
+            {
+                Content = "Sync library",
+                Width = 120,
+                Margin = new Thickness(0, 0, 12, 0),
+            };
+            syncPanel.Children.Add(btnSync);
+
+            var syncText = new TextBlock
+            {
+                Text = "Synchronize the game library with the Syncnite service.",
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 8, 0, 0),
+            };
+            ThemeHelpers.SetThemeTextBrush(syncText);
+            syncPanel.Children.Add(syncText);
+
+            Grid.SetColumn(syncPanel, 0);
+            action2.Children.Add(syncPanel);
+            Grid.SetRow(action2, 6);
+            root.Children.Add(action2);
+
+            // FOOTER
+            var footer = new TextBlock
+            {
+                Margin = new Thickness(0, 8, 0, 0),
+                TextWrapping = TextWrapping.Wrap,
+                Text = "Changes are applied when you press 'Save settings'.",
+                FontSize = 11,
+            };
+            ThemeHelpers.SetThemeTextBrush(footer);
+            Grid.SetRow(footer, 7);
+            root.Children.Add(footer);
+
+            // ---- LOCAL HELPERS ----
+
+            void ApplyLoginLockState()
+            {
+                if (isAdminInstall)
                 {
-                    Text = label,
-                    VerticalAlignment = VerticalAlignment.Center,
-                };
-                ThemeHelpers.SetThemeTextBrush(lb);
-                Grid.SetColumn(lb, 0);
-                r.Children.Add(lb);
-                Grid.SetColumn(input, 1);
-                r.Children.Add(input);
-                return r;
+                    // Email is locked; password can still change
+                    tbEmail.IsReadOnly = true;
+                    tbEmail.Opacity = 0.7;
+                    tbEmail.ToolTip = "Admin login is locked to this installation.";
+
+                    tbPass.IsEnabled = true;
+                    tbPass.Opacity = 1.0;
+                    tbPass.ToolTip = "Update the admin password if it changed on the server.";
+
+                    loginLockedInfo.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    tbEmail.IsReadOnly = false;
+                    tbEmail.Opacity = 1.0;
+                    tbEmail.ToolTip = null;
+
+                    tbPass.IsEnabled = true;
+                    tbPass.Opacity = 1.0;
+                    tbPass.ToolTip = null;
+
+                    loginLockedInfo.Visibility = Visibility.Collapsed;
+                }
             }
 
-            tbEmail = new TextBox { Text = initialEmail ?? "", Margin = new Thickness(0, 2, 0, 0) };
-            var rowEmail = MakeRow("Admin Email", tbEmail);
-
-            tbPass = new PasswordBox
-            {
-                Password = initialPassword ?? "",
-                Margin = new Thickness(0, 2, 0, 0),
-            };
-            var rowPass = MakeRow("Admin Password", tbPass);
-
-            Grid.SetRow(rowEmail, 0);
-            creds.Children.Add(rowEmail);
-            Grid.SetRow(rowPass, 1);
-            creds.Children.Add(rowPass);
-
-            Grid.SetRow(creds, 3);
-            root.Children.Add(creds);
-
-            // helper: save full form (API + creds)
             void SaveAll()
             {
                 onSaveApiBase?.Invoke(tbApi.Text?.Trim() ?? "");
-                onSaveCredentials?.Invoke(tbEmail.Text?.Trim() ?? "", tbPass.Password ?? "");
+
+                // When this install is locked as admin, we don't persist changed creds via the form.
+                if (!isAdminInstall)
+                {
+                    onSaveCredentials?.Invoke(tbEmail.Text?.Trim() ?? "", tbPass.Password ?? "");
+                }
             }
 
-            // helper: enable / disable action buttons
+            void RefreshRoleAndAdminControls()
+            {
+                var isAdminNow = false;
+                try
+                {
+                    isAdminNow = getIsAdmin?.Invoke() == true;
+                }
+                catch { }
+
+                roleText.Text = isAdminNow ? "(admin)" : "(user)";
+
+                btnReleaseAdmin.Visibility =
+                    (isAdminInstall && isAdminNow) ? Visibility.Visible : Visibility.Collapsed;
+            }
+
             void RefreshActionButtons()
             {
                 if (
@@ -294,182 +429,163 @@ namespace SyncniteBridge.UI
                     || tbEmail == null
                     || tbPass == null
                 )
+                {
                     return;
+                }
 
                 var hasUrl = !string.IsNullOrWhiteSpace(tbApi.Text);
                 var hasEmail = !string.IsNullOrWhiteSpace(tbEmail.Text);
                 var hasPass = !string.IsNullOrWhiteSpace(tbPass.Password);
 
-                var enabledByHealthAndForm = isHealthy && hasUrl && hasEmail && hasPass;
+                // When this install is locked to admin, we trust stored creds even if fields are readonly.
+                var formOk = hasUrl && (isAdminInstall || (hasEmail && hasPass));
 
-                // Try to determine current role
                 var isAdminNow = false;
                 try
                 {
                     isAdminNow = getIsAdmin?.Invoke() == true;
                 }
-                catch
-                {
-                    isAdminNow = false;
-                }
+                catch { }
 
-                // Push installed is allowed for both roles
-                btnPush.IsEnabled = enabledByHealthAndForm;
-
-                // Full library sync should only be possible as admin
-                btnSync.IsEnabled = enabledByHealthAndForm && isAdminNow;
+                btnPush.IsEnabled = isHealthy && formOk;
+                btnSync.IsEnabled = isHealthy && formOk && isAdminNow;
             }
 
-            // refresh actions when user edits fields
+            void RenderStatus(bool healthy)
+            {
+                isHealthy = healthy;
+
+                var text = getHealthText?.Invoke() ?? AppConstants.HealthStatusUnreachable;
+                statusText.Text = text;
+
+                var isHealthyText = string.Equals(
+                    text,
+                    AppConstants.HealthStatusHealthy,
+                    StringComparison.OrdinalIgnoreCase
+                );
+                var isVersionMismatch = text.StartsWith(
+                    AppConstants.HealthStatusVersionMismatch,
+                    StringComparison.OrdinalIgnoreCase
+                );
+
+                if (isHealthyText && healthy)
+                {
+                    if (
+                        !ThemeHelpers.TrySetDynamicBrush(
+                            statusDot,
+                            Shape.FillProperty,
+                            "SuccessBrush"
+                        )
+                    )
+                    {
+                        statusDot.Fill = new SolidColorBrush(Color.FromRgb(0, 180, 0));
+                    }
+                }
+                else if (isVersionMismatch)
+                {
+                    if (
+                        !ThemeHelpers.TrySetDynamicBrush(
+                            statusDot,
+                            Shape.FillProperty,
+                            "WarningBrush"
+                        )
+                    )
+                    {
+                        statusDot.Fill = new SolidColorBrush(Color.FromRgb(220, 160, 0));
+                    }
+                }
+                else
+                {
+                    if (
+                        !ThemeHelpers.TrySetDynamicBrush(
+                            statusDot,
+                            Shape.FillProperty,
+                            "ErrorBrush"
+                        )
+                    )
+                    {
+                        statusDot.Fill = new SolidColorBrush(Color.FromRgb(200, 0, 0));
+                    }
+                }
+
+                RefreshActionButtons();
+            }
+
+            // ---- WIRING ----
+
             tbApi.TextChanged += (s, e) => RefreshActionButtons();
             tbEmail.TextChanged += (s, e) => RefreshActionButtons();
             tbPass.PasswordChanged += (s, e) => RefreshActionButtons();
 
-            // 5) Form Save button (does NOT close window)
-            var formSavePanel = new StackPanel
+            btnSave.Click += (s, e) =>
             {
-                Orientation = Orientation.Horizontal,
-                HorizontalAlignment = HorizontalAlignment.Right,
-                Margin = new Thickness(0, 0, 0, 12),
+                SaveAll();
+                RefreshActionButtons();
             };
 
-            var btnSaveForm = new Button { Content = "Save", Width = 100 };
-            btnSaveForm.Click += (s, e) => SaveAll();
-
-            formSavePanel.Children.Add(btnSaveForm);
-
-            Grid.SetRow(formSavePanel, 4);
-            root.Children.Add(formSavePanel);
-
-            // 6) Actions: Push / Sync with descriptions
-            var action1 = new Grid { Margin = new Thickness(0, 2, 0, 12) };
-            action1.ColumnDefinitions.Add(
-                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
-            );
-            var action2 = new Grid { Margin = new Thickness(0, 2, 0, 12) };
-            action2.ColumnDefinitions.Add(
-                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
-            );
-
-            // Push installed
-            var pushPanel = new StackPanel { Orientation = Orientation.Horizontal };
-
-            btnPush = new Button
-            {
-                Content = "Push installed",
-                Width = 120,
-                Margin = new Thickness(0, 0, 12, 0),
-            };
             btnPush.Click += (s, e) => onPushInstalled?.Invoke();
+            btnSync.Click += (s, e) => onSyncLibrary?.Invoke();
 
-            var pushText = new TextBlock
-            {
-                Text = "Push list of installed games.",
-                TextWrapping = TextWrapping.Wrap,
-                Margin = new Thickness(0, 8, 0, 0),
-            };
-            ThemeHelpers.SetThemeTextBrush(pushText);
-
-            pushPanel.Children.Add(btnPush);
-            pushPanel.Children.Add(pushText);
-            Grid.SetColumn(pushPanel, 0);
-            action1.Children.Add(pushPanel);
-
-            Grid.SetRow(action1, 5);
-            root.Children.Add(action1);
-
-            // Sync library
-            var syncPanel = new StackPanel { Orientation = Orientation.Horizontal };
-
-            btnSync = new Button
-            {
-                Content = "Sync library",
-                Width = 120,
-                Margin = new Thickness(0, 0, 12, 0),
-            };
-            btnSync.Click += (s, e) =>
+            btnReleaseAdmin.Click += (s, e) =>
             {
                 var isAdminNow = false;
                 try
                 {
                     isAdminNow = getIsAdmin?.Invoke() == true;
                 }
-                catch
-                {
-                    isAdminNow = false;
-                }
+                catch { }
 
                 if (!isAdminNow)
                 {
                     api.Dialogs.ShowMessage(
-                        "You need to be logged in as an admin to run a full library sync.",
-                        AppConstants.AppName + " – Admin required"
+                        "You are not currently logged in as admin.",
+                        AppConstants.AppName
                     );
                     return;
                 }
 
-                onSyncLibrary?.Invoke();
-            };
+                var message =
+                    "This will release the admin account for this Syncnite server.\n\n"
+                    + "- The admin account on the server will be removed.\n"
+                    + "- This Playnite installation will no longer be the admin install.\n"
+                    + "- You will need to register a new admin from some installation.\n\n"
+                    + "Are you sure you want to continue?";
 
-            var syncText = new TextBlock
-            {
-                Text = "Run a full library sync and re-upload media.",
-                TextWrapping = TextWrapping.Wrap,
-                Margin = new Thickness(0, 8, 0, 0),
-            };
-            ThemeHelpers.SetThemeTextBrush(syncText);
+                var result = api.Dialogs.ShowMessage(
+                    message,
+                    "Release admin?",
+                    MessageBoxButton.YesNo
+                );
 
-            syncPanel.Children.Add(btnSync);
-            syncPanel.Children.Add(syncText);
-            Grid.SetColumn(syncPanel, 1);
-            action2.Children.Add(syncPanel);
+                if (result != MessageBoxResult.Yes)
+                    return;
 
-            Grid.SetRow(action2, 6);
-            root.Children.Add(action2);
+                onReleaseAdmin?.Invoke();
 
-            // 7) Footer: Save & Close / Cancel
-            var footer = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                HorizontalAlignment = HorizontalAlignment.Right,
-            };
-
-            var btnSaveAndClose = new Button
-            {
-                Content = "Save and close",
-                Width = 120,
-                Margin = new Thickness(0, 0, 8, 0),
-            };
-            btnSaveAndClose.Click += (s, e) =>
-            {
-                SaveAll();
+                // After release, it's usually safest to close the window.
                 win.Close();
             };
 
-            var btnCancel = new Button { Content = "Cancel", Width = 100 };
-            btnCancel.Click += (s, e) => win.Close();
+            // Initial state
+            ApplyLoginLockState();
 
-            footer.Children.Add(btnSaveAndClose);
-            footer.Children.Add(btnCancel);
-
-            Grid.SetRow(footer, 7);
-            root.Children.Add(footer);
-
-            // initial health + live updates (after controls created so we can toggle buttons)
+            var initialHealthText = getHealthText?.Invoke() ?? AppConstants.HealthStatusUnreachable;
             var initialHealthy = string.Equals(
-                getHealthText?.Invoke(),
+                initialHealthText,
                 AppConstants.HealthStatusHealthy,
                 StringComparison.OrdinalIgnoreCase
             );
             RenderStatus(initialHealthy);
+            RefreshRoleAndAdminControls();
             RefreshActionButtons();
 
             Action<bool> handler = ok =>
                 win.Dispatcher.Invoke(() =>
                 {
                     RenderStatus(ok);
-                    RefreshActionButtons();
+                    RefreshRoleAndAdminControls();
                 });
+
             subscribeHealth?.Invoke(handler);
             win.Closed += (s, e) =>
             {

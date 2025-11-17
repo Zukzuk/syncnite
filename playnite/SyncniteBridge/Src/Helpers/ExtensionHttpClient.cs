@@ -16,6 +16,13 @@ namespace SyncniteBridge.Helpers
         private readonly HttpClient http;
         private readonly BridgeLogger? blog;
 
+        // internal DTO for /ping JSON
+        private sealed class PingResponse
+        {
+            public bool ok { get; set; }
+            public string? version { get; set; }
+        }
+
         /// <summary>
         /// Create a new ExtensionHttpClient.
         /// </summary>
@@ -69,13 +76,6 @@ namespace SyncniteBridge.Helpers
             {
                 return (false, null);
             }
-        }
-
-        // internal DTO for /ping JSON
-        private sealed class PingResponse
-        {
-            public bool ok { get; set; }
-            public string? version { get; set; }
         }
 
         /// <summary>
@@ -133,6 +133,46 @@ namespace SyncniteBridge.Helpers
             {
                 blog?.Warn("http", "verify/admin failed", new { url, err = ex.Message });
                 return null;
+            }
+        }
+
+        public async Task<bool> ReleaseAdminAsync(string url)
+        {
+            try
+            {
+                var req = new HttpRequestMessage(HttpMethod.Post, url)
+                {
+                    Content = new StringContent("{}", Encoding.UTF8, "application/json"),
+                };
+
+                var resp = await http.SendAsync(req).ConfigureAwait(false);
+                if (resp.IsSuccessStatusCode)
+                {
+                    blog?.Info(
+                        "http",
+                        "release/admin succeeded",
+                        new { url, status = (int)resp.StatusCode }
+                    );
+                    return true;
+                }
+
+                var body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                blog?.Warn(
+                    "http",
+                    "release/admin failed",
+                    new
+                    {
+                        url,
+                        status = (int)resp.StatusCode,
+                        body,
+                    }
+                );
+                return false;
+            }
+            catch (Exception ex)
+            {
+                blog?.Error("http", "release/admin exception", new { url, err = ex.Message });
+                return false;
             }
         }
 

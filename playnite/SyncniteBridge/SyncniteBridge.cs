@@ -20,7 +20,6 @@ namespace SyncniteBridge
 
         private static bool s_initialized = false;
         private static readonly object s_initLock = new();
-        private readonly ILogger logger = LogManager.GetLogger();
         private readonly string configPath = string.Empty;
         private BridgeConfig config = null!;
         private BridgeLogger blog = null!;
@@ -29,7 +28,6 @@ namespace SyncniteBridge
         private PushDeltaService pushSync = null!;
         private PullDeltaService pullSync = null!;
         private ChangeDetectionService dbEvents = null!;
-
         private readonly bool isActiveInstance = false;
         private readonly Timer? pullTimer = null;
 
@@ -45,8 +43,9 @@ namespace SyncniteBridge
                 if (s_initialized)
                 {
                     // Secondary instance: do not initialize anything heavy
-                    logger.Warn(
-                        "[ext][singleton][WARN] Second SyncniteBridge instance detected, skipping initialization."
+                    blog.Warn(
+                        "startup",
+                        "Secondary SyncniteBridge instance loaded; no services started."
                     );
                     Properties = new GenericPluginProperties { HasSettings = false };
                     return;
@@ -56,11 +55,9 @@ namespace SyncniteBridge
                 isActiveInstance = true;
             }
 
-            // ---- Real initialization (first/active instance only) ----
-
             configPath = Path.Combine(GetPluginUserDataPath(), AppConstants.ConfigFileName);
             config = BridgeConfig.Load(configPath) ?? new BridgeConfig();
-            AuthHeaders.Set(config.AuthEmail, config.GetAuthPassword());
+            AuthHeaders.Set(config.AuthEmail, config.GetAuthPassword(), config.ClientId);
             blog = new BridgeLogger(config.ApiBase, BridgeVersion.Current, config.LogLevel);
 
             var playniteVer = PlayniteApi?.ApplicationInfo?.ApplicationVersion?.ToString();
@@ -77,7 +74,7 @@ namespace SyncniteBridge
             );
 
             // Health service (source of truth for connectivity)
-            var pingUrl = Combine(config.ApiBase, AppConstants.Path_Sync_Ping);
+            var pingUrl = Combine(config.ApiBase, AppConstants.Path_Ping);
             var verifyAdminUrl = Combine(config.ApiBase, AppConstants.Path_Accounts_VerifyAdmin);
             health = new HealthcheckService(api, pingUrl, verifyAdminUrl, blog);
             health.Start();
@@ -120,6 +117,13 @@ namespace SyncniteBridge
             // When health flips to healthy, kick once
             health.StatusChanged += ok =>
             {
+                if (health.IsAdmin && !config.IsAdminInstall)
+                {
+                    config.IsAdminInstall = true;
+                    BridgeConfig.Save(configPath, config);
+                    blog.Info("admin", "Marked this Playnite installation as the admin install.");
+                }
+
                 if (!ok)
                 {
                     blog.Warn("startup", "Health became unhealthy → suspend sync");
@@ -251,10 +255,7 @@ namespace SyncniteBridge
                                         config.ApiBase,
                                         AppConstants.Path_Sync_Installed
                                     );
-                                    var pingUrl = Combine(
-                                        config.ApiBase,
-                                        AppConstants.Path_Sync_Ping
-                                    );
+                                    var pingUrl = Combine(config.ApiBase, AppConstants.Path_Ping);
                                     var verifyAdminUrl = Combine(
                                         config.ApiBase,
                                         AppConstants.Path_Accounts_VerifyAdmin
@@ -291,21 +292,73 @@ namespace SyncniteBridge
                                 },
                                 initialEmail: config.AuthEmail,
                                 initialPassword: config.GetAuthPassword(),
+                                isAdminInstall: config.IsAdminInstall,
                                 onSaveCredentials: (email, password) =>
                                 {
                                     config.AuthEmail = email ?? "";
                                     config.SetAuthPassword(password ?? "");
                                     BridgeConfig.Save(configPath, config);
-                                    AuthHeaders.Set(config.AuthEmail, config.GetAuthPassword());
+                                    AuthHeaders.Set(config.AuthEmail, config.GetAuthPassword(), config.ClientId);
 
-                                    // Optional UX: if creds just became valid and server is healthy, kick once.
-                                    if (health.IsHealthy == true)
+                                    if (health.IsHealthy)
                                     {
                                         pushInstalled.PushNow();
                                         if (health.IsAdmin)
                                             pushSync.Trigger();
                                         else
-                                            _ = pullSync.pullOnceAsync(); // fire-and-forget
+                                            _ = pullSync.pullOnceAsync();
+                                    }
+                                },
+                                onReleaseAdmin: () =>
+                                {
+                                    try
+                                    {
+                                        var http = new ExtensionHttpClient(
+                                            blog,
+                                            TimeSpan.FromSeconds(30)
+                                        );
+                                        var url = Combine(config.ApiBase, "accounts/admin/release");
+                                        var ok = http.ReleaseAdminAsync(url)
+                                            .GetAwaiter()
+                                            .GetResult();
+
+                                        if (!ok)
+                                        {
+                                            PlayniteApi.Dialogs.ShowErrorMessage(
+                                                "Failed to release admin. Check the SyncniteBridge log for details.",
+                                                AppConstants.AppName
+                                            );
+                                            return;
+                                        }
+
+                                        // Reset local admin state
+                                        config.AuthEmail = "";
+                                        config.SetAuthPassword("");
+                                        config.IsAdminInstall = false;
+                                        BridgeConfig.Save(configPath, config);
+                                        AuthHeaders.Set(
+                                            config.AuthEmail,
+                                            config.GetAuthPassword(),
+                                            config.ClientId
+                                        );
+
+                                        PlayniteApi.Dialogs.ShowMessage(
+                                            "Admin account has been released on the server.\n\n"
+                                                + "You can now register a new admin from another installation.",
+                                            AppConstants.AppName
+                                        );
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        blog?.Error(
+                                            "admin",
+                                            "Release admin failed",
+                                            err: ex.Message
+                                        );
+                                        PlayniteApi.Dialogs.ShowErrorMessage(
+                                            $"Error releasing admin: {ex.Message}",
+                                            AppConstants.AppName
+                                        );
                                     }
                                 }
                             );

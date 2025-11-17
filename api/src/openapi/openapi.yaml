@@ -21,6 +21,11 @@ components:
       in: header
       name: x-auth-password
       description: Admin/user password for header auth
+    XClientId:
+      type: apiKey
+      in: header
+      name: x-client-id
+      description: Unique client ID for admin locking
   schemas:
     ErrorResponse:
       type: object
@@ -95,6 +100,60 @@ components:
 
 paths:
 
+# App endpoints
+
+  /ping:
+    get:
+      tags: [App]
+      summary: Ping API
+      security:
+        - XAuthEmail: []
+          XAuthPassword: []
+          XClientId: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  version: { type: string }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /ping/status:
+    get:
+      tags: [App]
+      summary: Extension ping status
+      security:
+        - XAuthEmail: []
+          XAuthPassword: []
+          XClientId: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  connected: { type: boolean }
+                  lastPingAt:
+                    type: string
+                    format: date-time
+                    nullable: true
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden (session required)
+
   /zips:
     get:
       tags: [App]
@@ -151,6 +210,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+# Extension endpoints
+
   /extension/download:
     get:
       tags: [Extension]
@@ -164,6 +225,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+
+# Accounts endpoints
 
   /accounts/register/admin:
     post:
@@ -196,6 +259,36 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "409":
           description: Admin exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+                
+  /accounts/admin/release:
+    post:
+      tags: [Accounts]
+      summary: Release admin client lock
+      security:
+        - XAuthEmail: []
+          XAuthPassword: []
+          XClientId: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden (not admin)
           content:
             application/json:
               schema:
@@ -304,6 +397,7 @@ paths:
       security:
         - XAuthEmail: []
           XAuthPassword: []
+          XClientId: []
       responses:
         "200":
           description: OK
@@ -325,6 +419,7 @@ paths:
       security:
         - XAuthEmail: []
           XAuthPassword: []
+          XClientId: []
       responses:
         "200":
           description: OK
@@ -345,55 +440,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /sync/ping:
-    get:
-      tags: [Sync]
-      summary: Ping
-      security:
-        - XAuthEmail: []
-          XAuthPassword: []
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  ok: { type: boolean }
-                  version: { type: string }
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-  /sync/ping/status:
-    get:
-      tags: [Sync]
-      summary: Extension ping status
-      security:
-        - XAuthEmail: []
-          XAuthPassword: []
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  ok: { type: boolean }
-                  connected: { type: boolean }
-                  lastPingAt:
-                    type: string
-                    format: date-time
-                    nullable: true
-        "401":
-          description: Unauthorized
-        "403":
-          description: Forbidden (session required)
+# Sync endpoints
 
   /sync/installed:
     post:
@@ -402,6 +449,7 @@ paths:
       security:
         - XAuthEmail: []
           XAuthPassword: []
+          XClientId: []
       requestBody:
         required: true
         content:
@@ -441,6 +489,7 @@ paths:
       security:
         - XAuthEmail: []
           XAuthPassword: []
+          XClientId: []
       requestBody:
         required: true
         content:
@@ -484,6 +533,7 @@ paths:
       security:
         - XAuthEmail: []
           XAuthPassword: []
+          XClientId: []
       requestBody:
         required: true
         content:
@@ -528,6 +578,7 @@ paths:
       security:
         - XAuthEmail: []
           XAuthPassword: []
+          XClientId: []
       parameters:
         - name: collection
           in: path
@@ -605,6 +656,7 @@ paths:
       security:
         - XAuthEmail: []
           XAuthPassword: []
+          XClientId: []
       requestBody:
         required: true
         content:
@@ -661,6 +713,7 @@ paths:
       security:
         - XAuthEmail: []
           XAuthPassword: []
+          XClientId: []
       responses:
         "204":
           description: Deleted or absent
@@ -703,6 +756,7 @@ paths:
       security:
         - XAuthEmail: []
           XAuthPassword: []
+          XClientId: []
       responses:
         "200":
           description: Media file stream
@@ -744,6 +798,7 @@ paths:
       security:
         - XAuthEmail: []
           XAuthPassword: []
+          XClientId: []
       requestBody:
         required: true
         content:
@@ -798,6 +853,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+# Backup endpoints
+
   /backup/upload:
     post:
       tags: [Backup]
@@ -805,6 +862,7 @@ paths:
       security:
         - XAuthEmail: []
           XAuthPassword: []
+          XClientId: []
       requestBody:
         required: true
         content:
@@ -853,6 +911,7 @@ paths:
       security:
         - XAuthEmail: []
           XAuthPassword: []
+          XClientId: []
       requestBody:
         required: true
         content:

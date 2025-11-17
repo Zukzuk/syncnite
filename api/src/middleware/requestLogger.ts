@@ -3,6 +3,9 @@ import { rootLog } from "../logger";
 
 const log = rootLog.child("http");
 
+/** 
+ * Middleware to log incoming requests.
+ */
 export function requestLogger(): RequestHandler {
     return (req, res, next) => {
         const started = Date.now();

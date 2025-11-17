@@ -2,6 +2,7 @@ import { LOG_LEVEL } from "./constants";
 import { SyncBus } from "./services/EventBusService";
 
 type Level = "error" | "warn" | "info" | "debug" | "trace";
+
 const levelOrder: Record<Level, number> = { error: 0, warn: 1, info: 2, debug: 3, trace: 4 };
 const validLevels: readonly Level[] = ["error", "warn", "info", "debug", "trace"] as const;
 const APP_VERSION = process.env.APP_VERSION ?? "dev";

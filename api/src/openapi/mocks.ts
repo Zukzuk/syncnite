@@ -1,6 +1,9 @@
 import express, { Request, Response } from "express";
 import { OpenAPIBackend, Context } from "openapi-backend";
 
+/** 
+ * Creates an Express router that serves mock responses based on the given OpenAPI specification.
+ */
 export async function createOpenApiMockRouter(swaggerSpec: any) {
     const api = new OpenAPIBackend({ definition: swaggerSpec });
     await api.init();

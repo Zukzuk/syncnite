@@ -1,13 +1,48 @@
 import express from "express";
 import { ListZipsService } from "../services/ListZipsService";
-import { UPLOADS_DIR } from "../constants";
+import { PING_CONNECTED_MS, UPLOADS_DIR } from "../constants";
 import { rootLog } from "../logger";
 import { createSSE } from "../sse";
 import { SyncBus } from "../services/EventBusService";
+import { AccountsService } from "../services/AccountsService";
+import { requireSession } from "../middleware/requireAuth";
 
 const router = express.Router();
 const listZipsService = new ListZipsService(UPLOADS_DIR);
 const log = rootLog.child("route:app");
+
+let LAST_PING = 0;
+
+// Update the last ping time for the admin associated with the given email
+async function setConnectedLabel(email: string) {
+    try {
+
+        const role = await AccountsService.getRole(email);
+        if (role === "admin") LAST_PING = Date.now();
+    } catch {
+        LAST_PING = 0;
+    }
+}
+
+router.get("/ping", requireSession, (_req, res) => {
+    const APP_VERSION = process.env.APP_VERSION ?? "dev";
+    const email = _req.auth?.email;
+    
+    setConnectedLabel(email as string); // fire and forget
+
+    return res.json({ ok: true, version: `v${APP_VERSION}` });
+});
+
+router.get("/ping/status", requireSession, (req, res) => {
+    const now = Date.now();
+    const connected = !!LAST_PING && now - LAST_PING <= PING_CONNECTED_MS;
+
+    return res.json({
+        ok: true,
+        connected,
+        lastPingAt: LAST_PING ? new Date(LAST_PING).toISOString() : null,
+    });
+});
 
 router.get("/zips", async (_req, res) => {
     log.info("zips: request received");

@@ -5,13 +5,14 @@ using System.Net.Http;
 namespace SyncniteBridge.Helpers
 {
     /// <summary>
-    /// Central place to set auth once and have it automatically 
+    /// Central place to set auth once and have it automatically
     /// applied to every HttpClient we use.
     /// </summary>
     internal static class AuthHeaders
     {
         private static string email = "";
         private static string password = "";
+        private static string clientId = "";
 
         // Keep weak refs so disposed clients don’t leak.
         private static readonly List<WeakReference<HttpClient>> clients =
@@ -20,10 +21,11 @@ namespace SyncniteBridge.Helpers
         /// <summary>
         /// Set the email and password to be used for authentication.
         /// </summary>
-        public static void Set(string newEmail, string newPassword)
+        public static void Set(string newEmail, string newPassword, string newClientId)
         {
             email = newEmail?.Trim() ?? "";
             password = newPassword ?? "";
+            clientId = newClientId ?? "";
             ReapplyAll();
         }
 
@@ -56,15 +58,18 @@ namespace SyncniteBridge.Helpers
                     http.DefaultRequestHeaders.Remove("X-Auth-Email");
                 if (http.DefaultRequestHeaders.Contains("X-Auth-Password"))
                     http.DefaultRequestHeaders.Remove("X-Auth-Password");
+                if (http.DefaultRequestHeaders.Contains("X-Client-Id"))
+                    http.DefaultRequestHeaders.Remove("X-Client-Id");
 
                 if (!string.IsNullOrWhiteSpace(email))
                     http.DefaultRequestHeaders.Add("X-Auth-Email", email.ToLowerInvariant());
                 if (!string.IsNullOrWhiteSpace(password))
                     http.DefaultRequestHeaders.Add("X-Auth-Password", password);
+                if (!string.IsNullOrWhiteSpace(clientId))
+                    http.DefaultRequestHeaders.Add("X-Client-Id", clientId);
             }
-            catch
-            { 
-                /* non-fatal */
+            catch { 
+                // swallow: best effort
             }
         }
 

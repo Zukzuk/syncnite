@@ -7,7 +7,7 @@ export const API_ENDPOINTS = {
   ZIP_LIST: "/api/zips",
   // Extension management
   EXTENSION_DOWNLOAD: "/api/extension/download",
-  EXTENSION_STATUS: "/api/sync/ping/status",
+  EXTENSION_STATUS: "/api/ping/status",
   // Account management
   LOGIN: "/api/accounts/login",
   STATUS: "/api/accounts/status",

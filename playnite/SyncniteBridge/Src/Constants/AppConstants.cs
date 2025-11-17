@@ -18,10 +18,10 @@ namespace SyncniteBridge.Constants
         public const string AppName = "SyncniteBridge";
 
         // Server endpoints (CRUD)
-        public const string Path_Sync_Log = "log";
+        public const string Path_Ping = "ping";
+        public const string Path_Log = "log";
         public const string Path_Sync_Crud = "sync";
         public const string Path_Sync_Installed = "sync/installed";
-        public const string Path_Sync_Ping = "sync/ping";
         public const string Path_Accounts_VerifyAdmin = "accounts/verify/admin";
 
         // Playnite data layout

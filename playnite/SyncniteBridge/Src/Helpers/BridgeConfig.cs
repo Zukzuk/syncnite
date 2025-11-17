@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using Playnite.SDK.Data;
 using SyncniteBridge.Constants;
@@ -6,7 +7,7 @@ namespace SyncniteBridge.Helpers
 {
     /// <summary>
     /// Configuration settings for the bridge,
-    /// persisted under ExtensionsData/<GUID>/
+    /// persisted under ExtensionsData/&lt;GUID&gt;/
     /// </summary>
     internal sealed class BridgeConfig
     {
@@ -22,6 +23,12 @@ namespace SyncniteBridge.Helpers
         // Store password encrypted at rest; only this field is serialized
         public string AuthPasswordEncrypted { get; set; } = "";
 
+        // Whether this Playnite installation is the "admin install"
+        public bool IsAdminInstall { get; set; } = false;
+
+        // Unique installation identifier (used as X-Client-Id)
+        public string ClientId { get; set; } = "";
+
         // Convenience helpers (NOT serialized—methods aren’t serialized)
         public string GetAuthPassword() => Crypto.Unprotect(AuthPasswordEncrypted);
 
@@ -29,7 +36,7 @@ namespace SyncniteBridge.Helpers
             AuthPasswordEncrypted = Crypto.Protect(value ?? "");
 
         /// <summary>
-        /// Load the config from disk.
+        /// Load the config from disk. Ensures ClientId is always set.
         /// </summary>
         public static BridgeConfig Load(string path)
         {
@@ -38,16 +45,31 @@ namespace SyncniteBridge.Helpers
                 if (File.Exists(path))
                 {
                     var cfg = Serialization.FromJson<BridgeConfig>(File.ReadAllText(path));
-                    if (cfg != null && string.IsNullOrWhiteSpace(cfg.LogLevel))
-                        cfg.LogLevel = "info";
-                    return cfg ?? new BridgeConfig();
+                    if (cfg != null)
+                    {
+                        if (string.IsNullOrWhiteSpace(cfg.LogLevel))
+                            cfg.LogLevel = "info";
+
+                        if (string.IsNullOrWhiteSpace(cfg.ClientId))
+                            cfg.ClientId = Guid.NewGuid().ToString("N"); // first run on this install
+                    }
+
+                    return cfg ?? NewWithClientId();
                 }
             }
             catch
             {
-                // ignore and return defaults
+                // swallow; return fresh config
             }
-            return new BridgeConfig();
+
+            // new config: initialize ClientId here as well
+            return NewWithClientId();
+        }
+
+        private static BridgeConfig NewWithClientId()
+        {
+            var fresh = new BridgeConfig { ClientId = Guid.NewGuid().ToString("N") };
+            return fresh;
         }
 
         /// <summary>
@@ -60,6 +82,7 @@ namespace SyncniteBridge.Helpers
                 var dir = Path.GetDirectoryName(path);
                 if (!string.IsNullOrEmpty(dir))
                     Directory.CreateDirectory(dir);
+
                 File.WriteAllText(path, Serialization.ToJson(cfg));
             }
             catch
