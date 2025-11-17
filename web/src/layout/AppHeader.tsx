@@ -46,7 +46,17 @@ export function AppHeader({ opened, onToggleNav }: Props) {
                     </Button>
                 </Tooltip>
 
-                {/* NEW: admin extension connection badge */}
+                {/* User logout */}
+                <Group gap="sm">
+                    {state.loggedIn ? (
+                        <>
+                            <Button size="xs" variant="light" onClick={logout}>Logout</Button>
+                            <Text size="xs" className="is-dim">{state.email}</Text>
+                        </>
+                    ) : null}
+                </Group>
+
+                {/* User role badge */}
                 {isAdmin && !loading && (
                     <Tooltip
                         withArrow
@@ -68,15 +78,6 @@ export function AppHeader({ opened, onToggleNav }: Props) {
                         </Badge>
                     </Tooltip>
                 )}
-
-                <Group gap="sm">
-                    {state.loggedIn ? (
-                        <>
-                            <Text size="xs" className="is-dim">{state.email}</Text>
-                            <Button size="xs" variant="light" onClick={logout}>Logout</Button>
-                        </>
-                    ) : null}
-                </Group>
 
                 {/* Dark / light toggle */}
                 <ActionIcon
