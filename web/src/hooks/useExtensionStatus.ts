@@ -9,6 +9,7 @@ const DEFAULT_STATE = {
     loading: true,
 };
 
+// A hook to monitor the status of the browser extension.
 export function useExtensionStatus(pollMs: number = INTERVAL_MS) {
     const { state } = useAuth({ pollMs: 0 });
     const [status, setStatus] = React.useState(DEFAULT_STATE);

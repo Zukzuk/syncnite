@@ -9,6 +9,7 @@ type UseReturn = {
     scrollItemIntoView: (index: number) => void;
 };
 
+// A hook to manage scrolling to grid items within a container.
 export function useGridJumpToScroll({ containerRef, positions }: UseParams): UseReturn {
     const scrollItemIntoView = React.useCallback((index: number) => {
         const el = containerRef.current;

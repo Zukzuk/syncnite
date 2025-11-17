@@ -7,7 +7,7 @@ import { startGlobalSse } from "./services/SseClient";
 export default function App() {
   useEffect(() => {
     const stopSse = startGlobalSse(); // connects to /api/sse and streams logs+progress
-    return () => stopSse?.();         // cleanup on hot-reload/unmount
+    return () => stopSse?.(); // cleanup on hot-reload/unmount
   }, []);
 
   return (

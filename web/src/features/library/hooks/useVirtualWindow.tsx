@@ -1,6 +1,6 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 
-/** Hook to manage a virtual window for large lists */
+// A hook to calculate visible range in a virtual scrolling window.
 export function useVirtualWindow(
     containerRef: React.RefObject<HTMLDivElement>,
     opts: {

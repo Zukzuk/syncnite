@@ -2,6 +2,7 @@ import React from "react";
 import { BackupUploader } from "../BackupUploader";
 import { LogBus } from "../../../services/LogBus";
 
+// A hook to manage the upload process of backup zip files.
 export function useUpload({ onZipsChanged }: { onZipsChanged?: (name?: string) => void } = {}) {
     const [busy, setBusy] = React.useState(false);
     const [percent, setPercent] = React.useState<number | null>(null);

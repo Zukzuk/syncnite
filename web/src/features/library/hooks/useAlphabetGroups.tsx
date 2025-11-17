@@ -20,7 +20,7 @@ type UseReturn = {
     flatItems: Item[];
 };
 
-/** Group items by their alphabetical title */
+// A hook to group items alphabetically based on their titles.
 export function useAlphabetGroups({ sortKey, withBuckets, itemsSorted }: UseParams): UseReturn {
     const groups = React.useMemo<AlphabeticalGroup[] | null>(() => {
         if (sortKey !== "title" || !withBuckets || withBuckets.length === 0) {

@@ -26,7 +26,7 @@ type UseReturn = {
     rangeChanged: (range: Range) => void,
 }
 
-/** Hook to manage alphabetical rail state and behavior */
+// A hook to manage alphabetical rail navigation for a list.
 export function useAlphabetRail({isGrouped, groups, flatItems, virtuosoRef }: UseParams): UseReturn {
 
     // flat

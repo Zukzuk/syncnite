@@ -1,8 +1,9 @@
 # Syncnite
+
 ## A self-hosted Playnite LibrarySynchronizer and WebViewer
 
 Syncnite makes it possible to **share your Playnite library** — games, metadata, media, settings — with family members or across your own devices.  
-It provides a self‑hosted API, a web viewer, and a companion Playnite extension (**Syncnite Bridge**) that performs fast, incremental syncing based on the new *PullDelta* mechanism.
+It provides a self‑hosted API, a web viewer, and a companion Playnite extension (**SyncniteBridge**) that performs fast, incremental syncing based on the new *PullDelta* mechanism.
 
 ## ⭐ What Syncnite does
 
@@ -11,16 +12,10 @@ It provides a self‑hosted API, a web viewer, and a companion Playnite extensio
 - Searchable and fast
 - Works fully offline once loaded
 
-### ✔️ Incremental sync via PullDelta
-- The Syncnite Bridge asks the server which items changed (using versions + checksums)
-- Only changed entities and media are uploaded
-- Reduces unnecessary bandwidth and makes frequent syncs instant
-
-### ✔️ Push from Playnite via Syncnite Bridge
-- Uploads library ZIPs when needed
+### ✔️ Admin Push and User Pull from Playnite via SyncniteBridge
+- One dedicated source of truth of your family's games library
+- Delta-based incremental sync of Playnite data and media
 - Pushes installed games list
-- Binary media uploads
-- Delta-based sync instead of full transfers
 
 ### ✔️ Self‑host easily
 - Docker Compose stack (`api`, `web`, `.pext` builder)
@@ -89,8 +84,8 @@ npm run clean
 3. Download `latest.pext` from the web UI  
 4. Install the extension in Playnite  
 5. Open **Syncnite Bridge → Settings**, configure:
-   - **API Base:** `http://<server>:3003/api/`
-   - **Admin/User email/password**
+   - **API Base:** `http://<node>:<port>/api/`
+   - **Admin/User** `email/password`
 
 ### Status Levels
 
@@ -115,7 +110,7 @@ npm run clean
 The API is fully documented via our OpenAPI spec.
 Documentation is served at:
 ```
-http://<server>:3003/api/docs
+http://<node>:<port>/api/docs
 ```
 
 ## 🏗 Architecture Notes

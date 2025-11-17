@@ -198,12 +198,7 @@ export async function loadLibrary(): Promise<LoadedData> {
     return { items, allSources, allTags, allSeries };
 }
 
-/**
- * Unified source of truth for the library data.
- * - Loads games/tags/sources 1:1 (no shape coercions)
- * - Updates when /data/manifest.json changes
- * - Patches "installed" quickly when local Installed.json changes
- */
+// A hook to manage the library data with automatic refresh and installed status updates.
 export function useLibrary({ pollMs }: UseParams): UseReturn {
     const [data, setData] = React.useState<LoadedData | null>(null);
 

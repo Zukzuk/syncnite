@@ -10,12 +10,7 @@ type UseReturn = {
     updatedAt: string | null
 };
 
-/**
- * Unified source of truth for the library data.
- * - Loads games/tags/sources 1:1 (no shape coercions)
- * - Updates when /data/snapshot/snapshot.json changes
- * - Patches "installed" quickly when local Installed.json changes
- */
+// A hook to manage refreshing the library data with periodic checks.
 export function useRefreshLibrary({ pollMs }: UseParams): UseReturn {
     const [version, setVersion] = React.useState(0);
     const [updatedAt, setUpdatedAt] = React.useState<string | null>(null);

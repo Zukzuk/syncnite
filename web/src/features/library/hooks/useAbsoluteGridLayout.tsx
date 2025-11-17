@@ -1,6 +1,6 @@
 import { useLayoutEffect, useMemo, useState } from "react";
 
-/** Measure container and compute absolute grid positions */
+// A hook to calculate an absolute grid layout for a container.
 export function useAbsoluteGridLayout(
     containerRef: React.RefObject<HTMLDivElement>,
     { padding, cardWidth, cardHeight, gap, itemsLen }: { padding: number; cardWidth: number; cardHeight: number; gap: number; itemsLen: number }

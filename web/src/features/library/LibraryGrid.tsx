@@ -24,6 +24,13 @@ type Props = {
     installedUpdatedAt?: string;
 };
 
+/** 
+ * AbsoluteGrid component for displaying library items in a virtualized grid layout.
+ * Props:
+ * - data: Loaded library data including items and metadata.
+ * - onCountsChange: Optional callback for when filtered/total counts change.
+ * - view: Current view mode.
+ */
 export default function AbsoluteGrid({
     data,
     onCountsChange,

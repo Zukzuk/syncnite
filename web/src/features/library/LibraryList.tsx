@@ -26,6 +26,17 @@ type Props = {
   installedUpdatedAt?: string;
 };
 
+/**
+ * LibraryList component for displaying library items in a virtualized list layout.
+ * Props:
+ * - data: Loaded library data including items and metadata.
+ * - onCountsChange: Optional callback for when filtered/total counts change.
+ * - view: Current view mode.
+ * - setView: Function to set the current view mode.
+ * - filteredCount: Number of items after filtering.
+ * - totalCount: Total number of items.
+ * - installedUpdatedAt: Optional timestamp for installed updates.
+ */
 export default function LibraryList({
   data,
   onCountsChange,

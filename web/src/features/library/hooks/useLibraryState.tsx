@@ -40,7 +40,7 @@ type UseReturn = {
   };
 };
 
-/** Hook to manage library state */
+// A hook to manage library state including filtering, sorting, and persistence.
 export function useLibraryState({ items }: UseParams): UseReturn {
   const cookieState = React.useMemo(loadStateFromCookie, []);
   const [q, setQ] = React.useState<string>(cookieState.q);

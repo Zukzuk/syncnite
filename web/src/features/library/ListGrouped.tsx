@@ -21,6 +21,21 @@ type Props = {
   installedUpdatedAt?: string;
 };
 
+/**
+ * ListGrouped component for displaying library items in a virtualized grouped list layout.
+ * Props:
+ * - virtuosoRef: Ref to the Virtuoso handle for controlling the list.
+ * - scrollerRef: Ref callback for the scroller element.
+ * - groups: Array of grouped library items to display.
+ * - topOffset: Number of pixels to offset the top of the list.
+ * - overscan: Number of pixels to overscan above and below the viewport.
+ * - rangeChanged: Callback when the visible range changes.
+ * - openIds: Set of item IDs that are currently expanded.
+ * - everOpenedIds: Set of item IDs that have ever been expanded.
+ * - onToggle: Callback to toggle the expanded state of an item.
+ * - remountKey: Key to force remounting the list.
+ * - installedUpdatedAt: Optional timestamp for installed updates.
+ */
 export function ListGrouped({
   virtuosoRef, scrollerRef, groups, topOffset, overscan, rangeChanged,
   openIds, everOpenedIds, onToggle, remountKey, installedUpdatedAt,

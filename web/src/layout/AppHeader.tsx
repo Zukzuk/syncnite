@@ -58,8 +58,8 @@ export function AppHeader({ opened, onToggleNav }: Props) {
                         style={{ fontSize: 10 }}
                     >
                         <Badge
-                            size="sm"
-                            radius="md"
+                            size="xs"
+                            radius="lg"
                             color={connected ? "teal" : "gray"}
                         >
                             {connected ? "connected" : "offline"}
@@ -73,7 +73,7 @@ export function AppHeader({ opened, onToggleNav }: Props) {
                 <Group gap="sm">
                     {state.loggedIn ? (
                         <>
-                            <Text size="md" className="is-dim">{state.email}</Text>
+                            <Text size="sm" className="is-dim">{state.email}</Text>
                             <Button size="xs" variant="light" onClick={logout}>Logout</Button>
                         </>
                     ) : null}
@@ -86,9 +86,9 @@ export function AppHeader({ opened, onToggleNav }: Props) {
                     onClick={() =>
                         setColorScheme(colorScheme === "dark" ? "light" : "dark")
                     }
-                    size="lg"
+                    size="md"
                 >
-                    {colorScheme === "dark" ? <IconSun size={20} /> : <IconMoon size={20} />}
+                    {colorScheme === "dark" ? <IconSun size={18} /> : <IconMoon size={18} />}
                 </ActionIcon>
             </Group>
         </Group>

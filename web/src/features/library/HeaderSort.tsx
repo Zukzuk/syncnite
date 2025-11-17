@@ -10,6 +10,16 @@ type Props = {
   gridColumns?: string;
 };
 
+/**
+ * Header sort component for the library view.
+ * Renders sortable column headers for Title, Year, Platform, and Series.
+ * Props:
+ * - headerRef: Ref callback for the header element.
+ * - sortKey: Current sort key.
+ * - sortDir: Current sort direction.
+ * - onToggleSort: Callback to toggle sorting by a given key.
+ * - gridColumns: CSS grid template columns for layout.
+ */
 export function HeaderSort(props: Props) {
   const { headerRef, sortKey, sortDir, onToggleSort, gridColumns } = props;
   const theme = useMantineTheme();

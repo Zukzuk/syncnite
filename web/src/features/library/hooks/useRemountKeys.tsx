@@ -17,7 +17,7 @@ type UseReturn = {
   flatKey: string;
 };
 
-/** Hook to generate remount keys for library views */
+// A hook to generate remount keys for grouped and flat views based on library state.
 export function useRemountKeys({
   filteredCount, q, 
   sources, tags, series, showHidden,

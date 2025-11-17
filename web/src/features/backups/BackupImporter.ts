@@ -47,11 +47,14 @@ function reset() {
     emit("pn:import-state", snapshot());
 }
 
-// Centralized "Run import" controller that survives route changes.
-// Emits:
-//  - "pn:import-progress" { phase: "unzip"|"copy"|null, percent, filename, extras? }
-//  - "pn:import-log"      { line }
-//  - "pn:import-state"    { snapshot of state }
+/** 
+ * A module to manage the backup import process.
+ * Provides methods to start an import and track its state.
+ * Emits:
+ *  - "pn:import-progress" { phase: "unzip"|"copy", percent, filename, extras? }
+ *  - "pn:import-state"    { snapshot of state }
+ *  - "pn:import-log"      { line }
+ */
 export const BackupImporter = {
     getState(): BackupImportState {
         return snapshot();

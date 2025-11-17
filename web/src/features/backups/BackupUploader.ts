@@ -58,9 +58,14 @@ function showRunImportNotice(fileName: string) {
     });
 }
 
-// Single source of truth for ALL uploads (manual or watcher-initiated).
-// Persists state across navigation, emits progress events, logs to LogBus,
-// notifies with Mantine, and announces availability via pn:zips-changed.
+/**
+ * A module to manage the backup upload process.
+ * Provides methods to start an upload and track its state.
+ * Emits:
+ *  - "pn:upload-progress" { phase: "start"|"progress"|"done"|"error", name, percent, message? }
+ *  - "pn:zips-changed"    { name }
+ *  - "pn:upload-state"    { snapshot of state }
+ */
 export const BackupUploader = {
     getState(): BackupUploadState { return { ...currentState }; },
     getLastUploaded(): { name: string; size?: number; lastModified?: number } | null { return lastUploaded ? { ...lastUploaded } : null; },

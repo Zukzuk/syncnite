@@ -18,7 +18,7 @@ type UseReturn = {
   logout: () => void;
 };
 
-// React hook to manage and provide authentication state and actions.
+// A hook to manage and provide authentication state and actions.
 export function useAuth({ pollMs }: UseParams): UseReturn {
   const [state, setState] = React.useState<AuthState>({
     ready: false,

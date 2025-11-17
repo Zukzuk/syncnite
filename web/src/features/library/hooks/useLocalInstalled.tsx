@@ -10,7 +10,7 @@ type UseReturn = {
     updatedAt: string | null
 };
 
-/** Hook to manage local installed state */
+// A hook to manage local installed games with periodic updates.
 export function useLocalInstalled({ pollMs }: UseParams): UseReturn {
     const [state, setState] = React.useState<UseReturn>({ set: null, updatedAt: null });
 

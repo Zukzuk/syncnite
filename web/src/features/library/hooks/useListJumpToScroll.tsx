@@ -12,7 +12,7 @@ type UseReturn = {
   scrollRowIntoView: (index: number, grouped: boolean) => void;
 };
 
-/** Hook to manage scrolling to a specific row */
+// A hook to manage scrolling to list items within a virtuoso scroller.
 export function useListJumpToScroll({headerH}: UseParams): UseReturn {
   const virtuosoRef = React.useRef<VirtuosoHandle>(null);
   const scrollerElRef = React.useRef<HTMLDivElement | null>(null);

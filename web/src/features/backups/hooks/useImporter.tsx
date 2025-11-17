@@ -11,6 +11,7 @@ type ImportUi = {
     startImport: (args: { filename: string; password?: string }) => void;
 };
 
+// A hook to manage the state and actions of the backup importer UI.
 export function useImporter(): ImportUi {
     const [busy, setBusy] = React.useState(false);
     const [phase, setPhase] = React.useState<Phase>(null);

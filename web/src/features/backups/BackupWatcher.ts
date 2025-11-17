@@ -153,8 +153,12 @@ function stop() {
     currentState.running = false; emit();
 }
 
-// Detects newer local zips and delegates the actual upload to UploadRunner.
-// Still persists the selected folder and exposes UI state.
+/**
+ * A module to watch a user-selected directory for new Playnite backup zip files.
+ * Provides methods to select directory, restore previous selection, and subscribe to state changes.
+ * Emits:
+ *  - "pn:watcher-state" { snapshot of state }
+ */
 export const BackupWatcher = {
     subscribe(fn: BackupListener) { 
         listeners.add(fn); 

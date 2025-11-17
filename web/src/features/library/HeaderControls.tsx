@@ -21,6 +21,24 @@ type Props = {
   totalCount: number;
 };
 
+/**
+ * Header controls component for the library view.
+ * Includes search, filters, view mode toggle, and item counts.
+ * Props:
+ * - controlsRef: Ref callback for the container element.
+ * - q, setQ: Search query state and setter.
+ * - sources, setSources: Selected platforms state and setter.
+ * - tags, setTags: Selected tags state and setter.
+ * - series, setSeries: Selected series state and setter.
+ * - view, setView: Current view mode and setter.
+ * - allSources: All available platforms.
+ * - allTags: All available tags.
+ * - allSeries: All available series.
+ * - showHidden, setShowHidden: Show hidden items state and setter.
+ * - installedOnly, setInstalledOnly: Installed only state and setter.
+ * - filteredCount: Number of items after filtering.
+ * - totalCount: Total number of items.
+ */
 export function HeaderControls(props: Props) {
   const {
     q, setQ, controlsRef,

@@ -9,6 +9,14 @@ type Props = {
   onJump: (letter: string) => void;
 };
 
+/**
+ * RailWrapper component to conditionally render the AlphabeticalRail.
+ * Props:
+ * - isVisible: Whether the rail should be displayed.
+ * - activeLetter: The currently active letter in the rail.
+ * - counts: A record of counts for each letter.
+ * - onJump: Callback when a letter is jumped to.
+ */
 export function RailWrapper({ isVisible, activeLetter, counts, onJump }: Props) {
   if (!isVisible) return null;
   return (
