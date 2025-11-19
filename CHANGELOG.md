@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.24.2](https://github.com/Zukzuk/syncnite/compare/v1.24.1...v1.24.2) (2025-11-19)
+
+
+### Bug Fixes
+
+* fixed bug whereplaynite was complaining about my singleton setup ([edae632](https://github.com/Zukzuk/syncnite/commit/edae632b3ed8d31f76de9ec9b6c0fb2021761b05))
+* fixed script name ([e3f2f94](https://github.com/Zukzuk/syncnite/commit/e3f2f940a7a0d9e0829d3538ef33b412ea1b0e62))
+
 ### [1.24.1](https://github.com/Zukzuk/syncnite/compare/v1.24.0...v1.24.1) (2025-11-17)
 
 ## [1.24.0](https://github.com/zukzuk/playnite-viewer/compare/v1.23.4...v1.24.0) (2025-11-17)
