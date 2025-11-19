@@ -253,11 +253,13 @@ namespace SyncniteBridge.Services
         {
             if (!a.HasValue && !b.HasValue)
                 return true;
-            if (a.HasValue != b.HasValue)
+            if (!a.HasValue || !b.HasValue)
                 return false;
+
             // Compare to the second – Playnite stores DateTime, precision differences aren't critical
-            return a.Value.ToUniversalTime().ToString("O")
-                == b.Value.ToUniversalTime().ToString("O");
+            var av = a.Value.ToUniversalTime().ToString("O");
+            var bv = b.Value.ToUniversalTime().ToString("O");
+            return av == bv;
         }
 
         public void Dispose()

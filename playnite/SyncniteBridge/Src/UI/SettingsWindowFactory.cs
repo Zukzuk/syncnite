@@ -25,19 +25,15 @@ namespace SyncniteBridge.UI
         /// <param name="unsubscribeHealth">Unsubscribe health handler.</param>
         /// <param name="onSaveApiBase">Callback when API base is saved.</param>
         /// <param name="onPushInstalled">Callback to push installed games.</param>
-        /// <param name="onSyncLibrary">Callback to sync library.</param>
+        /// <param name="onForceSyncLibrary">Callback to force sync full library.</param>
         /// <param name="initialEmail">Initial email value.</param>
         /// <param name="initialPassword">Initial password value.</param>
-        /// <param name="isAdminInstall">
-        /// True when this Playnite installation is the bound admin install.
-        /// </param>
-        /// <param name="onSaveCredentials">
-        /// Callback when credentials are saved (email, password).
-        /// </param>
+        /// <param name="clientId">ClientId hash string to display.</param>
+        /// <param name="isAdminInstall">True when this Playnite installation is the bound admin install.</param>
+        /// <param name="onSaveCredentials">Callback when credentials are saved (email, password).</param>
         /// <param name="onReleaseAdmin">
         /// Callback when the user confirms "Release admin" in the UI.
-        /// Should call the API to delete/release the admin account and
-        /// reset local state (config, headers, etc.).
+        /// Should call the API to delete/release the admin account and reset local state.
         /// </param>
         public static void BuildAndShow(
             IPlayniteAPI api,
@@ -48,53 +44,59 @@ namespace SyncniteBridge.UI
             Action<Action<bool>> unsubscribeHealth,
             Action<string> onSaveApiBase,
             Action onPushInstalled,
-            Action onSyncLibrary,
+            Action onForceSyncLibrary,
             string initialEmail,
             string initialPassword,
+            string clientId,
             bool isAdminInstall,
             Action<string, string> onSaveCredentials,
             Action onReleaseAdmin
         )
         {
-            var win = api.Dialogs.CreateWindow(
-                new WindowCreationOptions
+            var ctx = new SettingsWindow(api);
+            var win = ctx.Window;
+
+            // Center manually when the window has been laid out
+            win.Loaded += (_, __) =>
+            {
+                var main = Application.Current?.MainWindow;
+                if (main == null)
                 {
-                    ShowCloseButton = true,
-                    ShowMaximizeButton = false,
-                    ShowMinimizeButton = false,
+                    win.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                    return;
                 }
-            );
 
-            win.Title = AppConstants.AppName + " Settings (v" + BridgeVersion.Current + ")";
+                // If Width/Height are Auto, force measure first
+                win.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                win.Arrange(new Rect(win.DesiredSize));
 
+                var width = double.IsNaN(win.Width) || win.Width == 0 ? win.ActualWidth : win.Width;
+                var height =
+                    double.IsNaN(win.Height) || win.Height == 0 ? win.ActualHeight : win.Height;
+
+                if (width <= 0 || height <= 0)
+                {
+                    win.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                    return;
+                }
+
+                var left = main.Left + (main.ActualWidth - width) / 2;
+                var top = main.Top + (main.ActualHeight - height) / 2;
+
+                win.Left = Math.Max(left, 0);
+                win.Top = Math.Max(top, 0);
+            };
             ThemeHelpers.HookThemeBackground(win);
             ThemeHelpers.HookThemeForeground(win);
 
             bool isHealthy = false;
+            bool versionWarningShown = false;
 
-            TextBox tbApi = null!;
-            TextBox tbEmail = null!;
-            PasswordBox tbPass = null!;
-            Button btnPush = null!;
-            Button btnSync = null!;
-            Button btnSave = null!;
-            Button btnReleaseAdmin = null!;
-            TextBlock roleText = null!;
-            TextBlock loginLockedInfo = null!;
-            Ellipse statusDot = null!;
-            TextBlock statusText = null!;
+            var lockedEmail = initialEmail ?? "";
 
-            var root = new Grid { Margin = new Thickness(16) };
-            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Header
-            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Divider
-            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // API base
-            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Creds
-            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Save row
-            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Action 1
-            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Action 2
-            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Footer
+            var root = ctx.RootGrid;
 
-            UIElement MakeDivider(double mt = 10, double mb = 12)
+            UIElement MakeDivider(double mt = 16, double mb = 16)
             {
                 var div = new Border
                 {
@@ -113,295 +115,88 @@ namespace SyncniteBridge.UI
                 return div;
             }
 
-            // HEADER
-            var header = new Grid { Margin = new Thickness(0, 0, 0, 8) };
-            header.ColumnDefinitions.Add(
-                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
-            ); // title
-            header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto }); // status
-            header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto }); // role
+            // Window title
+            win.Title = AppConstants.AppName + " Settings";
 
-            var title = new TextBlock
-            {
-                Text = AppConstants.AppName + " Settings",
-                FontSize = 18,
-                FontWeight = FontWeights.Bold,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            ThemeHelpers.SetThemeTextBrush(title);
-            Grid.SetColumn(title, 0);
-            header.Children.Add(title);
+            // Header row: status, role, version, client id
+            SettingsHeaderBuilder.BuildHeaderRow(ctx, clientId);
 
-            var statusPanel = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(8, 0, 16, 0),
-            };
-
-            statusDot = new Ellipse
-            {
-                Width = 10,
-                Height = 10,
-                Margin = new Thickness(0, 0, 6, 0),
-                Fill = new SolidColorBrush(Color.FromRgb(140, 140, 140)),
-            };
-
-            statusText = new TextBlock
-            {
-                Text = AppConstants.HealthStatusUnreachable,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            ThemeHelpers.SetThemeTextBrush(statusText);
-
-            statusPanel.Children.Add(statusDot);
-            statusPanel.Children.Add(statusText);
-            Grid.SetColumn(statusPanel, 1);
-            header.Children.Add(statusPanel);
-
-            roleText = new TextBlock
-            {
-                Text = "(role unknown)",
-                VerticalAlignment = VerticalAlignment.Center,
-                FontStyle = FontStyles.Italic,
-            };
-            ThemeHelpers.SetThemeTextBrush(roleText);
-            Grid.SetColumn(roleText, 2);
-            header.Children.Add(roleText);
-
-            Grid.SetRow(header, 0);
-            root.Children.Add(header);
-
-            // DIVIDER
+            // Divider between header and form
             var div = MakeDivider();
             Grid.SetRow(div, 1);
             root.Children.Add(div);
 
-            // API ROW
-            var apiRow = new Grid { Margin = new Thickness(0, 0, 0, 10) };
-            apiRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(150) });
-            apiRow.ColumnDefinitions.Add(
-                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
+            // Form (API/credentials + save/admin row)
+            SettingsFormBuilder.BuildForm(
+                ctx,
+                initialApiBase,
+                initialEmail,
+                initialPassword,
+                isAdminInstall
             );
 
-            var apiLabel = new TextBlock
-            {
-                Text = "API Base URL",
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            ThemeHelpers.SetThemeTextBrush(apiLabel);
-            Grid.SetColumn(apiLabel, 0);
-            apiRow.Children.Add(apiLabel);
+            // Divider between form and manual actions (row 6)
+            div = MakeDivider();
+            Grid.SetRow(div, 6);
+            root.Children.Add(div);
 
-            tbApi = new TextBox { Text = initialApiBase ?? "" };
-            ThemeHelpers.SetThemeTextBrush(tbApi);
-            Grid.SetColumn(tbApi, 1);
-            apiRow.Children.Add(tbApi);
+            // Manual buttons (rows 7-8)
+            SettingsManualActionsBuilder.BuildManualActions(ctx);
 
-            Grid.SetRow(apiRow, 2);
-            root.Children.Add(apiRow);
+            // Divider between manual actions and window buttons (row 9)
+            div = MakeDivider();
+            Grid.SetRow(div, 9);
+            root.Children.Add(div);
 
-            // CREDS ROW
-            var credsRow = new Grid { Margin = new Thickness(0, 0, 0, 6) };
-            credsRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(150) });
-            credsRow.ColumnDefinitions.Add(
-                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
-            );
-            credsRow.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // email
-            credsRow.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // pass
+            // Bottom window buttons (row 10)
+            SettingsWindowButtonsBuilder.BuildWindowButtons(ctx);
 
-            var emailLabel = new TextBlock
-            {
-                Text = "Email",
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            ThemeHelpers.SetThemeTextBrush(emailLabel);
-            Grid.SetRow(emailLabel, 0);
-            Grid.SetColumn(emailLabel, 0);
-            credsRow.Children.Add(emailLabel);
-
-            tbEmail = new TextBox { Text = initialEmail ?? "", Margin = new Thickness(0, 0, 0, 4) };
-            ThemeHelpers.SetThemeTextBrush(tbEmail);
-            Grid.SetRow(tbEmail, 0);
-            Grid.SetColumn(tbEmail, 1);
-            credsRow.Children.Add(tbEmail);
-
-            var passLabel = new TextBlock
-            {
-                Text = "Password",
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            ThemeHelpers.SetThemeTextBrush(passLabel);
-            Grid.SetRow(passLabel, 1);
-            Grid.SetColumn(passLabel, 0);
-            credsRow.Children.Add(passLabel);
-
-            tbPass = new PasswordBox { Margin = new Thickness(0, 0, 0, 0) };
-            if (!string.IsNullOrEmpty(initialPassword))
-                tbPass.Password = initialPassword;
-            Grid.SetRow(tbPass, 1);
-            Grid.SetColumn(tbPass, 1);
-            credsRow.Children.Add(tbPass);
-
-            Grid.SetRow(credsRow, 3);
-            root.Children.Add(credsRow);
-
-            // INFO under creds (lock explanation)
-            loginLockedInfo = new TextBlock
-            {
-                Margin = new Thickness(150, 4, 0, 0),
-                FontStyle = FontStyles.Italic,
-                TextWrapping = TextWrapping.Wrap,
-                Visibility = Visibility.Collapsed,
-                Text =
-                    "Admin login is locked to this installation. "
-                    + "You can change the password, but not the email.",
-            };
-            ThemeHelpers.SetThemeTextBrush(loginLockedInfo);
-            Grid.SetRow(loginLockedInfo, 3);
-            root.Children.Add(loginLockedInfo);
-
-            // SAVE + RELEASE ROW
-            var saveRow = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                HorizontalAlignment = HorizontalAlignment.Left,
-                Margin = new Thickness(150, 10, 0, 10),
-            };
-
-            btnSave = new Button
-            {
-                Content = "Save settings",
-                Width = 120,
-                Margin = new Thickness(0, 0, 12, 0),
-            };
-            saveRow.Children.Add(btnSave);
-
-            btnReleaseAdmin = new Button
-            {
-                Content = "Release admin",
-                Width = 130,
-                Margin = new Thickness(0, 0, 0, 0),
-                Visibility = Visibility.Collapsed, // shown only when admin
-            };
-            saveRow.Children.Add(btnReleaseAdmin);
-
-            Grid.SetRow(saveRow, 4);
-            root.Children.Add(saveRow);
-
-            // ACTION: Push installed
-            var action1 = new Grid { Margin = new Thickness(0, 10, 0, 4) };
-            action1.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            action1.ColumnDefinitions.Add(
-                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
-            );
-
-            var pushPanel = new StackPanel { Orientation = Orientation.Horizontal };
-
-            btnPush = new Button
-            {
-                Content = "Push installed",
-                Width = 120,
-                Margin = new Thickness(0, 0, 12, 0),
-            };
-            pushPanel.Children.Add(btnPush);
-
-            var pushText = new TextBlock
-            {
-                Text = "Push list of installed games.",
-                TextWrapping = TextWrapping.Wrap,
-                Margin = new Thickness(0, 8, 0, 0),
-            };
-            ThemeHelpers.SetThemeTextBrush(pushText);
-            pushPanel.Children.Add(pushText);
-
-            Grid.SetColumn(pushPanel, 0);
-            action1.Children.Add(pushPanel);
-            Grid.SetRow(action1, 5);
-            root.Children.Add(action1);
-
-            // ACTION: Sync library
-            var action2 = new Grid { Margin = new Thickness(0, 4, 0, 10) };
-            action2.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            action2.ColumnDefinitions.Add(
-                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
-            );
-
-            var syncPanel = new StackPanel { Orientation = Orientation.Horizontal };
-
-            btnSync = new Button
-            {
-                Content = "Sync library",
-                Width = 120,
-                Margin = new Thickness(0, 0, 12, 0),
-            };
-            syncPanel.Children.Add(btnSync);
-
-            var syncText = new TextBlock
-            {
-                Text = "Synchronize the game library with the Syncnite service.",
-                TextWrapping = TextWrapping.Wrap,
-                Margin = new Thickness(0, 8, 0, 0),
-            };
-            ThemeHelpers.SetThemeTextBrush(syncText);
-            syncPanel.Children.Add(syncText);
-
-            Grid.SetColumn(syncPanel, 0);
-            action2.Children.Add(syncPanel);
-            Grid.SetRow(action2, 6);
-            root.Children.Add(action2);
-
-            // FOOTER
-            var footer = new TextBlock
-            {
-                Margin = new Thickness(0, 8, 0, 0),
-                TextWrapping = TextWrapping.Wrap,
-                Text = "Changes are applied when you press 'Save settings'.",
-                FontSize = 11,
-            };
-            ThemeHelpers.SetThemeTextBrush(footer);
-            Grid.SetRow(footer, 7);
-            root.Children.Add(footer);
-
-            // ---- LOCAL HELPERS ----
-
+            // Local helpers
             void ApplyLoginLockState()
             {
                 if (isAdminInstall)
                 {
-                    // Email is locked; password can still change
-                    tbEmail.IsReadOnly = true;
-                    tbEmail.Opacity = 0.7;
-                    tbEmail.ToolTip = "Admin login is locked to this installation.";
+                    if (!string.IsNullOrWhiteSpace(lockedEmail))
+                    {
+                        ctx.TbEmail.Text = lockedEmail + " (admin-locked)";
+                    }
+                    else
+                    {
+                        ctx.TbEmail.Text = "Admin (admin-locked)";
+                    }
 
-                    tbPass.IsEnabled = true;
-                    tbPass.Opacity = 1.0;
-                    tbPass.ToolTip = "Update the admin password if it changed on the server.";
-
-                    loginLockedInfo.Visibility = Visibility.Visible;
+                    ctx.TbEmail.IsReadOnly = true;
+                    ctx.TbEmail.Opacity = 0.7;
+                    ctx.TbEmail.ToolTip = "Admin is locked, click 'Release admin' to change";
+                    ctx.TbPass.IsEnabled = true;
+                    ctx.TbPass.Opacity = 1.0;
+                    ctx.TbPass.ToolTip = "Update the admin password if it changed on the server";
                 }
                 else
                 {
-                    tbEmail.IsReadOnly = false;
-                    tbEmail.Opacity = 1.0;
-                    tbEmail.ToolTip = null;
-
-                    tbPass.IsEnabled = true;
-                    tbPass.Opacity = 1.0;
-                    tbPass.ToolTip = null;
-
-                    loginLockedInfo.Visibility = Visibility.Collapsed;
+                    ctx.TbEmail.IsReadOnly = false;
+                    ctx.TbEmail.Opacity = 1.0;
+                    ctx.TbEmail.ToolTip = "username";
+                    ctx.TbEmail.Text = initialEmail ?? string.Empty;
+                    ctx.TbPass.IsEnabled = true;
+                    ctx.TbPass.Opacity = 1.0;
+                    ctx.TbPass.ToolTip = null;
                 }
             }
 
             void SaveAll()
             {
-                onSaveApiBase?.Invoke(tbApi.Text?.Trim() ?? "");
+                onSaveApiBase?.Invoke(ctx.TbApi.Text?.Trim() ?? string.Empty);
 
-                // When this install is locked as admin, we don't persist changed creds via the form.
-                if (!isAdminInstall)
+                var password = ctx.TbPass.Password ?? string.Empty;
+                if (isAdminInstall)
                 {
-                    onSaveCredentials?.Invoke(tbEmail.Text?.Trim() ?? "", tbPass.Password ?? "");
+                    onSaveCredentials?.Invoke(lockedEmail, password);
+                }
+                else
+                {
+                    var email = ctx.TbEmail.Text?.Trim() ?? string.Empty;
+                    onSaveCredentials?.Invoke(email, password);
                 }
             }
 
@@ -414,31 +209,21 @@ namespace SyncniteBridge.UI
                 }
                 catch { }
 
-                roleText.Text = isAdminNow ? "(admin)" : "(user)";
+                ctx.RoleText.Text = isAdminNow ? "(admin)" : "(user)";
 
-                btnReleaseAdmin.Visibility =
+                ctx.BtnReleaseAdmin.Visibility =
                     (isAdminInstall && isAdminNow) ? Visibility.Visible : Visibility.Collapsed;
+                ctx.ForcePanel.Visibility = isAdminNow ? Visibility.Visible : Visibility.Collapsed;
             }
 
             void RefreshActionButtons()
             {
-                if (
-                    btnPush == null
-                    || btnSync == null
-                    || tbApi == null
-                    || tbEmail == null
-                    || tbPass == null
-                )
-                {
-                    return;
-                }
+                var hasUrl = !string.IsNullOrWhiteSpace(ctx.TbApi.Text);
+                var emailToCheck = isAdminInstall ? lockedEmail : ctx.TbEmail.Text;
+                var hasEmail = !string.IsNullOrWhiteSpace(emailToCheck);
+                var hasPass = !string.IsNullOrWhiteSpace(ctx.TbPass.Password);
 
-                var hasUrl = !string.IsNullOrWhiteSpace(tbApi.Text);
-                var hasEmail = !string.IsNullOrWhiteSpace(tbEmail.Text);
-                var hasPass = !string.IsNullOrWhiteSpace(tbPass.Password);
-
-                // When this install is locked to admin, we trust stored creds even if fields are readonly.
-                var formOk = hasUrl && (isAdminInstall || (hasEmail && hasPass));
+                var formOk = hasUrl && hasEmail && hasPass;
 
                 var isAdminNow = false;
                 try
@@ -447,8 +232,8 @@ namespace SyncniteBridge.UI
                 }
                 catch { }
 
-                btnPush.IsEnabled = isHealthy && formOk;
-                btnSync.IsEnabled = isHealthy && formOk && isAdminNow;
+                ctx.BtnPush.IsEnabled = isHealthy && formOk;
+                ctx.BtnForceSync.IsEnabled = isHealthy && formOk && isAdminNow;
             }
 
             void RenderStatus(bool healthy)
@@ -456,7 +241,7 @@ namespace SyncniteBridge.UI
                 isHealthy = healthy;
 
                 var text = getHealthText?.Invoke() ?? AppConstants.HealthStatusUnreachable;
-                statusText.Text = text;
+                ctx.StatusText.Text = text;
 
                 var isHealthyText = string.Equals(
                     text,
@@ -472,61 +257,75 @@ namespace SyncniteBridge.UI
                 {
                     if (
                         !ThemeHelpers.TrySetDynamicBrush(
-                            statusDot,
+                            ctx.StatusDot,
                             Shape.FillProperty,
                             "SuccessBrush"
                         )
                     )
                     {
-                        statusDot.Fill = new SolidColorBrush(Color.FromRgb(0, 180, 0));
+                        ctx.StatusDot.Fill = new SolidColorBrush(Color.FromRgb(0, 180, 0));
                     }
                 }
                 else if (isVersionMismatch)
                 {
                     if (
                         !ThemeHelpers.TrySetDynamicBrush(
-                            statusDot,
+                            ctx.StatusDot,
                             Shape.FillProperty,
                             "WarningBrush"
                         )
                     )
                     {
-                        statusDot.Fill = new SolidColorBrush(Color.FromRgb(220, 160, 0));
+                        ctx.StatusDot.Fill = new SolidColorBrush(Color.FromRgb(220, 160, 0));
+                    }
+
+                    if (!versionWarningShown)
+                    {
+                        versionWarningShown = true;
+                        api.Dialogs.ShowMessage(
+                            "SyncniteBridge server / extension version mismatch detected.\n\n"
+                                + "Please install the matching Syncnite Bridge extension version "
+                                + "for this server, then restart Playnite.\n\n"
+                                + "Until then, sync is disabled.",
+                            AppConstants.AppName
+                        );
                     }
                 }
                 else
                 {
                     if (
                         !ThemeHelpers.TrySetDynamicBrush(
-                            statusDot,
+                            ctx.StatusDot,
                             Shape.FillProperty,
                             "ErrorBrush"
                         )
                     )
                     {
-                        statusDot.Fill = new SolidColorBrush(Color.FromRgb(200, 0, 0));
+                        ctx.StatusDot.Fill = new SolidColorBrush(Color.FromRgb(200, 0, 0));
                     }
                 }
 
                 RefreshActionButtons();
             }
 
-            // ---- WIRING ----
-
-            tbApi.TextChanged += (s, e) => RefreshActionButtons();
-            tbEmail.TextChanged += (s, e) => RefreshActionButtons();
-            tbPass.PasswordChanged += (s, e) => RefreshActionButtons();
-
-            btnSave.Click += (s, e) =>
+            // Wiring
+            ctx.TbApi.TextChanged += (s, e) => RefreshActionButtons();
+            ctx.TbEmail.TextChanged += (s, e) => RefreshActionButtons();
+            ctx.TbPass.PasswordChanged += (s, e) => RefreshActionButtons();
+            ctx.BtnSave.Click += (s, e) =>
             {
                 SaveAll();
                 RefreshActionButtons();
             };
-
-            btnPush.Click += (s, e) => onPushInstalled?.Invoke();
-            btnSync.Click += (s, e) => onSyncLibrary?.Invoke();
-
-            btnReleaseAdmin.Click += (s, e) =>
+            ctx.BtnSaveClose.Click += (s, e) =>
+            {
+                SaveAll();
+                win.Close();
+            };
+            ctx.BtnClose.Click += (s, e) => win.Close();
+            ctx.BtnPush.Click += (s, e) => onPushInstalled?.Invoke();
+            ctx.BtnForceSync.Click += (s, e) => onForceSyncLibrary?.Invoke();
+            ctx.BtnReleaseAdmin.Click += (s, e) =>
             {
                 var isAdminNow = false;
                 try
@@ -558,11 +357,11 @@ namespace SyncniteBridge.UI
                 );
 
                 if (result != MessageBoxResult.Yes)
+                {
                     return;
+                }
 
                 onReleaseAdmin?.Invoke();
-
-                // After release, it's usually safest to close the window.
                 win.Close();
             };
 
@@ -596,7 +395,23 @@ namespace SyncniteBridge.UI
                 catch { }
             };
 
-            win.Content = root;
+            var contentBorder = new Border { Padding = new Thickness(20), Child = root };
+            if (
+                !ThemeHelpers.TrySetDynamicBrush(
+                    contentBorder,
+                    Control.BackgroundProperty,
+                    "PanelBackgroundBrush"
+                )
+                && !ThemeHelpers.TrySetDynamicBrush(
+                    contentBorder,
+                    Control.BackgroundProperty,
+                    "ControlBackgroundBrush"
+                )
+            )
+            {
+                contentBorder.Background = Brushes.Transparent;
+            }
+            win.Content = contentBorder;
             win.SizeToContent = SizeToContent.WidthAndHeight;
             win.ShowDialog();
         }

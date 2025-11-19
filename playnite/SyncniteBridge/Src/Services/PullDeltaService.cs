@@ -156,7 +156,17 @@ namespace SyncniteBridge.Services
                 // 5) Save state
                 store.Save(next);
 
-                blog.Info("pull", "Pull sync completed");
+                blog.Info(
+                    "pull",
+                    "Pull sync completed, "
+                        + $"{games.Length} games, "
+                        + $"{tags.Length} tags, "
+                        + $"{sources.Length} sources, "
+                        + $"{platforms.Length} platforms, "
+                        + $"{genres.Length} genres, "
+                        + $"{categories.Length} categories, "
+                        + $"{features.Length} features"
+                );
             }
             finally
             {

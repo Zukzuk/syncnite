@@ -9,6 +9,7 @@ using Playnite.SDK;
 using Playnite.SDK.Models;
 using SyncniteBridge.Constants;
 using SyncniteBridge.Helpers;
+using SyncniteBridge.Models;
 
 namespace SyncniteBridge.Services
 {
@@ -86,8 +87,16 @@ namespace SyncniteBridge.Services
         {
             try
             {
-                var previous = snapshotStore.Load();
-                var current = localState.BuildSnapshot(fullRescan: true);
+                var previous = snapshotStore.Load() ?? new LocalStateSnapshot();
+                var current =
+                    localState.BuildSnapshot(fullRescan: true) ?? new LocalStateSnapshot();
+
+                previous.MediaVersions ??= new Dictionary<string, long>(
+                    StringComparer.OrdinalIgnoreCase
+                );
+                current.MediaVersions ??= new Dictionary<string, long>(
+                    StringComparer.OrdinalIgnoreCase
+                );
 
                 var firstRun =
                     previous.DbTicks == 0
@@ -117,13 +126,20 @@ namespace SyncniteBridge.Services
                     }
 
                     var changedFolders = 0;
-                    foreach (var kv in current.MediaVersions)
+                    foreach (
+                        var kv in current.MediaVersions
+                            ?? Enumerable.Empty<KeyValuePair<string, long>>()
+                    )
                     {
                         var folder = kv.Key;
                         var ticksNow = kv.Value;
-                        var ticksPrev = previous.MediaVersions.TryGetValue(folder, out var t)
-                            ? t
-                            : 0;
+                        var ticksPrev =
+                            (
+                                previous.MediaVersions != null
+                                && previous.MediaVersions.TryGetValue(folder, out var t)
+                            )
+                                ? t
+                                : 0;
 
                         if (ticksNow != ticksPrev)
                         {
@@ -139,8 +155,8 @@ namespace SyncniteBridge.Services
                         {
                             prevTicks = previous.DbTicks,
                             curTicks = current.DbTicks,
-                            prevMedia = previous.MediaVersions.Count,
-                            curMedia = current.MediaVersions.Count,
+                            prevMedia = previous.MediaVersions?.Count ?? 0,
+                            curMedia = current.MediaVersions?.Count ?? 0,
                             dbDirty,
                             mediaFoldersChanged = changedFolders,
                         }
@@ -223,7 +239,7 @@ namespace SyncniteBridge.Services
                 return;
 
             // Normalize separators
-            var norm = mediaPath.Replace('\\', '/').Trim();
+            var norm = mediaPath?.Replace('\\', '/')?.Trim() ?? string.Empty;
             if (norm.Length == 0)
                 return;
 
@@ -430,85 +446,25 @@ namespace SyncniteBridge.Services
             m.versions["games"] = gameVersions;
 
             // ---- simple named collections ----
-            AddNamedCollection(
-                m,
-                "tags",
-                api.Database.Tags,
-                t => t.Id,
-                t => t.Name
-            );
+            AddNamedCollection(m, "tags", api.Database.Tags, t => t.Id, t => t.Name);
 
-            AddNamedCollection(
-                m,
-                "companies",
-                api.Database.Companies,
-                c => c.Id,
-                c => c.Name
-            );
+            AddNamedCollection(m, "companies", api.Database.Companies, c => c.Id, c => c.Name);
 
-            AddNamedCollection(
-                m,
-                "sources",
-                api.Database.Sources,
-                s => s.Id,
-                s => s.Name
-            );
+            AddNamedCollection(m, "sources", api.Database.Sources, s => s.Id, s => s.Name);
 
-            AddNamedCollection(
-                m,
-                "platforms",
-                api.Database.Platforms,
-                p => p.Id,
-                p => p.Name
-            );
+            AddNamedCollection(m, "platforms", api.Database.Platforms, p => p.Id, p => p.Name);
 
-            AddNamedCollection(
-                m,
-                "genres",
-                api.Database.Genres,
-                g => g.Id,
-                g => g.Name
-            );
+            AddNamedCollection(m, "genres", api.Database.Genres, g => g.Id, g => g.Name);
 
-            AddNamedCollection(
-                m,
-                "categories",
-                api.Database.Categories,
-                c => c.Id,
-                c => c.Name
-            );
+            AddNamedCollection(m, "categories", api.Database.Categories, c => c.Id, c => c.Name);
 
-            AddNamedCollection(
-                m,
-                "features",
-                api.Database.Features,
-                f => f.Id,
-                f => f.Name
-            );
+            AddNamedCollection(m, "features", api.Database.Features, f => f.Id, f => f.Name);
 
-            AddNamedCollection(
-                m,
-                "series",
-                api.Database.Series,
-                s => s.Id,
-                s => s.Name
-            );
+            AddNamedCollection(m, "series", api.Database.Series, s => s.Id, s => s.Name);
 
-            AddNamedCollection(
-                m,
-                "regions",
-                api.Database.Regions,
-                r => r.Id,
-                r => r.Name
-            );
+            AddNamedCollection(m, "regions", api.Database.Regions, r => r.Id, r => r.Name);
 
-            AddNamedCollection(
-                m,
-                "ageratings",
-                api.Database.AgeRatings,
-                a => a.Id,
-                a => a.Name
-            );
+            AddNamedCollection(m, "ageratings", api.Database.AgeRatings, a => a.Id, a => a.Name);
 
             AddNamedCollection(
                 m,

@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.Security.Cryptography;
+using System.Text;
 using Playnite.SDK.Data;
 using SyncniteBridge.Constants;
 
@@ -7,36 +9,38 @@ namespace SyncniteBridge.Helpers
 {
     /// <summary>
     /// Configuration settings for the bridge,
-    /// persisted under ExtensionsData/&lt;GUID&gt;/
+    /// persisted under ExtensionsData/&lt;GUID&gt;/config.json
     /// </summary>
     internal sealed class BridgeConfig
     {
-        // Base URL for the Syncnite API server
         public string ApiBase { get; set; } = AppConstants.DefaultApiBase;
 
-        // user-tunable log level: "error" | "warn" | "info" | "debug" | "trace"
         public string LogLevel { get; set; } = "info";
 
-        // Admin account (email is fine to serialize)
         public string AuthEmail { get; set; } = "";
 
-        // Store password encrypted at rest; only this field is serialized
         public string AuthPasswordEncrypted { get; set; } = "";
 
-        // Whether this Playnite installation is the "admin install"
+        /// <summary>
+        /// Whether this Playnite installation has been recognized as the admin install.
+        /// </summary>
         public bool IsAdminInstall { get; set; } = false;
 
-        // Unique installation identifier (used as X-Client-Id)
+        /// <summary>
+        /// Unique identifier for this Playnite+extension installation.
+        /// Used as X-Client-Id on all requests.
+        /// </summary>
         public string ClientId { get; set; } = "";
 
-        // Convenience helpers (NOT serialized—methods aren’t serialized)
         public string GetAuthPassword() => Crypto.Unprotect(AuthPasswordEncrypted);
 
         public void SetAuthPassword(string value) =>
             AuthPasswordEncrypted = Crypto.Protect(value ?? "");
 
         /// <summary>
-        /// Load the config from disk. Ensures ClientId is always set.
+        /// Load the config from disk. Ensures ClientId is always set, and that
+        /// for the same machine/user/install path we get the same ClientId even if
+        /// config.json is deleted.
         /// </summary>
         public static BridgeConfig Load(string path)
         {
@@ -44,36 +48,34 @@ namespace SyncniteBridge.Helpers
             {
                 if (File.Exists(path))
                 {
-                    var cfg = Serialization.FromJson<BridgeConfig>(File.ReadAllText(path));
-                    if (cfg != null)
-                    {
-                        if (string.IsNullOrWhiteSpace(cfg.LogLevel))
-                            cfg.LogLevel = "info";
+                    var json = File.ReadAllText(path);
+                    var cfg = Serialization.FromJson<BridgeConfig>(json) ?? new BridgeConfig();
 
-                        if (string.IsNullOrWhiteSpace(cfg.ClientId))
-                            cfg.ClientId = Guid.NewGuid().ToString("N"); // first run on this install
-                    }
+                    if (string.IsNullOrWhiteSpace(cfg.LogLevel))
+                        cfg.LogLevel = "info";
 
-                    return cfg ?? NewWithClientId();
+                    if (string.IsNullOrWhiteSpace(cfg.ClientId))
+                        cfg.ClientId = GenerateDeterministicClientId(path);
+
+                    return cfg;
                 }
             }
             catch
             {
-                // swallow; return fresh config
+                // swallow and fall through to fresh config
             }
 
-            // new config: initialize ClientId here as well
-            return NewWithClientId();
-        }
-
-        private static BridgeConfig NewWithClientId()
-        {
-            var fresh = new BridgeConfig { ClientId = Guid.NewGuid().ToString("N") };
+            // No config on disk (or failed to read): create a new one with deterministic ClientId
+            var fresh = new BridgeConfig
+            {
+                LogLevel = "info",
+                ClientId = GenerateDeterministicClientId(path),
+            };
             return fresh;
         }
 
         /// <summary>
-        /// Save the config to disk.
+        /// Save the config to disk (including ClientId).
         /// </summary>
         public static void Save(string path, BridgeConfig cfg)
         {
@@ -83,11 +85,43 @@ namespace SyncniteBridge.Helpers
                 if (!string.IsNullOrEmpty(dir))
                     Directory.CreateDirectory(dir);
 
+                // As a safety net, ensure ClientId is never empty
+                if (string.IsNullOrWhiteSpace(cfg.ClientId))
+                    cfg.ClientId = GenerateDeterministicClientId(path);
+
                 File.WriteAllText(path, Serialization.ToJson(cfg));
             }
             catch
             {
-                // swallow; config changes are non-critical
+                // swallowing errors here is fine – config tweaks are non-critical
+            }
+        }
+
+        /// <summary>
+        /// Create a deterministic ID based on machine + user + install path.
+        /// This gives the same ID for the same Playnite+extension installation,
+        /// even if config.json is removed.
+        /// </summary>
+        private static string GenerateDeterministicClientId(string configPath)
+        {
+            try
+            {
+                var input = $"{Environment.MachineName}|{Environment.UserName}|{configPath}";
+                using var sha = SHA256.Create();
+                var bytes = Encoding.UTF8.GetBytes(input);
+                var hash = sha.ComputeHash(bytes);
+
+                // Use the first 16 bytes (32 hex chars) as our id
+                var sb = new StringBuilder(32);
+                for (int i = 0; i < 16 && i < hash.Length; i++)
+                    sb.Append(hash[i].ToString("x2"));
+
+                return sb.ToString();
+            }
+            catch
+            {
+                // If anything goes wrong, fall back to random – very rare edge case.
+                return Guid.NewGuid().ToString("N");
             }
         }
     }

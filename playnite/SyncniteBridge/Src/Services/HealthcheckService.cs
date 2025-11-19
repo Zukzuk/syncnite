@@ -267,7 +267,7 @@ namespace SyncniteBridge.Services
             }
 
             // Only report "healthy" to listeners when we are fully healthy (reachable + version match).
-            StatusChanged.Invoke(IsHealthy);
+            StatusChanged?.Invoke(IsHealthy);
         }
 
         private static string NormalizeVersion(string? v)
@@ -275,26 +275,26 @@ namespace SyncniteBridge.Services
             if (string.IsNullOrWhiteSpace(v))
                 return string.Empty;
 
-            v = v.Trim();
+            v = v?.Trim();
 
-            if (v.StartsWith("v", StringComparison.OrdinalIgnoreCase))
+            if (v != null && v.StartsWith("v", StringComparison.OrdinalIgnoreCase))
                 v = v.Substring(1);
 
-            return v;
+            return v ?? string.Empty;
         }
 
-        private static int CompareVersions(string a, string b)
+        private static int CompareVersions(string? a, string? b)
         {
-            a = NormalizeVersion(a);
-            b = NormalizeVersion(b);
+            var na = NormalizeVersion(a);
+            var nb = NormalizeVersion(b);
 
-            if (Version.TryParse(a, out var va) && Version.TryParse(b, out var vb))
+            if (Version.TryParse(na, out var va) && Version.TryParse(nb, out var vb))
             {
                 return va.CompareTo(vb);
             }
 
             // Fallback: simple ordinal compare
-            return string.CompareOrdinal(a, b);
+            return string.CompareOrdinal(na, nb);
         }
 
         /// <summary>

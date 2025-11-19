@@ -43,10 +43,10 @@ namespace SyncniteBridge
                 if (s_initialized)
                 {
                     // Secondary instance: do not initialize anything heavy
-                    blog.Warn(
-                        "startup",
-                        "Secondary SyncniteBridge instance loaded; no services started."
-                    );
+                    // Use Playnite's logger directly here because instance fields
+                    // (like blog) are not guaranteed to be initialized.
+                    var plog = Playnite.SDK.LogManager.GetLogger();
+                    plog.Warn("Secondary SyncniteBridge instance loaded; no services started.");
                     Properties = new GenericPluginProperties { HasSettings = false };
                     return;
                 }
@@ -285,20 +285,26 @@ namespace SyncniteBridge
                                     pushInstalled.PushNow();
                                     blog.Info("push", "Manual push requested");
                                 },
-                                onSyncLibrary: () =>
+                                onForceSyncLibrary: () =>
                                 {
+                                    // This is the "Force sync full library" button
                                     pushSync.HardSync();
-                                    blog.Info("sync", "Manual sync requested");
+                                    blog.Info("sync", "Manual full sync requested");
                                 },
                                 initialEmail: config.AuthEmail,
                                 initialPassword: config.GetAuthPassword(),
+                                clientId: config.ClientId, // NEW: show deterministic ClientId
                                 isAdminInstall: config.IsAdminInstall,
                                 onSaveCredentials: (email, password) =>
                                 {
                                     config.AuthEmail = email ?? "";
                                     config.SetAuthPassword(password ?? "");
                                     BridgeConfig.Save(configPath, config);
-                                    AuthHeaders.Set(config.AuthEmail, config.GetAuthPassword(), config.ClientId);
+                                    AuthHeaders.Set(
+                                        config.AuthEmail,
+                                        config.GetAuthPassword(),
+                                        config.ClientId
+                                    );
 
                                     if (health.IsHealthy)
                                     {
