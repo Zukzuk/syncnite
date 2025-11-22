@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.24.3](https://github.com/Zukzuk/syncnite/compare/v1.24.2...v1.24.3) (2025-11-22)
+
+
+### Bug Fixes
+
+* added version to api, fixed some scss jank ([067884d](https://github.com/Zukzuk/syncnite/commit/067884d9e96098187e02af0df2a3a8d6c3265ca5))
+
 ### [1.24.2](https://github.com/Zukzuk/syncnite/compare/v1.24.1...v1.24.2) (2025-11-19)
 
 
