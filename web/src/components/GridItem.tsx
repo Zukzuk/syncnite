@@ -53,11 +53,11 @@ export function GridItem({ item, collapseOpen }: Props) {
                     position: "relative",
                 }}
             >
-                <Box className={item.isHidden ? " is-dim" : ""}>
+                <Box>
                     {item.year && <Text style={{ fontSize: 13 }}>{item.year}</Text>}
                 </Box>
 
-                <Box className={item.isHidden ? " is-dim" : ""}>
+                <Box>
                     <Group
                         gap={6}
                         align="center"

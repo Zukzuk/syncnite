@@ -16,7 +16,7 @@ export default function AdminPage() {
                     <Text size="md">Signed in as&nbsp;<Code>{state.email}</Code></Text>
                 </Group>
                 <Divider my="sm" />
-                <Text size="sm" className="is-dim">
+                <Text size="sm">
                     Currently maximum of 1 admin per server
                 </Text>
             </Card>

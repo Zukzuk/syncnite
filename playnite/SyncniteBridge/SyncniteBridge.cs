@@ -58,7 +58,7 @@ namespace SyncniteBridge
             configPath = Path.Combine(GetPluginUserDataPath(), AppConstants.ConfigFileName);
             config = BridgeConfig.Load(configPath) ?? new BridgeConfig();
             AuthHeaders.Set(config.AuthEmail, config.GetAuthPassword(), config.ClientId);
-            blog = new BridgeLogger(config.ApiBase, BridgeVersion.Current, config.LogLevel);
+            blog = new BridgeLogger(config.ApiBaseUrl, BridgeVersion.Current, config.LogLevel);
 
             var playniteVer = PlayniteApi?.ApplicationInfo?.ApplicationVersion?.ToString();
             blog.Info("startup", "SyncniteBridge loaded");
@@ -74,21 +74,21 @@ namespace SyncniteBridge
             );
 
             // Health service (source of truth for connectivity)
-            var pingUrl = Combine(config.ApiBase, AppConstants.Path_Ping);
-            var verifyAdminUrl = Combine(config.ApiBase, AppConstants.Path_Accounts_VerifyAdmin);
+            var pingUrl = Combine(config.ApiBaseUrl, AppConstants.Path_Ping);
+            var verifyAdminUrl = Combine(config.ApiBaseUrl, AppConstants.Path_Accounts_VerifyAdmin);
             health = new HealthcheckService(api, pingUrl, verifyAdminUrl, blog);
             health.Start();
 
             // Push installed (independent path)
             pushInstalled = new PushInstalledService(
                 api,
-                Combine(config.ApiBase, AppConstants.Path_Sync_Installed),
+                Combine(config.ApiBaseUrl, AppConstants.Path_Sync_Installed),
                 blog
             );
             pushInstalled.SetHealthProvider(() => health.IsHealthy);
 
             // Delta sync (push/pull)
-            var syncUrl = Combine(config.ApiBase, AppConstants.Path_Sync_Crud);
+            var syncUrl = Combine(config.ApiBaseUrl, AppConstants.Path_Sync_Crud);
 
             // Admin-only CRUD push
             pushSync = new PushDeltaService(api, syncUrl, GetDefaultPlayniteDataRoot(), blog);
@@ -223,7 +223,7 @@ namespace SyncniteBridge
                         {
                             SettingsWindowFactory.BuildAndShow(
                                 PlayniteApi,
-                                initialApiBase: config.ApiBase,
+                                initialBaseUrlAndPort: config.BaseUrlAndPort,
                                 getHealthText: () => health?.StatusText ?? "unknown",
                                 getIsAdmin: () => health?.IsAdmin == true,
                                 subscribeHealth: cb =>
@@ -236,28 +236,28 @@ namespace SyncniteBridge
                                     if (health != null)
                                         health.StatusChanged -= cb;
                                 },
-                                onSaveApiBase: newBase =>
+                                onSaveApiBaseUrl: newBase =>
                                 {
                                     var nb = string.IsNullOrWhiteSpace(newBase)
-                                        ? config.ApiBase
+                                        ? config.BaseUrlAndPort
                                         : newBase.Trim();
                                     if (!string.IsNullOrEmpty(nb) && !nb.EndsWith("/"))
                                         nb += "/";
 
-                                    config.ApiBase = nb;
+                                    config.BaseUrlAndPort = nb;
                                     BridgeConfig.Save(configPath, config);
 
                                     var syncUrl = Combine(
-                                        config.ApiBase,
+                                        config.ApiBaseUrl,
                                         AppConstants.Path_Sync_Crud
                                     );
                                     var pushUrl = Combine(
-                                        config.ApiBase,
+                                        config.ApiBaseUrl,
                                         AppConstants.Path_Sync_Installed
                                     );
-                                    var pingUrl = Combine(config.ApiBase, AppConstants.Path_Ping);
+                                    var pingUrl = Combine(config.ApiBaseUrl, AppConstants.Path_Ping);
                                     var verifyAdminUrl = Combine(
-                                        config.ApiBase,
+                                        config.ApiBaseUrl,
                                         AppConstants.Path_Accounts_VerifyAdmin
                                     );
 
@@ -265,13 +265,13 @@ namespace SyncniteBridge
                                     pushSync.UpdateEndpoints(syncUrl);
                                     pullSync.UpdateEndpoint(syncUrl);
                                     health.UpdateEndpoints(pingUrl, verifyAdminUrl);
-                                    blog.UpdateApiBase(config.ApiBase);
+                                    blog.UpdateApiBase(config.ApiBaseUrl);
 
-                                    blog.Info("config", "ApiBase updated");
+                                    blog.Info("config", "ApiBaseUrl updated to " + config.ApiBaseUrl);
                                     blog.Debug(
                                         "config",
-                                        "New ApiBase",
-                                        new { apiBase = config.ApiBase }
+                                        "New ApiBaseUrl",
+                                        new { apiBaseUrl = config.ApiBaseUrl }
                                     );
 
                                     if (health.IsHealthy)
@@ -323,7 +323,7 @@ namespace SyncniteBridge
                                             blog,
                                             TimeSpan.FromSeconds(30)
                                         );
-                                        var url = Combine(config.ApiBase, "accounts/admin/release");
+                                        var url = Combine(config.ApiBaseUrl, "accounts/admin/release");
                                         var ok = http.ReleaseAdminAsync(url)
                                             .GetAwaiter()
                                             .GetResult();

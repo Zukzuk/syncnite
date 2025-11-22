@@ -13,8 +13,12 @@ namespace SyncniteBridge.Helpers
     /// </summary>
     internal sealed class BridgeConfig
     {
-        public string ApiBase { get; set; } = AppConstants.DefaultApiBase;
+        // Base URL of the Syncnite server (no trailing API path, e.g. "http://localhost:3003/")
+        public string BaseUrlAndPort { get; set; } = AppConstants.DefaultBaseUrlAndPort;
 
+        // Full API base (e.g. "http://localhost:3003/api/v1/") – derived from BaseUrl
+        public string ApiBaseUrl =>
+            (BaseUrlAndPort ?? AppConstants.DefaultBaseUrlAndPort) + AppConstants.DefaultApiUri;
         public string LogLevel { get; set; } = "info";
 
         public string AuthEmail { get; set; } = "";

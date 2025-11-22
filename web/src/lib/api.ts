@@ -9,6 +9,7 @@ export type ZipInfo = {
   mtime: number
 };
 
+// Generic POST helper
 export async function post(path: string, body: any) {
   const r = await fetch(path, {
     method: "POST",
@@ -17,11 +18,6 @@ export async function post(path: string, body: any) {
   });
   return r.json();
 }
-
-// Axios instance with base URL and credentials
-export const api = axios.create({
-  withCredentials: true,
-});
 
 // Fetch list of available ZIP backups
 export async function listZips(): Promise<ZipInfo[]> {
@@ -51,7 +47,7 @@ export async function uploadZip(
   return r.data;
 }
 
-// Start processing a ZIP on the server, then stream logs/progress via /api/sse
+// Start processing a ZIP on the server, then stream logs/progress via sse
 export function processZipStream({
   filename, password,
   onLog, onProgress, onDone, onError,
@@ -175,7 +171,7 @@ export async function registerAdmin(
 
 // Load a DB collection via the sync API
 export async function loadDbCollection<T>(collection: string): Promise<T[]> {
-  const url = `/api/sync/collection/${encodeURIComponent(collection)}`;
+  const url = `${API_ENDPOINTS.SYNC_COLLECTION}${encodeURIComponent(collection)}`;
   try {
     const creds = getCreds();
     if (!creds) throw new Error("No credentials");
@@ -194,6 +190,7 @@ export async function loadDbCollection<T>(collection: string): Promise<T[]> {
   }
 }
 
+// Fetch the status of the browser extension connection
 export async function fetchExtensionStatus(): Promise<{
   ok: boolean;
   connected: boolean;

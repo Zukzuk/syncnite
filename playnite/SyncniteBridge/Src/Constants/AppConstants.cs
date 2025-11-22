@@ -12,7 +12,8 @@ namespace SyncniteBridge.Constants
         public const string GUID = "a85f0db8-39f4-40ea-9e03-bc5be2298c89";
 
         // Default API base
-        public const string DefaultApiBase = "http://localhost:3003/api/";
+        public const string DefaultBaseUrlAndPort = "http://localhost:3003/";
+        public const string DefaultApiUri = "api/v1/";
 
         // Common app names/labels
         public const string AppName = "SyncniteBridge";

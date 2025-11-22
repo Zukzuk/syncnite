@@ -46,7 +46,6 @@ export default function AbsoluteGrid({
     const gap = 4;
     const padding = 2;
     const { ui, derived } = useLibraryState(data);
-    const items = derived.itemsSorted;
     const { ref: controlsRef, height: controlsH } = useElementSize();
     const { ref: headerRef, height: headerH } = useElementSize();
     const { openIds, everOpenedIds, toggleOpen } = useCollapseOpenToggle();
@@ -64,11 +63,13 @@ export default function AbsoluteGrid({
         cardWidth,
         cardHeight,
         gap,
-        itemsLen: items.length,
+        itemsLen: derived.itemsSorted.length,
     });
 
+    // jump-to-scroll effect
     const { scrollItemIntoView } = useGridJumpToScroll({ containerRef, positions });
 
+    // toggle handler with scroll effect
     const onToggleGridIndex = React.useCallback(
         (id: string, absoluteIndex: number) => {
             toggleOpen(id, () => requestAnimationFrame(() => scrollItemIntoView(absoluteIndex)));
@@ -82,7 +83,7 @@ export default function AbsoluteGrid({
         padding,
         strideY,
         cols,
-        itemsLen: items.length,
+        itemsLen: derived.itemsSorted.length,
         containerHeight,
         viewportH,
     });
@@ -139,7 +140,7 @@ export default function AbsoluteGrid({
                 <Box aria-hidden style={{ width: "100%", height: containerHeight }} />
 
                 {/* Visible window */}
-                {items.slice(visibleRange.startIndex, visibleRange.endIndex).map((item: any, i: number) => {
+                {derived.itemsSorted.slice(visibleRange.startIndex, visibleRange.endIndex).map((item: any, i: number) => {
                     const absoluteIndex = visibleRange.startIndex + i;
                     const { left, top } = positions[absoluteIndex] ?? { left: 0, top: 0 };
                     const isOpen = openIds.has(item.id);

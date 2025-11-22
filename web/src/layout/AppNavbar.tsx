@@ -53,7 +53,7 @@ export function AppNavbar() {
                 />
             )}
 
-            <Text size="xs" pt="md" pl="md" className="is-dim">v{appVersion}</Text>
+            <Text size="xs" pt="md" pl="md">v{appVersion}</Text>
         </ScrollArea>
     );
 }

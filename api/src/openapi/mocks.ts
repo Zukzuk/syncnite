@@ -39,7 +39,7 @@ export async function createOpenApiMockRouter(swaggerSpec: any) {
         api.handleRequest(
             {
                 method: req.method,
-                path: req.path, // spec uses servers: [/api], so /api/foo -> /foo
+                path: req.path, // spec uses servers: [/api/v1], so /api/v1/foo -> /foo
                 body: req.body,
                 query: req.query as any,
                 headers: req.headers as any,

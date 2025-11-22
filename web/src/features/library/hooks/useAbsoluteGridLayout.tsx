@@ -23,9 +23,9 @@ export function useAbsoluteGridLayout(
     }, []);
 
     const layout = useMemo(() => {
-        if (width <= 0) {
-            return { cols: 1, rows: 0, strideY: cardHeight + gap, positions: [] as { left: number; top: number }[], containerHeight: padding * 2 + cardHeight };
-        }
+        // if (width <= 0) {
+        //     return { cols: 1, rows: 0, strideY: cardHeight + gap, positions: [] as { left: number; top: number }[], containerHeight: padding * 2 + cardHeight };
+        // }
         const innerW = Math.max(0, width - padding * 2);
         const strideX = cardWidth + gap;
         const cols = Math.max(1, Math.floor((innerW + gap) / strideX));

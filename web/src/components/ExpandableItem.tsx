@@ -55,6 +55,7 @@ export function ExpandableItemWrapper(props: Props) {
         cursor: "pointer",
         userSelect: "none",
         transition: "background-color 140ms ease",
+        opacity: isHidden ? 0.5 : 1,
         backgroundColor: isInstalled
             ? "var(--mantine-primary-color-light)"
             : "transparent",
@@ -75,14 +76,14 @@ export function ExpandableItemWrapper(props: Props) {
     return (
         <Box
             data-row-id={id}
-            className={`game-row${isHidden ? " is-dim" : ""}${isInstalled ? " is-installed" : ""
-                }`}
             role="button"
             tabIndex={0}
             aria-expanded={collapseOpen}
             aria-label={`${title}`}
             onKeyDown={onKeyDown}
-            style={layout === "list" ? outerListStyles : outerGridStyles}
+            style={{
+                ...(layout === "list" ? outerListStyles : outerGridStyles),
+            }}
             onClick={onToggle}
         >
             <Box

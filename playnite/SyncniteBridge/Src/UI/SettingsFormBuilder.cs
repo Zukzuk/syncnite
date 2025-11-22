@@ -8,7 +8,7 @@ namespace SyncniteBridge.UI
     {
         public static void BuildForm(
             SettingsWindow ctx,
-            string initialApiBase,
+            string initialBaseUrlAndPort,
             string? initialEmail,
             string initialPassword,
             bool isAdminInstall
@@ -30,7 +30,7 @@ namespace SyncniteBridge.UI
             Grid.SetColumn(apiLabel, 0);
             apiRow.Children.Add(apiLabel);
 
-            var tbApi = new TextBox { Text = initialApiBase ?? string.Empty };
+            var tbApi = new TextBox { Text = initialBaseUrlAndPort ?? string.Empty };
             ThemeHelpers.SetThemeTextBrush(tbApi);
             Grid.SetColumn(tbApi, 1);
             apiRow.Children.Add(tbApi);

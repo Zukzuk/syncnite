@@ -1,25 +1,28 @@
 import { CookieState } from "./persist";
 
+const API_BASE = "/api/v1";
+
 export const API_ENDPOINTS = {
   // Fetch list of library items
-  SSE: "/api/sse",
-  ZIP_PROCESS: "/api/backup/process",
-  ZIP_LIST: "/api/zips",
+  SSE: `${API_BASE}/sse`,
+  ZIP_LIST: `${API_BASE}/zips`,
   // Extension management
-  EXTENSION_DOWNLOAD: "/api/extension/download",
-  EXTENSION_STATUS: "/api/ping/status",
+  EXTENSION_DOWNLOAD: `${API_BASE}/extension/download`,
+  EXTENSION_STATUS: `${API_BASE}/ping/status`,
   // Account management
-  LOGIN: "/api/accounts/login",
-  STATUS: "/api/accounts/status",
-  VERIFY: "/api/accounts/verify",
+  LOGIN: `${API_BASE}/accounts/login`,
+  STATUS: `${API_BASE}/accounts/status`,
+  VERIFY: `${API_BASE}/accounts/verify`,
   // User account management
-  USER_REGISTER: "/api/accounts/register/user",
+  USER_REGISTER: `${API_BASE}/accounts/register/user`,
   // Admin account management
-  ADMIN_REGISTER: "/api/accounts/register/admin",
-  ADMIN_VERIFY: "/api/accounts/verify/admin",
-
+  ADMIN_REGISTER: `${API_BASE}/accounts/register/admin`,
+  ADMIN_VERIFY: `${API_BASE}/accounts/verify/admin`,
   // Backup management
-  BACKUP_UPLOAD: "/api/backup/upload",
+  BACKUP_UPLOAD: `${API_BASE}/backup/upload`,
+  ZIP_PROCESS: `${API_BASE}/backup/process`,
+  // Sync API
+  SYNC_COLLECTION: `${API_BASE}/sync/collection/`,
 }
 
 export const GRID = {
@@ -96,8 +99,8 @@ export const COLLECTIONS = {
   sources: "sources",
   platforms: "platforms",
   genres: "genres",
-  categories:"categories",
-  features: "features", 
+  categories: "categories",
+  features: "features",
   series: "series",
   regions: "regions",
   ageratings: "ageratings",

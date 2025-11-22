@@ -18,12 +18,12 @@ namespace SyncniteBridge.UI
         /// Build and show the settings window.
         /// </summary>
         /// <param name="api">Playnite API instance.</param>
-        /// <param name="initialApiBase">Initial API base URL.</param>
+        /// <param name="initialBaseUrlAndPort">Initial API base URL.</param>
         /// <param name="getHealthText">Returns the current health text.</param>
         /// <param name="getIsAdmin">Returns true if the current session is admin.</param>
         /// <param name="subscribeHealth">Subscribe to health changes (bool healthy).</param>
         /// <param name="unsubscribeHealth">Unsubscribe health handler.</param>
-        /// <param name="onSaveApiBase">Callback when API base is saved.</param>
+        /// <param name="onSaveApiBaseUrl">Callback when API base is saved.</param>
         /// <param name="onPushInstalled">Callback to push installed games.</param>
         /// <param name="onForceSyncLibrary">Callback to force sync full library.</param>
         /// <param name="initialEmail">Initial email value.</param>
@@ -37,12 +37,12 @@ namespace SyncniteBridge.UI
         /// </param>
         public static void BuildAndShow(
             IPlayniteAPI api,
-            string initialApiBase,
+            string initialBaseUrlAndPort,
             Func<string> getHealthText,
             Func<bool> getIsAdmin,
             Action<Action<bool>> subscribeHealth,
             Action<Action<bool>> unsubscribeHealth,
-            Action<string> onSaveApiBase,
+            Action<string> onSaveApiBaseUrl,
             Action onPushInstalled,
             Action onForceSyncLibrary,
             string initialEmail,
@@ -129,7 +129,7 @@ namespace SyncniteBridge.UI
             // Form (API/credentials + save/admin row)
             SettingsFormBuilder.BuildForm(
                 ctx,
-                initialApiBase,
+                initialBaseUrlAndPort,
                 initialEmail,
                 initialPassword,
                 isAdminInstall
@@ -186,7 +186,7 @@ namespace SyncniteBridge.UI
 
             void SaveAll()
             {
-                onSaveApiBase?.Invoke(ctx.TbApi.Text?.Trim() ?? string.Empty);
+                onSaveApiBaseUrl?.Invoke(ctx.TbApi.Text?.Trim() ?? string.Empty);
 
                 var password = ctx.TbPass.Password ?? string.Empty;
                 if (isAdminInstall)

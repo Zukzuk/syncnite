@@ -133,7 +133,7 @@ export function HeaderControls(props: Props) {
           style={{ flex: '0 0 auto' }}
         >
           <Flex direction="row" align="center" justify="center" wrap="nowrap" style={{ alignSelf: "stretch" }}>
-            <Text size="sm" className="is-dim" pr="sm" style={{ whiteSpace: "nowrap" }}>
+            <Text size="sm" pr="sm" style={{ whiteSpace: "nowrap" }}>
               {totalCount ? `${filteredCount.toLocaleString()} / ${totalCount.toLocaleString()}` : ""}
             </Text>
             <Group gap="sm" align="end" wrap="nowrap">
@@ -145,7 +145,7 @@ export function HeaderControls(props: Props) {
                   size="sm"
                   pb={4}
                 />
-                <Text size="xs" className="is-dim">installed</Text>
+                <Text size="xs">installed</Text>
               </Flex>
               <Flex direction="column" align="center" justify="center" style={{ alignSelf: "stretch" }}>
                 <Switch
@@ -155,7 +155,7 @@ export function HeaderControls(props: Props) {
                   size="sm"
                   pb={4}
                 />
-                <Text size="xs" className="is-dim">hidden</Text>
+                <Text size="xs">hidden</Text>
               </Flex>
             </Group>
           </Flex>

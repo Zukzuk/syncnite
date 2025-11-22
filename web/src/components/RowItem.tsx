@@ -1,7 +1,8 @@
-import { Box, Flex, Text, Group, } from "@mantine/core";
+import React from "react";
+import { Box, Flex, Text, Group } from "@mantine/core";
+import { IconPlayerPlay, IconDownload } from "@tabler/icons-react";
 import { GRID } from "../lib/constants";
 import { Item } from "../features/library/hooks/useLibrary";
-import { IconActionOverlay } from "./IconActionOverlay";
 import { IconImage } from "./IconImage";
 import { ExternalLink } from "./ExternalLink";
 import { IconSourceLink } from "./IconSourceLink";
@@ -13,31 +14,71 @@ type Props = {
 };
 
 export function RowItem({ item, collapseOpen }: Props) {
-    const { id, isInstalled, iconUrl, title, gameId, year,
-        source, tags, series, link, isHidden,
-    } = item;
+    const { id, isInstalled, iconUrl, title, gameId, year, source, tags, series, link, isHidden } = item;
+    const [hovered, setHovered] = React.useState(false);
 
     return (
         <Box
             style={{
                 display: "grid",
-                gridTemplateColumns: GRID.colsList,
                 alignItems: "center",
                 gap: 12,
                 height: GRID.rowHeight,
+                gridTemplateColumns: GRID.colsList,
             }}
         >
-            <Flex align="center" gap={8} className={isHidden ? " is-dim" : ""} style={{ width: GRID.smallBox }}>
-                <Box className="icon-wrap" style={{ position: "relative", width: GRID.smallBox, height: GRID.smallBox }}>
-                    <IconActionOverlay installed={isInstalled} href={`playnite://play/${id}`} title={title}>
-                        <Box className="icon-base">
-                            <IconImage src={iconUrl ?? ""} />
-                        </Box>
-                    </IconActionOverlay>
+            <Flex align="center" gap={8} style={{ width: GRID.smallBox }}>
+                <Box
+                    component="a"
+                    href={`playnite://play/${id}`}
+                    title={title}
+                    onMouseEnter={() => setHovered(true)}
+                    onMouseLeave={() => setHovered(false)}
+                    style={{
+                        position: "relative",
+                        width: GRID.smallBox,
+                        height: GRID.smallBox,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        textDecoration: "none",
+                        cursor: "pointer",
+                    }}
+                >
+                    <Box
+                        style={{
+                            position: "absolute",
+                            inset: 0,
+                            opacity: hovered ? 0.35 : 1,
+                            transition: "opacity 140ms ease",
+                        }}
+                    >
+                        <IconImage src={iconUrl ?? ""} />
+                    </Box>
+
+                    <Box
+                        style={{
+                            position: "relative",
+                            display: "flex",
+                            color: "var(--mantine-color-grape-4)",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            opacity: hovered ? 1 : 0,
+                            transform: hovered ? "scale(1)" : "scale(0.96)",
+                            transition: "opacity 140ms ease, transform 140ms ease",
+                        }}
+                        onMouseDown={(e) => e.preventDefault()}
+                    >
+                        {isInstalled ? (
+                            <IconPlayerPlay size={26} stroke={2} />
+                        ) : (
+                            <IconDownload size={26} stroke={2} />
+                        )}
+                    </Box>
                 </Box>
             </Flex>
 
-            <Flex gap={8} className={isHidden ? " is-dim" : ""} style={{ minWidth: 0 }}>
+            <Flex gap={8} style={{ minWidth: 0 }}>
                 <Text
                     fw={600}
                     title={title}
@@ -59,20 +100,20 @@ export function RowItem({ item, collapseOpen }: Props) {
                 </Box>
             </Flex>
 
-            <Box className={isHidden ? " is-dim" : ""} ta="center">
+            <Box ta="center">
                 {year && (
                     <Text style={{ fontSize: 14 }}>{year}</Text>
                 )}
             </Box>
 
-            <Box className={isHidden ? " is-dim" : ""}>
+            <Box>
                 <Group gap={6} wrap="nowrap" style={{ justifyContent: "center" }}>
                     <ExternalLink source={source} link={link} title={title} />
                     <IconSourceLink source={source} gameId={gameId} link={link} />
                 </Group>
             </Box>
 
-            <Flex gap={8} className={isHidden ? " is-dim" : ""} style={{ minWidth: 0 }}>
+            <Flex gap={8} style={{ minWidth: 0 }}>
                 <Text
                     fw={600}
                     title={title}
@@ -87,7 +128,7 @@ export function RowItem({ item, collapseOpen }: Props) {
                 </Text>
             </Flex>
 
-            {/* <Box className={isHidden ? " is-dim" : ""} style={{ display: collapseOpen ? "none" : undefined }}>
+            {/* <Box style={{ display: collapseOpen ? "none" : undefined }}>
                 <Group gap={6} align="center" wrap="wrap" style={{ maxHeight: GRID.rowHeight, overflow: "hidden" }}>
                     {(tags ?? []).map((t) => (
                         <Badge key={t} variant="dark" size="sm">

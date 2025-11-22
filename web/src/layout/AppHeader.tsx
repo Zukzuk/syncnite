@@ -73,7 +73,7 @@ export function AppHeader({ opened, onToggleNav }: Props) {
                 <Group gap="sm">
                     {state.loggedIn ? (
                         <>
-                            <Text size="sm" className="is-dim">{state.email}</Text>
+                            <Text size="sm">{state.email}</Text>
                             <Button size="xs" variant="light" onClick={logout}>Logout</Button>
                         </>
                     ) : null}

@@ -50,9 +50,9 @@ namespace SyncniteBridge.Helpers
         /// <summary>
         /// Create a new BridgeLogger.
         /// </summary>
-        public BridgeLogger(string apiBase, string version, string level = "info")
+        public BridgeLogger(string apiBaseUrl, string version, string level = "info")
         {
-            endpoint = Combine(apiBase, AppConstants.Path_Log);
+            endpoint = Combine(apiBaseUrl, AppConstants.Path_Log);
             ver = version ?? "dev";
             threshold = Parse(level);
             worker = Task.Run(() => PumpAsync(cts.Token));
@@ -62,8 +62,8 @@ namespace SyncniteBridge.Helpers
         /// <summary>
         /// Update the API base URL.
         /// </summary>
-        public void UpdateApiBase(string apiBase) =>
-            endpoint = Combine(apiBase, AppConstants.Path_Log);
+        public void UpdateApiBase(string apiBaseUrl) =>
+            endpoint = Combine(apiBaseUrl, AppConstants.Path_Log);
 
         /// <summary>
         /// Update the logging level.

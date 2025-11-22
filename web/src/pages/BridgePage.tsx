@@ -49,7 +49,7 @@ export default function BridgePage() {
                         Watch location
                     </Button>
 
-                    <Text size="sm" className="is-dim" style={{ whiteSpace: "nowrap", alignSelf: "center" }}>
+                    <Text size="sm" style={{ whiteSpace: "nowrap", alignSelf: "center" }}>
                         {watcher.state?.dirName ? `/${watcher.state.dirName}` : "Not watching a folder"}
                     </Text>
                 </Group>
@@ -101,7 +101,7 @@ export default function BridgePage() {
                     autosize
                     styles={{ input: { fontFamily: "ui-monospace, Menlo, Consolas, monospace" } }}
                 />
-                <Text size="xs" className="is-dim">Newest on top</Text>
+                <Text size="xs">Newest on top</Text>
             </SectionCard>
 
         </Stack>

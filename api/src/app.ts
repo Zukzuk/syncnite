@@ -31,11 +31,11 @@ export function createApp() {
     // increase JSON body size limit for large backups
     app.use(express.json({ limit: "50mb" }));
 
-    // Swagger/OpenAPI setup
+    // Swagger/OpenAPI setup (see endpoints in ./openapi/openapi.yaml)
     const swaggerSpec = swaggerJsdoc({
         definition: {
             openapi: "3.1.0",
-            urls: ["/api"],
+            urls: ["/api/v1"],
             info: {
                 title: "Syncnite Web API",
                 version: APP_VERSION,
@@ -52,9 +52,9 @@ export function createApp() {
         // Load YAML + TS/JS (see below)
         apis: [path.join(__dirname, "/openapi/**/*.{yaml,yml}")]
     });
-    app.get("/api/docs.json", (_req, res) => res.json(swaggerSpec));
+    // Swagger UI setup with pre-filled auth headers for convenience
     app.use(
-        "/api/docs",
+        "/api/v1/docs",
         swaggerUi.serve,
         swaggerUi.setup(swaggerSpec, {
             swaggerOptions: {
@@ -67,11 +67,10 @@ export function createApp() {
             },
         })
     );
-
     // Mock API routes
     if (process.env.MOCKS === "spec") {
         // SSE is special: stream a deterministic sequence for the web UI
-        app.get("/api/sse", (req: Request, res: Response) => {
+        app.get("/api/v1/sse", (req: Request, res: Response) => {
             res.writeHead(200, {
                 "Content-Type": "text/event-stream",
                 "Cache-Control": "no-cache, no-transform",
@@ -98,18 +97,20 @@ export function createApp() {
             req.on("close", () => { try { clearInterval(t); } catch { } });
         });
 
-        // Everything else under /api comes from the OpenAPI mocker
+        // Everything else under /api/v1 comes from the OpenAPI mocker
         createOpenApiMockRouter(swaggerSpec).then((mockRouter) => {
-            app.use("/api", mockRouter);
+            app.use("/api/v1", mockRouter);
         });
     }
+    // Serve raw OpenAPI spec JSON
+    app.get("/api/v1/docs.json", (_req, res) => res.json(swaggerSpec));
 
     // routes
-    app.use("/api", generalRouter);
-    app.use("/api/accounts", accountsRouter);
-    app.use("/api/sync", syncRouter);
-    app.use("/api/backup", backupRouter);
-    app.use("/api/extension", extensionRouter);
+    app.use("/api/v1", generalRouter);
+    app.use("/api/v1/accounts", accountsRouter);
+    app.use("/api/v1/sync", syncRouter);
+    app.use("/api/v1/backup", backupRouter);
+    app.use("/api/v1/extension", extensionRouter);
 
     // 404 + error handler
     app.use(notFoundHandler());
