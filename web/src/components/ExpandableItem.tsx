@@ -55,7 +55,7 @@ export function ExpandableItemWrapper(props: Props) {
         cursor: "pointer",
         userSelect: "none",
         transition: "background-color 140ms ease",
-        opacity: isHidden ? 0.5 : 1,
+        opacity: isHidden ? 0.3 : 1,
         backgroundColor: isInstalled
             ? "var(--mantine-primary-color-light)"
             : "transparent",

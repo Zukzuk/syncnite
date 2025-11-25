@@ -385,7 +385,7 @@ export function useLibrary({ pollMs }: UseParams): UseReturn {
             if (!prev) return prev;
             const items = prev.items.map((r) => ({
                 ...r,
-                installed: installedSet.has(r.id.toLowerCase()),
+                isInstalled: installedSet.has(r.id.toLowerCase()),
             }));
             return { ...prev, items };
         });

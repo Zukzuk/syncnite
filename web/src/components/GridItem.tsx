@@ -54,7 +54,7 @@ export function GridItem({ item, collapseOpen }: Props) {
                 }}
             >
                 <Box>
-                    {item.year && <Text style={{ fontSize: 13 }}>{item.year}</Text>}
+                    {item.year && <Text style={{ fontSize: 12 }}>{item.year}</Text>}
                 </Box>
 
                 <Box>
@@ -64,7 +64,10 @@ export function GridItem({ item, collapseOpen }: Props) {
                         wrap="nowrap"
                         style={{ justifyContent: "center" }}
                     >
-                        <CopyTitle title={item.title} year={item.year} />
+                        <CopyTitle 
+                            title={item.title} 
+                            year={item.year} 
+                        />
                         <ExternalLink
                             source={item.source}
                             link={item.link}

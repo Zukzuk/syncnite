@@ -33,6 +33,19 @@ export function useVirtualWindow(
         };
     }, []);
 
+    useLayoutEffect(() => {
+        const el = containerRef.current;
+        if (!el) return;
+
+        const maxScroll = Math.max(0, containerHeight - viewportH);
+
+        if (el.scrollTop > maxScroll) {
+            el.scrollTop = maxScroll;
+        }
+
+        setScrollTop(el.scrollTop);
+    }, [containerHeight, viewportH, itemsLen]);
+
     const visibleRange = useMemo(() => {
         const vTop = Math.max(0, scrollTop - overscan.top);
         const vBot = Math.min(containerHeight, scrollTop + viewportH + overscan.bottom);

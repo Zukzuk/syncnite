@@ -84,8 +84,8 @@ npm run clean
 3. Download `latest.pext` from the web UI  
 4. Install the extension in Playnite  
 5. Open **Syncnite Bridge → Settings**, configure:
-   - **API Base:** `http://<node>:<port>/api/`
-   - **Admin/User** `email/password`
+   - **API Base:** `<protocol>://<host>:<port>/<api-base>/<api-version>/<endpoint>`
+   - **Admin/User** `email / password`
 
 ### Status Levels
 

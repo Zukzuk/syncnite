@@ -20,7 +20,7 @@
     "e2e:gate": "node scripts/e2e-gate.js",
     "build:ext": "node scripts/build-extension.js",
     "build:version": "node scripts/set-version.mjs",
-    "clean": "node scripts/util-clean.mjs",
+    "clean": "node scripts/util-clean.js",
     "codebase": "node scripts/util-codebase.mjs",
     "changes": "node scripts/util-changes.mjs"
   },

@@ -102,7 +102,7 @@ export const IconSourceLink = React.memo(function IconSourceLink({
                 size="sm"
                 style={{ lineHeight: 0, height: "100%", display: "flex", alignItems: "center" }}
             >
-                <Icon size={16} stroke={2} />
+                <Icon size={14} stroke={2} />
             </ActionIcon>
         </Tooltip>
     );

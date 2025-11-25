@@ -108,8 +108,15 @@ export default function AbsoluteGrid({
     const openWidth = `calc(100vw - ${GRID.menuWidth}px - 12px - 15px)`;
     const openHeight = `calc(100vh - ${topOffset}px - ${GRID.iconSize}px - 12px)`;
 
+    React.useEffect(() => {
+        const el = containerRef.current;
+        if (el) {
+            el.scrollTop = 0;
+        }
+    }, [flatKey]);
+
     return (
-        <Flex key={flatKey} direction="column" style={{ width: "100%", height: "100%" }}>
+        <Flex direction="column" style={{ width: "100%", height: "100%" }}>
             <HeaderControls
                 controlsRef={controlsRef as unknown as (el: HTMLElement | null) => void}
                 filteredCount={filteredCount}

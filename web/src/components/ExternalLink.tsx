@@ -26,7 +26,7 @@ export const ExternalLink = React.memo(function ExternalLink({
                 size="sm"
                 style={{ lineHeight: 0, height: "100%", display: "flex", alignItems: "center" }}
             >
-                <IconExternalLink size={16} stroke={2} />
+                <IconExternalLink size={14} stroke={2} />
             </ActionIcon>
         </Tooltip>
     );
