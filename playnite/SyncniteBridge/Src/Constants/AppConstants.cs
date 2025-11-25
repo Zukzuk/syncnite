@@ -39,9 +39,9 @@ namespace SyncniteBridge.Constants
         public const string Notif_Sync_Error = "SyncniteBridge_sync_error";
 
         // Health / status text + messages
-        public const string HealthStatusHealthy = "healthy";
-        public const string HealthStatusUnreachable = "unreachable";
-        public const string HealthStatusVersionMismatch = "version mismatch";
+        public const string HealthStatusHealthy = "Healthy";
+        public const string HealthStatusUnreachable = "Unreachable";
+        public const string HealthStatusVersionMismatch = "Version mismatch";
         public const string HealthMsgHealthy = AppName + ": server healthy";
         public const string HealthMsgUnreachable = AppName + ": server unreachable";
         public const string HealthMsgVersionMismatch =

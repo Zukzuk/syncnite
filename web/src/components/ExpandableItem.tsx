@@ -55,7 +55,6 @@ export function ExpandableItemWrapper(props: Props) {
         cursor: "pointer",
         userSelect: "none",
         transition: "background-color 140ms ease",
-        opacity: isHidden ? 0.3 : 1,
         backgroundColor: isInstalled
             ? "var(--mantine-primary-color-light)"
             : "transparent",
@@ -87,7 +86,11 @@ export function ExpandableItemWrapper(props: Props) {
             onClick={onToggle}
         >
             <Box
-                style={{ position: "relative", top: 0, left: 0, zIndex: 1 }}
+                style={{ 
+                    opacity: isHidden ? 0.2 : 1,
+                    position: "relative", 
+                    top: 0, left: 0, zIndex: 1 
+                }}
                 w={collapseOpen ? openWidth : "100%"}
                 h={collapseOpen ? openHeight : "100%"}
             >

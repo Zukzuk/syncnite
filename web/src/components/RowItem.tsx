@@ -49,7 +49,7 @@ export function RowItem({ item, collapseOpen }: Props) {
                         style={{
                             position: "absolute",
                             inset: 0,
-                            opacity: hovered ? 0.35 : 1,
+                            opacity: hovered ? 0.2 : 1,
                             transition: "opacity 140ms ease",
                         }}
                     >

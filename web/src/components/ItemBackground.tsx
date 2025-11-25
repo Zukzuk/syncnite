@@ -28,7 +28,7 @@ export function ItemBackground({ bgUrl, collapseOpen, everOpened }: Props) {
                 pointerEvents: "none",
                 zIndex: 0,
                 transform: collapseOpenDelayed ? "scale(1.02)" : "scale(1.01)",
-                opacity: collapseOpenDelayed ? 0.4 : 0,
+                opacity: collapseOpenDelayed ? 0.3 : 0,
                 willChange: "opacity, transform",
                 transitionProperty: "opacity, transform",
                 transitionDuration: "220ms, 260ms",

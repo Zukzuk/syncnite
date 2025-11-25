@@ -56,8 +56,10 @@ namespace SyncniteBridge.UI
             var ctx = new SettingsWindow(api);
             var win = ctx.Window;
 
-            // Center manually when the window has been laid out
-            win.Loaded += (_, __) =>
+            // Let WPF size the window first, then center it once
+            win.WindowStartupLocation = WindowStartupLocation.Manual;
+
+            win.ContentRendered += (_, __) =>
             {
                 var main = Application.Current?.MainWindow;
                 if (main == null)
@@ -66,26 +68,37 @@ namespace SyncniteBridge.UI
                     return;
                 }
 
-                // If Width/Height are Auto, force measure first
-                win.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-                win.Arrange(new Rect(win.DesiredSize));
-
-                var width = double.IsNaN(win.Width) || win.Width == 0 ? win.ActualWidth : win.Width;
-                var height =
-                    double.IsNaN(win.Height) || win.Height == 0 ? win.ActualHeight : win.Height;
+                // Make sure we have real, final size
+                var width = win.ActualWidth;
+                var height = win.ActualHeight;
 
                 if (width <= 0 || height <= 0)
                 {
+                    // Fallback: let WPF center on owner
                     win.WindowStartupLocation = WindowStartupLocation.CenterOwner;
                     return;
                 }
 
-                var left = main.Left + (main.ActualWidth - width) / 2;
-                var top = main.Top + (main.ActualHeight - height) / 2;
+                // If main is maximized, use its RestoreBounds to get logical position/size
+                var mainBounds =
+                    main.WindowState == WindowState.Normal
+                        ? new Rect(main.Left, main.Top, main.ActualWidth, main.ActualHeight)
+                        : main.RestoreBounds;
 
-                win.Left = Math.Max(left, 0);
-                win.Top = Math.Max(top, 0);
+                var left = mainBounds.Left + (mainBounds.Width - width) / 2;
+                var top = mainBounds.Top + (mainBounds.Height - height) / 2;
+
+                // Clamp to screen a bit, in case of multi-monitor or negative coords
+                left = Math.Max(left, 0);
+                top = Math.Max(top, 0);
+
+                win.Left = left;
+                win.Top = top;
+
+                // Only do this once
+                win.ContentRendered -= (_, __) => { };
             };
+
             ThemeHelpers.HookThemeBackground(win);
             ThemeHelpers.HookThemeForeground(win);
 

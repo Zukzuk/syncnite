@@ -23,7 +23,7 @@ namespace SyncniteBridge.UI
 
             var apiLabel = new TextBlock
             {
-                Text = "API URL",
+                Text = "Syncnite server URL",
                 VerticalAlignment = VerticalAlignment.Center,
             };
             ThemeHelpers.SetThemeTextBrush(apiLabel);
