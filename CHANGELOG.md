@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.25.0](https://github.com/Zukzuk/syncnite/compare/v1.24.3...v1.25.0) (2025-11-25)
+
+
+### Features
+
+* removed backup upload feature ([e0e44ee](https://github.com/Zukzuk/syncnite/commit/e0e44ee9e0777eeb4f850dda905b36d3ba355140))
+
+
+### Bug Fixes
+
+* fix e2e ([eadbc9e](https://github.com/Zukzuk/syncnite/commit/eadbc9e9ec693c1033bb5bbaa9c4569ace72d032))
+* fix smoke test ([899193a](https://github.com/Zukzuk/syncnite/commit/899193ab18d103f61da79327491ed73a5447c44c))
+* fixed grid for toggling ([61bce57](https://github.com/Zukzuk/syncnite/commit/61bce579973144ad6304bea1b983cc5503fd009b))
+
 ### [1.24.3](https://github.com/Zukzuk/syncnite/compare/v1.24.2...v1.24.3) (2025-11-22)
 
 
