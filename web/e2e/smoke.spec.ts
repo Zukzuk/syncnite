@@ -1,35 +1,51 @@
 import { test, expect } from "@playwright/test";
 
-test("SPA loads and API mocks are reachable", async ({ page }) => {
+test("SPA loads and API ping is reachable", async ({ page }) => {
     // 1) SPA loads
     await page.goto("/");
-    // we don't assume specific UI text; just ensure HTML loaded
     const html = await page.content();
     expect(html).toContain("<!DOCTYPE html>");
 
-    // 2) Call the mocked producer endpoint through the web's Nginx proxy
-    // This ensures web -> api works inside the compose network.
-    const zips = await page.evaluate(async () => {
-        const res = await fetch("/api/v1/zips", { headers: { "Accept": "application/json" } });
-        if (!res.ok) throw new Error(`status ${res.status}`);
-        return res.json();
+    // 2) Call the ping endpoint through the web's Nginx proxy
+    // This validates web -> api connectivity inside the compose network.
+    const ping = await page.evaluate(async () => {
+        const res = await fetch("/api/v1/ping", {
+            headers: { "Accept": "application/json" },
+        });
+
+        const text = await res.text();
+        return {
+            ok: res.ok,
+            status: res.status,
+            body: text,
+        };
     });
 
-    // In MOCKS=spec, /api/v1/zips returns the example array defined in your OpenAPI spec.
-    // We don't assert exact names to keep this test stable—just structure.
-    expect(Array.isArray(zips)).toBeTruthy();
-    if (zips.length > 0) {
-        expect(zips[0]).toHaveProperty("name");
-    }
+    expect(ping.ok).toBeTruthy();
+    expect(ping.status).toBe(200);
+    // We *don’t* assert on ping.body shape to keep this stable across versions.
 
-    // (Optional) very lightweight SSE check: connect and wait for the first event.
-    // This validates the dedicated /api/v1/sse location and streaming behavior.
+    // 3) (Optional) keep the SSE smoke check if you still want to validate streaming
     const gotFirstEvent = await page.evaluate(async () => {
         return await new Promise<boolean>((resolve) => {
             const es = new EventSource("/api/v1/sse");
-            const done = () => { try { es.close(); } catch { } };
-            const timeout = setTimeout(() => { done(); resolve(false); }, 3000);
-            es.addEventListener("log", () => { clearTimeout(timeout); done(); resolve(true); });
+            const done = () => {
+                try {
+                    es.close();
+                } catch {
+                    // ignore
+                }
+            };
+            const timeout = setTimeout(() => {
+                done();
+                resolve(false);
+            }, 3000);
+
+            es.addEventListener("log", () => {
+                clearTimeout(timeout);
+                done();
+                resolve(true);
+            });
         });
     });
     expect(gotFirstEvent).toBeTruthy();
