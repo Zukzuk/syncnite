@@ -11,7 +11,7 @@ type Props = {
 
 export function GridItem({ item, collapseOpen }: Props) {
     return (
-        <div /* no outer Card here, wrapper gives border/padding */>
+        <div>
             <div style={{ position: "relative", aspectRatio: "23 / 32" }}>
                 <Image
                     src={item.coverUrl || ""}

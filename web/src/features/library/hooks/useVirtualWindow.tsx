@@ -1,7 +1,8 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 
 // A hook to calculate visible range in a virtual scrolling window.
-// Now supports variable row heights via rowTops + rowHeights.
+// Supports variable row heights via rowTops + rowHeights and optional
+// per-row item index mapping for uneven rows (e.g. open rows).
 export function useVirtualWindow(
     containerRef: React.RefObject<HTMLDivElement>,
     opts: {
@@ -9,10 +10,13 @@ export function useVirtualWindow(
         rows: number;
         cols: number;
         itemsLen: number;
-        rowTops: number[];      // rowTop[row]
-        rowHeights: number[];   // rowHeight[row]
+        rowTops: number[]; // rowTop[row]
+        rowHeights: number[]; // rowHeight[row]
         containerHeight: number;
         viewportH: number;
+        // Optional: explicit mapping from row -> [firstItemIndex, lastItemIndexExclusive]
+        rowFirstItemIndexPerRow?: number[];
+        rowLastItemIndexExclusivePerRow?: number[];
     }
 ) {
     const {
@@ -24,6 +28,8 @@ export function useVirtualWindow(
         rowHeights,
         containerHeight,
         viewportH,
+        rowFirstItemIndexPerRow,
+        rowLastItemIndexExclusivePerRow,
     } = opts;
 
     const [scrollTop, setScrollTop] = useState(0);
@@ -32,6 +38,7 @@ export function useVirtualWindow(
     useLayoutEffect(() => {
         const el = containerRef.current;
         if (!el) return;
+
         const onScroll = () => {
             if (rafRef.current != null) return;
             rafRef.current = requestAnimationFrame(() => {
@@ -39,6 +46,7 @@ export function useVirtualWindow(
                 setScrollTop(el.scrollTop);
             });
         };
+
         el.addEventListener("scroll", onScroll, { passive: true });
         return () => {
             el.removeEventListener("scroll", onScroll);
@@ -51,7 +59,6 @@ export function useVirtualWindow(
         if (!el) return;
 
         const maxScroll = Math.max(0, containerHeight - viewportH);
-
         if (el.scrollTop > maxScroll) {
             el.scrollTop = maxScroll;
         }
@@ -83,9 +90,32 @@ export function useVirtualWindow(
             endRowExclusive++;
         }
 
-        const colsSafe = Math.max(1, cols);
-        const startIndex = Math.min(itemsLen, startRow * colsSafe);
-        const endIndex = Math.min(itemsLen, endRowExclusive * colsSafe);
+        let startIndex = 0;
+        let endIndex = 0;
+
+        const haveRowIndexMapping =
+            rowFirstItemIndexPerRow &&
+            rowLastItemIndexExclusivePerRow &&
+            rowFirstItemIndexPerRow.length === rows &&
+            rowLastItemIndexExclusivePerRow.length === rows;
+
+        if (haveRowIndexMapping && startRow < endRowExclusive) {
+            // ✅ Use real item indices per row (works with open rows / uneven row sizes)
+            const firstRow = startRow;
+            const lastRow = endRowExclusive - 1;
+
+            startIndex = rowFirstItemIndexPerRow![firstRow] ?? 0;
+            endIndex = rowLastItemIndexExclusivePerRow![lastRow] ?? startIndex;
+        } else {
+            // fallback: old behaviour assuming dense rows * cols
+            const colsSafe = Math.max(1, cols);
+            startIndex = startRow * colsSafe;
+            endIndex = endRowExclusive * colsSafe;
+        }
+
+        // clamp
+        startIndex = Math.max(0, Math.min(itemsLen, startIndex));
+        endIndex = Math.max(startIndex, Math.min(itemsLen, endIndex));
 
         return { startIndex, endIndex };
     }, [
@@ -99,6 +129,8 @@ export function useVirtualWindow(
         rowTops,
         rowHeights,
         itemsLen,
+        rowFirstItemIndexPerRow,
+        rowLastItemIndexExclusivePerRow,
     ]);
 
     return { scrollTop, visibleRange } as const;

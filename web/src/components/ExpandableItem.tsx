@@ -68,8 +68,9 @@ export function ExpandableItemWrapper(props: Props) {
 
     const outerGridStyles: React.CSSProperties = {
         ...outerBase,
-        borderRadius: 4,
-        padding: 2,
+        borderRadius: collapseOpen ? 0 : 4,
+        padding: collapseOpen ? 0 : 2,
+        paddingLeft: collapseOpen ? 12 : 2,
     };
 
     return (
