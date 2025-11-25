@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.27.0](https://github.com/Zukzuk/syncnite/compare/v1.26.0...v1.27.0) (2025-11-25)
+
+
+### Features
+
+* **a:** added grid reflow ([70b29c8](https://github.com/Zukzuk/syncnite/commit/70b29c81a3d3a68ccb1b2a749bdb0276d03cee99))
+
 ## [1.26.0](https://github.com/Zukzuk/syncnite/compare/v1.25.0...v1.26.0) (2025-11-25)
 
 
