@@ -10,15 +10,17 @@ services:
   e2e:
     image: mcr.microsoft.com/playwright:v1.48.2-jammy
     working_dir: /tests
-    depends_on: [ web ]
+    depends_on: [web]
+    env_file:
+      - .env
     environment:
-      WEB_BASE_URL: http://web:3003
+      WEB_BASE_URL: http://web:${WEB_PORT}
       HOME: /root
     volumes:
       - ./web/e2e:/tests/e2e:ro
       - ./web/playwright.config.js:/tests/playwright.config.js:ro
-      - ./reports:/tests/reports             # <— mount host ./reports to /tests/reports
-      - e2e_node_modules:/tests/node_modules # cache node_modules between runs
+      - ./reports:/tests/reports
+      - e2e_node_modules:/tests/node_modules
     command: >
       bash -lc "
         test -f package.json || npm init -y >/dev/null &&
@@ -28,9 +30,9 @@ services:
 
   e2e-report:
     image: nginx:alpine
-    depends_on: [ e2e ]
+    depends_on: [e2e]
     volumes:
-      - ./reports:/usr/share/nginx/html:ro   # <— serve ./reports (now has index.html)
+      - ./reports:/usr/share/nginx/html:ro
     ports:
       - "9323:80"
 
