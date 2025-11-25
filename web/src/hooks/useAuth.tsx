@@ -1,6 +1,6 @@
 import * as React from "react";
-import { clearCreds } from "../lib/persist";
 import { verifySession } from "../lib/api";
+import { clearCreds } from "../lib/utils";
 
 type AuthState = {
   ready: boolean;

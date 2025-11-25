@@ -28,7 +28,6 @@ router.post("/admin/release", requireAdminSession, async (req, res) => {
         return res.status(500).json({ ok: false, error: r.error });
     }
 
-    // After this, there is no admin; new admin can be registered from the server.
     return res.json({ ok: true });
 });
 

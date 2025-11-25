@@ -13,10 +13,8 @@ import {
 } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "@mantine/form";
-import { post } from "../lib/api";
-import { API_ENDPOINTS } from "../lib/constants";
-import { setCreds } from "../lib/persist";
-import { fetchAdminStatus } from "../lib/api";
+import { login, registerAdmin, registerUser, fetchAdminStatus } from "../lib/api";
+import { setCreds } from "../lib/utils";
 
 export default function LoginPage() {
   const nav = useNavigate();
@@ -38,48 +36,60 @@ export default function LoginPage() {
 
   const handleLogin = loginForm.onSubmit(async ({ email, password }) => {
     setError(null);
-    const res = await post(API_ENDPOINTS.LOGIN, {
-      email: email.trim().toLowerCase(),
-      password,
-    });
-    if (res?.ok) {
-      setCreds(email, password, res.role);
-      nav("/", { replace: true });
-    } else setError(res?.error || "Invalid credentials");
+    email = email.trim().toLowerCase();
+
+    const resp = await login({ email, password });
+
+    if (resp?.ok) {
+      setCreds(email, password, resp.role);
+    } else {
+      setError(resp?.error || "Invalid credentials");
+    }
+
+    nav("/", { replace: true });
   });
 
   const handleAdminRegister = registerAdminForm.onSubmit(async ({ email, password }) => {
     setError(null);
-    const reg = await post(API_ENDPOINTS.ADMIN_REGISTER, {
-      email: email.trim().toLowerCase(),
-      password,
-    });
-    if (!reg?.ok) return setError(reg?.error || "Registration failed");
+    email = email.trim().toLowerCase();
 
-    const loginRes = await post(API_ENDPOINTS.LOGIN, { email, password });
-    if (loginRes?.ok) setCreds(email, password, loginRes.role || "admin");
-    else setCreds(email, password, "admin");
+    const regResp = await registerAdmin({ email, password });
+    if (!regResp?.ok) return setError(regResp?.error || "Registration failed");
+
+    const loginResp = await login({ email, password });
+    if (loginResp?.ok) {
+      setCreds(email, password, loginResp.role || "admin");
+    } else {
+      setCreds(email, password, "admin");
+    }
+
     nav("/", { replace: true });
   });
 
   const handleUserRegister = registerUserForm.onSubmit(async ({ email, password }) => {
     setError(null);
-    const reg = await post(API_ENDPOINTS.USER_REGISTER, {
-      email: email.trim().toLowerCase(),
-      password,
-    });
-    if (!reg?.ok) {
+    email = email.trim().toLowerCase();
+
+    const regResp = await registerUser({ email, password });
+
+    if (!regResp?.ok) {
       const msg =
-        reg?.error === "no_admin_yet"
+        regResp?.error === "no_admin_yet"
           ? "An admin must exist before you can register."
-          : reg?.error === "user_exists"
-          ? "User already exists."
-          : reg?.error || "Registration failed";
+          : regResp?.error === "user_exists"
+            ? "User already exists."
+            : regResp?.error || "Registration failed";
+
       return setError(msg);
     }
-    const loginRes = await post(API_ENDPOINTS.LOGIN, { email, password });
-    if (loginRes?.ok) setCreds(email, password, loginRes.role || "user");
-    else setCreds(email, password, "user");
+
+    const loginResp = await login({ email, password });
+    if (loginResp?.ok) {
+      setCreds(email, password, loginResp.role || "user");
+    } else {
+      setCreds(email, password, "user");
+    }
+
     nav("/", { replace: true });
   });
 

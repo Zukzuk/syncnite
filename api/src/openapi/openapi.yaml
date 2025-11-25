@@ -3,7 +3,6 @@ tags:
   - name: Extension
   - name: Accounts
   - name: Sync
-  - name: Backup
 
 components:
   securitySchemes:
@@ -35,12 +34,6 @@ components:
         role:
           type: string
           enum: [admin, user, unknown]
-    ZipFile:
-      type: object
-      properties:
-        name: { type: string }
-        size: { type: integer }
-        mtime: { type: number, description: "Modified time (ms since epoch)" }
     InstalledPush:
       type: object
       properties:
@@ -149,27 +142,7 @@ paths:
           description: Unauthorized
         "403":
           description: Forbidden (session required)
-
-  /zips:
-    get:
-      tags: [App]
-      summary: List uploaded backup zips
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/ZipFile"
-        "500":
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-                
+        
   /sse:
     get:
       tags: [App]
@@ -844,108 +817,6 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "403":
           description: Forbidden (admin required)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-# Backup endpoints
-
-  /backup/upload:
-    post:
-      tags: [Backup]
-      summary: Upload a Playnite backup zip
-      security:
-        - XAuthEmail: []
-          XAuthPassword: []
-          XClientId: []
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  format: binary
-              required: [file]
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  ok: { type: boolean }
-                  file: { type: string }
-        "400":
-          description: No file
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "500":
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-  /backup/process:
-    post:
-      tags: [Backup]
-      summary: Validate/extract zip and import into /data (overwrite-only)
-      description: Runs the import pipeline and emits logs/progress to `/api/v1/sse`.
-      security:
-        - XAuthEmail: []
-          XAuthPassword: []
-          XClientId: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                filename:
-                  type: string
-                  description: "Name of previously uploaded .zip"
-                password:
-                  type: string
-                  description: "Optional LiteDB password (empty string allowed)"
-                  nullable: true
-              required: [filename]
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  ok: { type: boolean }
-        "400":
-          description: Bad request (e.g., missing/invalid filename)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "500":
-          description: Server error during processing
           content:
             application/json:
               schema:

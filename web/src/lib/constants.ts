@@ -1,4 +1,4 @@
-import { CookieState } from "./persist";
+import { SortDir, SortKey } from "./types";
 
 const API_BASE = "/api/v1";
 
@@ -29,7 +29,7 @@ export const GRID = {
   colsList: "40px minmax(0, 55%) 60px 95px minmax(0, 1fr)",
   colsGrid: "0px 60px 60px 95px minmax(0, 1fr)",
   rowHeight: 56,
-  smallBox: 38,
+  iconSize: 38,
   menuWidth: 160,
 } as const;
 
@@ -41,9 +41,10 @@ export const Z_INDEX = {
   rail: 100,
 } as const;
 
-export const BASE = "/data";
+export const FILE_BASE = "/data";
+
 export const FILES = {
-  snapshot: `${BASE}/snapshot/snapshot.json`,
+  snapshot: `${FILE_BASE}/snapshot/snapshot.json`,
 };
 
 export const FALLBACK_ICON =
@@ -69,21 +70,6 @@ export const SOURCE_MAP: Record<string, { platform: string; online: string; labe
   "microsoft store": { platform: "ms-windows-store://", online: "https://apps.microsoft.com", label: "Microsoft Store" },
 };
 
-export const COOKIE = {
-  libraryState: "pn_library_ui_v2",
-};
-
-export const COOKIE_DEFAULTS: CookieState = {
-  q: "",
-  sources: [],
-  tags: [],
-  series: [],
-  showHidden: false,
-  installedOnly: false,
-  sortKey: "title",
-  sortDir: "asc",
-};
-
 export const MAX_LINES = 1000;
 
 export const INTERVAL_MS = 5000;
@@ -91,6 +77,21 @@ export const INTERVAL_MS = 5000;
 export const LETTERS_LIST = ["#", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
 
 export const LETTERS = [...LETTERS_LIST] as const;
+
+export const COOKIE = {
+  libraryState: "pn_library_ui_v2",
+};
+
+export const COOKIE_DEFAULTS = {
+  q: "",
+  sources: [],
+  tags: [],
+  series: [],
+  showHidden: false,
+  installedOnly: false,
+  sortKey: "title" as SortKey,
+  sortDir: "asc" as SortDir,
+};
 
 export const COLLECTIONS = {
   games: "games",

@@ -27,7 +27,7 @@ export function RowItem({ item, collapseOpen }: Props) {
                 gridTemplateColumns: GRID.colsList,
             }}
         >
-            <Flex align="center" gap={8} style={{ width: GRID.smallBox }}>
+            <Flex align="center" gap={8} style={{ width: GRID.iconSize }}>
                 <Box
                     component="a"
                     href={`playnite://play/${id}`}
@@ -36,8 +36,8 @@ export function RowItem({ item, collapseOpen }: Props) {
                     onMouseLeave={() => setHovered(false)}
                     style={{
                         position: "relative",
-                        width: GRID.smallBox,
-                        height: GRID.smallBox,
+                        width: GRID.iconSize,
+                        height: GRID.iconSize,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",

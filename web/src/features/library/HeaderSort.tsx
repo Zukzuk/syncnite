@@ -49,7 +49,7 @@ export function HeaderSort(props: Props) {
           style={{
             display: "grid",
             gridTemplateColumns: gridColumns,
-            height: GRID.smallBox,
+            height: GRID.iconSize,
             alignItems: "center",
             gap: rem(12),
             padding: `0 ${rem(16)} 0 ${rem(12)}`,

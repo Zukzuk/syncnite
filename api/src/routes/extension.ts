@@ -1,16 +1,22 @@
 import express from "express";
-import { ExtensionService } from "../services/ExtensionService";
 import { rootLog } from "../logger";
+import { EXT_DIR } from "../constants";
 
 const router = express.Router();
-const extensionService = new ExtensionService();
 const log = rootLog.child("route:extension");
+const APP_VERSION = process.env.APP_VERSION ?? "dev";
 
 router.get("/download", (_req, res) => {
   log.info("download: request received");
 
   try {
-    const { filePath, downloadName } = extensionService.getLatest();
+    log.info("Resolving latest extension package", { version: APP_VERSION });
+
+    const filePath = `${EXT_DIR}/latest.pext`;
+    const downloadName = `syncnite-bridge-${APP_VERSION}.pext`;
+
+    log.info("Resolved extension package", { filePath, downloadName });
+
     res.download(filePath, downloadName, (err) => {
       if (err) {
         log.error("download: error during download:", String(err?.message || err));

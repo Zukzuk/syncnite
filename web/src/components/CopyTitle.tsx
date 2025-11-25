@@ -37,7 +37,7 @@ export const CopyTitle = React.memo(function CopyTitle({
                 size="sm"
                 style={{ lineHeight: 0, height: "100%", display: "flex", alignItems: "center" }}
             >
-                <IconCopy size={18} stroke={2}  />
+                <IconCopy size={16} stroke={2}  />
             </ActionIcon>
         </Tooltip>
     );

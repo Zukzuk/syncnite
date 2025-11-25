@@ -1,5 +1,4 @@
 import express from "express";
-import { ListZipsService } from "../services/ListZipsService";
 import { PING_CONNECTED_MS, UPLOADS_DIR } from "../constants";
 import { rootLog } from "../logger";
 import { createSSE } from "../sse";
@@ -8,7 +7,6 @@ import { AccountsService } from "../services/AccountsService";
 import { requireSession } from "../middleware/requireAuth";
 
 const router = express.Router();
-const listZipsService = new ListZipsService(UPLOADS_DIR);
 const log = rootLog.child("route:app");
 
 let LAST_PING = 0;
@@ -42,18 +40,6 @@ router.get("/ping/status", requireSession, (req, res) => {
         connected,
         lastPingAt: LAST_PING ? new Date(LAST_PING).toISOString() : null,
     });
-});
-
-router.get("/zips", async (_req, res) => {
-    log.info("zips: request received");
-    try {
-        const zips = await listZipsService.get();
-        log.info(`zips: found ${zips.length} zip(s)`);
-        res.json(zips);
-    } catch (e: any) {
-        log.error("zips: failed:", String(e?.message || e));
-        res.status(500).json({ ok: false, error: String(e?.message || e) });
-    }
 });
 
 router.post("/log", async (req, res) => {

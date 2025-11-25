@@ -1,7 +1,6 @@
 import * as React from "react";
 import type { SortKey, SortDir } from "../../../lib/types";
-import { orderedLetters } from "../../../lib/utils";
-import { CookieState, loadStateFromCookie, saveStateToCookie } from "../../../lib/persist";
+import { loadStateFromCookie, orderedLetters, saveStateToCookie } from "../../../lib/utils";
 import { Item } from "./useLibrary";
 
 export type WithBucket = {
@@ -53,7 +52,7 @@ export function useLibraryState({ items }: UseParams): UseReturn {
   const [installedOnly, setInstalledOnly] = React.useState<boolean>(cookieState.installedOnly);
 
   React.useEffect(() => {
-    const toSave: CookieState = { q, sources, tags, series, showHidden, installedOnly, sortKey, sortDir };
+    const toSave = { q, sources, tags, series, showHidden, installedOnly, sortKey, sortDir };
     saveStateToCookie(toSave);
   }, [q, sources, tags, series, showHidden, installedOnly, sortKey, sortDir]);
 

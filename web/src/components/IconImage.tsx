@@ -1,11 +1,40 @@
 import React from "react";
-import { isIcoPath, icoToPngDataUrl } from "../lib/utils";
+import ICO from "icojs";
 import { GRID } from "../lib/constants";
 
-type Props = { 
-  src: string; 
-  alt?: string 
+type Props = {
+  src: string;
+  alt?: string
 };
+
+function isIcoPath(url: string): boolean {
+  try {
+    const u = new URL(url, window.location.origin);
+    return /\.ico(\?|#|$)/i.test(u.pathname);
+  } catch {
+    return /\.ico(\?|#|$)/i.test(url);
+  }
+}
+
+async function icoToPngDataUrl(icoUrl: string): Promise<string | null> {
+  try {
+    const res = await fetch(icoUrl, { cache: "force-cache" });
+    if (!res.ok) return null;
+    const buf = await res.arrayBuffer();
+    const images = await ICO.parse(buf, "image/png"); // returns PNG blobs
+    if (!images?.length) return null;
+    // choose largest by width
+    const best = images.slice().sort((a, b) => (b.width ?? 0) - (a.width ?? 0))[0];
+    const blob = new Blob([best.buffer], { type: "image/png" });
+    return await new Promise<string>((resolve) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(String(fr.result));
+      fr.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
 
 export function IconImage({ src, alt }: Props) {
   const [url, setUrl] = React.useState(src);
@@ -30,9 +59,15 @@ export function IconImage({ src, alt }: Props) {
       className="icon"
       src={url}
       alt={alt ?? ""}
-      width={GRID.smallBox}
-      height={GRID.smallBox}
-      style={{ width: GRID.smallBox, height: GRID.smallBox, objectFit: "contain", borderRadius: 6, background: "var(--mantine-color-default)" }}
+      width={GRID.iconSize}
+      height={GRID.iconSize}
+      style={{
+        width: GRID.iconSize,
+        height: GRID.iconSize,
+        objectFit: "contain",
+        borderRadius: 6,
+        background: "var(--mantine-color-default)"
+      }}
       onError={async (e) => {
         const img = e.target as HTMLImageElement;
         // ICO: try converting to PNG as before

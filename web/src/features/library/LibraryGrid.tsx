@@ -106,7 +106,7 @@ export default function AbsoluteGrid({
 
     // ensure scroll position is maintained on layout changes
     const openWidth = `calc(100vw - ${GRID.menuWidth}px - 12px - 15px)`;
-    const openHeight = `calc(100vh - ${topOffset}px - ${GRID.smallBox}px - 12px)`;
+    const openHeight = `calc(100vh - ${topOffset}px - ${GRID.iconSize}px - 12px)`;
 
     return (
         <Flex key={flatKey} direction="column" style={{ width: "100%", height: "100%" }}>

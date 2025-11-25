@@ -6,7 +6,7 @@ type Props = { bucket: string; top: number };
 export function AlphabeticalSeparatorRow({ bucket, top }: Props) {
   return (
     <Box
-      h={GRID.smallBox}
+      h={GRID.iconSize}
       style={{
         position: 'sticky',
         zIndex: Z_INDEX.seperatorRow,

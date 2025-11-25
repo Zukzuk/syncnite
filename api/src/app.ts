@@ -7,7 +7,6 @@ import swaggerJsdoc from "swagger-jsdoc";
 import syncRouter from "./routes/sync";
 import accountsRouter from "./routes/accounts";
 import generalRouter from "./routes/general";
-import backupRouter from "./routes/backup";
 import extensionRouter from "./routes/extension";
 import { errorHandler, notFoundHandler } from "./middleware/errors";
 import { requestLogger } from "./middleware/requestLogger";
@@ -109,7 +108,6 @@ export function createApp() {
     app.use("/api/v1", generalRouter);
     app.use("/api/v1/accounts", accountsRouter);
     app.use("/api/v1/sync", syncRouter);
-    app.use("/api/v1/backup", backupRouter);
     app.use("/api/v1/extension", extensionRouter);
 
     // 404 + error handler

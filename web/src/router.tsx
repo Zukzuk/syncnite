@@ -9,8 +9,8 @@ import AdminPage from "./pages/AdminPage";
 import AccountPage from "./pages/AccountPage";
 import { useAuth } from "./hooks/useAuth";
 import { useAdminGate } from "./hooks/useAdminGate";
-import { clearCreds } from "./lib/persist";
 import { INTERVAL_MS } from "./lib/constants";
+import { clearCreds } from "./lib/utils";
 
 function WithShell({ hideSite = false }: { hideSite?: boolean }) {
   return (
@@ -86,7 +86,7 @@ export const router = createBrowserRouter([
           {
             element: <AdminOnly />,
             children: [
-              { path: "/admin", element:  <AdminPage /> }
+              { path: "/admin", element: <AdminPage /> }
             ],
           },
           { path: "*", element: <Navigate to="/" replace /> },

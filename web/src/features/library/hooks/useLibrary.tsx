@@ -1,13 +1,10 @@
 import * as React from "react";
 import type { Game, GameLink, GameReleaseDate, Series, Source, Tag } from "../../../types/playnite";
-import { fetchUser } from "../../../lib/persist";
+import { COLLECTIONS, FILE_BASE, FALLBACK_ICON, SOURCE_MAP } from "../../../lib/constants";
 import { loadDbCollection } from "../../../lib/api";
-import { buildIconUrl, findSourcishLink, normalizePath, extractYear,
-    sourcishLinkFallback, hasEmulatorTag, myAbandonwareLink, buildAssetUrl,
-} from "../../../lib/utils";
 import { useRefreshLibrary } from "./useRefreshLibrary";
 import { useLocalInstalled } from "./useLocalInstalled";
-import { COLLECTIONS } from "../../../lib/constants";
+import { fetchUser } from "../../../lib/utils";
 
 export type LoadedData = {
     items: Item[];
@@ -40,20 +37,73 @@ type UseReturn = {
     installedUpdatedAt: string | null;
 };
 
+// Get the Playnite Game.Id
 function getPlayniteId(g: Game): string {
     return g.Id;
 }
 
+// Get the GameId (external store id)
 function getGameId(id: string | null | undefined): string | null {
     return id ? String(id) : null;
 }
 
+// Get the Game Title (default "Untitled")
 function getGameTitle(name: string | null | undefined): string {
     return name ?? "Untitled";
 }
 
+// Get the SortingName (fallback to Name)
 function getSortingName(sortingName: string | null | undefined, name: string | null | undefined): string {
     return sortingName ?? name ?? "";
+}
+
+function parseYearFromString(s: string): number | null {
+    // Accept "2021", "2021-05-03", "2021/05/03", "2021-05", "May 5, 2021", etc.
+    const m = s.match(/(\d{4})/);
+    if (!m) return null;
+    const y = Number(m[1]);
+    if (y >= 1970 && y <= 2100) return y;
+    return null;
+}
+
+function parseYearFromNumber(n: number): number | null {
+    // Heuristic: treat 10 or 13 digits as epoch seconds/millis
+    if (n > 10_000_000_000) {
+        const y = new Date(n).getUTCFullYear();
+        return y >= 1970 && y <= 2100 ? y : null;
+    }
+    if (n > 1_000_000_000) {
+        const y = new Date(n * 1000).getUTCFullYear();
+        return y >= 1970 && y <= 2100 ? y : null;
+    }
+    // maybe already a year
+    if (n >= 1970 && n <= 2100) return n;
+    return null;
+}
+
+function extractYear(val: unknown): number | null {
+    if (val == null) return null;
+    if (typeof val === "number") return parseYearFromNumber(val);
+    if (typeof val === "string") return parseYearFromString(val);
+    if (typeof val === "object") {
+        const o = val as Record<string, unknown>;
+        // Sync style
+        if (typeof o["ReleaseDate"] === "string") return parseYearFromString(o["ReleaseDate"]);
+        // LiteDB / BSON-style
+        if (typeof o["$date"] === "string") return parseYearFromString(o["$date"]);
+        if (typeof o["Date"] === "string") return parseYearFromString(o["Date"]);
+        if (typeof o["Ticks"] === "number") {
+            // Ticks since 0001; convert to ms
+            const ticks = o["Ticks"];
+            const ms = (ticks - 621355968000000000) / 10000;
+            return parseYearFromNumber(ms);
+        }
+        // Generic Year or Value fields:
+        if (typeof o["Year"] === "number") return parseYearFromNumber(o["Year"]);
+        if (typeof o["Value"] === "string") return parseYearFromString(o["Value"]);
+        if (typeof o["Value"] === "number") return parseYearFromNumber(o["Value"]);
+    }
+    return null;
 }
 
 // Prefer explicit ReleaseYear, otherwise derive from ReleaseDate.ReleaseDate ("yyyy-mm-dd")
@@ -67,11 +117,111 @@ function pickYear(releaseYear: number | null | undefined, releaseDate: GameRelea
     return null;
 }
 
+function normalizePath(p?: string): string | null {
+    if (!p) return null;
+    return p.replace(/\\/g, "/").replace(/^\.?\//, "");
+}
+
+function buildIconUrl(iconRel: string | null, iconId: string | null): string {
+    if (iconRel && /^https?:\/\//i.test(iconRel)) return iconRel;
+    if (iconRel) {
+        const rel = iconRel.replace(/\\/g, "/").replace(/^\.?\//, "");
+        const path = rel.startsWith("libraryfiles/") ? rel : `libraryfiles/${rel}`;
+        return `${FILE_BASE}/${path}`;
+    }
+    if (iconId) return `${FILE_BASE}/libraryfiles/${iconId}.png`;
+    return FALLBACK_ICON;
+}
+
 // Prefer Icon (path) but fall back to Id (legacy)
 function pickIconUrl(icon: string | null | undefined): string {
     const iconRel = normalizePath(icon ?? undefined);
     // buildIconUrl historically accepts either a path and/or an id—pass only path here
     return buildIconUrl(iconRel, null);
+}
+
+function findSourcishLink(links: GameLink[] | undefined, sourceName: string): string | null {
+    if (!links || links.length === 0) return null;
+
+    const source = sourceName.toLowerCase();
+
+    // Try to find a link whose name directly matches or refers to a "store"
+    const preferredLink = links.find(link => {
+        const name = (link.Name ?? "").toLowerCase();
+        return name === "store" || name === source || name.includes("store");
+    });
+
+    if (preferredLink?.Url) return preferredLink.Url;
+
+    // Try to match based on known domain patterns for common stores/platforms
+    const domainMatches: Record<string, string[]> = {
+        steam: ["steampowered.com"],
+        epic: ["epicgames.com"],
+        gog: ["gog.com"],
+        ubisoft: ["ubisoft.com", "uplay"],
+        ea: ["ea.com", "origin.com"],
+        battle: ["battle.net", "blizzard.com"],
+        xbox: ["xbox.com", "microsoft.com"],
+        humble: ["humblebundle.com"],
+        nintendo: ["nintendo.com"]
+    };
+
+    const matchedLink = links.find(link => {
+        const url = (link.Url ?? "").toLowerCase();
+        return Object.entries(domainMatches).some(([key, domains]) =>
+            source.includes(key) && domains.some(domain => url.includes(domain))
+        );
+    });
+
+    return matchedLink?.Url ?? null;
+}
+
+function sourcishLinkFallback(source: string, id: string): string | null {
+    const s = source.toLowerCase();
+    switch (s) {
+        case "steam":
+            return `${SOURCE_MAP.steam.online}/app/${encodeURIComponent(id)}`;
+
+        case "gog":
+            return `${SOURCE_MAP.gog.online}/game/${encodeURIComponent(id)}`;
+
+        case "ubisoft connect":
+        case "uplay":
+        case "ubisoft":
+            return `${SOURCE_MAP["ubisoft connect"].online}/en-us/search?gss-q=${encodeURIComponent(id)}`;
+
+        case "ea app":
+            return null;
+
+        case "battle.net":
+            return null;
+
+        case "epic":
+            return `${SOURCE_MAP.epic.online}/store/en-US/p/${encodeURIComponent(id)}`;
+
+        case "xbox":
+            return `${SOURCE_MAP.xbox.online}/en-us/Search/Results?q=${encodeURIComponent(id)}`;
+
+        case "humble":
+            return `${SOURCE_MAP.humble.online}/store/search?search=${encodeURIComponent(id)}`;
+
+        case "nintendo":
+            return `${SOURCE_MAP.nintendo.online}/us/search/?q=${encodeURIComponent(id)}`;
+
+        case "microsoft store":
+            return `${SOURCE_MAP["microsoft store"].online}/search?query=${encodeURIComponent(id)}`;
+
+        default:
+            return null;
+    }
+};
+
+function hasEmulatorTag(tags?: string[]): boolean {
+    return Array.isArray(tags) && tags.some(t => /\bemulator(s)?\b/i.test(t));
+}
+
+function myAbandonwareLink(title: string): string {
+    return `https://www.myabandonware.com/search/q/${encodeURIComponent(title)}`;
 }
 
 // Prefer Links matching source, then any Links, then sourcish fallback
@@ -109,14 +259,14 @@ function expandSeriesNames(ids: string[] | undefined, seriesById: Map<string, st
 
 // Fetch JSON with no-cache, return null on error
 async function fetchJson(url: string): Promise<any | null> {
-  try {
-    const r = await fetch(url, { cache: "no-cache" });
-    if (!r.ok) return null;
-    const text = await r.text();
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
+    try {
+        const r = await fetch(url, { cache: "no-cache" });
+        if (!r.ok) return null;
+        const text = await r.text();
+        return JSON.parse(text);
+    } catch {
+        return null;
+    }
 }
 
 // Prefetch the local Installed.json (case-insensitive ids)
@@ -135,8 +285,18 @@ async function fetchInstalledList(email: string | null): Promise<Set<string> | n
     return localInstalledSet;
 }
 
+// Check if installed (case-insensitive)
 function getInstalled(id: string, installedSet: Set<string> | null): boolean {
     return installedSet ? installedSet.has(id.toLowerCase()) : false;
+}
+
+function buildAssetUrl(rel?: string | null): string | null {
+    if (!rel) return null;
+    const norm = normalizePath(rel);
+    if (!norm) return null;
+    if (/^https?:\/\//i.test(norm)) return norm;
+    const path = norm.startsWith("libraryfiles/") ? norm : `libraryfiles/${norm}`;
+    return `${FILE_BASE}/${path}`;
 }
 
 // Get CoverImage URL (if any)
