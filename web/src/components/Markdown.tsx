@@ -11,6 +11,7 @@ import ReactMarkdown from "react-markdown";
 import type { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
+import { getTheme } from "../lib/utils";
 
 /** Helper to flatten React children to text */
 function toText(node: React.ReactNode): string {
@@ -22,13 +23,9 @@ function toText(node: React.ReactNode): string {
 }
 
 export default function Markdown({ content }: { content: string }) {
-    const theme = useMantineTheme();
-    const { colorScheme } = useMantineColorScheme();
-
-    const border = colorScheme === "dark" ? theme.colors.dark[4] : theme.colors.gray[3];
-    const zebra = colorScheme === "dark" ? theme.colors.dark[6] : theme.colors.gray[0];
-
-    // --- Custom renderers ---
+    const { theme, isDark } = getTheme();
+    const border = isDark ? theme.colors.dark[4] : theme.colors.gray[3];
+    const zebra = isDark ? theme.colors.dark[6] : theme.colors.gray[0];
 
     // Inline code (react-markdown v9 only uses this for inline)
     const CodeRenderer: Components["code"] = ({ children, ...props }) => (

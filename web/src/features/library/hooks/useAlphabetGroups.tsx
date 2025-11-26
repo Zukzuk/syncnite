@@ -1,6 +1,6 @@
 import * as React from "react";
 import { orderedLetters } from "../../../lib/utils";
-import { Item } from "./useLibrary";
+import { Item } from "./useLibraryData";
 import { WithBucket } from "./useLibraryState";
 
 export type AlphabeticalGroup = { 

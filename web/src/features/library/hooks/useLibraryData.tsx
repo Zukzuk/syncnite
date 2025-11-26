@@ -359,7 +359,7 @@ export async function loadLibrary(): Promise<LoadedData> {
 }
 
 // A hook to manage the library data with automatic refresh and installed status updates.
-export function useLibrary({ pollMs }: UseParams): UseReturn {
+export function useLibraryData({ pollMs }: UseParams): UseReturn {
     const [data, setData] = React.useState<LoadedData | null>(null);
 
     // external pollers

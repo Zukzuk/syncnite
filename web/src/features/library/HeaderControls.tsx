@@ -1,8 +1,7 @@
 import React from "react";
-import { Group, MultiSelect, Switch, Text, Stack, Flex, rem, Box, SegmentedControl } from "@mantine/core";
+import { Group, MultiSelect, Switch, Text, Stack, Flex, Box, SegmentedControl } from "@mantine/core";
 import { SearchInput } from "../../components/SearchInput";
 import { SOURCE_MAP, Z_INDEX } from "../../lib/constants";
-import { getTheme } from "../../lib/utils";
 import { ViewMode } from "../../lib/types";
 
 type Props = {
@@ -65,8 +64,6 @@ export function HeaderControls(props: Props) {
     () => Array.from(new Set(allSeries)).sort().map((s) => ({ value: s, label: s })),
     [allSeries]
   );
-
-  const { theme } = getTheme();
 
   return (
     <Box

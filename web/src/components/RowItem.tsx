@@ -2,7 +2,7 @@ import React from "react";
 import { Box, Flex, Text, Group } from "@mantine/core";
 import { IconPlayerPlay, IconDownload } from "@tabler/icons-react";
 import { GRID } from "../lib/constants";
-import { Item } from "../features/library/hooks/useLibrary";
+import { Item } from "../features/library/hooks/useLibraryData";
 import { IconImage } from "./IconImage";
 import { ExternalLink } from "./ExternalLink";
 import { IconSourceLink } from "./IconSourceLink";
@@ -10,11 +10,11 @@ import { CopyTitle } from "./CopyTitle";
 
 type Props = {
     item: Item;
-    collapseOpen: boolean;
+    isOpen: boolean;
 };
 
-export function RowItem({ item, collapseOpen }: Props) {
-    const { id, isInstalled, iconUrl, title, gameId, year, source, tags, series, link, isHidden } = item;
+export function RowItem({ item, isOpen }: Props) {
+    const { id, isInstalled, iconUrl, title, gameId, year, source, tags, series, link } = item;
     const [hovered, setHovered] = React.useState(false);
 
     return (
@@ -87,7 +87,7 @@ export function RowItem({ item, collapseOpen }: Props) {
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                         whiteSpace: "nowrap",
-                        fontSize: collapseOpen ? 20 : undefined,
+                        fontSize: isOpen ? 20 : undefined,
                         transition: "font-size 140ms ease",
                     }}
                 >

@@ -2,14 +2,14 @@ import { Box, Group, Image, Text } from "@mantine/core";
 import { CopyTitle } from "./CopyTitle";
 import { ExternalLink } from "./ExternalLink";
 import { IconSourceLink } from "./IconSourceLink";
-import { Item } from "../features/library/hooks/useLibrary";
+import { Item } from "../features/library/hooks/useLibraryData";
 
 type Props = {
     item: Item;
-    collapseOpen: boolean;
+    isOpen: boolean;
 };
 
-export function GridItem({ item, collapseOpen }: Props) {
+export function GridItem({ item, isOpen }: Props) {
     return (
         <div>
             <div style={{ position: "relative", aspectRatio: "23 / 32" }}>
@@ -36,7 +36,7 @@ export function GridItem({ item, collapseOpen }: Props) {
                 fw={600}
                 h={40}
                 style={{
-                    fontSize: collapseOpen ? 20 : undefined,
+                    fontSize: isOpen ? 20 : undefined,
                     transition: "font-size 140ms ease",
                 }}
             >

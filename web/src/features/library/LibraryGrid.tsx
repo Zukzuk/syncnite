@@ -1,25 +1,21 @@
-import React, {
-    useCallback,
-    useEffect,
-    useLayoutEffect,
-    useMemo,
-    useRef,
-    useState,
-} from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Box, Flex } from "@mantine/core";
 import { useElementSize } from "@mantine/hooks";
 import { HeaderSort } from "./HeaderSort";
 import { HeaderControls } from "./HeaderControls";
 import { ExpandableItem } from "../../components/ExpandableItem";
+import type { Item, LoadedData } from "./hooks/useLibraryData";
 import { useLibraryState } from "./hooks/useLibraryState";
-import type { LoadedData } from "./hooks/useLibrary";
+import { useAlphabetGroups } from "./hooks/useAlphabetGroups";
+import { useAlphabetRail } from "./hooks/useAlphabetRail";
 import { useCollapseOpenToggle } from "./hooks/useCollapseOpenToggle";
 import { useRemountKeys } from "./hooks/useRemountKeys";
 import { useAbsoluteGridLayout } from "./hooks/useAbsoluteGridLayout";
+import { useGridJumpToScroll } from "./hooks/useGridJumpToScroll";
 import { useVirtualWindow } from "./hooks/useVirtualWindow";
 import { ViewMode } from "../../lib/types";
-import { GRID } from "../../lib/constants";
-import { useGridJumpToScroll } from "./hooks/useGridJumpToScroll";
+import { GRID, Z_INDEX } from "../../lib/constants";
+import { AlphabeticalRail } from "../../components/AlphabeticalRail";
 
 type Props = {
     data: LoadedData;
@@ -30,12 +26,6 @@ type Props = {
     totalCount: number;
     installedUpdatedAt?: string;
 };
-
-const CARD_WIDTH = 160;
-const CARD_HEIGHT = 300;
-const GAP = 4;
-const PADDING = 2;
-const OVERSCAN = { top: 600, bottom: 800 } as const;
 
 function buildGridRows(
     items: any[],
@@ -51,11 +41,9 @@ function buildGridRows(
     for (let i = 0; i < itemsLen; i++) {
         const item = items[i];
         if (!item) continue;
-
         const isOpen = openIds.has(item.id);
-        const isFirst = i === 0;
 
-        if (isOpen && !isFirst) {
+        if (isOpen) {
             // flush any partially filled row before inserting dedicated open row
             if (currentRow.length > 0) {
                 rows.push(currentRow);
@@ -76,11 +64,6 @@ function buildGridRows(
         }
     }
 
-    if (currentRow.length > 0) {
-        rows.push(currentRow);
-        rowIsOpen.push(false);
-    }
-
     return { rowItems: rows, rowIsOpen };
 }
 
@@ -88,10 +71,8 @@ function computeRowLayout(
     rowItems: number[][],
     rowIsOpen: boolean[],
     itemsLen: number,
-    numericOpenHeight: number,
-    cardHeight: number,
-    padding: number,
-    gap: number
+    dynamicOpenHeight: number,
+    baseClosedHeight: number,
 ) {
     const rowCount = rowItems.length;
     const rowTops = new Array<number>(rowCount);
@@ -99,11 +80,11 @@ function computeRowLayout(
     const itemRowIndex = new Array<number>(itemsLen);
     const itemColIndex = new Array<number>(itemsLen);
 
-    let y = padding;
+    let y = GRID.padding;
 
     for (let r = 0; r < rowCount; r++) {
         rowTops[r] = y;
-        const height = rowIsOpen[r] ? numericOpenHeight : cardHeight;
+        const height = rowIsOpen[r] ? dynamicOpenHeight : baseClosedHeight;
         rowHeights[r] = height;
 
         const indices = rowItems[r];
@@ -113,12 +94,11 @@ function computeRowLayout(
             itemColIndex[idx] = c;
         }
 
-        y += height + gap;
+        y += height + GRID.gap;
     }
 
     const containerHeight =
-        rowCount === 0 ? padding * 2 + cardHeight : y - gap + padding;
-
+        rowCount === 0 ? GRID.padding * 2 + baseClosedHeight : y - GRID.gap + GRID.padding;
     return {
         rowTops,
         rowHeights,
@@ -132,13 +112,10 @@ function computeItemPositions(
     itemsLen: number,
     itemRowIndex: number[],
     itemColIndex: number[],
-    padding: number,
-    cardWidth: number,
-    gap: number,
     rowTops: number[]
 ) {
     const out: { left: number; top: number }[] = new Array(itemsLen);
-    const strideX = cardWidth + gap;
+    const strideX = GRID.cardWidth + GRID.gap;
 
     for (let i = 0; i < itemsLen; i++) {
         const r = itemRowIndex[i];
@@ -146,8 +123,8 @@ function computeItemPositions(
 
         const c = itemColIndex[i] ?? 0;
         out[i] = {
-            left: padding + c * strideX,
-            top: rowTops[r] ?? padding,
+            left: GRID.padding + c * strideX,
+            top: rowTops[r] ?? GRID.padding,
         };
     }
 
@@ -173,6 +150,17 @@ export default function AbsoluteGrid({
     const { ref: controlsRef, height: controlsH } = useElementSize();
     const { ref: headerRef, height: headerH } = useElementSize();
 
+    // alphabet rail
+    const { groups, isGrouped, flatItems } = useAlphabetGroups({
+        sortKey: ui.sortKey,
+        withBuckets: derived.withBuckets,
+        itemsSorted: derived.itemsSorted,
+    });
+
+    // view mode
+    const isListView = view === "list";
+
+    // container ref
     const containerRef = useRef<HTMLDivElement | null>(null);
 
     // scroll-restore state for grid
@@ -181,6 +169,7 @@ export default function AbsoluteGrid({
     const userScrolledWhileOpenRef = useRef(false);
     const programmaticScrollRef = useRef(false);
 
+    // pending scroll index after open
     const [pendingScrollIndex, setPendingScrollIndex] = useState<number | null>(
         null
     );
@@ -193,16 +182,11 @@ export default function AbsoluteGrid({
     const itemsLen = derived.itemsSorted.length;
 
     // basic grid sizing (columns + viewportH)
-    const { cols, viewportH } = useAbsoluteGridLayout(containerRef, {
-        padding: PADDING,
-        cardWidth: CARD_WIDTH,
-        cardHeight: CARD_HEIGHT,
-        gap: GAP,
-        itemsLen,
-    });
+    const { cols, viewportH } = useAbsoluteGridLayout(containerRef, itemsLen);
 
     // ensure at least 1 column
-    const colsSafe = Math.max(1, cols || 1);
+    const colsSafe = isListView ? 1 : Math.max(1, cols || 1);
+
 
     // top offset like LibraryList (controls + header)
     const topOffset = controlsH + headerH;
@@ -214,11 +198,9 @@ export default function AbsoluteGrid({
 
     useLayoutEffect(() => {
         if (typeof window === "undefined") return;
-
         const onResize = () => {
             setWindowInnerH(window.innerHeight);
         };
-
         onResize();
         window.addEventListener("resize", onResize);
         return () => window.removeEventListener("resize", onResize);
@@ -229,11 +211,13 @@ export default function AbsoluteGrid({
     const openHeight = `calc(100vh - ${topOffset}px - ${GRID.iconSize}px - 12px)`;
 
     // numeric open height used for layout math (matches the CSS calc)
-    const numericOpenHeight = useMemo(() => {
-        if (windowInnerH <= 0) return CARD_HEIGHT;
+    const dynamicOpenHeight = useMemo(() => {
+        if (windowInnerH <= 0) return GRID.cardHeight;
         const h = windowInnerH - topOffset - GRID.iconSize - 12;
-        return Math.max(CARD_HEIGHT, h);
+        return Math.max(GRID.cardHeight, h);
     }, [windowInnerH, topOffset]);
+
+    const baseClosedHeight = isListView ? GRID.rowHeight : GRID.cardHeight;
 
     // remount on filter/sort change like LibraryList
     const { flatKey } = useRemountKeys({
@@ -258,14 +242,12 @@ export default function AbsoluteGrid({
     useEffect(() => {
         const el = containerRef.current;
         if (!el) return;
-
         const onScroll = () => {
             if (programmaticScrollRef.current) return;
             if (openItemIdRef.current) {
                 userScrolledWhileOpenRef.current = true;
             }
         };
-
         el.addEventListener("scroll", onScroll, { passive: true });
         return () => el.removeEventListener("scroll", onScroll);
     }, []);
@@ -283,6 +265,7 @@ export default function AbsoluteGrid({
         [rowItems]
     );
 
+    // exclusive end indexs per row
     const rowLastItemIndexExclusivePerRow = useMemo(
         () => rowItems.map((row) => (row.length ? row[row.length - 1] + 1 : 0)),
         [rowItems]
@@ -301,16 +284,15 @@ export default function AbsoluteGrid({
                 rowItems,
                 rowIsOpen,
                 itemsLen,
-                numericOpenHeight,
-                CARD_HEIGHT,
-                PADDING,
-                GAP
+                dynamicOpenHeight,
+                baseClosedHeight
             ),
         [
             rowItems,
             rowIsOpen,
             itemsLen,
-            numericOpenHeight,
+            dynamicOpenHeight,
+            baseClosedHeight,
         ]
     );
 
@@ -321,9 +303,6 @@ export default function AbsoluteGrid({
                 itemsLen,
                 itemRowIndex,
                 itemColIndex,
-                PADDING,
-                CARD_WIDTH,
-                GAP,
                 rowTops
             ),
         [itemsLen, itemRowIndex, itemColIndex, rowTops]
@@ -334,6 +313,31 @@ export default function AbsoluteGrid({
         containerRef,
         positions,
     });
+
+    // virtual windowing with variable-height rows
+    const { visibleRange } = useVirtualWindow(containerRef, {
+        rows: rowTops.length,
+        cols: colsSafe,
+        itemsLen,
+        rowTops,
+        rowHeights,
+        containerHeight,
+        viewportH,
+        rowFirstItemIndexPerRow,
+        rowLastItemIndexExclusivePerRow,
+    });
+
+    const { counts: railCounts, activeLetter, handleJump } = useAlphabetRail({
+        isGrouped,
+        groups,
+        flatItems,
+        scrollItemIntoView,
+        visibleStartIndex: visibleRange.startIndex,
+        totalItems: itemsLen,
+    });
+
+    // only show rail when sorting by title & we actually have data
+    const showRail = ui.sortKey === "title" && derived.filteredCount > 0;
 
     // toggle handler: remember scrollTop on open, restore on close if user didn't scroll
     const onToggleGridIndex = useCallback(
@@ -399,20 +403,6 @@ export default function AbsoluteGrid({
         setPendingScrollIndex(null);
     }, [pendingScrollIndex, derived.itemsSorted, openIds, scrollItemIntoView]);
 
-    // virtual windowing with variable-height rows
-    const { visibleRange } = useVirtualWindow(containerRef, {
-        overscan: OVERSCAN,
-        rows: rowTops.length,
-        cols: colsSafe,
-        itemsLen,
-        rowTops,
-        rowHeights,
-        containerHeight,
-        viewportH,
-        rowFirstItemIndexPerRow,
-        rowLastItemIndexExclusivePerRow,
-    });
-
     return (
         <Flex direction="column" style={{ width: "100%", height: "100%" }}>
             <HeaderControls
@@ -451,18 +441,17 @@ export default function AbsoluteGrid({
                 {/* Visible window */}
                 {derived.itemsSorted
                     .slice(visibleRange.startIndex, visibleRange.endIndex)
-                    .map((item: any, i: number) => {
+                    .map((item: Item, i: number) => {
                         const absoluteIndex = visibleRange.startIndex + i;
                         const pos = positions[absoluteIndex] ?? {
-                            left: PADDING,
-                            top: PADDING,
+                            left: GRID.padding,
+                            top: GRID.padding,
                         };
-                        let { left, top } = pos;
 
+                        // Open item OR list rows should occupy full width from the left edge
                         const isOpen = openIds.has(item.id);
-
-                        // Open item should occupy the whole row without spacing
-                        if (isOpen) left = 0;
+                        let { left, top } = pos;
+                        if (isOpen || isListView) left = 0;
 
                         return (
                             <Box
@@ -470,26 +459,34 @@ export default function AbsoluteGrid({
                                 role="listitem"
                                 tabIndex={0}
                                 style={{
-                                    display: "flex",
                                     position: "absolute",
                                     boxSizing: "border-box",
+                                    display: "flex",
                                     flexDirection: "column",
                                     overflow: "hidden",
                                     left,
                                     top,
-                                    width: isOpen ? openWidth : CARD_WIDTH,
-                                    height: isOpen ? openHeight : CARD_HEIGHT,
-                                    zIndex: isOpen ? 2 : 1,
+                                    width: isOpen
+                                        ? openWidth
+                                        : isListView
+                                            ? "100%"
+                                            : GRID.cardWidth,
+                                    height: isOpen
+                                        ? openHeight
+                                        : isListView
+                                            ? GRID.rowHeight
+                                            : GRID.cardHeight,
+                                    zIndex: isOpen ? Z_INDEX.aboveBase : Z_INDEX.base,
                                     backgroundColor: "var(--mantine-color-default-background)",
                                 }}
                             >
                                 <ExpandableItem
                                     item={item}
-                                    collapseOpen={isOpen}
+                                    isOpen={isOpen}
                                     topOffset={topOffset}
                                     openWidth={openWidth}
                                     openHeight={openHeight}
-                                    layout="grid"
+                                    view={view}
                                     onToggle={() =>
                                         onToggleGridIndex(item.id, absoluteIndex)
                                     }
@@ -497,6 +494,12 @@ export default function AbsoluteGrid({
                             </Box>
                         );
                     })}
+            </Box>
+
+            <Box style={{ display: "flex", alignItems: "stretch", pointerEvents: "none" }}>
+                <Box style={{ pointerEvents: "auto", width: "100%" }}>
+                    <AlphabeticalRail active={activeLetter} onJump={handleJump} counts={railCounts} />
+                </Box>
             </Box>
         </Flex>
     );

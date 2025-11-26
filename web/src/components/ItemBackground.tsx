@@ -2,16 +2,17 @@
 import React from "react";
 import { Box } from "@mantine/core";
 import { useDelayedFlag } from "../features/library/hooks/useDelayedFlag";
+import { Z_INDEX } from "../lib/constants";
 
 type Props = {
     bgUrl: string | null;
-    collapseOpen: boolean;
+    isOpen: boolean;
 };
 
-export function ItemBackground({ bgUrl, collapseOpen }: Props) {
-    const collapseOpenDelayed = useDelayedFlag({ active: collapseOpen, delayMs: 140 });
+export function ItemBackground({ bgUrl, isOpen }: Props) {
+    const isOpenDelayed = useDelayedFlag({ active: isOpen, delayMs: 140 });
 
-    if (!collapseOpen || !bgUrl)  return null;
+    if (!isOpen || !bgUrl)  return null;
 
     return (
         <Box
@@ -23,9 +24,9 @@ export function ItemBackground({ bgUrl, collapseOpen }: Props) {
                 backgroundSize: "cover",
                 backgroundPosition: "center",
                 pointerEvents: "none",
-                zIndex: 0,
-                transform: collapseOpenDelayed ? "scale(1.02)" : "scale(1.01)",
-                opacity: collapseOpenDelayed ? 0.3 : 0,
+                zIndex: Z_INDEX.belowBase,
+                transform: isOpenDelayed ? "scale(1.02)" : "scale(1.01)",
+                opacity: isOpenDelayed ? 0.3 : 0,
                 willChange: "opacity, transform",
                 transitionProperty: "opacity, transform",
                 transitionDuration: "220ms, 260ms",

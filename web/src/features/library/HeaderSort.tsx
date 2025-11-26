@@ -1,4 +1,4 @@
-import { Box, Paper, UnstyledButton, Text, useMantineTheme, rem } from "@mantine/core";
+import { Box, Paper, UnstyledButton, Text, rem } from "@mantine/core";
 import type { SortDir, SortKey } from "../../lib/types";
 import { GRID, Z_INDEX } from "../../lib/constants";
 
@@ -22,7 +22,6 @@ type Props = {
  */
 export function HeaderSort(props: Props) {
   const { headerRef, sortKey, sortDir, onToggleSort, gridColumns } = props;
-  const theme = useMantineTheme();
 
   const label = (base: string, key: SortKey) =>
     sortKey === key ? `${base} ${sortDir === "asc" ? "▲" : "▼"}` : base;

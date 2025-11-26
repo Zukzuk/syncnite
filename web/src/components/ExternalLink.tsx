@@ -2,7 +2,7 @@
 import React from "react";
 import { ActionIcon, Tooltip } from "@mantine/core";
 import { IconExternalLink } from "@tabler/icons-react";
-import { Item } from "../features/library/hooks/useLibrary";
+import { Item } from "../features/library/hooks/useLibraryData";
 import { SOURCE_MAP } from "../lib/constants";
 
 type Props = Pick<Item, "link" | "title" | "source">;

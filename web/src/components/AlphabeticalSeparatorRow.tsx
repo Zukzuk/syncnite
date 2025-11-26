@@ -9,7 +9,7 @@ export function AlphabeticalSeparatorRow({ bucket, top }: Props) {
       h={GRID.iconSize}
       style={{
         position: 'sticky',
-        zIndex: Z_INDEX.seperatorRow,
+        zIndex: Z_INDEX.base,
         fontWeight: 600,
         padding: '6px 12px 6px 64px',
         background: 'var(--mantine-color-body)',

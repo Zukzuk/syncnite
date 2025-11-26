@@ -14,7 +14,7 @@ import {
     IconWorldWww,
 } from "@tabler/icons-react";
 import { SOURCE_MAP } from "../lib/constants";
-import { Item } from "../features/library/hooks/useLibrary";
+import { Item } from "../features/library/hooks/useLibraryData";
 
 
 type Props = Pick<Item, "source" | "gameId" | "link">;

@@ -28,13 +28,20 @@ export const API_ENDPOINTS = {
 export const GRID = {
   colsList: "40px minmax(0, 55%) 60px 95px minmax(0, 1fr)",
   colsGrid: "0px 60px 60px 95px minmax(0, 1fr)",
+  cardWidth: 160,
+  cardHeight: 300,
   rowHeight: 56,
   iconSize: 38,
+  gap: 4,
+  padding: 2,
+  overscan: { top: 600, bottom: 800 } as const, 
   menuWidth: 160,
 } as const;
 
 export const Z_INDEX = {
-  seperatorRow: 1,
+  belowBase: 0,
+  base: 1,
+  aboveBase: 2,
   stickyHeader: 15,
   iconOverlay: 20,
   controls: 30,

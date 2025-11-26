@@ -1,29 +1,30 @@
 import React, { useCallback } from "react";
 import { Box } from "@mantine/core";
 import { ViewMode } from "../lib/types";
-import { Item } from "../features/library/hooks/useLibrary";
+import { Item } from "../features/library/hooks/useLibraryData";
 import { ItemDetails } from "./ItemDetails";
 import { ItemBackground } from "./ItemBackground";
 import { RowItem } from "./RowItem";
 import { GridItem } from "./GridItem";
+import { Z_INDEX } from "../lib/constants";
 
 type Props = {
     item: Item;
-    collapseOpen: boolean;
+    isOpen: boolean;
     topOffset: number;
     openWidth: string;
     openHeight: string;
-    layout: ViewMode;
+    view: ViewMode;
     onToggle: () => void;
 };
 
 export function ExpandableItem(props: Props) {
     const {
         item,
-        collapseOpen,
+        isOpen,
         openWidth,
         openHeight,
-        layout,
+        view,
         onToggle,
     } = props;
 
@@ -61,14 +62,13 @@ export function ExpandableItem(props: Props) {
     const outerListStyles: React.CSSProperties = {
         ...outerBase,
         borderBottom: "1px solid var(--mantine-color-default-border)",
-        paddingLeft: 12,
+        padding: "0px 0px 0px 12px",
     };
 
     const outerGridStyles: React.CSSProperties = {
         ...outerBase,
-        borderRadius: collapseOpen ? 0 : 4,
-        padding: collapseOpen ? 0 : 2,
-        paddingLeft: collapseOpen ? 12 : 2,
+        borderRadius: isOpen ? 0 : 4,
+        padding: isOpen ? "0px 0px 0px 12px" : "2px 2px 2px 2px",
     };
 
     return (
@@ -76,11 +76,11 @@ export function ExpandableItem(props: Props) {
             data-row-id={id}
             role="button"
             tabIndex={0}
-            aria-expanded={collapseOpen}
+            aria-expanded={isOpen}
             aria-label={`${title}`}
             onKeyDown={onKeyDown}
             style={{
-                ...(layout === "list" ? outerListStyles : outerGridStyles),
+                ...(view === "list" ? outerListStyles : outerGridStyles),
             }}
             onClick={onToggle}
         >
@@ -88,27 +88,26 @@ export function ExpandableItem(props: Props) {
                 style={{ 
                     opacity: isHidden ? 0.2 : 1,
                     position: "relative", 
-                    top: 0, left: 0, zIndex: 1 
+                    top: 0, left: 0, zIndex: Z_INDEX.base, 
                 }}
-                w={collapseOpen ? openWidth : "100%"}
-                h={collapseOpen ? openHeight : "100%"}
+                w={isOpen ? openWidth : "100%"}
+                h={isOpen ? openHeight : "100%"}
             >
-                {!collapseOpen && layout === "list" && <RowItem item={item} collapseOpen={collapseOpen} />}
-                {!collapseOpen && layout === "grid" && <GridItem item={item} collapseOpen={collapseOpen} />}
-                {/* expanded panel: identical everywhere */}
-                {collapseOpen && <RowItem item={item} collapseOpen={collapseOpen} />}
-                {collapseOpen && (
+                {!isOpen && view === "list" && <RowItem item={item} isOpen={isOpen} />}
+                {!isOpen && view === "grid" && <GridItem item={item} isOpen={isOpen} />}
+                {isOpen && <RowItem item={item} isOpen={isOpen} />}
+                {isOpen && (
                     <ItemDetails
                         title={title}
                         coverUrl={coverUrl}
-                        collapseOpen={collapseOpen}
+                        isOpen={isOpen}
                         onToggle={onToggle}
                     />
                 )}
             </Box>
             <ItemBackground
                 bgUrl={bgUrl}
-                collapseOpen={collapseOpen}
+                isOpen={isOpen}
             />
         </Box>
     );

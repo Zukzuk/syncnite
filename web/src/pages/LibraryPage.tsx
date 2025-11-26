@@ -3,18 +3,17 @@ import { Stack, Loader, Box, Center } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { GRID, INTERVAL_MS } from "../lib/constants";
 import { ViewMode } from "../lib/types";
-import { useLibrary } from "../features/library/hooks/useLibrary";
-import LibraryList from "../features/library/LibraryList";
+import { useLibraryData } from "../features/library/hooks/useLibraryData";
 import LibraryGrid from "../features/library/LibraryGrid";
 
 export default function LibraryPage() {
     const [filtered, setFiltered] = React.useState(0);
     const [total, setTotal] = React.useState(0);
-    const { data, installedUpdatedAt } = useLibrary({ pollMs: INTERVAL_MS });
+    const { data, installedUpdatedAt } = useLibraryData({ pollMs: INTERVAL_MS });
 
     const [view, setView] = useLocalStorage<ViewMode>({
         key: "library.view",
-        defaultValue: "list",
+        defaultValue: "grid",
     });
 
     if (!data) {
@@ -30,33 +29,18 @@ export default function LibraryPage() {
     return (
         <Stack gap="lg" style={{ height: "100%", minHeight: 0 }}>
             <Box style={{ height: `calc(100vh - ${GRID.rowHeight}px)` }}>
-                {view === "grid" ? (
-                    <LibraryGrid
-                        data={data}
-                        onCountsChange={(f, t) => {
-                            setFiltered(f);
-                            setTotal(t);
-                        }}
-                        view={view}
-                        setView={setView}
-                        filteredCount={filtered}
-                        totalCount={total}
-                        installedUpdatedAt={installedUpdatedAt || ""}
-                    />
-                ) : (
-                    <LibraryList
-                        data={data}
-                        onCountsChange={(f, t) => {
-                            setFiltered(f);
-                            setTotal(t);
-                        }}
-                        view={view}
-                        setView={setView}
-                        filteredCount={filtered}
-                        totalCount={total}
-                        installedUpdatedAt={installedUpdatedAt || ""}
-                    />
-                )}
+                <LibraryGrid
+                    data={data}
+                    onCountsChange={(f, t) => {
+                        setFiltered(f);
+                        setTotal(t);
+                    }}
+                    view={view}
+                    setView={setView}
+                    filteredCount={filtered}
+                    totalCount={total}
+                    installedUpdatedAt={installedUpdatedAt || ""}
+                />
             </Box>
         </Stack>
     );

@@ -1,9 +1,10 @@
 import { useLayoutEffect, useMemo, useState } from "react";
+import { GRID } from "../../../lib/constants";
 
 // A hook to calculate an absolute grid layout for a container.
 export function useAbsoluteGridLayout(
     containerRef: React.RefObject<HTMLDivElement>,
-    { padding, cardWidth, cardHeight, gap, itemsLen }: { padding: number; cardWidth: number; cardHeight: number; gap: number; itemsLen: number }
+    itemsLen: number,
 ) {
     const [width, setWidth] = useState(0);
     const [viewportH, setViewportH] = useState(0);
@@ -23,23 +24,20 @@ export function useAbsoluteGridLayout(
     }, []);
 
     const layout = useMemo(() => {
-        // if (width <= 0) {
-        //     return { cols: 1, rows: 0, strideY: cardHeight + gap, positions: [] as { left: number; top: number }[], containerHeight: padding * 2 + cardHeight };
-        // }
-        const innerW = Math.max(0, width - padding * 2);
-        const strideX = cardWidth + gap;
-        const cols = Math.max(1, Math.floor((innerW + gap) / strideX));
-        const strideY = cardHeight + gap;
+        const innerW = Math.max(0, width - GRID.padding * 2);
+        const strideX = GRID.cardWidth + GRID.gap;
+        const cols = Math.max(1, Math.floor((innerW + GRID.gap) / strideX));
+        const strideY = GRID.cardHeight + GRID.gap;
         const positions: { left: number; top: number }[] = new Array(itemsLen);
         for (let i = 0; i < itemsLen; i++) {
             const col = i % cols;
             const row = Math.floor(i / cols);
-            positions[i] = { left: padding + col * strideX, top: padding + row * strideY };
+            positions[i] = { left: GRID.padding + col * strideX, top: GRID.padding + row * strideY };
         }
         const rows = Math.ceil(itemsLen / cols);
-        const containerHeight = rows === 0 ? padding * 2 + cardHeight : padding * 2 + rows * (cardHeight + gap) - gap;
+        const containerHeight = rows === 0 ? GRID.padding * 2 + GRID.cardHeight : GRID.padding * 2 + rows * (GRID.cardHeight + GRID.gap) - GRID.gap;
         return { cols, rows, strideY, positions, containerHeight };
-    }, [width, padding, cardWidth, cardHeight, gap, itemsLen]);
+    }, [width, itemsLen]);
 
     return { width, viewportH, ...layout } as const;
 }
