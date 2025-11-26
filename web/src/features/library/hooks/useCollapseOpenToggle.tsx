@@ -2,15 +2,12 @@ import * as React from "react";
 
 type UseReturn = {
   openIds: Set<string>;
-  everOpenedIds: Set<string>;
   toggleOpen: (id: string, onOpen?: () => void) => void;
 };
 
 // A hook to manage collapse open/close state with tracking of ever opened items.
 export function useCollapseOpenToggle(): UseReturn {
   const [openIds, setOpenIds] = React.useState<Set<string>>(new Set());
-  const [everOpenedIds, setEverOpenedIds] = React.useState<Set<string>>(new Set());
-
   const toggleOpen = React.useCallback((id: string, onOpen?: () => void) => {
 
     setOpenIds(prev => {
@@ -24,15 +21,8 @@ export function useCollapseOpenToggle(): UseReturn {
       }
       return next;
     });
-
-    setEverOpenedIds(prev => {
-      if (prev.has(id)) return prev;
-      const next = new Set(prev);
-      next.add(id);
-      return next;
-    });
     
   }, []);
 
-  return { openIds, everOpenedIds, toggleOpen };
+  return { openIds, toggleOpen };
 }

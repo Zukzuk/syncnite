@@ -14,7 +14,6 @@ export function useVirtualWindow(
         rowHeights: number[]; // rowHeight[row]
         containerHeight: number;
         viewportH: number;
-        // Optional: explicit mapping from row -> [firstItemIndex, lastItemIndexExclusive]
         rowFirstItemIndexPerRow?: number[];
         rowLastItemIndexExclusivePerRow?: number[];
     }
@@ -35,6 +34,7 @@ export function useVirtualWindow(
     const [scrollTop, setScrollTop] = useState(0);
     const rafRef = useRef<number | null>(null);
 
+    // scroll handler
     useLayoutEffect(() => {
         const el = containerRef.current;
         if (!el) return;
@@ -54,6 +54,7 @@ export function useVirtualWindow(
         };
     }, []);
 
+    // adjust scrollTop if containerHeight or itemsLen changes
     useLayoutEffect(() => {
         const el = containerRef.current;
         if (!el) return;
@@ -66,6 +67,7 @@ export function useVirtualWindow(
         setScrollTop(el.scrollTop);
     }, [containerHeight, viewportH, itemsLen]);
 
+    // compute visible range
     const visibleRange = useMemo(() => {
         if (!rows || !cols) return { startIndex: 0, endIndex: 0 };
 
@@ -100,7 +102,7 @@ export function useVirtualWindow(
             rowLastItemIndexExclusivePerRow.length === rows;
 
         if (haveRowIndexMapping && startRow < endRowExclusive) {
-            // ✅ Use real item indices per row (works with open rows / uneven row sizes)
+            // Use real item indices per row (works with open rows / uneven row sizes)
             const firstRow = startRow;
             const lastRow = endRowExclusive - 1;
 

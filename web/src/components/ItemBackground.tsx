@@ -6,15 +6,12 @@ import { useDelayedFlag } from "../features/library/hooks/useDelayedFlag";
 type Props = {
     bgUrl: string | null;
     collapseOpen: boolean;
-    everOpened: boolean;
 };
 
-export function ItemBackground({ bgUrl, collapseOpen, everOpened }: Props) {
+export function ItemBackground({ bgUrl, collapseOpen }: Props) {
     const collapseOpenDelayed = useDelayedFlag({ active: collapseOpen, delayMs: 140 });
 
-    if (!collapseOpen && !everOpened || !bgUrl) {
-        return null;
-    }
+    if (!collapseOpen || !bgUrl)  return null;
 
     return (
         <Box

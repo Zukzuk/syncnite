@@ -1,4 +1,4 @@
-import { COOKIE, COOKIE_DEFAULTS, KEY_EMAIL, KEY_PASS, KEY_ROLE } from "./constants";
+import { COOKIE_DEFAULTS } from "./constants";
 import type { Letter, Role, SortDir, SortKey } from "./types";
 import { useComputedColorScheme, useMantineTheme } from "@mantine/core";
 
@@ -24,9 +24,9 @@ type Creds = {
 
 export function getCreds(): Creds | null {
   try {
-    const email = localStorage.getItem(KEY_EMAIL);
-    const password = localStorage.getItem(KEY_PASS);
-    const role = localStorage.getItem(KEY_ROLE) as Role | null;
+    const email = localStorage.getItem("sb_email");
+    const password = localStorage.getItem("sb_password");
+    const role = localStorage.getItem("sb_role") as Role | null;
     if (!email || !password || !role) return null;
     return { email, password, role };
   } catch {
@@ -36,18 +36,18 @@ export function getCreds(): Creds | null {
 
 export function setCreds(email: string, password: string, role: Role) {
   try {
-    localStorage.setItem(KEY_EMAIL, email.toLowerCase());
-    localStorage.setItem(KEY_PASS, password);
-    localStorage.setItem(KEY_ROLE, role);
+    localStorage.setItem("sb_email", email.toLowerCase());
+    localStorage.setItem("sb_password", password);
+    localStorage.setItem("sb_role", role);
     window.dispatchEvent(new Event("sb:auth-changed"));
   } catch { }
 }
 
 export function clearCreds() {
   try {
-    localStorage.removeItem(KEY_EMAIL);
-    localStorage.removeItem(KEY_PASS);
-    localStorage.removeItem(KEY_ROLE);
+    localStorage.removeItem("sb_email");
+    localStorage.removeItem("sb_password");
+    localStorage.removeItem("sb_role");
     window.dispatchEvent(new Event("sb:auth-changed"));
   } catch { }
 }
@@ -98,12 +98,12 @@ type CookieState = {
 
 export function loadStateFromCookie(): CookieState {
   try {
-    return jsonGet<CookieState>(COOKIE.libraryState, COOKIE_DEFAULTS);
+    return jsonGet<CookieState>("pn_library_state", COOKIE_DEFAULTS);
   } catch {
     return COOKIE_DEFAULTS;
   }
 }
 
 export function saveStateToCookie(cookieState: CookieState) {
-  jsonSet(COOKIE.libraryState, cookieState);
+  jsonSet("pn_library_state", cookieState);
 }

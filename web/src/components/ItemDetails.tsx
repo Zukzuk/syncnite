@@ -6,11 +6,10 @@ type Props = {
     title: string;
     coverUrl: string | null;
     collapseOpen: boolean;
-    everOpened: boolean;
     onToggle?: (e: React.MouseEvent) => void;
 };
 
-export function ItemDetails({ title, coverUrl, collapseOpen, everOpened, onToggle }: Props) {
+export function ItemDetails({ title, coverUrl, collapseOpen, onToggle }: Props) {
     const collapseOpenDelayed = useDelayedFlag({ active: collapseOpen, delayMs: 140 });
 
     return (
@@ -33,7 +32,7 @@ export function ItemDetails({ title, coverUrl, collapseOpen, everOpened, onToggl
                 }}
             >
                 <Group align="start" gap="md" wrap="nowrap" pb={0}>
-                    {everOpened && coverUrl ? (
+                    {coverUrl ? (
                         <Image
                             src={coverUrl}
                             alt={`${title} cover`}

@@ -1,18 +1,16 @@
-import { KEY, MAX_LINES } from "../lib/constants";
-
 let lines: string[] = restore();
 type LogListener = (lines: string[]) => void;
 const listeners = new Set<LogListener>();
 
 function store() {
     try {
-        sessionStorage.setItem(KEY, JSON.stringify(lines));
+        sessionStorage.setItem("pn_logs", JSON.stringify(lines));
     } catch { }
 }
 
 function restore(): string[] {
     try {
-        const raw = sessionStorage.getItem(KEY);
+        const raw = sessionStorage.getItem("pn_logs");
         if (!raw) return [];
         const arr = JSON.parse(raw);
         return Array.isArray(arr) ? arr : [];
@@ -31,7 +29,7 @@ function emit() {
 export const LogBus = {
     append(line: string) {
         if (!line) return;
-        lines = [line, ...lines].slice(0, MAX_LINES);
+        lines = [line, ...lines].slice(0, 1000);
         store();
         emit();
     },

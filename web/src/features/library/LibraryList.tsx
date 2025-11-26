@@ -50,7 +50,7 @@ export default function LibraryList({
   const { ui, derived } = useLibraryState(data);
   const { ref: controlsRef, height: controlsH } = useElementSize();
   const { ref: headerRef, height: headerH } = useElementSize();
-  const { openIds, everOpenedIds, toggleOpen } = useCollapseOpenToggle();
+  const { openIds, toggleOpen } = useCollapseOpenToggle();
   const { virtuosoRef, setScrollerEl, scrollRowIntoView } = useListJumpToScroll({ headerH });
 
   React.useEffect(() => {
@@ -125,7 +125,6 @@ export default function LibraryList({
             overscan={overscan}
             rangeChanged={rangeChanged}
             openIds={openIds}
-            everOpenedIds={everOpenedIds}
             onToggle={onToggleGrouped}
             remountKey={groupedKey}
             installedUpdatedAt={installedUpdatedAt}
@@ -139,7 +138,6 @@ export default function LibraryList({
             overscan={overscan}
             rangeChanged={rangeChanged}
             openIds={openIds}
-            everOpenedIds={everOpenedIds}
             onToggle={onToggleFlat}
             remountKey={flatKey}
             installedUpdatedAt={installedUpdatedAt}

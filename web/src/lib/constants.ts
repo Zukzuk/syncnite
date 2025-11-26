@@ -70,17 +70,11 @@ export const SOURCE_MAP: Record<string, { platform: string; online: string; labe
   "microsoft store": { platform: "ms-windows-store://", online: "https://apps.microsoft.com", label: "Microsoft Store" },
 };
 
-export const MAX_LINES = 1000;
-
 export const INTERVAL_MS = 5000;
 
 export const LETTERS_LIST = ["#", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
 
 export const LETTERS = [...LETTERS_LIST] as const;
-
-export const COOKIE = {
-  libraryState: "pn_library_ui_v2",
-};
 
 export const COOKIE_DEFAULTS = {
   q: "",
@@ -109,27 +103,3 @@ export const COLLECTIONS = {
   filterpresets: "filterpresets",
   importexclusions: "importexclusions",
 } as const;
-
-export const KEY_EMAIL = "sb_email";
-
-export const KEY_PASS = "sb_password";
-
-export const KEY_ROLE = "sb_role";
-
-export const EVT = "sb:auth-changed";
-
-export const NOTIF_IMPORT_ID = "pn-import";
-
-export const KEY = "pn_logs_v1";
-
-export const NOTIF_UPLOAD_ID = "pn-upload";
-
-export const STATE_KEY = "pn_upload_state_v1";
-
-export const LAST_UP_KEY = "pn_last_uploaded_v1";
-
-export const IDB_DB = "pn_fs_handles";
-
-export const IDB_STORE = "handles";
-
-export const DB_KEY = "backupDir";

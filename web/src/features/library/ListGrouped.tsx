@@ -4,7 +4,7 @@ import type { VirtuosoHandle } from "react-virtuoso";
 import { Item } from "./hooks/useLibrary";
 import { AlphabeticalSeparatorRow } from "../../components/AlphabeticalSeparatorRow";
 import { Scroller } from "../../components/Scroller";
-import { ExpandableItemWrapper } from "../../components/ExpandableItem";
+import { ExpandableItem } from "../../components/ExpandableItem";
 import { GRID } from "../../lib/constants";
 
 type Props = {
@@ -15,7 +15,6 @@ type Props = {
   overscan: { top: number; bottom: number };
   rangeChanged: (range: { startIndex: number; endIndex: number }) => void;
   openIds: Set<string>;
-  everOpenedIds: Set<string>;
   onToggle: (id: string, globalIndex: number) => void;
   remountKey: string;
   installedUpdatedAt?: string;
@@ -38,7 +37,7 @@ type Props = {
  */
 export function ListGrouped({
   virtuosoRef, scrollerRef, groups, topOffset, overscan, rangeChanged,
-  openIds, everOpenedIds, onToggle, remountKey, installedUpdatedAt,
+  openIds, onToggle, remountKey, installedUpdatedAt,
 }: Props) {
   // ensure scroll position is maintained on layout changes
   const openWidth = `calc(100vw - ${GRID.menuWidth}px - 12px - 15px)`;
@@ -69,10 +68,9 @@ export function ListGrouped({
             const item = g.items[i];
             const globalIndex = offset + i;
             return (
-              <ExpandableItemWrapper
+              <ExpandableItem
                 item={item}
                 collapseOpen={openIds.has(item.id)}
-                everOpened={everOpenedIds.has(item.id)}
                 topOffset={topOffset}
                 openWidth={openWidth}
                 openHeight={openHeight}

@@ -10,7 +10,7 @@ import { Box, Flex } from "@mantine/core";
 import { useElementSize } from "@mantine/hooks";
 import { HeaderSort } from "./HeaderSort";
 import { HeaderControls } from "./HeaderControls";
-import { ExpandableItemWrapper } from "../../components/ExpandableItem";
+import { ExpandableItem } from "../../components/ExpandableItem";
 import { useLibraryState } from "./hooks/useLibraryState";
 import type { LoadedData } from "./hooks/useLibrary";
 import { useCollapseOpenToggle } from "./hooks/useCollapseOpenToggle";
@@ -169,8 +169,7 @@ export default function AbsoluteGrid({
     installedUpdatedAt,
 }: Props) {
     const { ui, derived } = useLibraryState(data);
-    const { openIds, everOpenedIds, toggleOpen } = useCollapseOpenToggle();
-
+    const { openIds, toggleOpen } = useCollapseOpenToggle();
     const { ref: controlsRef, height: controlsH } = useElementSize();
     const { ref: headerRef, height: headerH } = useElementSize();
 
@@ -202,6 +201,7 @@ export default function AbsoluteGrid({
         itemsLen,
     });
 
+    // ensure at least 1 column
     const colsSafe = Math.max(1, cols || 1);
 
     // top offset like LibraryList (controls + header)
@@ -270,16 +270,14 @@ export default function AbsoluteGrid({
         return () => el.removeEventListener("scroll", onScroll);
     }, []);
 
-    /**
-     * Logical rows based on open/closed state
-     */
+    // build rows with open items taking full rows
     const { rowItems, rowIsOpen } = useMemo(
         () =>
             buildGridRows(derived.itemsSorted, itemsLen, openIds, colsSafe),
         [derived.itemsSorted, itemsLen, openIds, colsSafe]
     );
 
-    // NEW: per-row item index ranges for virtual window mapping
+    // per-row item index ranges for virtual window mapping
     const rowFirstItemIndexPerRow = useMemo(
         () => rowItems.map((row) => (row.length ? row[0] : 0)),
         [rowItems]
@@ -290,9 +288,7 @@ export default function AbsoluteGrid({
         [rowItems]
     );
 
-    /**
-     * Row layout and mapping item -> (row, col)
-     */
+    // compute row layout including open rows
     const {
         rowTops,
         rowHeights,
@@ -315,13 +311,10 @@ export default function AbsoluteGrid({
             rowIsOpen,
             itemsLen,
             numericOpenHeight,
-            /* CARD_HEIGHT, PADDING, GAP are constants */
         ]
     );
 
-    /**
-     * Absolute positions per item index reflecting the logical rows
-     */
+    // compute item positions based on row layout
     const positions = useMemo(
         () =>
             computeItemPositions(
@@ -448,13 +441,7 @@ export default function AbsoluteGrid({
 
             <Box
                 ref={containerRef}
-                style={{
-                    position: "relative",
-                    width: "100%",
-                    flex: 1,
-                    height: "100%",
-                    overflow: "auto",
-                }}
+                style={{ flex: 1, position: "relative", width: "100%", height: "100%", overflow: "auto" }}
                 aria-label="absolute-grid"
                 role="list"
             >
@@ -473,9 +460,8 @@ export default function AbsoluteGrid({
                         let { left, top } = pos;
 
                         const isOpen = openIds.has(item.id);
-                        const wasOpened = everOpenedIds.has(item.id);
 
-                        // Open item should occupy the whole row from left padding
+                        // Open item should occupy the whole row without spacing
                         if (isOpen) left = 0;
 
                         return (
@@ -484,24 +470,22 @@ export default function AbsoluteGrid({
                                 role="listitem"
                                 tabIndex={0}
                                 style={{
+                                    display: "flex",
                                     position: "absolute",
+                                    boxSizing: "border-box",
+                                    flexDirection: "column",
+                                    overflow: "hidden",
                                     left,
                                     top,
                                     width: isOpen ? openWidth : CARD_WIDTH,
                                     height: isOpen ? openHeight : CARD_HEIGHT,
-                                    boxSizing: "border-box",
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    overflow: "hidden",
                                     zIndex: isOpen ? 2 : 1,
-                                    backgroundColor:
-                                        "var(--mantine-color-default-background)",
+                                    backgroundColor: "var(--mantine-color-default-background)",
                                 }}
                             >
-                                <ExpandableItemWrapper
+                                <ExpandableItem
                                     item={item}
                                     collapseOpen={isOpen}
-                                    everOpened={wasOpened}
                                     topOffset={topOffset}
                                     openWidth={openWidth}
                                     openHeight={openHeight}

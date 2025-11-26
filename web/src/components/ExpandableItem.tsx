@@ -10,7 +10,6 @@ import { GridItem } from "./GridItem";
 type Props = {
     item: Item;
     collapseOpen: boolean;
-    everOpened: boolean;
     topOffset: number;
     openWidth: string;
     openHeight: string;
@@ -18,11 +17,10 @@ type Props = {
     onToggle: () => void;
 };
 
-export function ExpandableItemWrapper(props: Props) {
+export function ExpandableItem(props: Props) {
     const {
         item,
         collapseOpen,
-        everOpened,
         openWidth,
         openHeight,
         layout,
@@ -104,7 +102,6 @@ export function ExpandableItemWrapper(props: Props) {
                         title={title}
                         coverUrl={coverUrl}
                         collapseOpen={collapseOpen}
-                        everOpened={everOpened}
                         onToggle={onToggle}
                     />
                 )}
@@ -112,7 +109,6 @@ export function ExpandableItemWrapper(props: Props) {
             <ItemBackground
                 bgUrl={bgUrl}
                 collapseOpen={collapseOpen}
-                everOpened={everOpened}
             />
         </Box>
     );
