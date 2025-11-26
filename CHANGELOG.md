@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.28.0](https://github.com/Zukzuk/syncnite/compare/v1.27.0...v1.28.0) (2025-11-26)
+
+
+### Features
+
+* removed unnecessary everopenend calc ([5072a9f](https://github.com/Zukzuk/syncnite/commit/5072a9fdf5608950a6c51fd04824ab2ad18265d2))
+
 ## [1.27.0](https://github.com/Zukzuk/syncnite/compare/v1.26.0...v1.27.0) (2025-11-25)
 
 
