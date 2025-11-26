@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.28.1](https://github.com/Zukzuk/syncnite/compare/v1.28.0...v1.28.1) (2025-11-26)
+
+
+### Bug Fixes
+
+* fixed first rail implementation ([1957ac9](https://github.com/Zukzuk/syncnite/commit/1957ac9f5b2615be5b6ef80a7cd54a5a06858a5d))
+
 ## [1.28.0](https://github.com/Zukzuk/syncnite/compare/v1.27.0...v1.28.0) (2025-11-26)
 
 
