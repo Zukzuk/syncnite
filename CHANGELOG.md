@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.29.0](https://github.com/Zukzuk/syncnite/compare/v1.28.1...v1.29.0) (2025-11-28)
+
+
+### Features
+
+* fixed up some grid issues ([65bacc2](https://github.com/Zukzuk/syncnite/commit/65bacc2951af9371e74e736b455fdd14e6411260))
+
 ### [1.28.1](https://github.com/Zukzuk/syncnite/compare/v1.28.0...v1.28.1) (2025-11-26)
 
 
