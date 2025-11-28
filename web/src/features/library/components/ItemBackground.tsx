@@ -1,15 +1,15 @@
 
 import React from "react";
 import { Box } from "@mantine/core";
-import { useDelayedFlag } from "../features/library/hooks/useDelayedFlag";
-import { Z_INDEX } from "../lib/constants";
+import { useDelayedFlag } from "../hooks/useDelayedFlag";
+import { Z_INDEX } from "../../../lib/constants";
 
 type Props = {
     bgUrl: string | null;
     isOpen: boolean;
 };
 
-export function ItemBackground({ bgUrl, isOpen }: Props) {
+export function ItemBackground({ bgUrl, isOpen }: Props): JSX.Element | null {
     const isOpenDelayed = useDelayedFlag({ active: isOpen, delayMs: 140 });
 
     if (!isOpen || !bgUrl)  return null;

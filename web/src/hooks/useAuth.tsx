@@ -1,13 +1,7 @@
 import * as React from "react";
 import { verifySession } from "../lib/api";
 import { clearCreds } from "../lib/utils";
-
-type AuthState = {
-  ready: boolean;
-  loggedIn: boolean;
-  email: string | null;
-  role: string | null;
-};
+import { AuthState } from "../types/types";
 
 type UseParams = {
   pollMs: number;

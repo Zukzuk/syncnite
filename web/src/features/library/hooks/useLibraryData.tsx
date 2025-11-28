@@ -2,33 +2,10 @@ import * as React from "react";
 import type { Game, GameLink, GameReleaseDate, Series, Source, Tag } from "../../../types/playnite";
 import { COLLECTIONS, FILE_BASE, FALLBACK_ICON, SOURCE_MAP } from "../../../lib/constants";
 import { loadDbCollection } from "../../../lib/api";
+import { fetchUser } from "../../../lib/utils";
+import { GameItem, LoadedData } from "../../../types/types";
 import { useRefreshLibrary } from "./useRefreshLibrary";
 import { useLocalInstalled } from "./useLocalInstalled";
-import { fetchUser } from "../../../lib/utils";
-
-export type LoadedData = {
-    items: Item[];
-    allSources: string[];
-    allTags: string[];
-    allSeries: string[];
-};
-
-export type Item = {
-    id: string;
-    title: string;
-    sortingName: string | null;
-    gameId: string | null;
-    source: string;
-    tags: string[];
-    series: string[];
-    isHidden: boolean;
-    isInstalled: boolean;
-    link: string | null;
-    year: number | null;
-    iconUrl: string | null;
-    coverUrl: string | null;
-    bgUrl: string | null;
-};
 
 type UseParams = { pollMs: number };
 
@@ -43,8 +20,8 @@ function getPlayniteId(g: Game): string {
 }
 
 // Get the GameId (external store id)
-function getGameId(id: string | null | undefined): string | null {
-    return id ? String(id) : null;
+function getGameId(id: string): string {
+    return String(id);
 }
 
 // Get the Game Title (default "Untitled")
@@ -309,7 +286,7 @@ function getBgUrl(bg: string | null | undefined): string | null {
     return bg ? buildAssetUrl(bg) : null;
 }
 
-/** Load the library data */
+// Load and process the full library data
 export async function loadLibrary(): Promise<LoadedData> {
     // load raw data
     const games = await loadDbCollection<Game>(COLLECTIONS.games);
@@ -328,7 +305,7 @@ export async function loadLibrary(): Promise<LoadedData> {
     const isInstalledSet = await fetchInstalledList(email);
 
     // build items
-    const items: Item[] = games.map((g) => {
+    const items: GameItem[] = games.map((g) => {
         const id = getPlayniteId(g);
         const gameId = getGameId(g.GameId);
         const title = getGameTitle(g.Name);
@@ -346,7 +323,7 @@ export async function loadLibrary(): Promise<LoadedData> {
         return {
             id, gameId, title, sortingName, source, tags,
             series, isHidden, link, iconUrl, year,
-            isInstalled, coverUrl, bgUrl
+            isInstalled, coverUrl, bgUrl,
         };
     });
 

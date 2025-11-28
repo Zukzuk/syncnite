@@ -1,9 +1,10 @@
 import { Box } from '@mantine/core';
-import { GRID, Z_INDEX } from '../lib/constants';
+import { GRID, Z_INDEX } from '../../../lib/constants';
+import { Letter } from '../../../types/types';
 
-type Props = { bucket: string; top: number };
+type Props = { letter: Letter; top: number };
 
-export function AlphabeticalSeparatorRow({ bucket, top }: Props) {
+export function AlphabeticalSeparatorRow({ letter, top }: Props): JSX.Element {
   return (
     <Box
       h={GRID.iconSize}
@@ -17,7 +18,7 @@ export function AlphabeticalSeparatorRow({ bucket, top }: Props) {
         top,
       }}
     >
-      {bucket}
+      {letter}
     </Box>
   );
 }

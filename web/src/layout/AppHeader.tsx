@@ -1,6 +1,6 @@
 import { Group, Title, ActionIcon, Button, Tooltip, Burger, Text, useMantineColorScheme, Badge } from "@mantine/core";
 import { IconDownload, IconMoon, IconSun } from "@tabler/icons-react";
-import { API_ENDPOINTS } from "../lib/constants";
+import { API_ENDPOINTS, INTERVAL_MS } from "../lib/constants";
 import { useAuth } from "../hooks/useAuth";
 import { useExtensionStatus } from "../hooks/useExtensionStatus";
 
@@ -14,7 +14,7 @@ type Props = {
 export function AppHeader({ opened, onToggleNav }: Props) {
     const { colorScheme, setColorScheme } = useMantineColorScheme();
     const { state, logout } = useAuth({ pollMs: 0 });
-    const { connected, lastPingAt, loading } = useExtensionStatus(10_000);
+    const { connected, lastPingAt, loading } = useExtensionStatus({ pollMs: INTERVAL_MS });
 
     const isAdmin = state.loggedIn && state.role === "admin";
 
@@ -78,7 +78,7 @@ export function AppHeader({ opened, onToggleNav }: Props) {
                         </>
                     ) : null}
                 </Group>
-                
+
                 {/* Dark / light toggle */}
                 <ActionIcon
                     variant="subtle"

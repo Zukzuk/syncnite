@@ -1,24 +1,17 @@
 import { Paper, Stack, Button, rem } from "@mantine/core";
-import { LETTERS_LIST, Z_INDEX } from "../lib/constants";
-import { getTheme } from "../lib/utils";
-
-export type AlphabeticalRailCounts = Record<string, number>;
+import { LETTERS_LIST, Z_INDEX } from "../../../lib/constants";
+import { getTheme } from "../../../lib/utils";
+import { Letter } from "../../../types/types";
 
 type Props = {
-    letters?: string[];
-    counts?: AlphabeticalRailCounts;
-    active?: string | null;
-    onJump: (letter: string) => void;
-    title?: string;
+    activeLetter: Letter;
+    handleJump: (letter: Letter) => void;
+    railCounts: Record<Letter, number>;
 };
 
-export function AlphabeticalRail({
-    letters = LETTERS_LIST,
-    counts, active, onJump,
-    title = "Jump to letter",
-}: Props) {
-    const usable = counts ? letters.filter((ch) => (counts[ch] ?? 0) > 0) : letters;
-    if (usable.length < 10) return null;
+export function AlphabeticalRail({activeLetter, handleJump, railCounts}: Props): JSX.Element | null {
+    const letters = LETTERS_LIST.filter((l) => (railCounts[l] ?? 0) > 0);
+    if (letters.length < 10) return null;
 
     const { theme, isDark } = getTheme();
     const backgroundColor = isDark ? theme.colors.dark[6] : theme.white;
@@ -26,7 +19,7 @@ export function AlphabeticalRail({
     return (
         <Paper
             component="nav"
-            aria-label={title}
+            aria-label="Jump to letter"
             radius="xl"
             withBorder
             shadow="sm"
@@ -46,8 +39,8 @@ export function AlphabeticalRail({
             }}
         >
             <Stack gap={2} align="stretch" justify="center" style={{ width: "100%" }}>
-                {usable.map((ch) => {
-                    const isActive = !!active && active.toUpperCase() === ch;
+                {letters.map((letter) => {
+                    const isActive = activeLetter.toUpperCase() === letter;
                     return (
                         <Button
                             type="button"
@@ -56,7 +49,7 @@ export function AlphabeticalRail({
                             size="compact-xs"
                             fullWidth
                             radius={0}
-                            onClick={() => onJump(ch)}
+                            onClick={() => handleJump(letter)}
                             aria-pressed={isActive}
                             style={{
                                 height: rem(16),
@@ -69,7 +62,7 @@ export function AlphabeticalRail({
                                 transition: "background-color 120ms ease, color 120ms ease",
                             }}
                         >
-                            {ch}
+                            {letter}
                         </Button>
                     );
                 })}

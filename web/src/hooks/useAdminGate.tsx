@@ -2,14 +2,14 @@ import * as React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { fetchAdminStatus } from "../lib/api";
 
-type UseParams = { 
-  pollMs: number; 
+type UseParams = {
+  pollMs: number;
 };
 
-type UseReturn = { 
-  hideSite: boolean; 
-  loaded: boolean; 
-  hasAdmin: boolean 
+type UseReturn = {
+  hideSite: boolean;
+  loaded: boolean;
+  hasAdmin: boolean
 };
 
 // A hook to manage and provide admin gate status.

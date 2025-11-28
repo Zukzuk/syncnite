@@ -1,15 +1,9 @@
 import * as React from "react";
-import type { SortKey, SortDir } from "../../../lib/types";
+import type { SortKey, SortDir, GameItem, ItemGroupedByLetter } from "../../../types/types";
 import { loadStateFromCookie, orderedLetters, saveStateToCookie } from "../../../lib/utils";
-import { Item } from "./useLibraryData";
-
-export type WithBucket = {
-  item: Item;
-  bucket: string
-};
 
 type UseParams = {
-  items: Item[];
+  items: GameItem[];
 };
 
 type UseReturn = {
@@ -34,8 +28,8 @@ type UseReturn = {
   derived: {
     filteredCount: number;
     totalCount: number;
-    itemsSorted: Item[];
-    withBuckets: WithBucket[];
+    itemsSorted: GameItem[];
+    itemsGroupedByLetter: ItemGroupedByLetter[];
   };
 };
 
@@ -93,7 +87,7 @@ export function useLibraryState({ items }: UseParams): UseReturn {
       // keep numeric for comparisons; value only used when !empty
       return { empty, n: empty ? 0 : y as number };
     };
-    const titleKey = (r: Item) => strKey(r.sortingName || r.title);
+    const titleKey = (r: GameItem) => strKey(r.sortingName || r.title);
 
     pass.sort((a, b) => {
       // Choose primary key
@@ -112,9 +106,9 @@ export function useLibraryState({ items }: UseParams): UseReturn {
 
       const pickKey = () => {
         if (sortKey === "title") return titleKey;
-        if (sortKey === "source") return (r: Item) => strKey(r.source);
-        if (sortKey === "tags") return (r: Item) => arrKey(r.tags);
-        if (sortKey === "series") return (r: Item) => arrKey(r.series);
+        if (sortKey === "source") return (r: GameItem) => strKey(r.source);
+        if (sortKey === "tags") return (r: GameItem) => arrKey(r.tags);
+        if (sortKey === "series") return (r: GameItem) => arrKey(r.series);
         return titleKey;
       };
 
@@ -152,8 +146,8 @@ export function useLibraryState({ items }: UseParams): UseReturn {
       filteredCount: filteredSorted.length,
       totalCount: items.length,
       itemsSorted: filteredSorted,
-      withBuckets: filteredSorted.map(
-        (item) => ({ item, bucket: orderedLetters(item.title, item.sortingName) })
+      itemsGroupedByLetter: filteredSorted.map(
+        (item) => ({ item, itemLetter: orderedLetters(item.title, item.sortingName) })
       ),
     },
   };

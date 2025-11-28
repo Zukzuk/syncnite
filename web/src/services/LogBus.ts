@@ -2,6 +2,13 @@ let lines: string[] = restore();
 type LogListener = (lines: string[]) => void;
 const listeners = new Set<LogListener>();
 
+interface LogBus {
+    append(line: string): void;
+    clear(): void;
+    get(): string[];
+    subscribe(fn: LogListener): () => void;
+}
+
 function store() {
     try {
         sessionStorage.setItem("pn_logs", JSON.stringify(lines));
@@ -24,9 +31,11 @@ function emit() {
     listeners.forEach((fn) => fn(snapshot));
 }
 
-// Global log buffer that survives route changes AND page reloads (via sessionStorage).
-// Newest-first order. Keeps up to MAX lines.
+/**
+ * A simple in-memory log bus with sessionStorage persistence.
+ */
 export const LogBus = {
+    // Prepend new lines, capping at 1000 entries.
     append(line: string) {
         if (!line) return;
         lines = [line, ...lines].slice(0, 1000);
@@ -34,19 +43,22 @@ export const LogBus = {
         emit();
     },
     
+    // Clear all logs.
     clear() {
         lines = [];
         store();
         emit();
     },
 
+    // Get current log lines.
     get(): string[] {
         return [...lines];
     },
 
+    // Subscribe to log updates.
     subscribe(fn: LogListener) {
         listeners.add(fn);
         fn([...lines]); // immediate hydration
         return () => { listeners.delete(fn); };
     },
-};
+} as LogBus;

@@ -1,24 +1,27 @@
 import React from "react";
 import { fetchExtensionStatus } from "../lib/api";
 import { useAuth } from "./useAuth";
-import { INTERVAL_MS } from "../lib/constants";
+import { INTERVAL_MS, EXT_STATE_DEFAULTS } from "../lib/constants";
 
-const DEFAULT_STATE = {
-    connected: false,
-    lastPingAt: null as string | null,
-    loading: true,
+type UseParams = {
+    pollMs?: number;
+};
+type UseReturn = {
+    connected: boolean;
+    lastPingAt: string | null;
+    loading: boolean;
 };
 
 // A hook to monitor the status of the browser extension.
-export function useExtensionStatus(pollMs: number = INTERVAL_MS) {
+export function useExtensionStatus({ pollMs = INTERVAL_MS }: UseParams): UseReturn {
     const { state } = useAuth({ pollMs: 0 });
-    const [status, setStatus] = React.useState(DEFAULT_STATE);
+    const [status, setStatus] = React.useState(EXT_STATE_DEFAULTS);
 
     const isAdmin = state.loggedIn && state.role === "admin";
 
     React.useEffect(() => {
         if (!isAdmin) {
-            setStatus(DEFAULT_STATE);
+            setStatus(EXT_STATE_DEFAULTS);
             return;
         }
 

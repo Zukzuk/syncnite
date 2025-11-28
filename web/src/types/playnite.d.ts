@@ -35,16 +35,13 @@ export interface Game {
   Id: string;
   Name: string;
   SortingName?: string;
+  GameId: string;
 
   // visibility / install
   Hidden?: boolean;
   IsInstalled?: boolean;
   InstallDirectory?: string | null;
   InstallSize?: number | null;
-
-  // library identity
-  PluginId?: string | null;
-  GameId?: string | null;
 
   // joins (IDs to other collections)
   SourceId?: string | null;
@@ -61,6 +58,7 @@ export interface Game {
   RegionIds?: string[];
   DeveloperIds?: string[];
   PublisherIds?: string[];
+  PluginId?: string | null;
 
   // dates + art
   ReleaseDate?: GameReleaseDate | null;

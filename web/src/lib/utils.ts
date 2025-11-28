@@ -1,7 +1,8 @@
 import { COOKIE_DEFAULTS } from "./constants";
-import type { Letter, Role, SortDir, SortKey } from "./types";
+import type { AccountCreds, CookieState, Letter, Role, SortDir, SortKey } from "../types/types";
 import { useComputedColorScheme, useMantineTheme } from "@mantine/core";
 
+// Returns the current theme and whether dark mode is active
 export function getTheme() {
   const theme = useMantineTheme();
   const colorScheme = useComputedColorScheme("light", { getInitialValueInEffect: true });
@@ -9,6 +10,7 @@ export function getTheme() {
   return { theme, isDark };
 }
 
+// Returns the first letter for ordering purposes
 export function orderedLetters(title?: string | null, sortingName?: string | null): Letter {
   const s = (sortingName || title || "").trim();
   if (!s) return "#";
@@ -16,13 +18,8 @@ export function orderedLetters(title?: string | null, sortingName?: string | nul
   return (c >= "A" && c <= "Z" ? c : "#") as Letter;
 }
 
-type Creds = {
-  email: string;
-  password: string;
-  role: Role;
-};
-
-export function getCreds(): Creds | null {
+// Functions to get, set, and clear account credentials in localStorage
+export function getCreds(): AccountCreds | null {
   try {
     const email = localStorage.getItem("sb_email");
     const password = localStorage.getItem("sb_password");
@@ -34,6 +31,7 @@ export function getCreds(): Creds | null {
   }
 }
 
+// Sets account credentials and dispatches an auth-changed event
 export function setCreds(email: string, password: string, role: Role) {
   try {
     localStorage.setItem("sb_email", email.toLowerCase());
@@ -43,6 +41,7 @@ export function setCreds(email: string, password: string, role: Role) {
   } catch { }
 }
 
+// Clears account credentials and dispatches an auth-changed event
 export function clearCreds() {
   try {
     localStorage.removeItem("sb_email");
@@ -81,21 +80,12 @@ function jsonSet<T>(key: string, value: T) {
   }
 }
 
+// Fetches the stored user email from localStorage
 export function fetchUser(): string | null {
   try { return localStorage.getItem("sb_email"); } catch { return null; }
 }
 
-type CookieState = {
-  q: string;
-  sources: string[];
-  tags: string[];
-  series: string[];
-  showHidden: boolean;
-  installedOnly: boolean;
-  sortKey: SortKey;
-  sortDir: SortDir;
-};
-
+// Loads the library state from a cookie
 export function loadStateFromCookie(): CookieState {
   try {
     return jsonGet<CookieState>("pn_library_state", COOKIE_DEFAULTS);
@@ -104,6 +94,7 @@ export function loadStateFromCookie(): CookieState {
   }
 }
 
+// Saves the library state to a cookie
 export function saveStateToCookie(cookieState: CookieState) {
   jsonSet("pn_library_state", cookieState);
 }

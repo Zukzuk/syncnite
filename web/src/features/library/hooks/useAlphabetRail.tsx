@@ -1,49 +1,37 @@
 import * as React from "react";
-import type { Letter } from "../../../lib/types";
+import type { AlphabeticalGroup, GameItem, Letter } from "../../../types/types";
 import { LETTERS } from "../../../lib/constants";
 import { orderedLetters } from "../../../lib/utils";
-import type { AlphabeticalRailCounts } from "../../../components/AlphabeticalRail";
-import { AlphabeticalGroup } from "./useAlphabetGroups";
-import { Item } from "./useLibraryData";
 
 type UseParams = {
     isGrouped: boolean;
-    groups: AlphabeticalGroup[] | null;
-    flatItems: Item[];
-    // from useGridJumpToScroll
+    alphabeticalGroups: AlphabeticalGroup[] | null;
+    flatItems: GameItem[];
     scrollItemIntoView: (index: number) => void;
-    // from useVirtualWindow
     visibleStartIndex: number;
     totalItems: number;
 };
 
 type UseReturn = {
-    counts: AlphabeticalRailCounts;
-    activeLetter: string | null;
-    handleJump: (L: string) => void;
+    railCounts: Record<Letter, number>;
+    activeLetter: Letter;
+    handleJump: (L: Letter) => void;
 };
 
 // A hook to manage alphabetical rail navigation for the absolute grid.
-export function useAlphabetRail({
-    isGrouped,
-    groups,
-    flatItems,
-    scrollItemIntoView,
-    visibleStartIndex,
-    totalItems,
-}: UseParams): UseReturn {
+export function useAlphabetRail({ isGrouped, alphabeticalGroups, flatItems, scrollItemIntoView, visibleStartIndex, totalItems }: UseParams): UseReturn {
     // flat
     const { flatFirstIndex, flatCounts } = React.useMemo(() => {
         const firstIndex = Object.fromEntries(
             LETTERS.map((L) => [L, -1])
-        ) as Record<Letter, number>;
+        );
 
         const counts = Object.fromEntries(
             LETTERS.map((L) => [L, 0])
-        ) as AlphabeticalRailCounts;
+        );
 
         flatItems.forEach((r, idx) => {
-            const L = orderedLetters(r?.title);
+            const L = orderedLetters(r?.title, r?.sortingName);
             counts[L] = (counts[L] ?? 0) + 1;
             if (firstIndex[L] === -1) firstIndex[L] = idx;
         });
@@ -53,53 +41,51 @@ export function useAlphabetRail({
 
     // grouped
     const { groupFirstItemIndex, groupCounts } = React.useMemo(() => {
-        if (!groups) {
+        if (!alphabeticalGroups) {
             return {
-                groupFirstItemIndex: {} as Record<Letter, number>,
+                groupFirstItemIndex: {},
                 groupCounts: Object.fromEntries(
                     LETTERS.map((L) => [L, 0])
-                ) as AlphabeticalRailCounts,
+                ),
             };
         }
 
         const firstIndex = Object.fromEntries(
             LETTERS.map((L) => [L, -1])
-        ) as Record<Letter, number>;
+        );
 
         const counts = Object.fromEntries(
             LETTERS.map((L) => [L, 0])
-        ) as AlphabeticalRailCounts;
+        );
 
         let running = 0;
-        for (const g of groups) {
-            const L = orderedLetters(g.title);
+        for (const g of alphabeticalGroups) {
+            const L = orderedLetters(g.groupLetter);
             if (firstIndex[L] === -1) firstIndex[L] = running;
             counts[L] = (counts[L] ?? 0) + g.items.length;
             running += g.items.length;
         }
 
         return { groupFirstItemIndex: firstIndex, groupCounts: counts };
-    }, [groups]);
+    }, [alphabeticalGroups]);
 
-    const [activeLetter, setActiveLetter] = React.useState<string | null>(null);
+    const [activeLetter, setActiveLetter] = React.useState<string>("");
 
     const currentLetterAtIndex = React.useCallback(
         (idx: number): string | null => {
             if (idx == null || idx < 0 || idx >= totalItems) return null;
-
-            if (isGrouped && groups && groups.length) {
+            if (isGrouped && alphabeticalGroups && alphabeticalGroups.length) {
                 let i = idx;
-                for (const g of groups) {
-                    if (i < g.items.length) return orderedLetters(g.title);
+                for (const g of alphabeticalGroups) {
+                    if (i < g.items.length) return orderedLetters(g.groupLetter);
                     i -= g.items.length;
                 }
                 return null;
             }
-
-            const r = flatItems[idx];
-            return r ? orderedLetters(r.title) : null;
+            const item = flatItems[idx];
+            return item ? orderedLetters(item.title, item.sortingName) : null;
         },
-        [isGrouped, groups, flatItems, totalItems]
+        [isGrouped, alphabeticalGroups, flatItems, totalItems]
     );
 
     const handleJump = React.useCallback(
@@ -124,10 +110,10 @@ export function useAlphabetRail({
 
     // Reset when dataset semantics change
     React.useEffect(() => {
-        setActiveLetter(null);
-    }, [isGrouped, groups?.length, flatItems.length, totalItems]);
+        setActiveLetter("");
+    }, [isGrouped, alphabeticalGroups?.length, flatItems.length, totalItems]);
 
-    const counts: AlphabeticalRailCounts = isGrouped ? groupCounts : flatCounts;
+    const railCounts = isGrouped ? groupCounts : flatCounts;
 
-    return { counts, activeLetter, handleJump };
+    return { railCounts, activeLetter, handleJump };
 }

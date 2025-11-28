@@ -1,8 +1,8 @@
 import React from "react";
 import { Group, MultiSelect, Switch, Text, Stack, Flex, Box, SegmentedControl } from "@mantine/core";
-import { SearchInput } from "../../components/SearchInput";
-import { SOURCE_MAP, Z_INDEX } from "../../lib/constants";
-import { ViewMode } from "../../lib/types";
+import { SearchInput } from "../../../components/SearchInput";
+import { SOURCE_MAP, Z_INDEX } from "../../../lib/constants";
+import { ViewMode } from "../../../types/types";
 
 type Props = {
   controlsRef: (el: HTMLElement | null) => void;

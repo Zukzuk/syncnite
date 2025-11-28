@@ -1,15 +1,14 @@
 import React, { useCallback } from "react";
 import { Box } from "@mantine/core";
-import { ViewMode } from "../lib/types";
-import { Item } from "../features/library/hooks/useLibraryData";
+import { GameItem, ViewMode } from "../../../types/types";
+import { Z_INDEX } from "../../../lib/constants";
 import { ItemDetails } from "./ItemDetails";
 import { ItemBackground } from "./ItemBackground";
 import { RowItem } from "./RowItem";
 import { GridItem } from "./GridItem";
-import { Z_INDEX } from "../lib/constants";
 
 type Props = {
-    item: Item;
+    item: GameItem;
     isOpen: boolean;
     topOffset: number;
     openWidth: string;
@@ -18,16 +17,7 @@ type Props = {
     onToggle: () => void;
 };
 
-export function ExpandableItem(props: Props) {
-    const {
-        item,
-        isOpen,
-        openWidth,
-        openHeight,
-        view,
-        onToggle,
-    } = props;
-
+export function ExpandableItem({ item, isOpen, openWidth, openHeight, view, onToggle }: Props): JSX.Element {
     const {
         id,
         title,
@@ -73,8 +63,8 @@ export function ExpandableItem(props: Props) {
 
     return (
         <Box
-            data-row-id={id}
-            role="button"
+            key={id}
+            role="library-item-button"
             tabIndex={0}
             aria-expanded={isOpen}
             aria-label={`${title}`}
@@ -85,12 +75,14 @@ export function ExpandableItem(props: Props) {
             onClick={onToggle}
         >
             <Box
-                style={{ 
+                aria-label="library-item-inner"
+                role="library-item-inner"
+                style={{
                     opacity: isHidden ? 0.2 : 1,
-                    position: "relative", 
-                    top: 0, left: 0, zIndex: Z_INDEX.base, 
+                    position: "relative",
+                    zIndex: Z_INDEX.base,
                 }}
-                w={isOpen ? openWidth : "100%"}
+                w={"100%"}
                 h={isOpen ? openHeight : "100%"}
             >
                 {!isOpen && view === "list" && <RowItem item={item} isOpen={isOpen} />}
@@ -106,6 +98,7 @@ export function ExpandableItem(props: Props) {
                 )}
             </Box>
             <ItemBackground
+                aria-label="library-item-bg"
                 bgUrl={bgUrl}
                 isOpen={isOpen}
             />

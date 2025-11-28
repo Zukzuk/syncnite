@@ -1,21 +1,24 @@
 import { Box, Group, Image, Text } from "@mantine/core";
-import { CopyTitle } from "./CopyTitle";
-import { ExternalLink } from "./ExternalLink";
-import { IconSourceLink } from "./IconSourceLink";
-import { Item } from "../features/library/hooks/useLibraryData";
+import { CopyTitle } from "../../../components/CopyTitle";
+import { ExternalLink } from "../../../components/ExternalLink";
+import { IconSourceLink } from "../../../components/IconSourceLink";
+import { GameItem } from "../../../types/types";
 
 type Props = {
-    item: Item;
+    item: GameItem;
     isOpen: boolean;
 };
 
-export function GridItem({ item, isOpen }: Props) {
+export function GridItem({ item, isOpen }: Props): JSX.Element {
+
+    const { title, coverUrl, year, source, link, gameId } = item;
+
     return (
-        <div>
-            <div style={{ position: "relative", aspectRatio: "23 / 32" }}>
+        <>
+            <Box style={{ position: "relative", aspectRatio: "23 / 32" }}>
                 <Image
-                    src={item.coverUrl || ""}
-                    alt={item.title}
+                    src={coverUrl || ""}
+                    alt={title}
                     fit="contain"
                     loading="lazy"
                     style={{
@@ -26,13 +29,13 @@ export function GridItem({ item, isOpen }: Props) {
                         objectFit: "contain",
                     }}
                 />
-            </div>
+            </Box>
 
             <Text
                 size="sm"
                 m={6}
                 lineClamp={2}
-                title={item.title}
+                title={title}
                 fw={600}
                 h={40}
                 style={{
@@ -40,7 +43,7 @@ export function GridItem({ item, isOpen }: Props) {
                     transition: "font-size 140ms ease",
                 }}
             >
-                {item.title}
+                {title}
             </Text>
 
             <Box
@@ -54,7 +57,7 @@ export function GridItem({ item, isOpen }: Props) {
                 }}
             >
                 <Box>
-                    {item.year && <Text style={{ fontSize: 12 }}>{item.year}</Text>}
+                    {year && <Text style={{ fontSize: 12 }}>{year}</Text>}
                 </Box>
 
                 <Box>
@@ -65,22 +68,22 @@ export function GridItem({ item, isOpen }: Props) {
                         style={{ justifyContent: "center" }}
                     >
                         <CopyTitle 
-                            title={item.title} 
-                            year={item.year} 
+                            title={title} 
+                            year={year} 
                         />
                         <ExternalLink
-                            source={item.source}
-                            link={item.link}
-                            title={item.title}
+                            source={source}
+                            link={link}
+                            title={title}
                         />
                         <IconSourceLink
-                            source={item.source}
-                            gameId={item.gameId}
-                            link={item.link}
+                            source={source}
+                            gameId={gameId}
+                            link={link}
                         />
                     </Group>
                 </Box>
             </Box>
-        </div>
+        </>
     );
 }

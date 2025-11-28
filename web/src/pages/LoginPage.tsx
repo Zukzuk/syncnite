@@ -1,22 +1,11 @@
 import * as React from "react";
-import {
-  Card,
-  Tabs,
-  Stack,
-  TextInput,
-  PasswordInput,
-  Button,
-  Text,
-  Alert,
-  Center,
-  Space,
-} from "@mantine/core";
+import { Card, Tabs, Stack, TextInput, PasswordInput, Button, Text, Alert, Center, Space } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "@mantine/form";
 import { login, registerAdmin, registerUser, fetchAdminStatus } from "../lib/api";
 import { setCreds } from "../lib/utils";
 
-export default function LoginPage() {
+export default function LoginPage(): JSX.Element {
   const nav = useNavigate();
   const [tab, setTab] = React.useState<"login" | "user" | "admin">("login");
   const [error, setError] = React.useState<string | null>(null);
@@ -58,7 +47,7 @@ export default function LoginPage() {
 
     const loginResp = await login({ email, password });
     if (loginResp?.ok) {
-      setCreds(email, password, loginResp.role || "admin");
+      setCreds(email, password, loginResp.role);
     } else {
       setCreds(email, password, "admin");
     }
@@ -85,7 +74,7 @@ export default function LoginPage() {
 
     const loginResp = await login({ email, password });
     if (loginResp?.ok) {
-      setCreds(email, password, loginResp.role || "user");
+      setCreds(email, password, loginResp.role);
     } else {
       setCreds(email, password, "user");
     }

@@ -1,11 +1,23 @@
 import { useLayoutEffect, useMemo, useState } from "react";
 import { GRID } from "../../../lib/constants";
 
+type UseParams = {
+    containerRef: React.RefObject<HTMLDivElement>;
+    itemsLen: number;
+};
+
+type UseReturn = {
+    width: number;
+    viewportH: number;
+    cols: number;
+    rows: number;
+    strideY: number;
+    positions: { left: number; top: number }[];
+    containerHeight: number;
+};
+
 // A hook to calculate an absolute grid layout for a container.
-export function useAbsoluteGridLayout(
-    containerRef: React.RefObject<HTMLDivElement>,
-    itemsLen: number,
-) {
+export function useAbsoluteGridLayout({ containerRef, itemsLen }: UseParams): UseReturn {
     const [width, setWidth] = useState(0);
     const [viewportH, setViewportH] = useState(0);
 

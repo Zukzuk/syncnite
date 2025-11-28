@@ -1,6 +1,6 @@
 import { Box, Paper, UnstyledButton, Text, rem } from "@mantine/core";
-import type { SortDir, SortKey } from "../../lib/types";
-import { GRID, Z_INDEX } from "../../lib/constants";
+import { SortDir, SortKey } from "../../../types/types";
+import { GRID, Z_INDEX } from "../../../lib/constants";
 
 type Props = {
   headerRef: (el: HTMLElement | null) => void;
@@ -34,8 +34,6 @@ export function HeaderSort(props: Props) {
     <Box pos="relative" style={{ zIndex: Z_INDEX.stickyHeader }}>
       <Paper
         ref={headerRef}
-        radius={0}
-        withBorder
         style={{
           background: "var(--mantine-color-body)",
           borderTop: `1px solid var(--mantine-color-default-border)`,

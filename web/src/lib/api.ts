@@ -1,13 +1,11 @@
+import { Creds, Role } from "../types/types";
 import { API_ENDPOINTS } from "./constants";
 import { getCreds } from "./utils";
 
-type Credentials = {
-  email: string;
-  password: string;
-};
-
 // Login with email and password
-export async function login(body: Credentials) {
+export async function login(body: Creds): Promise<{
+  ok: boolean; email: string; role: Role; error?: string
+}> {
   const resp = await fetch(API_ENDPOINTS.LOGIN, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -18,7 +16,9 @@ export async function login(body: Credentials) {
 }
 
 // Register a new admin user
-export async function registerAdmin(body: Credentials) {
+export async function registerAdmin(body: Creds): Promise<{
+  ok: boolean; email: string; error?: string
+}> {
   const resp = await fetch(API_ENDPOINTS.ADMIN_REGISTER, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -29,7 +29,9 @@ export async function registerAdmin(body: Credentials) {
 }
 
 // Register a new user
-export async function registerUser(body: Credentials) {
+export async function registerUser(body: Creds): Promise<{
+  ok: boolean; email: string; error?: string
+}> {
   const resp = await fetch(API_ENDPOINTS.USER_REGISTER, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

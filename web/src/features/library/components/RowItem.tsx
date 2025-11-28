@@ -1,20 +1,22 @@
 import React from "react";
 import { Box, Flex, Text, Group } from "@mantine/core";
 import { IconPlayerPlay, IconDownload } from "@tabler/icons-react";
-import { GRID } from "../lib/constants";
-import { Item } from "../features/library/hooks/useLibraryData";
-import { IconImage } from "./IconImage";
-import { ExternalLink } from "./ExternalLink";
-import { IconSourceLink } from "./IconSourceLink";
-import { CopyTitle } from "./CopyTitle";
+import { GRID } from "../../../lib/constants";
+import { IconImage } from "../../../components/IconImage";
+import { ExternalLink } from "../../../components/ExternalLink";
+import { IconSourceLink } from "../../../components/IconSourceLink";
+import { CopyTitle } from "../../../components/CopyTitle";
+import { GameItem } from "../../../types/types";
 
 type Props = {
-    item: Item;
+    item: GameItem;
     isOpen: boolean;
 };
 
-export function RowItem({ item, isOpen }: Props) {
-    const { id, isInstalled, iconUrl, title, gameId, year, source, tags, series, link } = item;
+export function RowItem({ item, isOpen }: Props): JSX.Element {
+    const { id, isInstalled, iconUrl, title, gameId, 
+        year, source, tags, series, link 
+    } = item;
     const [hovered, setHovered] = React.useState(false);
 
     return (

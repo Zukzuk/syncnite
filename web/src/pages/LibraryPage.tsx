@@ -2,11 +2,11 @@ import React from "react";
 import { Stack, Loader, Box, Center } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { GRID, INTERVAL_MS } from "../lib/constants";
-import { ViewMode } from "../lib/types";
+import { ViewMode } from "../types/types";
 import { useLibraryData } from "../features/library/hooks/useLibraryData";
 import LibraryGrid from "../features/library/LibraryGrid";
 
-export default function LibraryPage() {
+export default function LibraryPage(): JSX.Element {
     const [filtered, setFiltered] = React.useState(0);
     const [total, setTotal] = React.useState(0);
     const { data, installedUpdatedAt } = useLibraryData({ pollMs: INTERVAL_MS });

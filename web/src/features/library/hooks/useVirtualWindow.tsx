@@ -1,11 +1,8 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { GRID } from "../../../lib/constants";
 
-// A hook to calculate visible range in a virtual scrolling window.
-// Supports variable row heights via rowTops + rowHeights and optional
-// per-row item index mapping for uneven rows (e.g. open rows).
-export function useVirtualWindow(
-    containerRef: React.RefObject<HTMLDivElement>,
+type UseParams = {
+    containerRef: React.RefObject<HTMLDivElement>;
     opts: {
         rows: number;
         cols: number;
@@ -16,8 +13,21 @@ export function useVirtualWindow(
         viewportH: number;
         rowFirstItemIndexPerRow?: number[];
         rowLastItemIndexExclusivePerRow?: number[];
-    }
-) {
+    };
+};
+
+type UseReturn = {
+    scrollTop: number;
+    visibleRange: {
+        startIndex: number;
+        endIndex: number;
+    };
+};
+
+// A hook to calculate visible range in a virtual scrolling window.
+// Supports variable row heights via rowTops + rowHeights and optional
+// per-row item index mapping for uneven rows (e.g. open rows).
+export function useVirtualWindow({ containerRef, opts }: UseParams): UseReturn {
     const {
         rows,
         cols,

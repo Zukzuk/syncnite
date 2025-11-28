@@ -2,7 +2,7 @@ import React from "react";
 import { Container, Loader } from "@mantine/core";
 import Markdown from "../components/Markdown";
 
-export default function HomePage() {
+export default function HomePage(): JSX.Element {
     const [content, setContent] = React.useState<string | null>(null);
 
     React.useEffect(() => {

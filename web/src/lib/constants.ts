@@ -1,4 +1,4 @@
-import { SortDir, SortKey } from "./types";
+import { SortDir, SortKey } from "../types/types";
 
 const API_BASE = "/api/v1";
 
@@ -32,9 +32,9 @@ export const GRID = {
   cardHeight: 300,
   rowHeight: 56,
   iconSize: 38,
-  gap: 4,
+  gap: 8,
   padding: 2,
-  overscan: { top: 600, bottom: 800 } as const, 
+  overscan: { top: 600, bottom: 800 } as const,
   menuWidth: 160,
 } as const;
 
@@ -82,6 +82,12 @@ export const INTERVAL_MS = 5000;
 export const LETTERS_LIST = ["#", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
 
 export const LETTERS = [...LETTERS_LIST] as const;
+
+export const EXT_STATE_DEFAULTS = {
+  connected: false,
+  lastPingAt: null as string | null,
+  loading: true,
+};
 
 export const COOKIE_DEFAULTS = {
   q: "",
