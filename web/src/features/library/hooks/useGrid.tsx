@@ -1,12 +1,11 @@
 import { useMemo } from "react";
 import { useGridLayout } from "./useGridLayout";
 import { useGridVirtualWindow } from "./useGridVirtualWindow";
-import { useGridAlphabetGroups } from "./useGridAlphabetGroups";
 import { useGridAlphabetRail } from "./useGridAlphabetRail";
 import { useGridOpenItemToggle } from "./useGridOpenItemToggle";
 import { useGridScrollJump } from "./useGridScrollJump";
 import { useGridScrollRestore } from "./useGridScrollRestore";
-import { GameItem, GridRows, ItemPositions, Letter, RowLayout, ViewMode } from "../../../types/types";
+import { GameItem, GridRows, ItemPositions, Letter, RowLayout, UIDerivedState, UIState, ViewMode } from "../../../types/types";
 import { GRID } from "../../../lib/constants";
 
 type UseParams = {
@@ -14,8 +13,8 @@ type UseParams = {
     view: ViewMode;
     controlsH: number;
     headerH: number;
-    ui: any;
-    derived: any;
+    ui: UIState;
+    derived: UIDerivedState;
 };
 
 type UseReturn = {
@@ -126,21 +125,18 @@ export function useGrid({
         }
     });
 
-    // Alphabet groups for rail
-    const { alphabeticalGroups, isGrouped, flatItems } = useGridAlphabetGroups({
-        sortKey: ui.sortKey,
-        itemsGroupedByLetter: derived.itemsGroupedByLetter,
-        itemsSorted: derived.itemsSorted,
-    });
+    const railVisibleIndex =
+        visibleRange.endIndex > visibleRange.startIndex
+            ? Math.floor((visibleRange.startIndex + visibleRange.endIndex - 1) / 2)
+            : visibleRange.startIndex;
 
     // Alphabet rail (counts, active letter, jump handler)
     const { railCounts, activeLetter, onScrollJump } = useGridAlphabetRail({
-        isGrouped,
-        alphabeticalGroups,
-        flatItems,
+        railVisibleIndex,
+        itemsLen,
+        ui,
+        derived,
         scrollItemIntoView,
-        visibleStartIndex: visibleRange.startIndex,
-        totalItems: itemsLen,
     });
 
     return {

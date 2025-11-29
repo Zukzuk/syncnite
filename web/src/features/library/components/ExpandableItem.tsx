@@ -88,14 +88,7 @@ export function ExpandableItem({ item, isOpen, openWidth, openHeight, view, onTo
                 {!isOpen && view === "list" && <RowItem item={item} isOpen={isOpen} />}
                 {!isOpen && view === "grid" && <GridItem item={item} isOpen={isOpen} />}
                 {isOpen && <RowItem item={item} isOpen={isOpen} />}
-                {isOpen && (
-                    <ItemDetails
-                        title={title}
-                        coverUrl={coverUrl}
-                        isOpen={isOpen}
-                        onToggle={onToggle}
-                    />
-                )}
+                {isOpen && <ItemDetails item={item} isOpen={isOpen} onToggle={onToggle} />}
             </Box>
             <ItemBackground
                 aria-label="library-item-bg"

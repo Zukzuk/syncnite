@@ -108,12 +108,12 @@ export function AppNavbar() {
                             component="a"
                             href={API_ENDPOINTS.EXTENSION_DOWNLOAD}
                             size="xs"
-                            radius="md"
+                            radius="lg"
                             leftSection={<IconDownload size={16} />}
                             variant="filled"
-                            fw={600}
+                            fw={200}
                         >
-                            Playnite<br />extension
+                            download
                         </Button>
                     </Tooltip>
                 </Group>

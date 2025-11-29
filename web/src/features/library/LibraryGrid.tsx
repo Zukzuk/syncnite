@@ -12,12 +12,12 @@ import { GameItem, LoadedData, ViewMode } from "../../types/types";
 
 type Props = {
     libraryData: LoadedData;
-    onCountsChange?: (filtered: number, total: number) => void;
     view: ViewMode;
-    setView: (view: ViewMode) => void;
     filteredCount: number;
     totalCount: number;
     installedUpdatedAt?: string;
+    setView: (view: ViewMode) => void;
+    onCountsChange?: (filtered: number, total: number) => void;
 };
 
 /**
@@ -29,7 +29,7 @@ export default function LibraryGrid({ libraryData, onCountsChange, view, setView
     const { ref: controlsRef, height: controlsH } = useElementSize();
     const { ref: headerRef, height: headerH } = useElementSize();
     const containerRef = useRef<HTMLDivElement | null>(null);
-    
+
     // Data signature for resetting
     const dataSig = `${derived.filteredCount}|${ui.q}|${ui.sources.join(",")}|${ui.tags.join(",")}|${ui.series.join(",")}|${ui.showHidden}|${ui.installedOnly}`;
     const groupedKey = `grp:${dataSig}|${ui.sortKey}|${ui.sortDir}`;
@@ -53,7 +53,7 @@ export default function LibraryGrid({ libraryData, onCountsChange, view, setView
         view,
         controlsH,
         headerH,
-        ui, 
+        ui,
         derived,
     });
 

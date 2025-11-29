@@ -1,5 +1,5 @@
 import * as React from "react";
-import type { SortKey, SortDir, GameItem, ItemGroupedByLetter } from "../../../types/types";
+import type { SortKey, SortDir, GameItem, ItemGroupedByLetter, UIState, UIDerivedState } from "../../../types/types";
 import { loadStateFromCookie, orderedLetters, saveStateToCookie } from "../../../lib/utils";
 
 type UseParams = {
@@ -7,30 +7,8 @@ type UseParams = {
 };
 
 type UseReturn = {
-  ui: {
-    q: string;
-    setQ: React.Dispatch<React.SetStateAction<string>>;
-    sources: string[];
-    setSources: React.Dispatch<React.SetStateAction<string[]>>;
-    tags: string[];
-    setTags: React.Dispatch<React.SetStateAction<string[]>>;
-    series: string[];
-    setSeries: React.Dispatch<React.SetStateAction<string[]>>;
-    showHidden: boolean;
-    setShowHidden: React.Dispatch<React.SetStateAction<boolean>>;
-    sortKey: SortKey;
-    sortDir: SortDir;
-    setSortKey: React.Dispatch<React.SetStateAction<SortKey>>;
-    toggleSort: (key: SortKey) => void;
-    installedOnly: boolean;
-    setInstalledOnly: React.Dispatch<React.SetStateAction<boolean>>;
-  };
-  derived: {
-    filteredCount: number;
-    totalCount: number;
-    itemsSorted: GameItem[];
-    itemsGroupedByLetter: ItemGroupedByLetter[];
-  };
+  ui: UIState;
+  derived: UIDerivedState;
 };
 
 // A hook to manage library state including filtering, sorting, and persistence.
