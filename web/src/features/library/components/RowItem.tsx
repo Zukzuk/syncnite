@@ -14,9 +14,7 @@ type Props = {
 };
 
 export function RowItem({ item, isOpen }: Props): JSX.Element {
-    const { id, isInstalled, iconUrl, title, gameId, 
-        year, source, tags, series, link 
-    } = item;
+    const { id, isInstalled, iconUrl, title, gameId, year, source, tags, series, link } = item;
     const [hovered, setHovered] = React.useState(false);
 
     return (
@@ -24,7 +22,6 @@ export function RowItem({ item, isOpen }: Props): JSX.Element {
             style={{
                 display: "grid",
                 alignItems: "center",
-                gap: 12,
                 height: GRID.rowHeight,
                 gridTemplateColumns: GRID.colsList,
             }}

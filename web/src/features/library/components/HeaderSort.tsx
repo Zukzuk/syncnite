@@ -31,7 +31,7 @@ export function HeaderSort(props: Props) {
     sortKey !== key ? "none" : sortDir === "asc" ? "ascending" : "descending";
 
   return (
-    <Box pos="relative" style={{ zIndex: Z_INDEX.stickyHeader }}>
+    <Box pos="relative" style={{ zIndex: Z_INDEX.medium }}>
       <Paper
         ref={headerRef}
         style={{

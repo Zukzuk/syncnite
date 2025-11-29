@@ -39,7 +39,6 @@ export interface Game {
 
   // visibility / install
   Hidden?: boolean;
-  IsInstalled?: boolean;
   InstallDirectory?: string | null;
   InstallSize?: number | null;
 

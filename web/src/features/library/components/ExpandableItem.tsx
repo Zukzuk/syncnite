@@ -11,21 +11,13 @@ type Props = {
     item: GameItem;
     isOpen: boolean;
     topOffset: number;
-    openWidth: string;
     openHeight: string;
     view: ViewMode;
     onToggle: () => void;
 };
 
-export function ExpandableItem({ item, isOpen, openWidth, openHeight, view, onToggle }: Props): JSX.Element {
-    const {
-        id,
-        title,
-        isInstalled,
-        bgUrl,
-        coverUrl,
-        isHidden,
-    } = item;
+export function ExpandableItem({ item, isOpen, openHeight, view, onToggle }: Props): JSX.Element {
+    const { id, title, bgUrl, coverUrl, isHidden, isInstalled } = item;
 
     const onKeyDown = useCallback(
         (e: React.KeyboardEvent) => {

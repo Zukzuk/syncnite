@@ -313,7 +313,8 @@ async function loadLibrary(): Promise<LoadedData> {
         const series = expandSeriesNames(g.SeriesIds, seriesById);
         const coverUrl = getCoverUrl(g.CoverImage);
         const bgUrl = getBgUrl(g.BackgroundImage);
-
+        
+        // return the GameItem
         return {
             id, gameId, title, sortingName, source, tags,
             series, isHidden, link, iconUrl, year,
@@ -326,6 +327,7 @@ async function loadLibrary(): Promise<LoadedData> {
     const allTags = Array.from(new Set(items.flatMap((r) => r.tags).filter(Boolean))).sort();
     const allSeries = Array.from(new Set(items.flatMap((r) => r.series).filter(Boolean))).sort();
 
+    // return full data
     return { items, allSources, allTags, allSeries };
 }
 

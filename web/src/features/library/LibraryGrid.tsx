@@ -12,28 +12,29 @@ import { GameItem, LoadedData, ViewMode } from "../../types/types";
 
 type Props = {
     libraryData: LoadedData;
-    onCountsChange?: (filtered: number, total: number) => void;
     view: ViewMode;
-    setView: (view: ViewMode) => void;
-    filteredCount: number;
-    totalCount: number;
     installedUpdatedAt?: string;
+    setView: (view: ViewMode) => void;
 };
 
 /**
  * Absolute-positioned library grid with expandable items, virtual scrolling
  * and alphabetical rail navigation.
  */
-export default function LibraryGrid({ libraryData, onCountsChange, view, setView, filteredCount, totalCount, installedUpdatedAt }: Props): JSX.Element {
+export default function LibraryGrid({
+    libraryData, installedUpdatedAt, view, setView,
+}: Props): JSX.Element {
     const { ui, derived } = useLibraryState({ items: libraryData.items });
     const { ref: controlsRef, height: controlsH } = useElementSize();
     const { ref: headerRef, height: headerH } = useElementSize();
     const containerRef = useRef<HTMLDivElement | null>(null);
-    
+
     // Data signature for resetting
-    const dataSig = `${derived.filteredCount}|${ui.q}|${ui.sources.join(",")}|${ui.tags.join(",")}|${ui.series.join(",")}|${ui.showHidden}|${ui.installedOnly}`;
-    const groupedKey = `grp:${dataSig}|${ui.sortKey}|${ui.sortDir}`;
-    const flatKey = `flt:${dataSig}|${ui.sortKey}|${ui.sortDir}`;
+    const { filteredCount, totalCount } = derived;
+    const { sources, tags, series, q, showHidden, installedOnly, sortKey, sortDir } = ui;
+    const dataSig = `${derived.filteredCount}|${q}|${sources.join(",")}|${tags.join(",")}|${series.join(",")}|${showHidden}|${installedOnly}`;
+    const groupedKey = `grp:${dataSig}|${sortKey}|${sortDir}`;
+    const flatKey = `flt:${dataSig}|${sortKey}|${sortDir}`;
 
     // Use grid hook for layout and positioning
     const {
@@ -53,7 +54,7 @@ export default function LibraryGrid({ libraryData, onCountsChange, view, setView
         view,
         controlsH,
         headerH,
-        ui, 
+        ui,
         derived,
     });
 
@@ -62,11 +63,6 @@ export default function LibraryGrid({ libraryData, onCountsChange, view, setView
         const el = containerRef.current;
         if (el) el.scrollTop = 0;
     }, [flatKey]);
-
-    // Notify parent about counts 
-    useEffect(() => {
-        onCountsChange?.(derived.filteredCount, derived.totalCount);
-    }, [derived.filteredCount, derived.totalCount, onCountsChange]);
 
     // Render visible items only
     const renderVisibleItems = () => {
@@ -77,7 +73,6 @@ export default function LibraryGrid({ libraryData, onCountsChange, view, setView
                 const pos = positions[absoluteIndex] ?? { left: GRID.gap, top: GRID.gap };
                 const isOpen = openIds.has(item.id);
 
-                // Adjust top to account for dynamic open heights above
                 return (
                     <Box
                         key={`${String(item.id)}|${installedUpdatedAt ?? ""}`}
@@ -103,7 +98,6 @@ export default function LibraryGrid({ libraryData, onCountsChange, view, setView
                             item={item}
                             isOpen={isOpen}
                             topOffset={topOffset}
-                            openWidth={openWidth}
                             openHeight={openHeight}
                             view={view}
                             onToggle={() => onToggleItem(item.id, absoluteIndex)}

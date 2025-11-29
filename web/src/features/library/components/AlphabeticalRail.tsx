@@ -33,7 +33,7 @@ export function AlphabeticalRail({activeLetter, onScrollJump, railCounts}: Props
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                zIndex: Z_INDEX.rail,
+                zIndex: Z_INDEX.high,
                 background: backgroundColor,
                 transition: "background-color 120ms ease",
             }}

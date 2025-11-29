@@ -90,3 +90,12 @@ export interface ItemPositions extends Array<{
   left: number;
   top: number
 }> { };
+
+export type LogListener = (lines: string[]) => void;
+
+export interface ILogBus {
+    append(line: string): void;
+    clear(): void;
+    get(): string[];
+    subscribe(fn: LogListener): () => void;
+}

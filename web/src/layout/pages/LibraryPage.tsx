@@ -1,14 +1,12 @@
 import React from "react";
 import { Stack, Loader, Box, Center } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
-import { GRID, INTERVAL_MS } from "../lib/constants";
-import { ViewMode } from "../types/types";
-import { useLibraryData } from "../features/library/hooks/useLibraryData";
-import LibraryGrid from "../features/library/LibraryGrid";
+import { GRID, INTERVAL_MS } from "../../lib/constants";
+import { ViewMode } from "../../types/types";
+import { useLibraryData } from "../../features/library/hooks/useLibraryData";
+import LibraryGrid from "../../features/library/LibraryGrid";
 
 export default function LibraryPage(): JSX.Element {
-    const [filtered, setFiltered] = React.useState(0);
-    const [total, setTotal] = React.useState(0);
     const { libraryData, installedUpdatedAt } = useLibraryData({ pollMs: INTERVAL_MS });
 
     const [view, setView] = useLocalStorage<ViewMode>({
@@ -31,14 +29,8 @@ export default function LibraryPage(): JSX.Element {
             <Box style={{ height: `calc(100vh)` }}>
                 <LibraryGrid
                     libraryData={libraryData}
-                    onCountsChange={(f, t) => {
-                        setFiltered(f);
-                        setTotal(t);
-                    }}
                     view={view}
                     setView={setView}
-                    filteredCount={filtered}
-                    totalCount={total}
                     installedUpdatedAt={installedUpdatedAt || ""}
                 />
             </Box>

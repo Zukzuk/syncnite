@@ -2,8 +2,8 @@ import * as React from "react";
 import { Card, Tabs, Stack, TextInput, PasswordInput, Button, Text, Alert, Center, Space } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "@mantine/form";
-import { login, registerAdmin, registerUser, fetchAdminStatus } from "../lib/api";
-import { setCreds } from "../lib/utils";
+import { login, registerAdmin, registerUser, fetchAdminStatus } from "../../lib/api";
+import { setCreds } from "../../lib/utils";
 
 export default function LoginPage(): JSX.Element {
   const nav = useNavigate();

@@ -1,12 +1,12 @@
 import * as React from "react";
 import { createBrowserRouter, Navigate, Outlet, useNavigate } from "react-router-dom";
 import AppShellLayout from "./layout/AppShellLayout";
-import HomePage from "./pages/HomePage";
-import LibraryPage from "./pages/LibraryPage";
-import BridgePage from "./pages/BridgePage";
-import LoginPage from "./pages/LoginPage";
-import AdminPage from "./pages/AdminPage";
-import AccountPage from "./pages/AccountPage";
+import HomePage from "./layout/pages/HomePage";
+import LibraryPage from "./layout/pages/LibraryPage";
+import BridgePage from "./layout/pages/BridgePage";
+import LoginPage from "./layout/pages/LoginPage";
+import AdminPage from "./layout/pages/AdminPage";
+import AccountPage from "./layout/pages/AccountPage";
 import { useAuth } from "./hooks/useAuth";
 import { useAdminGate } from "./hooks/useAdminGate";
 import { INTERVAL_MS } from "./lib/constants";

@@ -1,20 +1,16 @@
+import { ILogBus, LogListener } from "../types/types";
+
 let lines: string[] = restore();
-type LogListener = (lines: string[]) => void;
 const listeners = new Set<LogListener>();
 
-interface LogBus {
-    append(line: string): void;
-    clear(): void;
-    get(): string[];
-    subscribe(fn: LogListener): () => void;
-}
-
+// Persist logs to sessionStorage.
 function store() {
     try {
         sessionStorage.setItem("pn_logs", JSON.stringify(lines));
     } catch { }
 }
 
+// Restore logs from sessionStorage.
 function restore(): string[] {
     try {
         const raw = sessionStorage.getItem("pn_logs");
@@ -26,6 +22,7 @@ function restore(): string[] {
     }
 }
 
+// Notify all listeners of log updates.
 function emit() {
     const snapshot = [...lines];
     listeners.forEach((fn) => fn(snapshot));
@@ -61,4 +58,4 @@ export const LogBus = {
         fn([...lines]); // immediate hydration
         return () => { listeners.delete(fn); };
     },
-} as LogBus;
+} as ILogBus;

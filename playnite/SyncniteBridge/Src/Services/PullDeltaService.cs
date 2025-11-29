@@ -200,14 +200,44 @@ namespace SyncniteBridge.Services
             sb.Append(g.Name).Append("|");
             sb.Append(g.SortingName).Append("|");
             sb.Append(g.Hidden).Append("|");
-            sb.Append(g.IsInstalled).Append("|");
             sb.Append(g.Modified?.Ticks ?? 0).Append("|");
             sb.Append(g.Playtime).Append("|");
             sb.Append(g.PlayCount).Append("|");
             sb.Append(g.Icon).Append("|");
             sb.Append(g.CoverImage).Append("|");
-            sb.Append(g.BackgroundImage);
+            sb.Append(g.BackgroundImage).Append("|");
+            sb.Append(g.InstallDirectory).Append("|");
+            sb.Append(g.InstallSize).Append("|");
+            sb.Append(g.PluginId).Append("|");
+            sb.Append(g.GameId).Append("|");
+            sb.Append(g.SourceId).Append("|");
+            sb.Append(g.ReleaseDate).Append("|");
+            sb.Append(g.Added).Append("|");
+            sb.Append(g.Modified).Append("|");
+            sb.Append(g.LastActivity).Append("|");
+            sb.Append(g.Playtime).Append("|");
+            sb.Append(g.PlayCount).Append("|");
+            sb.Append(g.UserScore).Append("|");
+            sb.Append(g.CommunityScore).Append("|");
+            sb.Append(g.CriticScore).Append("|");
+            sb.Append(g.Description).Append("|");
+            sb.Append(g.Notes).Append("|");
+            sb.Append(g.Links).Append("|");
+            sb.Append(g.GameActions).Append("|");
+            sb.Append(g.Roms).Append("|");
+            sb.Append(g.CompletionStatusId).Append("|");
+            sb.Append(g.TagIds?.ToList()).Append("|");
+            sb.Append(g.PlatformIds?.ToList()).Append("|");
+            sb.Append(g.GenreIds?.ToList()).Append("|");
+            sb.Append(g.CategoryIds?.ToList()).Append("|");
+            sb.Append(g.FeatureIds?.ToList()).Append("|");
+            sb.Append(g.SeriesIds?.ToList()).Append("|");
+            sb.Append(g.AgeRatingIds?.ToList()).Append("|");
+            sb.Append(g.RegionIds?.ToList()).Append("|");
+            sb.Append(g.DeveloperIds?.ToList()).Append("|");
+            sb.Append(g.PublisherIds?.ToList()).Append("|");
 
+            // Compute SHA1 hash
             using (var sha = SHA1.Create())
             {
                 var bytes = Encoding.UTF8.GetBytes(sb.ToString());
@@ -327,23 +357,11 @@ namespace SyncniteBridge.Services
                         Name = g.Name,
                         SortingName = g.SortingName,
                         Hidden = g.Hidden,
-                        IsInstalled = g.IsInstalled,
                         InstallDirectory = g.InstallDirectory,
                         InstallSize = g.InstallSize,
                         PluginId = g.PluginId,
                         GameId = g.GameId,
                         SourceId = g.SourceId,
-                        TagIds = g.TagIds?.ToList(),
-                        PlatformIds = g.PlatformIds?.ToList(),
-                        GenreIds = g.GenreIds?.ToList(),
-                        CategoryIds = g.CategoryIds?.ToList(),
-                        FeatureIds = g.FeatureIds?.ToList(),
-                        SeriesIds = g.SeriesIds?.ToList(),
-                        CompletionStatusId = g.CompletionStatusId,
-                        AgeRatingIds = g.AgeRatingIds?.ToList(),
-                        RegionIds = g.RegionIds?.ToList(),
-                        DeveloperIds = g.DeveloperIds?.ToList(),
-                        PublisherIds = g.PublisherIds?.ToList(),
                         ReleaseDate = g.ReleaseDate,
                         Icon = g.Icon,
                         CoverImage = g.CoverImage,
@@ -361,6 +379,17 @@ namespace SyncniteBridge.Services
                         Links = g.Links,
                         GameActions = g.GameActions,
                         Roms = g.Roms,
+                        CompletionStatusId = g.CompletionStatusId,
+                        TagIds = g.TagIds?.ToList(),
+                        PlatformIds = g.PlatformIds?.ToList(),
+                        GenreIds = g.GenreIds?.ToList(),
+                        CategoryIds = g.CategoryIds?.ToList(),
+                        FeatureIds = g.FeatureIds?.ToList(),
+                        SeriesIds = g.SeriesIds?.ToList(),
+                        AgeRatingIds = g.AgeRatingIds?.ToList(),
+                        RegionIds = g.RegionIds?.ToList(),
+                        DeveloperIds = g.DeveloperIds?.ToList(),
+                        PublisherIds = g.PublisherIds?.ToList(),
                     };
                     api.Database.Games.Add(newGame);
                 }
@@ -369,23 +398,11 @@ namespace SyncniteBridge.Services
                     existing.Name = g.Name;
                     existing.SortingName = g.SortingName;
                     existing.Hidden = g.Hidden;
-                    existing.IsInstalled = g.IsInstalled;
                     existing.InstallDirectory = g.InstallDirectory;
                     existing.InstallSize = g.InstallSize;
                     existing.PluginId = g.PluginId;
                     existing.GameId = g.GameId;
                     existing.SourceId = g.SourceId;
-                    existing.TagIds = g.TagIds?.ToList();
-                    existing.PlatformIds = g.PlatformIds?.ToList();
-                    existing.GenreIds = g.GenreIds?.ToList();
-                    existing.CategoryIds = g.CategoryIds?.ToList();
-                    existing.FeatureIds = g.FeatureIds?.ToList();
-                    existing.SeriesIds = g.SeriesIds?.ToList();
-                    existing.CompletionStatusId = g.CompletionStatusId;
-                    existing.AgeRatingIds = g.AgeRatingIds?.ToList();
-                    existing.RegionIds = g.RegionIds?.ToList();
-                    existing.DeveloperIds = g.DeveloperIds?.ToList();
-                    existing.PublisherIds = g.PublisherIds?.ToList();
                     existing.ReleaseDate = g.ReleaseDate;
                     existing.Icon = g.Icon;
                     existing.CoverImage = g.CoverImage;
@@ -403,6 +420,17 @@ namespace SyncniteBridge.Services
                     existing.Links = g.Links;
                     existing.GameActions = g.GameActions;
                     existing.Roms = g.Roms;
+                    existing.CompletionStatusId = g.CompletionStatusId;
+                    existing.TagIds = g.TagIds?.ToList();
+                    existing.PlatformIds = g.PlatformIds?.ToList();
+                    existing.GenreIds = g.GenreIds?.ToList();
+                    existing.CategoryIds = g.CategoryIds?.ToList();
+                    existing.FeatureIds = g.FeatureIds?.ToList();
+                    existing.SeriesIds = g.SeriesIds?.ToList();
+                    existing.AgeRatingIds = g.AgeRatingIds?.ToList();
+                    existing.RegionIds = g.RegionIds?.ToList();
+                    existing.DeveloperIds = g.DeveloperIds?.ToList();
+                    existing.PublisherIds = g.PublisherIds?.ToList();
                 }
             }
 

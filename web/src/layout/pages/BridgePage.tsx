@@ -1,7 +1,7 @@
 import React from "react";
 import { Stack, Button, Textarea, Text } from "@mantine/core";
-import { SectionCard } from "../components/SectionCard";
-import { useLogBus } from "../hooks/useLogBus";
+import { SectionCard } from "../../components/SectionCard";
+import { useLogBus } from "../../hooks/useLogBus";
 
 export default function BridgePage(): JSX.Element {
     const logBus = useLogBus();

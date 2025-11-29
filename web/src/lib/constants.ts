@@ -42,10 +42,9 @@ export const Z_INDEX = {
   belowBase: 0,
   base: 1,
   aboveBase: 2,
-  stickyHeader: 15,
-  iconOverlay: 20,
-  controls: 30,
-  rail: 100,
+  medium: 50,
+  high: 100,
+  top: 1000,
 } as const;
 
 export const FILE_BASE = "/data";

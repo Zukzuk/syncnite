@@ -1,9 +1,10 @@
-// AppShellLayout.tsx
 import React from "react";
 import { AppShell, Burger, Box } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { AppNavbar } from "./AppNavbar";
-import { GRID } from "../lib/constants";
+import { GRID, Z_INDEX } from "../lib/constants";
+
+const WEB_APP_VERSION = `v${window.__APP_VERSION__}`;
 
 export default function AppShellLayout({
   children,
@@ -30,7 +31,7 @@ export default function AppShellLayout({
     >
       {!hideSite && (
         <AppShell.Navbar p="sm" pr={0} pl={0}>
-          <AppNavbar />
+          <AppNavbar appVersion={WEB_APP_VERSION} />
         </AppShell.Navbar>
       )}
 
@@ -42,7 +43,7 @@ export default function AppShellLayout({
             position: "fixed",
             top: 10,
             left: 10,
-            zIndex: 1000,
+            zIndex: Z_INDEX.top,
           }}
         >
           <Burger

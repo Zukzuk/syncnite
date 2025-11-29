@@ -1,44 +1,18 @@
-// AppNavbar.tsx
-import * as React from "react";
-import {
-    ScrollArea,
-    NavLink,
-    Text,
-    Group,
-    Stack,
-    Box,
-    Button,
-    ActionIcon,
-    Tooltip,
-    Divider,
-    Badge,
-} from "@mantine/core";
+
 import { Link, useLocation } from "react-router-dom";
-import {
-    IconHome2,
-    IconBooks,
-    IconAB2,
-    IconShield,
-    IconUser,
-    IconDownload,
-    IconMoon,
-    IconSun,
-} from "@tabler/icons-react";
-import { useMantineColorScheme } from "@mantine/core";
+import { useMantineColorScheme, Stack, Box, Group, Text, ActionIcon, Badge, Button, Divider, ScrollArea, Tooltip, NavLink } from "@mantine/core";
+import { IconSun, IconMoon, IconDownload, IconHome2, IconBooks, IconAB2, IconUser, IconShield } from "@tabler/icons-react";
 import { useAuth } from "../hooks/useAuth";
 import { useExtensionStatus } from "../hooks/useExtensionStatus";
 import { API_ENDPOINTS, INTERVAL_MS } from "../lib/constants";
 
-export function AppNavbar() {
+export function AppNavbar({ appVersion }: { appVersion: string }) {
     const location = useLocation();
     const { state, logout } = useAuth({ pollMs: 0 });
     const { colorScheme, setColorScheme } = useMantineColorScheme();
 
-    const { connected, lastPingAt, loading } = useExtensionStatus({
-        pollMs: INTERVAL_MS,
-    });
+    const { connected, lastPingAt, loading } = useExtensionStatus({ pollMs: INTERVAL_MS });
 
-    const appVersion = (window as any).__APP_VERSION__ ?? "dev";
     const isAdmin = state.role === "admin";
     const isLoggedIn = state.loggedIn;
 
@@ -52,7 +26,7 @@ export function AppNavbar() {
                             Syncnite
                         </Text>
                         <Text size="xs" c="dimmed">
-                            v{appVersion}
+                            {appVersion}
                         </Text>
                     </Stack>
 
