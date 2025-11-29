@@ -1,14 +1,13 @@
-import * as React from "react";
-import type { AlphabeticalGroup, GameItem, Letter } from "../../../types/types";
+import React from "react";
+import { AlphabeticalGroup, GameItem, ItemGroupedByLetter, Letter, UIDerivedState, UIState } from "../../../types/types";
 import { LETTERS } from "../../../lib/constants";
 import { orderedLetters } from "../../../lib/utils";
 
 type UseParams = {
-    isGrouped: boolean;
-    alphabeticalGroups: AlphabeticalGroup[] | null;
-    flatItems: GameItem[];
-    visibleStartIndex: number;
-    totalItems: number;
+    railVisibleIndex: number;
+    itemsLen: number;
+    ui: UIState;
+    derived: UIDerivedState;
     scrollItemIntoView: (index: number) => void;
 };
 
@@ -19,7 +18,14 @@ type UseReturn = {
 };
 
 // A hook to manage alphabetical rail navigation for the absolute grid.
-export function useGridAlphabetRail({ isGrouped, alphabeticalGroups, flatItems, scrollItemIntoView, visibleStartIndex, totalItems }: UseParams): UseReturn {
+export function useGridAlphabetRail({ scrollItemIntoView, ui, derived, railVisibleIndex, itemsLen }: UseParams): UseReturn {
+    // Alphabet groups for rail
+    const { alphabeticalGroups, isGrouped, flatItems } = computeAlphabetGroups({
+        sortKey: ui.sortKey,
+        itemsGroupedByLetter: derived.itemsGroupedByLetter,
+        itemsSorted: derived.itemsSorted,
+    });
+    
     // flat
     const { flatFirstIndex, flatCounts } = React.useMemo(() => {
         const firstIndex = Object.fromEntries(
@@ -73,7 +79,7 @@ export function useGridAlphabetRail({ isGrouped, alphabeticalGroups, flatItems, 
 
     const currentLetterAtIndex = React.useCallback(
         (idx: number): string | null => {
-            if (idx == null || idx < 0 || idx >= totalItems) return null;
+            if (idx == null || idx < 0 || idx >= itemsLen) return null;
             if (isGrouped && alphabeticalGroups && alphabeticalGroups.length) {
                 let i = idx;
                 for (const g of alphabeticalGroups) {
@@ -85,7 +91,7 @@ export function useGridAlphabetRail({ isGrouped, alphabeticalGroups, flatItems, 
             const item = flatItems[idx];
             return item ? orderedLetters(item.title, item.sortingName) : null;
         },
-        [isGrouped, alphabeticalGroups, flatItems, totalItems]
+        [isGrouped, alphabeticalGroups, flatItems, itemsLen]
     );
 
     const onScrollJump = React.useCallback(
@@ -104,16 +110,49 @@ export function useGridAlphabetRail({ isGrouped, alphabeticalGroups, flatItems, 
 
     // Follow scroll: top visible item determines active letter
     React.useEffect(() => {
-        const L = currentLetterAtIndex(visibleStartIndex);
+        const L = currentLetterAtIndex(railVisibleIndex);
         if (L) setActiveLetter(L);
-    }, [visibleStartIndex, currentLetterAtIndex]);
+    }, [railVisibleIndex, currentLetterAtIndex]);
 
     // Reset when dataset semantics change
     React.useEffect(() => {
         setActiveLetter("");
-    }, [isGrouped, alphabeticalGroups?.length, flatItems.length, totalItems]);
+    }, [isGrouped, alphabeticalGroups?.length, flatItems.length, itemsLen]);
 
     const railCounts = isGrouped ? groupCounts : flatCounts;
 
     return { railCounts, activeLetter, onScrollJump };
+}
+
+/**
+ * Compute alphabetical groups from sorted items.
+ */
+function computeAlphabetGroups({ sortKey, itemsGroupedByLetter, itemsSorted }: { 
+    sortKey: string; itemsGroupedByLetter: ItemGroupedByLetter[] | null; itemsSorted: GameItem[] | null 
+}): {
+    alphabeticalGroups: AlphabeticalGroup[] | null; isGrouped: boolean; flatItems: GameItem[];
+} {
+    const alphabeticalGroups = React.useMemo<AlphabeticalGroup[] | null>(() => {
+        if (sortKey !== "title" || !itemsGroupedByLetter || itemsGroupedByLetter.length === 0) {
+            return null;
+        }
+        
+        const out: AlphabeticalGroup[] = [];
+        let current: AlphabeticalGroup | null = null;
+
+        for (const { item, itemLetter } of itemsGroupedByLetter) {
+            const gp = (itemLetter || orderedLetters(item?.title, item?.sortingName));
+            if (!current || current.groupLetter !== gp) {
+                current = { groupLetter: gp, items: [] };
+                out.push(current);
+            }
+            current.items.push(item);
+        }
+        return out;
+    }, [sortKey, itemsGroupedByLetter]);
+
+    const isGrouped = !!alphabeticalGroups && alphabeticalGroups.length > 0;
+    const flatItems = itemsSorted ?? [];
+
+    return { alphabeticalGroups, isGrouped, flatItems };
 }

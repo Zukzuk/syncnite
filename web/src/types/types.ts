@@ -1,4 +1,5 @@
 import { LETTERS } from "../lib/constants";
+import { GameLink } from "./playnite";
 
 export type SortKey = "title" | "series" | "year" | "source" | "tags";
 
@@ -37,6 +38,32 @@ export interface CookieState {
   sortDir: SortDir;
 };
 
+export interface UIState {
+  q: string;
+  setQ: React.Dispatch<React.SetStateAction<string>>;
+  sources: string[];
+  setSources: React.Dispatch<React.SetStateAction<string[]>>;
+  tags: string[];
+  setTags: React.Dispatch<React.SetStateAction<string[]>>;
+  series: string[];
+  setSeries: React.Dispatch<React.SetStateAction<string[]>>;
+  showHidden: boolean;
+  setShowHidden: React.Dispatch<React.SetStateAction<boolean>>;
+  sortKey: SortKey;
+  sortDir: SortDir;
+  setSortKey: React.Dispatch<React.SetStateAction<SortKey>>;
+  onToggleSort: (key: SortKey) => void;
+  installedOnly: boolean;
+  setInstalledOnly: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+export interface UIDerivedState {
+  filteredCount: number;
+  totalCount: number;
+  itemsSorted: GameItem[];
+  itemsGroupedByLetter: ItemGroupedByLetter[];
+};
+
 export interface GameItem {
   id: string;
   title: string;
@@ -48,6 +75,7 @@ export interface GameItem {
   isHidden: boolean;
   isInstalled: boolean;
   link: string | null;
+  links: GameLink[] | null;
   year: number | null;
   iconUrl: string | null;
   coverUrl: string | null;

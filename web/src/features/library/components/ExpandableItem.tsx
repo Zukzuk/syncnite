@@ -13,20 +13,20 @@ type Props = {
     topOffset: number;
     openHeight: string;
     view: ViewMode;
-    onToggle: () => void;
+    onToggleItem: () => void;
 };
 
-export function ExpandableItem({ item, isOpen, openHeight, view, onToggle }: Props): JSX.Element {
+export function ExpandableItem({ item, isOpen, openHeight, view, onToggleItem }: Props): JSX.Element {
     const { id, title, bgUrl, coverUrl, isHidden, isInstalled } = item;
 
     const onKeyDown = useCallback(
         (e: React.KeyboardEvent) => {
             if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
-                onToggle();
+                onToggleItem();
             }
         },
-        [onToggle]
+        [onToggleItem]
     );
 
     const outerBase: React.CSSProperties = {
@@ -64,7 +64,7 @@ export function ExpandableItem({ item, isOpen, openHeight, view, onToggle }: Pro
             style={{
                 ...(view === "list" ? outerListStyles : outerGridStyles),
             }}
-            onClick={onToggle}
+            onClick={onToggleItem}
         >
             <Box
                 aria-label="library-item-inner"
@@ -80,14 +80,7 @@ export function ExpandableItem({ item, isOpen, openHeight, view, onToggle }: Pro
                 {!isOpen && view === "list" && <RowItem item={item} isOpen={isOpen} />}
                 {!isOpen && view === "grid" && <GridItem item={item} isOpen={isOpen} />}
                 {isOpen && <RowItem item={item} isOpen={isOpen} />}
-                {isOpen && (
-                    <ItemDetails
-                        title={title}
-                        coverUrl={coverUrl}
-                        isOpen={isOpen}
-                        onToggle={onToggle}
-                    />
-                )}
+                {isOpen && <ItemDetails item={item} isOpen={isOpen} onToggleItem={onToggleItem} />}
             </Box>
             <ItemBackground
                 aria-label="library-item-bg"

@@ -29,9 +29,10 @@ export default function LibraryGrid({
     const { ref: headerRef, height: headerH } = useElementSize();
     const containerRef = useRef<HTMLDivElement | null>(null);
 
+
     // Data signature for resetting
-    const { filteredCount, totalCount } = derived;
-    const { sources, tags, series, q, showHidden, installedOnly, sortKey, sortDir } = ui;
+    const { filteredCount, totalCount, itemsSorted } = derived;
+    const { sources, tags, series, q, showHidden, installedOnly, sortKey, sortDir, onToggleSort } = ui;
     const dataSig = `${derived.filteredCount}|${q}|${sources.join(",")}|${tags.join(",")}|${series.join(",")}|${showHidden}|${installedOnly}`;
     const groupedKey = `grp:${dataSig}|${sortKey}|${sortDir}`;
     const flatKey = `flt:${dataSig}|${sortKey}|${sortDir}`;
@@ -100,7 +101,7 @@ export default function LibraryGrid({
                             topOffset={topOffset}
                             openHeight={openHeight}
                             view={view}
-                            onToggle={() => onToggleItem(item.id, absoluteIndex)}
+                            onToggleItem={() => onToggleItem(item.id, absoluteIndex)}
                         />
                     </Box>
                 );
@@ -111,22 +112,21 @@ export default function LibraryGrid({
         <Flex direction="column" style={{ width: "100%", height: "100%" }}>
             <HeaderControls
                 controlsRef={controlsRef as unknown as (el: HTMLElement | null) => void}
-                filteredCount={filteredCount}
-                totalCount={totalCount}
                 allSources={libraryData.allSources}
                 allTags={libraryData.allTags}
                 allSeries={libraryData.allSeries}
                 view={view}
                 setView={setView}
+                filteredCount={filteredCount}
+                totalCount={totalCount}
                 {...ui}
             />
 
             <HeaderSort
                 headerRef={headerRef as unknown as (el: HTMLElement | null) => void}
-                sortKey={ui.sortKey}
-                sortDir={ui.sortDir}
-                onToggleSort={ui.toggleSort}
-                gridColumns={GRID.colsList}
+                sortKey={sortKey}
+                sortDir={sortDir}
+                onToggleSort={onToggleSort}
             />
 
             <Box
@@ -139,7 +139,7 @@ export default function LibraryGrid({
                 <Box aria-hidden role="grid-height-spacer" style={{ width: "100%", height: containerHeight }} />
 
                 {/* Visible window only */}
-                {derived.itemsSorted ? renderVisibleItems() : null}
+                {itemsSorted ? renderVisibleItems() : null}
             </Box>
 
             <AlphabeticalRail activeLetter={activeLetter} onScrollJump={onScrollJump} railCounts={railCounts} />

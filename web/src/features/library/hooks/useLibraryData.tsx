@@ -203,6 +203,11 @@ function getEffectiveLink(links: GameLink[] | undefined, name: string, source: s
     return null;
 }
 
+function getLinks(links: GameLink[] | undefined): GameLink[] | null {
+    if (!links || links.length === 0) return null;
+    return links;
+}
+
 // Get the Hidden flag (default false)
 function getIsHidden(hidden: boolean | null | undefined): boolean {
     return !!hidden;
@@ -308,6 +313,7 @@ async function loadLibrary(): Promise<LoadedData> {
         const tags = expandTagNames(g.TagIds, tagById);
         const isHidden = getIsHidden(g.Hidden);
         const link = getEffectiveLink(g.Links, g.Name, source, title, tags);
+        const links = getLinks(g.Links);
         const iconUrl = pickIconUrl(g.Icon);
         const isInstalled = getInstalled(g.Id, isInstalledSet);
         const series = expandSeriesNames(g.SeriesIds, seriesById);
@@ -317,7 +323,7 @@ async function loadLibrary(): Promise<LoadedData> {
         // return the GameItem
         return {
             id, gameId, title, sortingName, source, tags,
-            series, isHidden, link, iconUrl, year,
+            series, isHidden, link, links, iconUrl, year,
             isInstalled, coverUrl, bgUrl,
         };
     });

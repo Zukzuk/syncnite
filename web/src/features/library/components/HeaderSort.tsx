@@ -7,7 +7,6 @@ type Props = {
   sortKey: SortKey;
   sortDir: SortDir;
   onToggleSort: (k: SortKey) => void;
-  gridColumns?: string;
 };
 
 /**
@@ -21,7 +20,7 @@ type Props = {
  * - gridColumns: CSS grid template columns for layout.
  */
 export function HeaderSort(props: Props) {
-  const { headerRef, sortKey, sortDir, onToggleSort, gridColumns } = props;
+  const { headerRef, sortKey, sortDir, onToggleSort } = props;
 
   const label = (base: string, key: SortKey) =>
     sortKey === key ? `${base} ${sortDir === "asc" ? "▲" : "▼"}` : base;
@@ -45,7 +44,7 @@ export function HeaderSort(props: Props) {
         <Box
           style={{
             display: "grid",
-            gridTemplateColumns: gridColumns,
+            gridTemplateColumns: GRID.colsList,
             height: GRID.iconSize,
             alignItems: "center",
             gap: rem(12),
