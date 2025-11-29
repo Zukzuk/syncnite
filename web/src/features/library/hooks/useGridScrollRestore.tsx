@@ -19,7 +19,7 @@ type UseReturn = {
  * - restores scroll on close if user didn't scroll manually
  * - scrolls to opened item once layout has updated
  */
-export function useOpenItemScrollRestore({ containerRef, openIds, items, scrollItemIntoView, toggleOpen }: UseParams): UseReturn {
+export function useGridScrollRestore({ containerRef, openIds, items, scrollItemIntoView, toggleOpen }: UseParams): UseReturn {
     const preOpenScrollTopRef = useRef<number | null>(null);
     const openItemIdRef = useRef<string | null>(null);
     const userScrolledWhileOpenRef = useRef(false);

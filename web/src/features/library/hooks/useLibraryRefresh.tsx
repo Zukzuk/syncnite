@@ -11,7 +11,7 @@ type UseReturn = {
 };
 
 // A hook to manage refreshing the library data with periodic checks.
-export function useRefreshLibrary({ pollMs }: UseParams): UseReturn {
+export function useLibraryRefresh({ pollMs }: UseParams): UseReturn {
     const [version, setVersion] = React.useState(0);
     const [updatedAt, setUpdatedAt] = React.useState<string | null>(null);
     const lastRef = React.useRef<string>("");

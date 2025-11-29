@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Box } from "@mantine/core";
-import { useDelayedFlag } from "../hooks/useDelayedFlag";
+import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 import { Z_INDEX } from "../../../lib/constants";
 
 type Props = {

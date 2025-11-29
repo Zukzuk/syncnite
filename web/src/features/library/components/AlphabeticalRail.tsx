@@ -5,11 +5,11 @@ import { Letter } from "../../../types/types";
 
 type Props = {
     activeLetter: Letter;
-    handleJump: (letter: Letter) => void;
+    onScrollJump: (letter: Letter) => void;
     railCounts: Record<Letter, number>;
 };
 
-export function AlphabeticalRail({activeLetter, handleJump, railCounts}: Props): JSX.Element | null {
+export function AlphabeticalRail({activeLetter, onScrollJump, railCounts}: Props): JSX.Element | null {
     const letters = LETTERS_LIST.filter((l) => (railCounts[l] ?? 0) > 0);
     if (letters.length < 10) return null;
 
@@ -49,7 +49,7 @@ export function AlphabeticalRail({activeLetter, handleJump, railCounts}: Props):
                             size="compact-xs"
                             fullWidth
                             radius={0}
-                            onClick={() => handleJump(letter)}
+                            onClick={() => onScrollJump(letter)}
                             aria-pressed={isActive}
                             style={{
                                 height: rem(16),

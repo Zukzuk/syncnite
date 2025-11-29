@@ -11,8 +11,8 @@ type UseParams = {
         rowHeights: number[];
         containerHeight: number;
         viewportH: number;
-        rowFirstItemIndexPerRow?: number[];
-        rowLastItemIndexExclusivePerRow?: number[];
+        rowFirstItemIndex?: number[];
+        rowLastItemIndex?: number[];
     };
 };
 
@@ -27,7 +27,7 @@ type UseReturn = {
 // A hook to calculate visible range in a virtual scrolling window.
 // Supports variable row heights via rowTops + rowHeights and optional
 // per-row item index mapping for uneven rows (e.g. open rows).
-export function useVirtualWindow({ containerRef, opts }: UseParams): UseReturn {
+export function useGridVirtualWindow({ containerRef, opts }: UseParams): UseReturn {
     const {
         rows,
         cols,
@@ -36,8 +36,8 @@ export function useVirtualWindow({ containerRef, opts }: UseParams): UseReturn {
         rowHeights,
         containerHeight,
         viewportH,
-        rowFirstItemIndexPerRow,
-        rowLastItemIndexExclusivePerRow,
+        rowFirstItemIndex,
+        rowLastItemIndex,
     } = opts;
 
     const [scrollTop, setScrollTop] = useState(0);
@@ -105,18 +105,18 @@ export function useVirtualWindow({ containerRef, opts }: UseParams): UseReturn {
         let endIndex = 0;
 
         const haveRowIndexMapping =
-            rowFirstItemIndexPerRow &&
-            rowLastItemIndexExclusivePerRow &&
-            rowFirstItemIndexPerRow.length === rows &&
-            rowLastItemIndexExclusivePerRow.length === rows;
+            rowFirstItemIndex &&
+            rowLastItemIndex &&
+            rowFirstItemIndex.length === rows &&
+            rowLastItemIndex.length === rows;
 
         if (haveRowIndexMapping && startRow < endRowExclusive) {
             // real item indices per row (works with open rows / uneven row sizes)
             const firstRow = startRow;
             const lastRow = endRowExclusive - 1;
 
-            startIndex = rowFirstItemIndexPerRow![firstRow] ?? 0;
-            endIndex = rowLastItemIndexExclusivePerRow![lastRow] ?? startIndex;
+            startIndex = rowFirstItemIndex![firstRow] ?? 0;
+            endIndex = rowLastItemIndex![lastRow] ?? startIndex;
         } else {
             // behaviour assuming dense rows * cols
             const colsSafe = Math.max(1, cols);
@@ -138,8 +138,8 @@ export function useVirtualWindow({ containerRef, opts }: UseParams): UseReturn {
         rowTops,
         rowHeights,
         itemsLen,
-        rowFirstItemIndexPerRow,
-        rowLastItemIndexExclusivePerRow,
+        rowFirstItemIndex,
+        rowLastItemIndex,
     ]);
 
     return { scrollTop, visibleRange } as const;

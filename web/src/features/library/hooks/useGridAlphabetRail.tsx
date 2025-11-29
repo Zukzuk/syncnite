@@ -7,19 +7,19 @@ type UseParams = {
     isGrouped: boolean;
     alphabeticalGroups: AlphabeticalGroup[] | null;
     flatItems: GameItem[];
-    scrollItemIntoView: (index: number) => void;
     visibleStartIndex: number;
     totalItems: number;
+    scrollItemIntoView: (index: number) => void;
 };
 
 type UseReturn = {
     railCounts: Record<Letter, number>;
     activeLetter: Letter;
-    handleJump: (L: Letter) => void;
+    onScrollJump: (L: Letter) => void;
 };
 
 // A hook to manage alphabetical rail navigation for the absolute grid.
-export function useAlphabetRail({ isGrouped, alphabeticalGroups, flatItems, scrollItemIntoView, visibleStartIndex, totalItems }: UseParams): UseReturn {
+export function useGridAlphabetRail({ isGrouped, alphabeticalGroups, flatItems, scrollItemIntoView, visibleStartIndex, totalItems }: UseParams): UseReturn {
     // flat
     const { flatFirstIndex, flatCounts } = React.useMemo(() => {
         const firstIndex = Object.fromEntries(
@@ -88,7 +88,7 @@ export function useAlphabetRail({ isGrouped, alphabeticalGroups, flatItems, scro
         [isGrouped, alphabeticalGroups, flatItems, totalItems]
     );
 
-    const handleJump = React.useCallback(
+    const onScrollJump = React.useCallback(
         (L: string) => {
             const targetIdx = isGrouped
                 ? groupFirstItemIndex[L as Letter]
@@ -115,5 +115,5 @@ export function useAlphabetRail({ isGrouped, alphabeticalGroups, flatItems, scro
 
     const railCounts = isGrouped ? groupCounts : flatCounts;
 
-    return { railCounts, activeLetter, handleJump };
+    return { railCounts, activeLetter, onScrollJump };
 }

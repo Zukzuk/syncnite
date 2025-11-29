@@ -1,6 +1,6 @@
 import React from "react";
 import { Collapse, Group, Image, Paper } from "@mantine/core";
-import { useDelayedFlag } from "../hooks/useDelayedFlag";
+import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 
 type Props = {
     title: string;

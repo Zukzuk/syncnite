@@ -6,7 +6,7 @@ type UseReturn = {
 };
 
 // A hook to manage collapse open/close state with tracking of ever opened items.
-export function useCollapseToggle(): UseReturn {
+export function useGridOpenItemToggle(): UseReturn {
   const [openIds, setOpenIds] = React.useState<Set<string>>(new Set());
   const toggleOpen = React.useCallback((id: string, onOpen?: () => void) => {
 

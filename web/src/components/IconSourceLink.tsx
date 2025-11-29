@@ -14,10 +14,9 @@ import {
     IconWorldWww,
 } from "@tabler/icons-react";
 import { SOURCE_MAP } from "../lib/constants";
-import { Item } from "../features/library/hooks/useLibraryData";
+import { GameItem } from "../types/types";
 
-
-type Props = Pick<Item, "source" | "gameId" | "link">;
+type Props = Pick<GameItem, "source" | "gameId" | "link">;
 
 const iconForSource = (s: string | null | undefined) => {
     const key = (s ?? "").toLowerCase();

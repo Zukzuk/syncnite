@@ -1,4 +1,5 @@
 import React from "react";
+import "./Scroller.scss";
 
 export const Scroller = React.forwardRef<HTMLDivElement, React.HTMLProps<HTMLDivElement>>(
   (props, ref) => (

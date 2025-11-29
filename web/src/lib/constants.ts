@@ -32,8 +32,8 @@ export const GRID = {
   cardHeight: 300,
   rowHeight: 56,
   iconSize: 38,
+  scrollbarWidth: 15,
   gap: 8,
-  padding: 2,
   overscan: { top: 600, bottom: 800 } as const,
   menuWidth: 160,
 } as const;

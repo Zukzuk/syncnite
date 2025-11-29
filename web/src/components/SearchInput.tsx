@@ -14,11 +14,11 @@ export function SearchInput({ value, onChange }: Props) {
             placeholder="Search…"
             value={value}
             onChange={(e) => onChange(e.currentTarget.value)}
-            w={312}
-            size="sm"
-            radius="md"
+            w={219}
+            size="xs"
+            radius="sm"
             variant={!!value ? "filled" : "default"}
-            leftSection={<IconSearch size={18} stroke={2} aria-hidden />}
+            leftSection={<IconSearch size={16} stroke={2} aria-hidden />}
             leftSectionPointerEvents="none"
             rightSection={
                 value ? (

@@ -15,7 +15,7 @@ type UseReturn = {
 };
 
 // A hook to group items alphabetically based on their titles.
-export function useAlphabetGroups({ sortKey, itemsGroupedByLetter, itemsSorted }: UseParams): UseReturn {
+export function useGridAlphabetGroups({ sortKey, itemsGroupedByLetter, itemsSorted }: UseParams): UseReturn {
     const alphabeticalGroups = React.useMemo<AlphabeticalGroup[] | null>(() => {
         if (sortKey !== "title" || !itemsGroupedByLetter || itemsGroupedByLetter.length === 0) {
             return null;

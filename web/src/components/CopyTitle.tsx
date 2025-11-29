@@ -2,9 +2,9 @@
 import React from "react";
 import { ActionIcon, Tooltip } from "@mantine/core";
 import { IconCopy } from "@tabler/icons-react";
-import { Item } from "../features/library/hooks/useLibraryData";
+import { GameItem } from "../types/types";
 
-type Props = Pick<Item, "title" | "year">;
+type Props = Pick<GameItem, "title" | "year">;
 
 export const CopyTitle = React.memo(function CopyTitle({
     title,

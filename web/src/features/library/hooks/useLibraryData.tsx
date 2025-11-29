@@ -4,15 +4,8 @@ import { COLLECTIONS, FILE_BASE, FALLBACK_ICON, SOURCE_MAP } from "../../../lib/
 import { loadDbCollection } from "../../../lib/api";
 import { fetchUser } from "../../../lib/utils";
 import { GameItem, LoadedData } from "../../../types/types";
-import { useRefreshLibrary } from "./useRefreshLibrary";
+import { useLibraryRefresh } from "./useLibraryRefresh";
 import { useLocalInstalled } from "./useLocalInstalled";
-
-type UseParams = { pollMs: number };
-
-type UseReturn = {
-    data: LoadedData | null;
-    installedUpdatedAt: string | null;
-};
 
 // Get the Playnite Game.Id
 function getPlayniteId(g: Game): string {
@@ -287,7 +280,7 @@ function getBgUrl(bg: string | null | undefined): string | null {
 }
 
 // Load and process the full library data
-export async function loadLibrary(): Promise<LoadedData> {
+async function loadLibrary(): Promise<LoadedData> {
     // load raw data
     const games = await loadDbCollection<Game>(COLLECTIONS.games);
     const tags = await loadDbCollection<Tag>(COLLECTIONS.tags);
@@ -320,6 +313,7 @@ export async function loadLibrary(): Promise<LoadedData> {
         const series = expandSeriesNames(g.SeriesIds, seriesById);
         const coverUrl = getCoverUrl(g.CoverImage);
         const bgUrl = getBgUrl(g.BackgroundImage);
+
         return {
             id, gameId, title, sortingName, source, tags,
             series, isHidden, link, iconUrl, year,
@@ -335,12 +329,19 @@ export async function loadLibrary(): Promise<LoadedData> {
     return { items, allSources, allTags, allSeries };
 }
 
+type UseParams = { pollMs: number };
+
+type UseReturn = {
+    libraryData: LoadedData | null;
+    installedUpdatedAt: string | null;
+};
+
 // A hook to manage the library data with automatic refresh and installed status updates.
 export function useLibraryData({ pollMs }: UseParams): UseReturn {
-    const [data, setData] = React.useState<LoadedData | null>(null);
+    const [libraryData, setData] = React.useState<LoadedData | null>(null);
 
     // external pollers
-    const { version: libraryVersion } = useRefreshLibrary({ pollMs });
+    const { version: libraryVersion } = useLibraryRefresh({ pollMs });
     const { set: installedSet, updatedAt: installedUpdatedAt } = useLocalInstalled({ pollMs });
 
     // reload on manifest change
@@ -360,13 +361,13 @@ export function useLibraryData({ pollMs }: UseParams): UseReturn {
         if (!installedSet || !installedUpdatedAt) return;
         setData((prev) => {
             if (!prev) return prev;
-            const items = prev.items.map((r) => ({
-                ...r,
-                isInstalled: installedSet.has(r.id.toLowerCase()),
+            const items = prev.items.map((item) => ({
+                ...item,
+                isInstalled: installedSet.has(item.id.toLowerCase()),
             }));
             return { ...prev, items };
         });
     }, [installedUpdatedAt, installedSet]);
 
-    return { data, installedUpdatedAt };
+    return { libraryData, installedUpdatedAt };
 }

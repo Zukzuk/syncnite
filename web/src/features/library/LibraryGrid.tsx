@@ -5,19 +5,13 @@ import { HeaderSort } from "./components/HeaderSort";
 import { HeaderControls } from "./components/HeaderControls";
 import { ExpandableItem } from "./components/ExpandableItem";
 import { AlphabeticalRail } from "./components/AlphabeticalRail";
-import { useAbsoluteGridLayout } from "./hooks/useAbsoluteGridLayout";
-import { useAbsoluteGridModel } from "./hooks/useAbsoluteGridModel";
-import { useAlphabetGroups } from "./hooks/useAlphabetGroups";
-import { useCollapseToggle } from "./hooks/useCollapseToggle";
 import { useLibraryState } from "./hooks/useLibraryState";
-import { useRemountKeys } from "./hooks/useRemountKeys";
-import { useOpenCardDimensions } from "./hooks/useOpenCardDimensions";
-import { useOpenItemScrollRestore } from "./hooks/useOpenItemScrollRestore";
+import { useGrid } from "./hooks/useGrid";
 import { GRID, Z_INDEX } from "../../lib/constants";
 import { GameItem, LoadedData, ViewMode } from "../../types/types";
 
 type Props = {
-    data: LoadedData;
+    libraryData: LoadedData;
     onCountsChange?: (filtered: number, total: number) => void;
     view: ViewMode;
     setView: (view: ViewMode) => void;
@@ -30,56 +24,37 @@ type Props = {
  * Absolute-positioned library grid with expandable items, virtual scrolling
  * and alphabetical rail navigation.
  */
-export default function LibraryGrid({ data, onCountsChange, view, setView, filteredCount, totalCount, installedUpdatedAt }: Props): JSX.Element {
-    const { ui, derived } = useLibraryState({ items: data.items });
-    const { openIds, toggleOpen } = useCollapseToggle();
+export default function LibraryGrid({ libraryData, onCountsChange, view, setView, filteredCount, totalCount, installedUpdatedAt }: Props): JSX.Element {
+    const { ui, derived } = useLibraryState({ items: libraryData.items });
     const { ref: controlsRef, height: controlsH } = useElementSize();
     const { ref: headerRef, height: headerH } = useElementSize();
-
-    // Alphabet groups for rail
-    const { alphabeticalGroups, isGrouped, flatItems } = useAlphabetGroups({
-        sortKey: ui.sortKey,
-        itemsGroupedByLetter: derived.itemsGroupedByLetter,
-        itemsSorted: derived.itemsSorted,
-    });
-
-    // Scroll container
     const containerRef = useRef<HTMLDivElement | null>(null);
+    
+    // Data signature for resetting
+    const dataSig = `${derived.filteredCount}|${ui.q}|${ui.sources.join(",")}|${ui.tags.join(",")}|${ui.series.join(",")}|${ui.showHidden}|${ui.installedOnly}`;
+    const groupedKey = `grp:${dataSig}|${ui.sortKey}|${ui.sortDir}`;
+    const flatKey = `flt:${dataSig}|${ui.sortKey}|${ui.sortDir}`;
 
-    // Notify parent about counts (stay compatible with existing props)
-    useEffect(() => {
-        onCountsChange?.(derived.filteredCount, derived.totalCount);
-    }, [derived.filteredCount, derived.totalCount, onCountsChange]);
-
-    // Total items length
-    const itemsLen = derived.itemsSorted.length;
-
-    // Base grid sizing (cols + viewport height)
-    const { cols, viewportH } = useAbsoluteGridLayout({ containerRef, itemsLen });
-    const colsSafe = view === "list" ? 1 : Math.max(1, cols || 1);
-
-    // Combined sticky header/controls offset
-    const topOffset = controlsH + headerH;
-
-    // Open card CSS + numeric height
-    const { openWidth, openHeight, dynamicOpenHeight } = useOpenCardDimensions({
+    // Use grid hook for layout and positioning
+    const {
+        containerHeight,
+        positions,
+        visibleRange,
+        railCounts,
+        activeLetter,
+        openWidth,
+        openHeight,
         topOffset,
-    });
-
-    // Base closed item height
-    const baseClosedHeight = view === "list" ? GRID.rowHeight : GRID.cardHeight;
-
-    // Keys to reset scroll on major filter/sort changes
-    const { flatKey } = useRemountKeys({
-        filteredCount: derived.filteredCount,
-        q: ui.q,
-        sources: ui.sources,
-        tags: ui.tags,
-        series: ui.series,
-        showHidden: ui.showHidden,
-        installedOnly: ui.installedOnly,
-        sortKey: ui.sortKey,
-        sortDir: ui.sortDir,
+        openIds,
+        onScrollJump,
+        onToggleItem,
+    } = useGrid({
+        containerRef,
+        view,
+        controlsH,
+        headerH,
+        ui, 
+        derived,
     });
 
     // Reset scroll position when dataset semantics change
@@ -88,37 +63,10 @@ export default function LibraryGrid({ data, onCountsChange, view, setView, filte
         if (el) el.scrollTop = 0;
     }, [flatKey]);
 
-    // Central grid model: rows, positions, virtual window, rail
-    const {
-        containerHeight,
-        positions,
-        visibleRange,
-        scrollItemIntoView,
-        railCounts,
-        activeLetter,
-        handleJump,
-    } = useAbsoluteGridModel({
-        itemsSorted: derived.itemsSorted,
-        openIds,
-        colsSafe,
-        dynamicOpenHeight,
-        baseClosedHeight,
-        containerRef,
-        viewportH,
-        isGrouped,
-        alphabeticalGroups,
-        flatItems,
-        view,
-    });
-
-    // Open/close behavior with scroll restore
-    const { onToggleItem } = useOpenItemScrollRestore({
-        containerRef,
-        openIds,
-        items: derived.itemsSorted as GameItem[],
-        scrollItemIntoView,
-        toggleOpen: (id: string) => toggleOpen(id),
-    });
+    // Notify parent about counts 
+    useEffect(() => {
+        onCountsChange?.(derived.filteredCount, derived.totalCount);
+    }, [derived.filteredCount, derived.totalCount, onCountsChange]);
 
     // Render visible items only
     const renderVisibleItems = () => {
@@ -126,7 +74,7 @@ export default function LibraryGrid({ data, onCountsChange, view, setView, filte
             .slice(visibleRange.startIndex, visibleRange.endIndex)
             .map((item: GameItem, i: number) => {
                 const absoluteIndex = visibleRange.startIndex + i;
-                const pos = positions[absoluteIndex] ?? { left: GRID.padding, top: GRID.padding };
+                const pos = positions[absoluteIndex] ?? { left: GRID.gap, top: GRID.gap };
                 const isOpen = openIds.has(item.id);
 
                 // Adjust top to account for dynamic open heights above
@@ -171,9 +119,9 @@ export default function LibraryGrid({ data, onCountsChange, view, setView, filte
                 controlsRef={controlsRef as unknown as (el: HTMLElement | null) => void}
                 filteredCount={filteredCount}
                 totalCount={totalCount}
-                allSources={data.allSources}
-                allTags={data.allTags}
-                allSeries={data.allSeries}
+                allSources={libraryData.allSources}
+                allTags={libraryData.allTags}
+                allSeries={libraryData.allSeries}
                 view={view}
                 setView={setView}
                 {...ui}
@@ -200,7 +148,7 @@ export default function LibraryGrid({ data, onCountsChange, view, setView, filte
                 {derived.itemsSorted ? renderVisibleItems() : null}
             </Box>
 
-            <AlphabeticalRail activeLetter={activeLetter} handleJump={handleJump} railCounts={railCounts} />
+            <AlphabeticalRail activeLetter={activeLetter} onScrollJump={onScrollJump} railCounts={railCounts} />
         </Flex>
     );
 }

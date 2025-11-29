@@ -1,7 +1,7 @@
 import React from "react";
-import { Group, MultiSelect, Switch, Text, Stack, Flex, Box, SegmentedControl } from "@mantine/core";
+import { Group, MultiSelect, Switch, Text, Flex, Box, SegmentedControl } from "@mantine/core";
 import { SearchInput } from "../../../components/SearchInput";
-import { SOURCE_MAP, Z_INDEX } from "../../../lib/constants";
+import { SOURCE_MAP } from "../../../lib/constants";
 import { ViewMode } from "../../../types/types";
 
 type Props = {
@@ -68,8 +68,7 @@ export function HeaderControls(props: Props) {
   return (
     <Box
       ref={controlsRef as unknown as React.RefObject<HTMLDivElement>}
-      p="sm"
-      style={{ position: "sticky", top: 0, zIndex: Z_INDEX.controls, background: "var(--mantine-color-body)" }}
+      p="xs"
     >
       <Group wrap="wrap" align="center" gap="sm">
 
@@ -78,15 +77,27 @@ export function HeaderControls(props: Props) {
           wrap="wrap"
           style={{ flex: '1 1 0%', minWidth: 0 }}
         >
-          <Group align="end" wrap="wrap">
-            <Stack gap="xs" style={{ flex: 1 }}>
-              <SearchInput value={q} onChange={setQ} />
-            </Stack>
+          <Group align="end" wrap="wrap" >
+            <Flex direction="column" align="center" justify="center" style={{ alignSelf: "stretch" }}>
+              <SegmentedControl
+                value={view}
+                size="xs"
+                radius="sm"
+                onChange={(v) => setView(v as ViewMode)}
+                data={[
+                  { value: "list", label: "List" },
+                  { value: "grid", label: "Grid" },
+                ]}
+              />
+            </Flex>
+            <SearchInput value={q} onChange={setQ} />
           </Group>
 
           <Group gap="sm" align="end" wrap="nowrap" style={{ flex: '0 0 auto' }}>
             <MultiSelect
               w={150}
+              size="xs"
+              radius="sm"
               placeholder="Platforms"
               value={sources}
               onChange={setSources}
@@ -98,6 +109,8 @@ export function HeaderControls(props: Props) {
             />
             <MultiSelect
               w={150}
+              size="xs"
+              radius="sm"
               placeholder="Tags"
               value={tags}
               onChange={setTags}
@@ -107,16 +120,6 @@ export function HeaderControls(props: Props) {
               clearable
               styles={{ pill: { display: "none" as const } }}
             />
-            <Flex direction="column" align="center" justify="center" style={{ alignSelf: "stretch" }}>
-              <SegmentedControl
-                value={view}
-                onChange={(v) => setView(v as ViewMode)}
-                data={[
-                  { value: "list", label: "List" },
-                  { value: "grid", label: "Grid" },
-                ]}
-              />
-            </Flex>
           </Group>
 
         </Group>
@@ -130,7 +133,7 @@ export function HeaderControls(props: Props) {
           style={{ flex: '0 0 auto' }}
         >
           <Flex direction="row" align="center" justify="center" wrap="nowrap" style={{ alignSelf: "stretch" }}>
-            <Text size="sm" pr="sm" style={{ whiteSpace: "nowrap" }}>
+            <Text size="xs" pr="sm" style={{ whiteSpace: "nowrap" }}>
               {totalCount ? `${filteredCount.toLocaleString()} / ${totalCount.toLocaleString()}` : ""}
             </Text>
             <Group gap="sm" align="end" wrap="nowrap">
@@ -139,7 +142,8 @@ export function HeaderControls(props: Props) {
                   aria-label="Installed only"
                   checked={installedOnly}
                   onChange={(e) => setInstalledOnly(e.currentTarget.checked)}
-                  size="sm"
+                  size="xs"
+                  radius="md"
                   pb={4}
                 />
                 <Text size="xs">installed</Text>
@@ -149,7 +153,8 @@ export function HeaderControls(props: Props) {
                   aria-label="Show hidden"
                   checked={showHidden}
                   onChange={(e) => setShowHidden(e.currentTarget.checked)}
-                  size="sm"
+                  size="xs"
+                  radius="md"
                   pb={4}
                 />
                 <Text size="xs">hidden</Text>

@@ -1,7 +1,7 @@
+// AppShellLayout.tsx
 import React from "react";
-import { AppShell } from "@mantine/core";
+import { AppShell, Burger, Box } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { AppHeader } from "./AppHeader";
 import { AppNavbar } from "./AppNavbar";
 import { GRID } from "../lib/constants";
 
@@ -16,23 +16,43 @@ export default function AppShellLayout({
 
   return (
     <AppShell
-      header={hideSite ? undefined : { height: GRID.rowHeight }}
+      // no header anymore
+      header={undefined}
       navbar={
         hideSite
           ? undefined
-          : { width: GRID.menuWidth, breakpoint: "sm", collapsed: { mobile: !opened } }
+          : {
+            width: GRID.menuWidth,
+            breakpoint: "sm",
+            collapsed: { mobile: !opened },
+          }
       }
     >
-      {!hideSite && (
-        <AppShell.Header>
-          <AppHeader opened={opened} onToggleNav={toggle} />
-        </AppShell.Header>
-      )}
-
       {!hideSite && (
         <AppShell.Navbar p="sm" pr={0} pl={0}>
           <AppNavbar />
         </AppShell.Navbar>
+      )}
+
+      {/* Floating burger for mobile toggle */}
+      {!hideSite && (
+        <Box
+          // keep it on top of content
+          style={{
+            position: "fixed",
+            top: 10,
+            left: 10,
+            zIndex: 1000,
+          }}
+        >
+          <Burger
+            opened={opened}
+            onClick={toggle}
+            size="sm"
+            hiddenFrom="sm"
+            aria-label="Toggle navigation"
+          />
+        </Box>
       )}
 
       <AppShell.Main>{children}</AppShell.Main>

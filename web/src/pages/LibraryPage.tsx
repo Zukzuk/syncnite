@@ -9,17 +9,17 @@ import LibraryGrid from "../features/library/LibraryGrid";
 export default function LibraryPage(): JSX.Element {
     const [filtered, setFiltered] = React.useState(0);
     const [total, setTotal] = React.useState(0);
-    const { data, installedUpdatedAt } = useLibraryData({ pollMs: INTERVAL_MS });
+    const { libraryData, installedUpdatedAt } = useLibraryData({ pollMs: INTERVAL_MS });
 
     const [view, setView] = useLocalStorage<ViewMode>({
         key: "library.view",
         defaultValue: "grid",
     });
 
-    if (!data) {
+    if (!libraryData) {
         return (
-            <Stack gap="lg" style={{ height: "100%", minHeight: 0 }}>
-                <Center w={`calc(100vw - ${GRID.menuWidth}px)`} h={`calc(100vh - ${GRID.rowHeight}px)`}>
+            <Stack style={{ height: "100%", minHeight: 0 }}>
+                <Center w={`calc(100vw - ${GRID.menuWidth}px)`} h={`calc(100vh)`}>
                     <Loader size="lg" />
                 </Center>
             </Stack>
@@ -27,10 +27,10 @@ export default function LibraryPage(): JSX.Element {
     }
 
     return (
-        <Stack gap="lg" style={{ height: "100%", minHeight: 0 }}>
-            <Box style={{ height: `calc(100vh - ${GRID.rowHeight}px)` }}>
+        <Stack style={{ height: "100%", minHeight: 0 }}>
+            <Box style={{ height: `calc(100vh)` }}>
                 <LibraryGrid
-                    data={data}
+                    libraryData={libraryData}
                     onCountsChange={(f, t) => {
                         setFiltered(f);
                         setTotal(t);

@@ -4,8 +4,6 @@ import {
     Anchor as MantineAnchor,
     Code as MantineCode,
     ScrollArea,
-    useMantineTheme,
-    useMantineColorScheme,
 } from "@mantine/core";
 import ReactMarkdown from "react-markdown";
 import type { Components } from "react-markdown";
