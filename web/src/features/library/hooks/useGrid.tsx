@@ -10,7 +10,7 @@ import { GRID } from "../../../lib/constants";
 
 type UseParams = {
     containerRef: React.RefObject<HTMLDivElement>;
-    view: ViewMode;
+    isListView: boolean;
     controlsH: number;
     headerH: number;
     ui: UIState;
@@ -27,6 +27,7 @@ type UseReturn = {
     openHeight: string;
     topOffset: number;
     openIds: Set<string>;
+    hasOpenItemInView: boolean;
     onScrollJump: (letter: Letter) => void;
     onToggleItem: (id: string, index: number) => void;
 };
@@ -34,7 +35,7 @@ type UseReturn = {
 // A hook to manage the absolute grid model: positions, virtual window, jump-to-scroll, alphabetical rail.
 export function useGrid({
     containerRef,
-    view,
+    isListView,
     controlsH,
     headerH,
     ui,
@@ -44,16 +45,25 @@ export function useGrid({
     const itemsLen = derived.itemsSorted.length;
     // Base grid sizing (cols + viewport height)
     const { cols, viewportH } = useGridLayout({ containerRef, itemsLen });
-    const colsSafe = view === "list" ? 1 : Math.max(1, cols || 1);
+    const colsSafe = isListView ? 1 : Math.max(1, cols || 1);
 
     // Combined header/controls offset
     const topOffset = controlsH + headerH;
     // Open card CSS + numeric height
-    const openWidth = `calc(100vw - ${GRID.menuWidth}px - ${GRID.scrollbarWidth}px)`;
+    const openWidth = `calc(100vw - ${GRID.navBarWidth}px - ${GRID.scrollbarWidth}px)`;
     const openHeight = `calc(100vh - ${topOffset}px)`;
 
     // Open/close state
     const { openIds, toggleOpen } = useGridOpenItemToggle();
+
+    // Build id -> index map once per items change
+    const idToIndex = useMemo(() => {
+        const map = new Map<string, number>();
+        derived.itemsSorted.forEach((item: GameItem, index: number) => {
+            map.set(item.id, index);
+        });
+        return map;
+    }, [derived.itemsSorted]);
 
     // Build grid rows with open items occupying dedicated full-width rows
     const { rowItems, rowIsOpen } = useMemo(
@@ -75,9 +85,9 @@ export function useGrid({
                 rowIsOpen,
                 itemsLen,
                 viewportH,
-                view,
+                isListView,
             ),
-        [rowItems, rowIsOpen, itemsLen, viewportH, view]
+        [rowItems, rowIsOpen, itemsLen, viewportH, isListView]
     );
 
     // Per-row first/last item indices
@@ -89,6 +99,7 @@ export function useGrid({
         () => rowItems.map((row) => (row.length ? row[row.length - 1] + 1 : 0)),
         [rowItems]
     );
+
     // Compute absolute item positions
     const positions = useMemo(
         () => computeItemPositions(itemsLen, itemRowIndex, itemColIndex, rowTops),
@@ -125,6 +136,7 @@ export function useGrid({
         }
     });
 
+    // Compute id -> index map once per items change
     const railVisibleIndex =
         visibleRange.endIndex > visibleRange.startIndex
             ? Math.floor((visibleRange.startIndex + visibleRange.endIndex - 1) / 2)
@@ -139,6 +151,48 @@ export function useGrid({
         scrollItemIntoView,
     });
 
+    // Open item must intersect viewport by >= minIntersection
+    const hasOpenItemInView = useMemo(() => {
+        if (isListView) return false;
+        const el = containerRef.current;
+        if (!el || openIds.size === 0) return false;
+
+        const viewportTop = el.scrollTop;
+        const viewportBottom = viewportTop + el.clientHeight;
+        const MIN_INTERSECTION = 80; // tweak as needed
+
+        for (const openId of openIds) {
+            const idx = idToIndex.get(openId);
+            if (idx == null) continue;
+
+            const rowIdx = itemRowIndex[idx];
+            if (rowIdx == null) continue;
+
+            const top = rowTops[rowIdx] ?? GRID.gap;
+            const height = rowHeights[rowIdx] ?? 0;
+            const bottom = top + height;
+
+            const intersection =
+                Math.min(bottom, viewportBottom) - Math.max(top, viewportTop);
+
+            if (intersection >= MIN_INTERSECTION) {
+                return true;
+            }
+        }
+
+        return false;
+    }, [
+        isListView,
+        openIds,
+        idToIndex,
+        itemRowIndex,
+        rowTops,
+        rowHeights,
+        containerRef,
+        visibleRange.startIndex,
+        visibleRange.endIndex,
+    ]);
+
     return {
         containerHeight,
         positions,
@@ -149,6 +203,7 @@ export function useGrid({
         openHeight,
         topOffset,
         openIds,
+        hasOpenItemInView,
         onScrollJump,
         onToggleItem,
     } as const;
@@ -200,15 +255,15 @@ function buildGridRows(items: GameItem[], openIds: Set<string>, colsSafe: number
 /**
  * Compute per-row layout, including variable row heights.
  */
-function computeRowLayout(rowItems: number[][], rowIsOpen: boolean[], itemsLen: number, viewportH: number, view: ViewMode): RowLayout {
+function computeRowLayout(rowItems: number[][], rowIsOpen: boolean[], itemsLen: number, viewportH: number, isListView: boolean): RowLayout {
     const rowCount = rowItems.length;
     const rowTops = new Array<number>(rowCount);
     const rowHeights = new Array<number>(rowCount);
     const itemRowIndex = new Array<number>(itemsLen);
     const itemColIndex = new Array<number>(itemsLen);
 
-    const closedHeight = view === "list" ? GRID.rowHeight : GRID.cardHeight;
-    let y = view === "list" ? 0 : GRID.gap;
+    const closedHeight = isListView ? GRID.rowHeight : GRID.cardHeight;
+    let y = isListView ? 0 : GRID.gap;
 
     for (let r = 0; r < rowCount; r++) {
         rowTops[r] = y;
@@ -223,13 +278,13 @@ function computeRowLayout(rowItems: number[][], rowIsOpen: boolean[], itemsLen: 
             itemColIndex[idx] = c;
         }
 
-        y += height + (view === "list" ? 0 : GRID.gap);
+        y += height + (isListView ? 0 : GRID.gap);
     }
 
     const containerHeight =
         rowCount === 0
             ? GRID.gap * 2 + closedHeight
-            : y - (view === "list" ? 0 : GRID.gap * 2);
+            : y - (isListView ? 0 : GRID.gap * 2);
 
     return {
         rowTops,

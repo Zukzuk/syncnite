@@ -17,20 +17,19 @@ export default function AppShellLayout({
 
   return (
     <AppShell
-      // no header anymore
       header={undefined}
       navbar={
         hideSite
           ? undefined
           : {
-            width: GRID.menuWidth,
+            width: GRID.navBarWidth,
             breakpoint: "sm",
             collapsed: { mobile: !opened },
           }
       }
     >
       {!hideSite && (
-        <AppShell.Navbar p="sm" pr={0} pl={0}>
+        <AppShell.Navbar p={0}>
           <AppNavbar appVersion={WEB_APP_VERSION} />
         </AppShell.Navbar>
       )}

@@ -6,6 +6,8 @@ type Props = {
   headerRef: (el: HTMLElement | null) => void;
   sortKey: SortKey;
   sortDir: SortDir;
+  isListView: boolean;
+  hasOpenItemInView?: boolean;
   onToggleSort: (k: SortKey) => void;
 };
 
@@ -20,7 +22,7 @@ type Props = {
  * - gridColumns: CSS grid template columns for layout.
  */
 export function HeaderSort(props: Props) {
-  const { headerRef, sortKey, sortDir, onToggleSort } = props;
+  const { headerRef, sortKey, sortDir, isListView, hasOpenItemInView, onToggleSort } = props;
 
   const label = (base: string, key: SortKey) =>
     sortKey === key ? `${base} ${sortDir === "asc" ? "▲" : "▼"}` : base;
@@ -39,17 +41,17 @@ export function HeaderSort(props: Props) {
           borderBottom: `1px solid var(--mantine-color-default-border)`,
           borderLeft: "none",
           borderRight: "none",
+          padding: `0 ${GRID.scrollbarWidth}px 0 ${GRID.listLeftPadding}px`,
         }}
       >
         <Box
           style={{
             display: "grid",
-            gridTemplateColumns: GRID.colsList,
-            height: GRID.iconSize,
             alignItems: "center",
-            gap: rem(12),
-            padding: `0 ${rem(16)} 0 ${rem(12)}`,
-            fontWeight: 600,
+            gridTemplateColumns: (isListView || hasOpenItemInView) ? GRID.colsList : GRID.colsGrid,
+            height: GRID.halfRowHeight,
+            gap: GRID.gap,
+            fontWeight: 400,
           }}
           role="row"
         >
@@ -63,7 +65,7 @@ export function HeaderSort(props: Props) {
             aria-label="Sort by Title"
             style={{ textAlign: "left", cursor: "pointer" }}
           >
-            <Text fw={600}>{label("Title", "title")}</Text>
+            <Text size="sm" fw={400}>{label("Title", "title")}</Text>
           </UnstyledButton>
 
           <UnstyledButton
@@ -73,7 +75,7 @@ export function HeaderSort(props: Props) {
             aria-label="Sort by Year"
             style={{ textAlign: "center", cursor: "pointer" }}
           >
-            <Text fw={600}>{label("Year", "year")}</Text>
+            <Text size="sm" fw={400}>{label("Year", "year")}</Text>
           </UnstyledButton>
 
           <UnstyledButton
@@ -83,7 +85,7 @@ export function HeaderSort(props: Props) {
             aria-label="Sort by Platform"
             style={{ textAlign: "center", cursor: "pointer" }}
           >
-            <Text fw={600}>{label("Platform", "source")}</Text>
+            <Text size="sm" fw={400}>{label("Platform", "source")}</Text>
           </UnstyledButton>
 
           <UnstyledButton
@@ -93,7 +95,7 @@ export function HeaderSort(props: Props) {
             aria-label="Sort by Series"
             style={{ textAlign: "left", cursor: "pointer" }}
           >
-            <Text fw={600}>{label("Series", "series")}</Text>
+            <Text size="sm" fw={400}>{label("Series", "series")}</Text>
           </UnstyledButton>
         </Box>
       </Paper>

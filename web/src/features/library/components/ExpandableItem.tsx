@@ -12,11 +12,11 @@ type Props = {
     isOpen: boolean;
     topOffset: number;
     openHeight: string;
-    view: ViewMode;
+    isListView: boolean;
     onToggleItem: () => void;
 };
 
-export function ExpandableItem({ item, isOpen, openHeight, view, onToggleItem }: Props): JSX.Element {
+export function ExpandableItem({ item, isOpen, openHeight, isListView, onToggleItem }: Props): JSX.Element {
     const { id, title, bgUrl, coverUrl, isHidden, isInstalled } = item;
 
     const onKeyDown = useCallback(
@@ -61,9 +61,7 @@ export function ExpandableItem({ item, isOpen, openHeight, view, onToggleItem }:
             aria-expanded={isOpen}
             aria-label={`${title}`}
             onKeyDown={onKeyDown}
-            style={{
-                ...(view === "list" ? outerListStyles : outerGridStyles),
-            }}
+            style={{ ...(isListView ? outerListStyles : outerGridStyles)}}
             onClick={onToggleItem}
         >
             <Box
@@ -77,16 +75,13 @@ export function ExpandableItem({ item, isOpen, openHeight, view, onToggleItem }:
                 w={"100%"}
                 h={isOpen ? openHeight : "100%"}
             >
-                {!isOpen && view === "list" && <RowItem item={item} isOpen={isOpen} />}
-                {!isOpen && view === "grid" && <GridItem item={item} isOpen={isOpen} />}
+                {!isOpen && isListView && <RowItem item={item} isOpen={isOpen} />}
+                {!isOpen && !isListView && <GridItem item={item} isOpen={isOpen} />}
                 {isOpen && <RowItem item={item} isOpen={isOpen} />}
                 {isOpen && <ItemDetails item={item} isOpen={isOpen} onToggleItem={onToggleItem} />}
             </Box>
-            <ItemBackground
-                aria-label="library-item-bg"
-                bgUrl={bgUrl}
-                isOpen={isOpen}
-            />
+
+            <ItemBackground aria-label="library-item-bg" bgUrl={bgUrl} isOpen={isOpen} />
         </Box>
     );
 }

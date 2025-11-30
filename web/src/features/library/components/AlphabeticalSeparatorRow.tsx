@@ -7,7 +7,7 @@ type Props = { letter: Letter; top: number };
 export function AlphabeticalSeparatorRow({ letter, top }: Props): JSX.Element {
   return (
     <Box
-      h={GRID.iconSize}
+      h={GRID.halfRowHeight}
       style={{
         position: 'sticky',
         zIndex: Z_INDEX.base,

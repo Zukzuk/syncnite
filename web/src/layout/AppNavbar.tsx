@@ -1,7 +1,6 @@
-
 import { Link, useLocation } from "react-router-dom";
-import { useMantineColorScheme, Stack, Box, Group, Text, ActionIcon, Badge, Button, Divider, ScrollArea, Tooltip, NavLink } from "@mantine/core";
-import { IconSun, IconMoon, IconDownload, IconHome2, IconBooks, IconAB2, IconUser, IconShield } from "@tabler/icons-react";
+import { Box, Stack, Group, Text, ActionIcon, Button, Tooltip, ScrollArea, NavLink, Badge, useMantineColorScheme } from "@mantine/core";
+import { IconSun, IconMoon, IconDownload, IconHome2, IconBooks, IconAB2, IconUser, IconShield, IconLogout2 } from "@tabler/icons-react";
 import { useAuth } from "../hooks/useAuth";
 import { useExtensionStatus } from "../hooks/useExtensionStatus";
 import { API_ENDPOINTS, INTERVAL_MS } from "../lib/constants";
@@ -10,149 +9,200 @@ export function AppNavbar({ appVersion }: { appVersion: string }) {
     const location = useLocation();
     const { state, logout } = useAuth({ pollMs: 0 });
     const { colorScheme, setColorScheme } = useMantineColorScheme();
-
     const { connected, lastPingAt, loading } = useExtensionStatus({ pollMs: INTERVAL_MS });
 
     const isAdmin = state.role === "admin";
     const isLoggedIn = state.loggedIn;
 
+    const toggleColorScheme = () =>
+        setColorScheme(colorScheme === "dark" ? "light" : "dark");
+
+    const isHome = location.pathname === "/";
+    const isLibrary = location.pathname.startsWith("/library");
+    const isBridge = location.pathname.startsWith("/bridge");
+    const isAccount = location.pathname.startsWith("/account");
+    const isAdminRoute = location.pathname.startsWith("/admin");
+
     return (
-        <Stack h="100%" gap="xs">
-            {/* BRAND / THEME SECTION */}
-            <Box px="md">
-                <Group justify="space-between" align="center">
-                    <Stack gap={0} style={{ flex: 1, minWidth: 0 }}>
-                        <Text fw={700} size="lg" truncate>
-                            Syncnite
-                        </Text>
-                        <Text size="xs" c="dimmed">
-                            {appVersion}
-                        </Text>
-                    </Stack>
+        <Stack h="100%" gap={0}>
+            {/* TOP CONTROL PANEL */}
+            <Box
+                px="sm"
+                py="xs"
+                style={{
+                    borderBottom: "1px solid var(--mantine-color-default-border)",
+                }}
+            >
+                <Stack gap="xs">
+                    {/* Row 1: title + version + theme toggle */}
+                    <Group justify="space-between" align="center" gap="xs" wrap="nowrap">
+                        <Stack gap={0} style={{ flex: 1, minWidth: 0 }}>
+                            <Text fw={700} size="lg" truncate>
+                                Syncnite
+                            </Text>
+                            <Text size="xs" c="dimmed">
+                                {appVersion}
+                            </Text>
+                        </Stack>
 
-                    <ActionIcon
-                        variant="subtle"
-                        aria-label="Toggle color scheme"
-                        onClick={() =>
-                            setColorScheme(colorScheme === "dark" ? "light" : "dark")
-                        }
-                        size="md"
-                    >
-                        {colorScheme === "dark" ? (
-                            <IconSun size={18} />
-                        ) : (
-                            <IconMoon size={18} />
-                        )}
-                    </ActionIcon>
-                </Group>
-            </Box>
-
-            {/* EXTENSION SECTION */}
-            <Box px="md">
-                <Group justify="space-between" align="center">
-                    {isAdmin && !loading && (
                         <Tooltip
                             withArrow
                             label={
-                                connected
-                                    ? lastPingAt
-                                        ? `Admin extension last ping: ${new Date(
-                                            lastPingAt
-                                        ).toLocaleTimeString()}`
-                                        : "Admin extension is currently pinging the API"
-                                    : "No recent ping from admin extension"
+                                colorScheme === "dark"
+                                    ? "Switch to light mode"
+                                    : "Switch to dark mode"
                             }
                             style={{ fontSize: 10 }}
                         >
-                            <Badge
-                                size="xs"
-                                radius="lg"
-                                color={connected ? "teal" : "gray"}
+                            <ActionIcon
+                                variant="subtle"
+                                aria-label="Toggle color scheme"
+                                onClick={toggleColorScheme}
+                                size="md"
                             >
-                                {connected ? "connected" : "offline"}
-                            </Badge>
+                                {colorScheme === "dark" ? (
+                                    <IconSun size={18} />
+                                ) : (
+                                    <IconMoon size={18} />
+                                )}
+                            </ActionIcon>
                         </Tooltip>
-                    )}
-                    <Tooltip
-                        withArrow
-                        label={`Download SyncniteBridge v${appVersion} (.pext)`}
-                        style={{ fontSize: 10 }}
-                    >
-                        <Button
-                            component="a"
-                            href={API_ENDPOINTS.EXTENSION_DOWNLOAD}
-                            size="xs"
-                            radius="lg"
-                            leftSection={<IconDownload size={16} />}
-                            variant="filled"
-                            fw={200}
-                        >
-                            download
-                        </Button>
-                    </Tooltip>
-                </Group>
+                    </Group>
+                </Stack>
             </Box>
 
-            <Divider />
-
-            {/* NAV LINKS (SCROLLABLE MIDDLE) */}
+            {/* NAVIGATION SCROLL SECTION */}
             <Box style={{ flex: 1, minHeight: 0 }}>
                 <ScrollArea style={{ height: "100%" }}>
-                    <NavLink
-                        component={Link}
-                        to="/"
-                        label="Home"
-                        leftSection={<IconHome2 size={18} />}
-                        active={location.pathname === "/"}
-                    />
-                    <NavLink
-                        component={Link}
-                        to="/library"
-                        label="Library"
-                        leftSection={<IconBooks size={18} />}
-                        active={location.pathname.startsWith("/library")}
-                    />
-                    <NavLink
-                        component={Link}
-                        to="/bridge"
-                        label="Bridge"
-                        leftSection={<IconAB2 size={18} />}
-                        active={location.pathname.startsWith("/bridge")}
-                    />
-                    {isLoggedIn && (
+                    <Stack gap={2} px="xs" py="xs">
                         <NavLink
                             component={Link}
-                            to="/account"
-                            label="Account"
-                            leftSection={<IconUser size={18} />}
-                            active={location.pathname.startsWith("/account")}
+                            to="/"
+                            label="Home"
+                            leftSection={<IconHome2 size={18} />}
+                            active={isHome}
+                            variant="light"
                         />
-                    )}
-                    {isAdmin && (
                         <NavLink
                             component={Link}
-                            to="/admin"
-                            label="Admin"
-                            leftSection={<IconShield size={18} />}
-                            active={location.pathname.startsWith("/admin")}
+                            to="/library"
+                            label="Library"
+                            leftSection={<IconBooks size={18} />}
+                            active={isLibrary}
+                            variant="light"
                         />
-                    )}
+                        <NavLink
+                            component={Link}
+                            to="/bridge"
+                            label="Bridge"
+                            leftSection={<IconAB2 size={18} />}
+                            active={isBridge}
+                            variant="light"
+                        />
+                        {isLoggedIn && (
+                            <NavLink
+                                component={Link}
+                                to="/account"
+                                label="Account"
+                                leftSection={<IconUser size={18} />}
+                                active={isAccount}
+                                variant="light"
+                            />
+                        )}
+                        {isAdmin && (
+                            <NavLink
+                                component={Link}
+                                to="/admin"
+                                label="Admin"
+                                leftSection={<IconShield size={18} />}
+                                active={isAdminRoute}
+                                variant="light"
+                            />
+                        )}
+                    </Stack>
                 </ScrollArea>
             </Box>
 
-            <Divider />
-
-            {/* ACCOUNT / LOGOUT SECTION AT BOTTOM */}
-            <Box px="md" pb="sm" pt="xs">
+            {/* BOTTOM ACCOUNT PANEL - each item gets its own row */}
+            <Box
+                px="sm"
+                py="xs"
+                style={{
+                    borderTop: "1px solid var(--mantine-color-default-border)",
+                }}
+            >
                 {isLoggedIn ? (
-                    <Group justify="space-between" gap="xs" align="center">
+                    <Stack gap="xs">
+                        {/* email */}
                         <Text size="sm" truncate>
                             {state.email}
                         </Text>
-                        <Button size="xs" variant="light" onClick={logout}>
-                            Logout
-                        </Button>
-                    </Group>
+
+                        {/* connected badge (admin only) */}
+                        {isAdmin && !loading && (
+                            <Tooltip
+                                withArrow
+                                label={
+                                    connected
+                                        ? lastPingAt
+                                            ? `Admin extension last ping: ${new Date(
+                                                lastPingAt
+                                            ).toLocaleTimeString()}`
+                                            : "Admin extension is currently pinging the API"
+                                        : "No recent ping from admin extension"
+                                }
+                                style={{ fontSize: 10 }}
+                            >
+                                <Badge
+                                    size="xs"
+                                    radius="lg"
+                                    color={connected ? "teal" : "gray"}
+                                    style={{ width: "max-content" }}
+                                >
+                                    {connected ? "connected" : "offline"}
+                                </Badge>
+                            </Tooltip>
+                        )}
+
+                        {/* download button */}
+                        <Tooltip
+                            withArrow
+                            label={`Download SyncniteBridge ${appVersion} (.pext)`}
+                            style={{ fontSize: 10 }}
+                        >
+                            <Button
+                                component="a"
+                                href={API_ENDPOINTS.EXTENSION_DOWNLOAD}
+                                size="xs"
+                                radius="sm"
+                                leftSection={<IconDownload size={14} />}
+                                variant="light"
+                                fullWidth
+                            >
+                                Download<br />extension
+                            </Button>
+                        </Tooltip>
+
+                        {/* logout button */}
+                        <Tooltip
+                            withArrow
+                            label={`Logout ${state.email} (${state.role})`}
+                            style={{ fontSize: 10 }}
+                        >
+                            <Button
+                                onClick={logout}
+                                component="a"
+                                href={API_ENDPOINTS.EXTENSION_DOWNLOAD}
+                                size="xs"
+                                radius="sm"
+                                leftSection={<IconLogout2 size={14} />}
+                                variant="light"
+                                fullWidth
+                            >
+                                Logout
+                            </Button>
+                        </Tooltip>
+                    </Stack>
                 ) : (
                     <Text size="xs" c="dimmed">
                         Not signed in

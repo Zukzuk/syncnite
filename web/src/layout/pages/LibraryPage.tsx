@@ -17,7 +17,7 @@ export default function LibraryPage(): JSX.Element {
     if (!libraryData) {
         return (
             <Stack style={{ height: "100%", minHeight: 0 }}>
-                <Center w={`calc(100vw - ${GRID.menuWidth}px)`} h={`calc(100vh)`}>
+                <Center w={`calc(100vw - ${GRID.navBarWidth}px)`} h={`calc(100vh)`}>
                     <Loader size="lg" />
                 </Center>
             </Stack>

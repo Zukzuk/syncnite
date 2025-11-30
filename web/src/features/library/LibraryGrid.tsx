@@ -36,6 +36,7 @@ export default function LibraryGrid({
     const dataSig = `${derived.filteredCount}|${q}|${sources.join(",")}|${tags.join(",")}|${series.join(",")}|${showHidden}|${installedOnly}`;
     const groupedKey = `grp:${dataSig}|${sortKey}|${sortDir}`;
     const flatKey = `flt:${dataSig}|${sortKey}|${sortDir}`;
+    const isListView = (view === "list");
 
     // Use grid hook for layout and positioning
     const {
@@ -48,11 +49,12 @@ export default function LibraryGrid({
         openHeight,
         topOffset,
         openIds,
+        hasOpenItemInView,
         onScrollJump,
         onToggleItem,
     } = useGrid({
         containerRef,
-        view,
+        isListView,
         controlsH,
         headerH,
         ui,
@@ -87,10 +89,10 @@ export default function LibraryGrid({
                             flexDirection: "column",
                             overflow: "hidden",
                             backgroundColor: "var(--mantine-color-default-background)",
-                            left: (isOpen || view === "list") ? 0 : pos.left,
+                            left: (isOpen || isListView) ? 0 : pos.left,
                             top: pos.top,
-                            width: (isOpen) ? openWidth : (view === "list") ? openWidth : GRID.cardWidth,
-                            height: (isOpen) ? openHeight : (view === "list") ? GRID.rowHeight : GRID.cardHeight,
+                            width: (isOpen || isListView) ? openWidth : GRID.cardWidth,
+                            height: (isOpen) ? openHeight : (isListView) ? GRID.rowHeight : GRID.cardHeight,
                             zIndex: (isOpen) ? Z_INDEX.aboveBase : Z_INDEX.base,
                         }}
                     >
@@ -100,7 +102,7 @@ export default function LibraryGrid({
                             isOpen={isOpen}
                             topOffset={topOffset}
                             openHeight={openHeight}
-                            view={view}
+                            isListView={isListView}
                             onToggleItem={() => onToggleItem(item.id, absoluteIndex)}
                         />
                     </Box>
@@ -126,6 +128,8 @@ export default function LibraryGrid({
                 headerRef={headerRef as unknown as (el: HTMLElement | null) => void}
                 sortKey={sortKey}
                 sortDir={sortDir}
+                isListView={isListView}
+                hasOpenItemInView={hasOpenItemInView}
                 onToggleSort={onToggleSort}
             />
 
@@ -139,10 +143,15 @@ export default function LibraryGrid({
                 <Box aria-hidden role="grid-height-spacer" style={{ width: "100%", height: containerHeight }} />
 
                 {/* Visible window only */}
-                {itemsSorted ? renderVisibleItems() : null}
+                {itemsSorted && (
+                    renderVisibleItems()
+                )}
             </Box>
-
-            <AlphabeticalRail activeLetter={activeLetter} onScrollJump={onScrollJump} railCounts={railCounts} />
+            
+            {/* Alphabetical rail */}
+            {sortKey === "title" && (
+                <AlphabeticalRail activeLetter={activeLetter} onScrollJump={onScrollJump} railCounts={railCounts} />
+            )}
         </Flex>
     );
 }

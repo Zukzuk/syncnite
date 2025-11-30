@@ -14,7 +14,7 @@ type Props = {
 };
 
 export function RowItem({ item, isOpen }: Props): JSX.Element {
-    const { id, isInstalled, iconUrl, title, gameId, year, source, tags, series, link } = item;
+    const { id, isInstalled, iconUrl, title, gameId, year, source, series, link } = item;
     const [hovered, setHovered] = React.useState(false);
 
     return (
@@ -23,10 +23,11 @@ export function RowItem({ item, isOpen }: Props): JSX.Element {
                 display: "grid",
                 alignItems: "center",
                 height: GRID.rowHeight,
+                gap: GRID.gap,
                 gridTemplateColumns: GRID.colsList,
             }}
         >
-            <Flex align="center" gap={8} style={{ width: GRID.iconSize }}>
+            <Flex align="center" gap={GRID.gap} style={{ width: GRID.iconSize }}>
                 <Box
                     component="a"
                     href={`playnite://play/${id}`}
@@ -83,10 +84,9 @@ export function RowItem({ item, isOpen }: Props): JSX.Element {
                     title={title}
                     className="item-title"
                     style={{
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                        fontSize: isOpen ? 20 : undefined,
+                        overflow: isOpen ? undefined : "hidden",
+                        textOverflow: isOpen ? undefined : "ellipsis",
+                        whiteSpace: isOpen ? undefined : "nowrap",
                         transition: "font-size 140ms ease",
                     }}
                 >
@@ -126,16 +126,6 @@ export function RowItem({ item, isOpen }: Props): JSX.Element {
                     {series && series.length > 0 ? series.join(", ") : ""}
                 </Text>
             </Flex>
-
-            {/* <Box style={{ display: collapseOpen ? "none" : undefined }}>
-                <Group gap={6} align="center" wrap="wrap" style={{ maxHeight: GRID.rowHeight, overflow: "hidden" }}>
-                    {(tags ?? []).map((t) => (
-                        <Badge key={t} variant="dark" size="sm">
-                            {t}
-                        </Badge>
-                    ))}
-                </Group>
-            </Box> */}
         </Box>
     );
 }

@@ -3,6 +3,7 @@ import React from "react";
 import { Box } from "@mantine/core";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 import { Z_INDEX } from "../../../lib/constants";
+import { getTheme } from "../../../lib/utils";
 
 type Props = {
     bgUrl: string | null;
@@ -11,6 +12,7 @@ type Props = {
 
 export function ItemBackground({ bgUrl, isOpen }: Props): JSX.Element | null {
     const isOpenDelayed = useDelayedFlag({ active: isOpen, delayMs: 140 });
+    const { isDark } = getTheme();
 
     if (!isOpen || !bgUrl)  return null;
 
@@ -25,8 +27,8 @@ export function ItemBackground({ bgUrl, isOpen }: Props): JSX.Element | null {
                 backgroundPosition: "center",
                 pointerEvents: "none",
                 zIndex: Z_INDEX.belowBase,
-                transform: isOpenDelayed ? "scale(1.02)" : "scale(1.01)",
-                opacity: isOpenDelayed ? 0.3 : 0,
+                transform: isOpenDelayed ? "scale(1.02)" : "scale(1)",
+                opacity: isOpenDelayed ? (isDark ? 0.1 : 0.3) : 0,
                 willChange: "opacity, transform",
                 transitionProperty: "opacity, transform",
                 transitionDuration: "220ms, 260ms",
