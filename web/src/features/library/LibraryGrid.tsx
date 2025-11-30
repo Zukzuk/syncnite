@@ -17,26 +17,87 @@ type Props = {
     setView: (view: ViewMode) => void;
 };
 
+const MAX_RELATED = 8;
+
+function intersects(
+    a: string[] | null | undefined,
+    b: string[] | null | undefined
+): boolean {
+    if (!a?.length || !b?.length) return false;
+    const set = new Set(a);
+    return b.some((v) => set.has(v));
+}
+
+function getRelatedBySeries(item: GameItem, items: GameItem[]): GameItem[] {
+    if (!item.series || item.series.length === 0) return [];
+    return items
+        .filter(
+            (other) =>
+                other.id !== item.id &&
+                !!other.coverUrl &&
+                intersects(other.series, item.series)
+        )
+        .slice(0, MAX_RELATED);
+}
+
+function getRelatedByTags(item: GameItem, items: GameItem[]): GameItem[] {
+    if (!item.tags || item.tags.length === 0) return [];
+    return items
+        .filter(
+            (other) =>
+                other.id !== item.id &&
+                !!other.coverUrl &&
+                intersects(other.tags, item.tags)
+        )
+        .slice(0, MAX_RELATED);
+}
+
+function getRelatedByYear(item: GameItem, items: GameItem[]): GameItem[] {
+    if (!item.year) return [];
+    return items
+        .filter(
+            (other) =>
+                other.id !== item.id &&
+                !!other.coverUrl &&
+                other.year === item.year
+        )
+        .slice(0, MAX_RELATED);
+}
+
 /**
  * Absolute-positioned library grid with expandable items, virtual scrolling
  * and alphabetical rail navigation.
  */
 export default function LibraryGrid({
-    libraryData, installedUpdatedAt, view, setView,
+    libraryData,
+    installedUpdatedAt,
+    view,
+    setView,
 }: Props): JSX.Element {
     const { ui, derived } = useLibraryState({ items: libraryData.items });
     const { ref: controlsRef, height: controlsH } = useElementSize();
     const { ref: headerRef, height: headerH } = useElementSize();
     const containerRef = useRef<HTMLDivElement | null>(null);
 
-
     // Data signature for resetting
     const { filteredCount, totalCount, itemsSorted } = derived;
-    const { sources, tags, series, q, showHidden, installedOnly, sortKey, sortDir, onToggleSort } = ui;
-    const dataSig = `${derived.filteredCount}|${q}|${sources.join(",")}|${tags.join(",")}|${series.join(",")}|${showHidden}|${installedOnly}`;
+    const {
+        sources,
+        tags,
+        series,
+        q,
+        showHidden,
+        installedOnly,
+        sortKey,
+        sortDir,
+        onToggleSort,
+    } = ui;
+    const dataSig = `${derived.filteredCount}|${q}|${sources.join(
+        ","
+    )}|${tags.join(",")}|${series.join(",")}|${showHidden}|${installedOnly}`;
     const groupedKey = `grp:${dataSig}|${sortKey}|${sortDir}`;
     const flatKey = `flt:${dataSig}|${sortKey}|${sortDir}`;
-    const isListView = (view === "list");
+    const isListView = view === "list";
 
     // Use grid hook for layout and positioning
     const {
@@ -73,8 +134,22 @@ export default function LibraryGrid({
             .slice(visibleRange.startIndex, visibleRange.endIndex)
             .map((item: GameItem, i: number) => {
                 const absoluteIndex = visibleRange.startIndex + i;
-                const pos = positions[absoluteIndex] ?? { left: GRID.gap, top: GRID.gap };
+                const pos =
+                    positions[absoluteIndex] ?? {
+                        left: GRID.gap,
+                        top: GRID.gap,
+                    };
                 const isOpen = openIds.has(item.id);
+
+                const relatedBySeries = isOpen
+                    ? getRelatedBySeries(item, derived.itemsSorted)
+                    : undefined;
+                const relatedByTags = isOpen
+                    ? getRelatedByTags(item, derived.itemsSorted)
+                    : undefined;
+                const relatedByYear = isOpen
+                    ? getRelatedByYear(item, derived.itemsSorted)
+                    : undefined;
 
                 return (
                     <Box
@@ -88,12 +163,18 @@ export default function LibraryGrid({
                             boxSizing: "border-box",
                             flexDirection: "column",
                             overflow: "hidden",
-                            backgroundColor: "var(--mantine-color-default-background)",
-                            left: (isOpen || isListView) ? 0 : pos.left,
+                            backgroundColor:
+                                "var(--mantine-color-default-background)",
+                            left: isOpen || isListView ? 0 : pos.left,
                             top: pos.top,
-                            width: (isOpen || isListView) ? openWidth : GRID.cardWidth,
-                            height: (isOpen) ? openHeight : (isListView) ? GRID.rowHeight : GRID.cardHeight,
-                            zIndex: (isOpen) ? Z_INDEX.aboveBase : Z_INDEX.base,
+                            width:
+                                isOpen || isListView ? openWidth : GRID.cardWidth,
+                            height: isOpen
+                                ? openHeight
+                                : isListView
+                                    ? GRID.rowHeight
+                                    : GRID.cardHeight,
+                            zIndex: isOpen ? Z_INDEX.aboveBase : Z_INDEX.base,
                         }}
                     >
                         <ExpandableItem
@@ -103,17 +184,24 @@ export default function LibraryGrid({
                             topOffset={topOffset}
                             openHeight={openHeight}
                             isListView={isListView}
-                            onToggleItem={() => onToggleItem(item.id, absoluteIndex)}
+                            onToggleItem={() =>
+                                onToggleItem(item.id, absoluteIndex)
+                            }
+                            relatedBySeries={relatedBySeries}
+                            relatedByTags={relatedByTags}
+                            relatedByYear={relatedByYear}
                         />
                     </Box>
                 );
-            })
-    }
+            });
+    };
 
     return (
         <Flex direction="column" style={{ width: "100%", height: "100%" }}>
             <HeaderControls
-                controlsRef={controlsRef as unknown as (el: HTMLElement | null) => void}
+                controlsRef={
+                    controlsRef as unknown as (el: HTMLElement | null) => void
+                }
                 allSources={libraryData.allSources}
                 allTags={libraryData.allTags}
                 allSeries={libraryData.allSeries}
@@ -125,7 +213,9 @@ export default function LibraryGrid({
             />
 
             <HeaderSort
-                headerRef={headerRef as unknown as (el: HTMLElement | null) => void}
+                headerRef={
+                    headerRef as unknown as (el: HTMLElement | null) => void
+                }
                 sortKey={sortKey}
                 sortDir={sortDir}
                 isListView={isListView}
@@ -135,22 +225,34 @@ export default function LibraryGrid({
 
             <Box
                 ref={containerRef}
-                style={{ flex: 1, position: "relative", width: "100%", height: "100%", overflow: "auto" }}
+                style={{
+                    flex: 1,
+                    position: "relative",
+                    width: "100%",
+                    height: "100%",
+                    overflow: "auto",
+                }}
                 aria-label="absolute-grid"
                 role="library"
             >
                 {/* Spacer to give scroll area full height */}
-                <Box aria-hidden role="grid-height-spacer" style={{ width: "100%", height: containerHeight }} />
+                <Box
+                    aria-hidden
+                    role="grid-height-spacer"
+                    style={{ width: "100%", height: containerHeight }}
+                />
 
                 {/* Visible window only */}
-                {itemsSorted && (
-                    renderVisibleItems()
-                )}
+                {itemsSorted && renderVisibleItems()}
             </Box>
-            
+
             {/* Alphabetical rail */}
             {sortKey === "title" && (
-                <AlphabeticalRail activeLetter={activeLetter} onScrollJump={onScrollJump} railCounts={railCounts} />
+                <AlphabeticalRail
+                    activeLetter={activeLetter}
+                    onScrollJump={onScrollJump}
+                    railCounts={railCounts}
+                />
             )}
         </Flex>
     );
