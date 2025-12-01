@@ -31,7 +31,7 @@ export function ItemDetails({
         <Collapse
             in={isOpen}
             transitionDuration={140}
-            pt={GRID.gap}
+            py={GRID.gap}
             pr={GRID.gap * 6}
             style={{
                 height: `calc(100% - ${GRID.rowHeight}px)`
@@ -57,7 +57,7 @@ export function ItemDetails({
             >
                 <Group
                     align="flex-start"
-                    gap="md"
+                    gap={GRID.gap * 3}
                     wrap="nowrap"
                     style={{ height: "100%" }}
                 >
@@ -158,6 +158,7 @@ export function ItemDetails({
                         }}
                     >
                         <ItemAssociatedDecks
+                            aria-label="item-associated-decks" 
                             item={item}
                             bySeries={relatedBySeries}
                             byTags={relatedByTags}

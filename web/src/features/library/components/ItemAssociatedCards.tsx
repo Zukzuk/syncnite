@@ -1,7 +1,8 @@
 import React from "react";
-import { Box, Flex, Image, Text } from "@mantine/core";
+import { Box, Flex, Image, Stack, Text } from "@mantine/core";
 import { ASSOCIATED_CARD_STEP_Y, GRID, MAX_ASSOCIATED } from "../../../lib/constants";
 import { GameItem } from "../../../types/types";
+import { getTheme } from "../../../lib/utils";
 
 type Props = {
     label: string;
@@ -10,60 +11,43 @@ type Props = {
 };
 
 export function ItemAssociatedCards({ label, items, onAssociatedClick }: Props): JSX.Element | null {
-    const cards = items.filter((g) => g.coverUrl).slice(0, MAX_ASSOCIATED);
     const [hoveredId, setHoveredId] = React.useState<string | null>(null);
+    const [isDeckHovered, setIsDeckHovered] = React.useState(false);
+    const { isDark } = getTheme();
 
+    const cards = items.filter((g) => g.coverUrl).slice(0, MAX_ASSOCIATED);
     if (cards.length === 0) return null;
 
-    const cardHeight = (GRID.coverWidth * 32) / 23;
+    const cardHeight = (GRID.cardWidth * 32) / 23;
     const deckHeight = cardHeight + ASSOCIATED_CARD_STEP_Y * (cards.length - 1);
-
-    const hoveredIndex = hoveredId
-        ? cards.findIndex((c) => c.id === hoveredId)
-        : -1;
-
-    const maxZ = cards.length * 2;
-
-    const handleWheel = (event: React.WheelEvent<HTMLDivElement>) => {
-        const el = event.currentTarget;
-        const { scrollTop, scrollHeight, clientHeight } = el;
-        const deltaY = event.deltaY;
-        const noScroll = scrollHeight <= clientHeight + 1;
-
-        // If there's no scrollable content, always block scroll chaining
-        if (noScroll) {
-            event.preventDefault();
-            return;
-        }
-
-        const atTop = scrollTop <= 0;
-        const atBottom = scrollTop + clientHeight >= scrollHeight - 1;
-        const scrollingUp = deltaY < 0;
-        const scrollingDown = deltaY > 0;
-
-        // At bounds + trying to scroll further -> lock
-        if ((atTop && scrollingUp) || (atBottom && scrollingDown)) {
-            event.preventDefault();
-        }
-    };
+    const hoveredIndex = hoveredId ? cards.findIndex((c) => c.id === hoveredId) : -1;
+    const hasHoveredCard = hoveredIndex >= 0;
+    const maxZ = cards.length + 1;
+    const topIndex = hasHoveredCard ? hoveredIndex : -1;
 
     return (
-        <Flex direction="column" align="flex-start" gap="xs">
-            <Text size="xs" c="dimmed">
+        <Stack pos="relative">
+            <Text size="xs" c="dimmed" pos="absolute" top={-GRID.halfRowHeight}>
                 {label}
             </Text>
             <Box
                 className="subtle-scrollbar"
-                onWheel={handleWheel}
+                p={GRID.gap}
+                onMouseEnter={() => setIsDeckHovered(true)}
+                onMouseLeave={() => {
+                    setIsDeckHovered(false);
+                    setHoveredId(null);
+                }}
                 style={{
                     flex: "0 0 auto",
                     maxHeight: "100%",
-                    overflowY: "auto",
+                    overflowY: "scroll",
                     overflowX: "visible",
                     overscrollBehaviorY: "contain",
                 }}
             >
                 <Box
+                    aria-label="item-associated-card"
                     style={{
                         position: "relative",
                         width: GRID.cardWidth,
@@ -72,18 +56,20 @@ export function ItemAssociatedCards({ label, items, onAssociatedClick }: Props):
                     }}
                 >
                     {cards.map((g, index) => {
-                        const isHovered = hoveredId === g.id;
                         const top = index * ASSOCIATED_CARD_STEP_Y;
 
                         // Pyramid z-index around hovered card
                         let zIndex: number;
-                        if (hoveredIndex === -1) {
-                            // No hovered card: default stack
-                            zIndex = maxZ - index;
+                        if (!hasHoveredCard) {
+                            zIndex = index + 1;
                         } else {
                             const distance = Math.abs(index - hoveredIndex);
                             zIndex = maxZ - distance;
                         }
+
+                        const isTopCard = hasHoveredCard && index === topIndex;
+                        // Only dim when an actual top card exists
+                        const isDimmed = hasHoveredCard && isDeckHovered && !isTopCard;
 
                         return (
                             <Box
@@ -106,16 +92,22 @@ export function ItemAssociatedCards({ label, items, onAssociatedClick }: Props):
                                     width: GRID.cardWidth,
                                     zIndex,
                                     cursor: "pointer",
-                                    borderRadius: 8,
+                                    borderRadius: 4,
                                     overflow: "hidden",
-                                    boxShadow: isHovered
-                                        ? "0 16px 24px rgba(0,0,0,1)"
-                                        : "0 4px 16px rgba(0,0,0,0.5)",
-                                    transition:
-                                        "transform 140ms ease, box-shadow 140ms ease",
                                     backgroundColor: "var(--mantine-color-dark-6)",
+                                    boxShadow: isTopCard
+                                        ? "0 8px 16px rgba(0, 0, 0, 0.25)"
+                                        : "0 4px 8px rgba(0, 0, 0, 0.15)",
+                                    border: isTopCard
+                                        ? isDark
+                                            ? "2px solid var(--mantine-color-dark-9)"
+                                            : "2px solid var(--mantine-color-gray-2)"
+                                        : "none",
+                                    transform: isTopCard ? "scale(1.05)" : "scale(1)",
+                                    transition: "transform 140ms ease, box-shadow 140ms ease",
                                 }}
                             >
+                                {/* IMAGE */}
                                 <Box
                                     style={{
                                         position: "relative",
@@ -136,14 +128,26 @@ export function ItemAssociatedCards({ label, items, onAssociatedClick }: Props):
                                             objectFit: "fill",
                                         }}
                                     />
+
+                                    {/* DIMMING OVERLAY */}
+                                    {isDimmed && (
+                                        <Box
+                                            style={{
+                                                position: "absolute",
+                                                inset: 0,
+                                                backgroundColor: isDark
+                                                    ? "color-mix(in srgb, var(--mantine-color-dark-7) 60%, transparent)"
+                                                    : "color-mix(in srgb, var(--mantine-color-gray-3) 50%, transparent)",
+                                                transition: "background-color 120ms ease",
+                                            }}
+                                        />
+                                    )}
                                 </Box>
                             </Box>
                         );
                     })}
                 </Box>
             </Box>
-        </Flex>
+        </Stack>
     );
 }
-
-

@@ -31,7 +31,7 @@ function getRelatedBySeries(item: GameItem, all: GameItem[]): GameItem[] {
     return all
         .filter(
             (other) =>
-                other.id !== item.id &&
+                // other.id !== item.id &&
                 !!other.coverUrl &&
                 intersects(other.series, item.series)
         )
@@ -163,7 +163,7 @@ export default function LibraryGrid({
                         }}
                     >
                         <ExpandableItem
-                            aria-label="library-item"
+                            aria-label="expandable-item"
                             item={item}
                             isOpen={isOpen}
                             topOffset={topOffset}
@@ -172,7 +172,7 @@ export default function LibraryGrid({
                             onToggleItem={() =>
                                 onToggleItem(item.id, absoluteIndex)
                             }
-                            onAssociatedClick={(targetId) => 
+                            onAssociatedClick={(targetId) =>
                                 onAssociatedClick(item.id, targetId)
                             }
                             relatedBySeries={relatedBySeries}
@@ -190,6 +190,7 @@ export default function LibraryGrid({
                 controlsRef={
                     controlsRef as unknown as (el: HTMLElement | null) => void
                 }
+                aria-label="header-controls"
                 allSources={libraryData.allSources}
                 allTags={libraryData.allTags}
                 allSeries={libraryData.allSeries}
@@ -204,6 +205,7 @@ export default function LibraryGrid({
                 headerRef={
                     headerRef as unknown as (el: HTMLElement | null) => void
                 }
+                aria-label="header-sort"
                 sortKey={sortKey}
                 sortDir={sortDir}
                 isListView={isListView}

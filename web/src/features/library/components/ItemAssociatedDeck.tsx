@@ -60,6 +60,7 @@ export function ItemAssociatedDecks({ item, bySeries, byTags, byYear, onAssociat
             >
                 {seriesDecks.map((deck) => (
                     <ItemAssociatedCards
+                        aria-label="item-associated-cards" 
                         key={deck.key}
                         label={deck.label}
                         items={deck.items}
@@ -69,6 +70,7 @@ export function ItemAssociatedDecks({ item, bySeries, byTags, byYear, onAssociat
 
                 {tagDecks.map((deck) => (
                     <ItemAssociatedCards
+                        aria-label="item-associated-cards"
                         key={deck.key}
                         label={deck.label}
                         items={deck.items}
@@ -78,6 +80,7 @@ export function ItemAssociatedDecks({ item, bySeries, byTags, byYear, onAssociat
 
                 {hasYearDeck && (
                     <ItemAssociatedCards
+                        aria-label="item-associated-cards" 
                         key="year"
                         label={item.year ? String(item.year) : "Year"}
                         items={byYear!}

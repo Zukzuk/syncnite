@@ -89,11 +89,12 @@ export function ExpandableItem({
                 w={"100%"}
                 h={isOpen ? openHeight : "100%"}
             >
-                {!isOpen && isListView && <RowItem item={item} isOpen={isOpen} />}
-                {!isOpen && !isListView && <GridItem item={item} isOpen={isOpen} />}
-                {isOpen && <RowItem item={item} isOpen={isOpen} />}
+                {!isOpen && isListView && <RowItem aria-label="library-row-item" item={item} isOpen={isOpen} />}
+                {!isOpen && !isListView && <GridItem aria-label="library-grid-item"  item={item} isOpen={isOpen} />}
+                {isOpen && <RowItem aria-label="library-row-item" item={item} isOpen={isOpen} />}
                 {isOpen && (
                     <ItemDetails
+                        aria-label="library-item-details"
                         item={item}
                         isOpen={isOpen}
                         relatedBySeries={relatedBySeries}
