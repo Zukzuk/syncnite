@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.30.0](https://github.com/Zukzuk/syncnite/compare/v1.29.4...v1.30.0) (2025-12-01)
+
+
+### Features
+
+* added associated games feature ([861d55d](https://github.com/Zukzuk/syncnite/commit/861d55d488be4085f1c85950adae540245cbb714))
+
 ### [1.29.4](https://github.com/Zukzuk/syncnite/compare/v1.29.3...v1.29.4) (2025-11-30)
 
 ### [1.29.3](https://github.com/zukzuk/playnite-viewer/compare/v1.29.2...v1.29.3) (2025-11-29)
