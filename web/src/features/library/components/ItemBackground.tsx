@@ -4,13 +4,15 @@ import { Box } from "@mantine/core";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 import { Z_INDEX } from "../../../lib/constants";
 import { getTheme } from "../../../lib/utils";
+import { GameItem } from "../../../types/types";
 
 type Props = {
-    bgUrl: string | null;
+    item: Pick<GameItem, "bgUrl">;
     isOpen: boolean;
 };
 
-export function ItemBackground({ bgUrl, isOpen }: Props): JSX.Element | null {
+export function ItemBackground({ item, isOpen }: Props): JSX.Element | null {
+    const { bgUrl } = item;
     const isOpenDelayed = useDelayedFlag({ active: isOpen, delayMs: 140 });
     const { isDark } = getTheme();
 

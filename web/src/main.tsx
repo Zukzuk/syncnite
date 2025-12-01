@@ -9,6 +9,7 @@ import { startGlobalSse } from "./services/SseClient";
 
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
+import "./scroller.scss";
 
 declare global { interface Window { __APP_VERSION__?: string } }
 

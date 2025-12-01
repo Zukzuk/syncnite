@@ -30,6 +30,7 @@ type UseReturn = {
     hasOpenItemInView: boolean;
     onScrollJump: (letter: Letter) => void;
     onToggleItem: (id: string, index: number) => void;
+    onAssociatedClick: (fromId: string, targetId: string) => void;
 };
 
 // A hook to manage the absolute grid model: positions, virtual window, jump-to-scroll, alphabetical rail.
@@ -121,6 +122,28 @@ export function useGrid({
         toggleOpen: (id: string) => toggleOpen(id),
     });
 
+    const onAssociatedClick = (fromId: string, targetId: string) => {
+        if (fromId === targetId) return;
+
+        const items = derived.itemsSorted as GameItem[];
+
+        const targetIndex = items.findIndex((g) => g.id === targetId);
+        if (targetIndex === -1) return;
+
+        // 1. Close the current collapse if it's open
+        if (openIds.has(fromId)) {
+            const fromIndex = items.findIndex((g) => g.id === fromId);
+            if (fromIndex !== -1) {
+                onToggleItem(fromId, fromIndex);
+            }
+        }
+
+        // 2. Open the clicked item (3. scroll is handled by useGridScrollRestore)
+        if (!openIds.has(targetId)) {
+            onToggleItem(targetId, targetIndex);
+        }
+    };
+
     // Virtual window (variable-height rows)
     const { visibleRange } = useGridVirtualWindow({
         containerRef, opts: {
@@ -206,6 +229,7 @@ export function useGrid({
         hasOpenItemInView,
         onScrollJump,
         onToggleItem,
+        onAssociatedClick,
     } as const;
 }
 

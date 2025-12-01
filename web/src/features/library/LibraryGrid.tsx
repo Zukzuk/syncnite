@@ -7,7 +7,7 @@ import { ExpandableItem } from "./components/ExpandableItem";
 import { AlphabeticalRail } from "./components/AlphabeticalRail";
 import { useLibraryState } from "./hooks/useLibraryState";
 import { useGrid } from "./hooks/useGrid";
-import { GRID, Z_INDEX } from "../../lib/constants";
+import { GRID, MAX_ASSOCIATED, Z_INDEX } from "../../lib/constants";
 import { GameItem, LoadedData, ViewMode } from "../../types/types";
 
 type Props = {
@@ -16,8 +16,6 @@ type Props = {
     installedUpdatedAt?: string;
     setView: (view: ViewMode) => void;
 };
-
-const MAX_RELATED = 8;
 
 function intersects(
     a: string[] | null | undefined,
@@ -28,40 +26,40 @@ function intersects(
     return b.some((v) => set.has(v));
 }
 
-function getRelatedBySeries(item: GameItem, items: GameItem[]): GameItem[] {
+function getRelatedBySeries(item: GameItem, all: GameItem[]): GameItem[] {
     if (!item.series || item.series.length === 0) return [];
-    return items
+    return all
         .filter(
             (other) =>
                 other.id !== item.id &&
                 !!other.coverUrl &&
                 intersects(other.series, item.series)
         )
-        .slice(0, MAX_RELATED);
+        .slice(0, MAX_ASSOCIATED);
 }
 
-function getRelatedByTags(item: GameItem, items: GameItem[]): GameItem[] {
+function getRelatedByTags(item: GameItem, all: GameItem[]): GameItem[] {
     if (!item.tags || item.tags.length === 0) return [];
-    return items
+    return all
         .filter(
             (other) =>
                 other.id !== item.id &&
                 !!other.coverUrl &&
                 intersects(other.tags, item.tags)
         )
-        .slice(0, MAX_RELATED);
+        .slice(0, MAX_ASSOCIATED);
 }
 
-function getRelatedByYear(item: GameItem, items: GameItem[]): GameItem[] {
+function getRelatedByYear(item: GameItem, all: GameItem[]): GameItem[] {
     if (!item.year) return [];
-    return items
+    return all
         .filter(
             (other) =>
                 other.id !== item.id &&
                 !!other.coverUrl &&
                 other.year === item.year
         )
-        .slice(0, MAX_RELATED);
+        .slice(0, MAX_ASSOCIATED);
 }
 
 /**
@@ -81,23 +79,17 @@ export default function LibraryGrid({
 
     // Data signature for resetting
     const { filteredCount, totalCount, itemsSorted } = derived;
-    const {
-        sources,
-        tags,
-        series,
-        q,
-        showHidden,
-        installedOnly,
-        sortKey,
-        sortDir,
-        onToggleSort,
-    } = ui;
-    const dataSig = `${derived.filteredCount}|${q}|${sources.join(
-        ","
-    )}|${tags.join(",")}|${series.join(",")}|${showHidden}|${installedOnly}`;
+    const { q, sources, tags, series, showHidden, installedOnly, sortKey, sortDir, onToggleSort } = ui;
+    const dataSig = `${derived.filteredCount}|${q}|${sources.join(",")}|${tags.join(",")}|${series.join(",")}|${showHidden}|${installedOnly}`;
     const groupedKey = `grp:${dataSig}|${sortKey}|${sortDir}`;
     const flatKey = `flt:${dataSig}|${sortKey}|${sortDir}`;
     const isListView = view === "list";
+
+    // Reset scroll position when dataset semantics change
+    useEffect(() => {
+        const el = containerRef.current;
+        if (el) el.scrollTop = 0;
+    }, [flatKey]);
 
     // Use grid hook for layout and positioning
     const {
@@ -113,6 +105,7 @@ export default function LibraryGrid({
         hasOpenItemInView,
         onScrollJump,
         onToggleItem,
+        onAssociatedClick,
     } = useGrid({
         containerRef,
         isListView,
@@ -122,23 +115,16 @@ export default function LibraryGrid({
         derived,
     });
 
-    // Reset scroll position when dataset semantics change
-    useEffect(() => {
-        const el = containerRef.current;
-        if (el) el.scrollTop = 0;
-    }, [flatKey]);
-
     // Render visible items only
     const renderVisibleItems = () => {
         return derived.itemsSorted
             .slice(visibleRange.startIndex, visibleRange.endIndex)
             .map((item: GameItem, i: number) => {
                 const absoluteIndex = visibleRange.startIndex + i;
-                const pos =
-                    positions[absoluteIndex] ?? {
-                        left: GRID.gap,
-                        top: GRID.gap,
-                    };
+                const pos = positions[absoluteIndex] ?? {
+                    left: GRID.gap,
+                    top: GRID.gap,
+                };
                 const isOpen = openIds.has(item.id);
 
                 const relatedBySeries = isOpen
@@ -167,8 +153,7 @@ export default function LibraryGrid({
                                 "var(--mantine-color-default-background)",
                             left: isOpen || isListView ? 0 : pos.left,
                             top: pos.top,
-                            width:
-                                isOpen || isListView ? openWidth : GRID.cardWidth,
+                            width: isOpen || isListView ? openWidth : GRID.cardWidth,
                             height: isOpen
                                 ? openHeight
                                 : isListView
@@ -186,6 +171,9 @@ export default function LibraryGrid({
                             isListView={isListView}
                             onToggleItem={() =>
                                 onToggleItem(item.id, absoluteIndex)
+                            }
+                            onAssociatedClick={(targetId) => 
+                                onAssociatedClick(item.id, targetId)
                             }
                             relatedBySeries={relatedBySeries}
                             relatedByTags={relatedByTags}
@@ -225,28 +213,25 @@ export default function LibraryGrid({
 
             <Box
                 ref={containerRef}
+                aria-label="absolute-grid"
+                role="library"
                 style={{
                     flex: 1,
                     position: "relative",
                     width: "100%",
                     height: "100%",
-                    overflow: "auto",
+                    overflowX: "hidden",
                 }}
-                aria-label="absolute-grid"
-                role="library"
             >
-                {/* Spacer to give scroll area full height */}
                 <Box
                     aria-hidden
                     role="grid-height-spacer"
                     style={{ width: "100%", height: containerHeight }}
                 />
 
-                {/* Visible window only */}
                 {itemsSorted && renderVisibleItems()}
             </Box>
 
-            {/* Alphabetical rail */}
             {sortKey === "title" && (
                 <AlphabeticalRail
                     activeLetter={activeLetter}

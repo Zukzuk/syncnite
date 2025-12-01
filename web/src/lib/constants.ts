@@ -29,6 +29,7 @@ export const GRID = {
   colsList: "40px minmax(0, 45%) 60px 95px minmax(0, 1fr)",
   colsGrid: "0px 60px 60px 95px minmax(0, 1fr)",
   navBarWidth: 160,
+  coverWidth: 220,
   cardWidth: 160,
   cardHeight: 300,
   rowHeight: 60,
@@ -49,6 +50,10 @@ export const Z_INDEX = {
   high: 100,
   top: 1000,
 } as const;
+
+export const MAX_ASSOCIATED = 1000;
+
+export const ASSOCIATED_CARD_STEP_Y = 60;
 
 export const FILE_BASE = "/data";
 

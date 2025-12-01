@@ -1,49 +1,45 @@
 import React from "react";
-import {
-    Box,
-    Paper,
-    Group,
-    Text,
-    Image,
-    Badge,
-    Stack,
-    Collapse,
-    Anchor,
-} from "@mantine/core";
+import { Box, Group, Stack, Paper, Image, Text, Badge, Anchor, Collapse } from "@mantine/core";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 import { GameItem } from "../../../types/types";
+import { GRID } from "../../../lib/constants";
+import { ItemAssociatedDecks } from "./ItemAssociatedDeck";
 
 type Props = {
     item: GameItem;
     isOpen: boolean;
-    onToggleItem?: (e: React.MouseEvent) => void;
+    relatedBySeries?: GameItem[];
+    relatedByTags?: GameItem[];
+    relatedByYear?: GameItem[];
+    onToggleItem: (e: React.MouseEvent) => void;
+    onAssociatedClick: (targetId: string) => void;
 };
 
-const COVER_WIDTH = 220;
-
-export function ItemDetails({ item, isOpen, onToggleItem }: Props): JSX.Element {
-    const {
-        sortingName,
-        tags,
-        series,
-        isInstalled,
-        isHidden,
-        links,
-        coverUrl,
-    } = item;
+export function ItemDetails({
+    item,
+    isOpen,
+    relatedBySeries,
+    relatedByTags,
+    relatedByYear,
+    onToggleItem,
+    onAssociatedClick,
+}: Props): JSX.Element {
+    const { sortingName, tags, isInstalled, isHidden, links, coverUrl } = item;
     const isOpenDelayed = useDelayedFlag({ active: isOpen, delayMs: 140 });
 
     return (
-        <Collapse in={isOpen} transitionDuration={140}>
+        <Collapse
+            in={isOpen}
+            transitionDuration={140}
+            pt={GRID.gap}
+            pr={GRID.gap * 6}
+            style={{
+                height: `calc(100% - ${GRID.rowHeight}px)`
+            }}
+        >
             <Paper
-                pl={0}
-                pt="md"
-                pr={6}
-                pb={0}
-                ml={0}
-                mt={0}
-                mr={48}
-                mb="lg"
+                p={0}
+                m={0}
                 onClick={(e) => {
                     e.stopPropagation();
                     onToggleItem?.(e);
@@ -56,20 +52,26 @@ export function ItemDetails({ item, isOpen, onToggleItem }: Props): JSX.Element 
                     transitionProperty: "opacity, transform",
                     transitionDuration: "220ms, 260ms",
                     transitionTimingFunction: "ease, ease",
+                    height: "100%",
                 }}
             >
-                <Group align="flex-start" gap="md" wrap="nowrap">
+                <Group
+                    align="flex-start"
+                    gap="md"
+                    wrap="nowrap"
+                    style={{ height: "100%" }}
+                >
                     {/* LEFT: COVER + meta under it (fixed width) */}
                     <Stack
                         gap={6}
                         align="flex-start"
-                        style={{ width: COVER_WIDTH, maxWidth: COVER_WIDTH }}
+                        style={{ width: GRID.coverWidth, maxWidth: GRID.coverWidth }}
                     >
                         {coverUrl && (
                             <Image
                                 src={coverUrl}
-                                alt="cover"
-                                w={COVER_WIDTH}
+                                alt={sortingName || "cover"}
+                                w={GRID.coverWidth}
                                 mb={4}
                                 radius="md"
                                 fit="cover"
@@ -146,8 +148,23 @@ export function ItemDetails({ item, isOpen, onToggleItem }: Props): JSX.Element 
                         </Stack>
                     </Stack>
 
-                    {/* RIGHT: currently empty, kept for layout / future use */}
-                    <Box style={{ flex: 1, minWidth: 0 }} />
+                    {/* RIGHT: associated decks – horizontally scrollable, each deck scrolls vertically */}
+                    <Box
+                        style={{
+                            flex: 1,
+                            minWidth: 0,
+                            height: "100%",
+                            display: "flex",
+                        }}
+                    >
+                        <ItemAssociatedDecks
+                            item={item}
+                            bySeries={relatedBySeries}
+                            byTags={relatedByTags}
+                            byYear={relatedByYear}
+                            onAssociatedClick={onAssociatedClick}
+                        />
+                    </Box>
                 </Group>
             </Paper>
         </Collapse>

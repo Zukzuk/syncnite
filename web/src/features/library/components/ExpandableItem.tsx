@@ -1,6 +1,6 @@
 import React, { useCallback } from "react";
 import { Box } from "@mantine/core";
-import { GameItem, ViewMode } from "../../../types/types";
+import { GameItem } from "../../../types/types";
 import { Z_INDEX } from "../../../lib/constants";
 import { ItemDetails } from "./ItemDetails";
 import { ItemBackground } from "./ItemBackground";
@@ -13,10 +13,24 @@ type Props = {
     topOffset: number;
     openHeight: string;
     isListView: boolean;
+    relatedBySeries?: GameItem[];
+    relatedByTags?: GameItem[];
+    relatedByYear?: GameItem[];
     onToggleItem: () => void;
+    onAssociatedClick: (targetId: string) => void;
 };
 
-export function ExpandableItem({ item, isOpen, openHeight, isListView, onToggleItem }: Props): JSX.Element {
+export function ExpandableItem({
+    item,
+    isOpen,
+    openHeight,
+    isListView,
+    relatedBySeries,
+    relatedByTags,
+    relatedByYear,
+    onToggleItem,
+    onAssociatedClick,
+}: Props): JSX.Element {
     const { id, title, bgUrl, coverUrl, isHidden, isInstalled } = item;
 
     const onKeyDown = useCallback(
@@ -61,7 +75,7 @@ export function ExpandableItem({ item, isOpen, openHeight, isListView, onToggleI
             aria-expanded={isOpen}
             aria-label={`${title}`}
             onKeyDown={onKeyDown}
-            style={{ ...(isListView ? outerListStyles : outerGridStyles)}}
+            style={{ ...(isListView ? outerListStyles : outerGridStyles) }}
             onClick={onToggleItem}
         >
             <Box
@@ -78,10 +92,24 @@ export function ExpandableItem({ item, isOpen, openHeight, isListView, onToggleI
                 {!isOpen && isListView && <RowItem item={item} isOpen={isOpen} />}
                 {!isOpen && !isListView && <GridItem item={item} isOpen={isOpen} />}
                 {isOpen && <RowItem item={item} isOpen={isOpen} />}
-                {isOpen && <ItemDetails item={item} isOpen={isOpen} onToggleItem={onToggleItem} />}
+                {isOpen && (
+                    <ItemDetails
+                        item={item}
+                        isOpen={isOpen}
+                        relatedBySeries={relatedBySeries}
+                        relatedByTags={relatedByTags}
+                        relatedByYear={relatedByYear}
+                        onToggleItem={onToggleItem}
+                        onAssociatedClick={onAssociatedClick}
+                    />
+                )}
             </Box>
 
-            <ItemBackground aria-label="library-item-bg" bgUrl={bgUrl} isOpen={isOpen} />
+            <ItemBackground
+                aria-label="library-item-bg"
+                item={item}
+                isOpen={isOpen}
+            />
         </Box>
     );
 }
