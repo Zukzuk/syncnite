@@ -3,7 +3,7 @@ import { Box, Stack, Group, Text, ActionIcon, Button, Tooltip, ScrollArea, NavLi
 import { IconSun, IconMoon, IconDownload, IconHome2, IconBooks, IconAB2, IconUser, IconShield, IconLogout2 } from "@tabler/icons-react";
 import { useAuth } from "../hooks/useAuth";
 import { useExtensionStatus } from "../hooks/useExtensionStatus";
-import { API_ENDPOINTS, INTERVAL_MS } from "../lib/constants";
+import { API_ENDPOINTS, GRID, INTERVAL_MS } from "../lib/constants";
 
 export function AppNavbar({ appVersion }: { appVersion: string }) {
     const location = useLocation();
@@ -28,8 +28,8 @@ export function AppNavbar({ appVersion }: { appVersion: string }) {
             {/* TOP CONTROL PANEL */}
             <Box
                 px="sm"
-                py="xs"
                 style={{
+                    minHeight: GRID.rowHeight,
                     borderBottom: "1px solid var(--mantine-color-default-border)",
                 }}
             >
@@ -190,9 +190,8 @@ export function AppNavbar({ appVersion }: { appVersion: string }) {
                             style={{ fontSize: 10 }}
                         >
                             <Button
-                                onClick={logout}
                                 component="a"
-                                href={API_ENDPOINTS.EXTENSION_DOWNLOAD}
+                                onClick={logout}
                                 size="xs"
                                 radius="sm"
                                 leftSection={<IconLogout2 size={14} />}

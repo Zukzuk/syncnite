@@ -9,11 +9,10 @@ import { GameItem, GridRows, ItemPositions, Letter, RowLayout, UIDerivedState, U
 import { GRID } from "../../../lib/constants";
 
 type UseParams = {
-    containerRef: React.RefObject<HTMLDivElement>;
+    gridRef: React.RefObject<HTMLDivElement>;
     isListView: boolean;
-    allowMultipleOpen: boolean;
     controlsH: number;
-    headerH: number;
+    sortH: number;
     ui: UIState;
     derived: UIDerivedState;
 };
@@ -26,7 +25,6 @@ type UseReturn = {
     activeLetter: Letter;
     openWidth: string;
     openHeight: string;
-    topOffset: number;
     openIds: Set<string>;
     hasOpenItemInView: boolean;
     onScrollJump: (letter: Letter) => void;
@@ -36,22 +34,21 @@ type UseReturn = {
 
 // A hook to manage the absolute grid model: positions, virtual window, jump-to-scroll, alphabetical rail.
 export function useGrid({
-    containerRef,
+    gridRef,
     isListView,
-    allowMultipleOpen,
     controlsH,
-    headerH,
+    sortH,
     ui,
     derived,
 }: UseParams): UseReturn {
     // Total items length
     const itemsLen = derived.itemsSorted.length;
     // Base grid sizing (cols + viewport height)
-    const { cols, viewportH } = useGridLayout({ containerRef, itemsLen });
+    const { cols, viewportH } = useGridLayout({ gridRef, itemsLen });
     const viewCols = isListView ? 1 : Math.max(1, cols || 1);
 
     // Combined header/controls offset
-    const topOffset = controlsH + headerH;
+    const topOffset = controlsH + sortH;
     // Open card CSS + numeric height
     const openWidth = `calc(100vw - ${GRID.navBarWidth}px - ${GRID.scrollbarWidth}px)`;
     const openHeight = `calc(100vh - ${topOffset}px)`;
@@ -111,13 +108,13 @@ export function useGrid({
 
     // Jump-to-scroll, based on positions
     const { scrollItemIntoView } = useGridScrollJump({
-        containerRef,
+        gridRef,
         positions,
     });
 
     // Open/close behavior with scroll restore
     const { onToggleItem } = useGridScrollRestore({
-        containerRef,
+        gridRef,
         openIds,
         items: derived.itemsSorted as GameItem[],
         scrollItemIntoView,
@@ -148,7 +145,7 @@ export function useGrid({
 
     // Virtual window (variable-height rows)
     const { visibleRange } = useGridVirtualWindow({
-        containerRef, opts: {
+        gridRef, opts: {
             rows: rowTops.length,
             cols: viewCols,
             itemsLen,
@@ -179,7 +176,7 @@ export function useGrid({
     // Open item must intersect viewport by >= minIntersection
     const hasOpenItemInView = useMemo(() => {
         if (isListView) return false;
-        const el = containerRef.current;
+        const el = gridRef.current;
         if (!el || openIds.size === 0) return false;
 
         const viewportTop = el.scrollTop;
@@ -213,7 +210,7 @@ export function useGrid({
         itemRowIndex,
         rowTops,
         rowHeights,
-        containerRef,
+        gridRef,
         visibleRange.startIndex,
         visibleRange.endIndex,
     ]);
@@ -226,7 +223,6 @@ export function useGrid({
         activeLetter,
         openWidth,
         openHeight,
-        topOffset,
         openIds,
         hasOpenItemInView,
         onScrollJump,

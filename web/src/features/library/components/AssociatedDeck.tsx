@@ -37,10 +37,16 @@ export function AssociatedDeck({
     const colGap = GRID.gap * 2;
     const hasRightColumn = rightCount > 0;
     const deckWidth = hasRightColumn ? colWidth * 2 + colGap : colWidth;
+
     const hoveredIndex = hoveredId ? cards.findIndex((c) => c.id === hoveredId) : -1;
     const hasHoveredCard = hoveredIndex >= 0;
     const topIndex = hasHoveredCard ? hoveredIndex : -1;
-    const maxZ = cards.length + 1;
+    const hoveredInLeftColumn = hasHoveredCard && hoveredIndex < leftCount;
+    const hoveredIndexInColumn = !hasHoveredCard
+        ? -1
+        : hoveredInLeftColumn
+            ? hoveredIndex
+            : hoveredIndex - leftCount;
 
     return (
         <Stack
@@ -51,7 +57,6 @@ export function AssociatedDeck({
         >
             <Text
                 size="xs"
-                c="dimmed"
                 style={{
                     overflow: "hidden",
                     textOverflow: "ellipsis",
@@ -64,20 +69,20 @@ export function AssociatedDeck({
             <Box
                 className="subtle-scrollbar"
                 p={GRID.gap}
-                onMouseEnter={() => setIsDeckHovered(true)}
-                onMouseLeave={() => {
-                    setIsDeckHovered(false);
-                    setHoveredId(null);
-                }}
                 style={{
                     flex: "1 1 auto",
                     maxHeight: `calc(100% - ${GRID.gap * 3}px)`,
-                    overflowY: "scroll",
+                    overflowY: "auto",
                     overflowX: "visible",
                     overscrollBehaviorY: "contain",
                 }}
             >
                 <Box
+                    onMouseEnter={() => setIsDeckHovered(true)}
+                    onMouseLeave={() => {
+                        setIsDeckHovered(false);
+                        setHoveredId(null);
+                    }}
                     style={{
                         position: "relative",
                         width: deckWidth,
@@ -95,13 +100,22 @@ export function AssociatedDeck({
                         const left = inLeftColumn ? 0 : colWidth + colGap;
                         const top = indexInColumn * ASSOCIATED_CARD_STEP_Y;
 
-                        // Pyramid z-index around hovered card (same logic as before)
+                        const maxZInColumn = (inLeftColumn ? leftCount : rightCount) + 1;
+
                         let zIndex: number;
                         if (!hasHoveredCard) {
-                            zIndex = index + 1;
+                            // Simple stacking inside each column when nothing is hovered
+                            zIndex = indexInColumn + 1;
+                        } else if (
+                            // Same column as hovered -> build a pyramid in this column
+                            (inLeftColumn && hoveredInLeftColumn) ||
+                            (!inLeftColumn && !hoveredInLeftColumn)
+                        ) {
+                            const distance = Math.abs(indexInColumn - hoveredIndexInColumn);
+                            zIndex = maxZInColumn - distance;
                         } else {
-                            const distance = Math.abs(index - hoveredIndex);
-                            zIndex = maxZ - distance;
+                            // Other column: keep its own natural stacking
+                            zIndex = indexInColumn + 1;
                         }
 
                         const isTopCard = hasHoveredCard && index === topIndex;
@@ -136,13 +150,14 @@ export function AssociatedDeck({
                                     boxShadow: isTopCard
                                         ? "0 8px 16px rgba(0, 0, 0, 0.25)"
                                         : "0 4px 8px rgba(0, 0, 0, 0.15)",
-                                    border: isDark
-                                        ? "2px solid var(--mantine-color-dark-9)"
-                                        : "2px solid var(--mantine-color-gray-3)",
-                                    transform: isTopCard ? "scale(1.05)" : "scale(1)",
+                                    border: isTopCard
+                                        ? "2px solid var(--mantine-primary-color-4)"
+                                        : isDark
+                                            ? "2px solid var(--mantine-color-dark-9)"
+                                            : "2px solid var(--mantine-color-gray-3)",
+                                    transform: isTopCard ? "scale(1.07)" : "scale(1)",
                                     transition: "transform 140ms ease, box-shadow 140ms ease, clip-path 140ms ease",
                                 }}
-
                             >
                                 <Box
                                     style={{

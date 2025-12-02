@@ -1,7 +1,7 @@
 import React from "react";
 import { Group, MultiSelect, Switch, Text, Flex, Box, SegmentedControl } from "@mantine/core";
 import { SearchInput } from "../../../components/SearchInput";
-import { SOURCE_MAP } from "../../../lib/constants";
+import { GRID, SOURCE_MAP } from "../../../lib/constants";
 import { ViewMode } from "../../../types/types";
 
 type Props = {
@@ -69,6 +69,10 @@ export function HeaderControls(props: Props) {
     <Box
       ref={controlsRef as unknown as React.RefObject<HTMLDivElement>}
       p="xs"
+      style={{
+        minHeight: GRID.rowHeight,
+        borderBottom: `1px solid var(--mantine-color-default-border)`,
+      }}
     >
       <Group wrap="wrap" align="center" gap="sm">
 

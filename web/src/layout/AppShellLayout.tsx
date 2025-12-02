@@ -39,7 +39,7 @@ export default function AppShellLayout({
         <Box
           // keep it on top of content
           style={{
-            position: "fixed",
+            position: "relative",
             top: 10,
             left: 10,
             zIndex: Z_INDEX.top,

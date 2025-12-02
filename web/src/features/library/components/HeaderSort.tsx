@@ -3,7 +3,7 @@ import { SortDir, SortKey } from "../../../types/types";
 import { GRID, Z_INDEX } from "../../../lib/constants";
 
 type Props = {
-  headerRef: (el: HTMLElement | null) => void;
+  sortRef: (el: HTMLElement | null) => void;
   sortKey: SortKey;
   sortDir: SortDir;
   isListView: boolean;
@@ -15,14 +15,14 @@ type Props = {
  * Header sort component for the library view.
  * Renders sortable column headers for Title, Year, Platform, and Series.
  * Props:
- * - headerRef: Ref callback for the header element.
+ * - sortRef: Ref callback for the header element.
  * - sortKey: Current sort key.
  * - sortDir: Current sort direction.
  * - onToggleSort: Callback to toggle sorting by a given key.
  * - gridColumns: CSS grid template columns for layout.
  */
 export function HeaderSort(props: Props) {
-  const { headerRef, sortKey, sortDir, isListView, hasOpenItemInView, onToggleSort } = props;
+  const { sortRef, sortKey, sortDir, isListView, hasOpenItemInView, onToggleSort } = props;
 
   const label = (base: string, key: SortKey) =>
     sortKey === key ? `${base} ${sortDir === "asc" ? "▲" : "▼"}` : base;
@@ -32,73 +32,70 @@ export function HeaderSort(props: Props) {
     sortKey !== key ? "none" : sortDir === "asc" ? "ascending" : "descending";
 
   return (
-    <Box pos="relative" style={{ zIndex: Z_INDEX.medium }}>
-      <Paper
-        ref={headerRef}
+    <Box
+      ref={sortRef as unknown as React.RefObject<HTMLDivElement>}
+      style={{
+        position: "relative",
+        background: "var(--mantine-color-body)",
+        borderBottom: `1px solid var(--mantine-color-default-border)`,
+        height: GRID.halfRowHeight,
+        padding: `0 ${GRID.scrollbarWidth}px 0 ${GRID.listLeftPadding}px`,
+      }}
+    >
+      <Box
         style={{
-          background: "var(--mantine-color-body)",
-          borderTop: `1px solid var(--mantine-color-default-border)`,
-          borderBottom: `1px solid var(--mantine-color-default-border)`,
-          borderLeft: "none",
-          borderRight: "none",
-          padding: `0 ${GRID.scrollbarWidth}px 0 ${GRID.listLeftPadding}px`,
+          display: "grid",
+          alignItems: "center",
+          height: "100%",
+          gridTemplateColumns: (isListView || hasOpenItemInView) ? GRID.colsList : GRID.colsGrid,
+          gap: GRID.gap,
+          fontWeight: 400,
         }}
+        role="row"
       >
-        <Box
-          style={{
-            display: "grid",
-            alignItems: "center",
-            gridTemplateColumns: (isListView || hasOpenItemInView) ? GRID.colsList : GRID.colsGrid,
-            height: GRID.halfRowHeight,
-            gap: GRID.gap,
-            fontWeight: 400,
-          }}
-          role="row"
+        {/* spacer column */}
+        <Box role="columnheader" aria-hidden="true" />
+
+        <UnstyledButton
+          onClick={() => onToggleSort("title")}
+          role="columnheader"
+          aria-sort={ariaSort("title")}
+          aria-label="Sort by Title"
+          style={{ textAlign: "left", cursor: "pointer" }}
         >
-          {/* spacer column */}
-          <Box role="columnheader" aria-hidden="true" />
+          <Text size="sm" fw={400}>{label("Title", "title")}</Text>
+        </UnstyledButton>
 
-          <UnstyledButton
-            onClick={() => onToggleSort("title")}
-            role="columnheader"
-            aria-sort={ariaSort("title")}
-            aria-label="Sort by Title"
-            style={{ textAlign: "left", cursor: "pointer" }}
-          >
-            <Text size="sm" fw={400}>{label("Title", "title")}</Text>
-          </UnstyledButton>
+        <UnstyledButton
+          onClick={() => onToggleSort("year")}
+          role="columnheader"
+          aria-sort={ariaSort("year")}
+          aria-label="Sort by Year"
+          style={{ textAlign: "center", cursor: "pointer" }}
+        >
+          <Text size="sm" fw={400}>{label("Year", "year")}</Text>
+        </UnstyledButton>
 
-          <UnstyledButton
-            onClick={() => onToggleSort("year")}
-            role="columnheader"
-            aria-sort={ariaSort("year")}
-            aria-label="Sort by Year"
-            style={{ textAlign: "center", cursor: "pointer" }}
-          >
-            <Text size="sm" fw={400}>{label("Year", "year")}</Text>
-          </UnstyledButton>
+        <UnstyledButton
+          onClick={() => onToggleSort("source")}
+          role="columnheader"
+          aria-sort={ariaSort("source")}
+          aria-label="Sort by Platform"
+          style={{ textAlign: "center", cursor: "pointer" }}
+        >
+          <Text size="sm" fw={400}>{label("Platform", "source")}</Text>
+        </UnstyledButton>
 
-          <UnstyledButton
-            onClick={() => onToggleSort("source")}
-            role="columnheader"
-            aria-sort={ariaSort("source")}
-            aria-label="Sort by Platform"
-            style={{ textAlign: "center", cursor: "pointer" }}
-          >
-            <Text size="sm" fw={400}>{label("Platform", "source")}</Text>
-          </UnstyledButton>
-
-          <UnstyledButton
-            onClick={() => onToggleSort("series")}
-            role="columnheader"
-            aria-sort={ariaSort("series")}
-            aria-label="Sort by Series"
-            style={{ textAlign: "left", cursor: "pointer" }}
-          >
-            <Text size="sm" fw={400}>{label("Series", "series")}</Text>
-          </UnstyledButton>
-        </Box>
-      </Paper>
+        <UnstyledButton
+          onClick={() => onToggleSort("series")}
+          role="columnheader"
+          aria-sort={ariaSort("series")}
+          aria-label="Sort by Series"
+          style={{ textAlign: "left", cursor: "pointer" }}
+        >
+          <Text size="sm" fw={400}>{label("Series", "series")}</Text>
+        </UnstyledButton>
+      </Box>
     </Box>
   );
 }

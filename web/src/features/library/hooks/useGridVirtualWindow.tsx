@@ -2,7 +2,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { GRID } from "../../../lib/constants";
 
 type UseParams = {
-    containerRef: React.RefObject<HTMLDivElement>;
+    gridRef: React.RefObject<HTMLDivElement>;
     opts: {
         rows: number;
         cols: number;
@@ -27,7 +27,7 @@ type UseReturn = {
 // A hook to calculate visible range in a virtual scrolling window.
 // Supports variable row heights via rowTops + rowHeights and optional
 // per-row item index mapping for uneven rows (e.g. open rows).
-export function useGridVirtualWindow({ containerRef, opts }: UseParams): UseReturn {
+export function useGridVirtualWindow({ gridRef, opts }: UseParams): UseReturn {
     const {
         rows,
         cols,
@@ -45,7 +45,7 @@ export function useGridVirtualWindow({ containerRef, opts }: UseParams): UseRetu
 
     // scroll handler
     useLayoutEffect(() => {
-        const el = containerRef.current;
+        const el = gridRef.current;
         if (!el) return;
 
         const onScroll = () => {
@@ -65,7 +65,7 @@ export function useGridVirtualWindow({ containerRef, opts }: UseParams): UseRetu
 
     // adjust scrollTop if containerHeight or itemsLen changes
     useLayoutEffect(() => {
-        const el = containerRef.current;
+        const el = gridRef.current;
         if (!el) return;
 
         const maxScroll = Math.max(0, containerHeight - viewportH);

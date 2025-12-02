@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { GameItem } from "../../../types/types";
 
 type UseParams = {
-    containerRef: React.RefObject<HTMLDivElement | null>;
+    gridRef: React.RefObject<HTMLDivElement | null>;
     openIds: Set<string>;
     items: GameItem[];
     scrollItemIntoView: (index: number) => void;
@@ -19,7 +19,7 @@ type UseReturn = {
  * - restores scroll on close if user didn't scroll manually
  * - scrolls to opened item once layout has updated
  */
-export function useGridScrollRestore({ containerRef, openIds, items, scrollItemIntoView, toggleOpen }: UseParams): UseReturn {
+export function useGridScrollRestore({ gridRef, openIds, items, scrollItemIntoView, toggleOpen }: UseParams): UseReturn {
     const preOpenScrollTopRef = useRef<number | null>(null);
     const openItemIdRef = useRef<string | null>(null);
     const userScrolledWhileOpenRef = useRef(false);
@@ -28,7 +28,7 @@ export function useGridScrollRestore({ containerRef, openIds, items, scrollItemI
 
     // Track user scrolls while an item is open
     useEffect(() => {
-        const el = containerRef.current;
+        const el = gridRef.current;
         if (!el) return;
 
         const onScroll = () => {
@@ -40,12 +40,12 @@ export function useGridScrollRestore({ containerRef, openIds, items, scrollItemI
 
         el.addEventListener("scroll", onScroll, { passive: true });
         return () => el.removeEventListener("scroll", onScroll);
-    }, [containerRef]);
+    }, [gridRef]);
 
     const onToggleItem = useCallback(
         (id: string, absoluteIndex: number) => {
             const willOpen = !openIds.has(id);
-            const el = containerRef.current;
+            const el = gridRef.current;
 
             if (willOpen) {
                 preOpenScrollTopRef.current = el ? el.scrollTop : null;
@@ -79,7 +79,7 @@ export function useGridScrollRestore({ containerRef, openIds, items, scrollItemI
                 userScrolledWhileOpenRef.current = false;
             }
         },
-        [openIds, toggleOpen, containerRef]
+        [openIds, toggleOpen, gridRef]
     );
 
     // Perform scroll after layout updated for the opened item

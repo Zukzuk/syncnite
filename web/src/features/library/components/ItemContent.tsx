@@ -5,6 +5,7 @@ import { Deck, GameItem } from "../../../types/types";
 import { GRID } from "../../../lib/constants";
 import { AssociatedDeck } from "./AssociatedDeck";
 import { AssociatedStack } from "./AssociatedStack";
+import { getTheme } from "../../../lib/utils";
 
 type Props = {
     item: GameItem;
@@ -27,7 +28,8 @@ export function ItemContent({
 }: Props): JSX.Element {
     const { sortingName, tags, isInstalled, isHidden, links, coverUrl } = item;
     const isOpenDelayed = useDelayedFlag({ active: isOpen, delayMs: 140 });
-
+    const { isDark } = getTheme();
+    
     const seriesNames = item.series ?? [];
     const tagNames = item.tags ?? [];
 
@@ -104,22 +106,24 @@ export function ItemContent({
                     transitionDuration: "220ms, 260ms",
                     transitionTimingFunction: "ease, ease",
                     height: "100%",
-                    overflow: "hidden",
+                    overflowX: "auto",
+                    overflowY: "hidden",
                 }}
             >
                 <Group
                     align="flex-start"
                     gap={GRID.gap * 3}
                     wrap="nowrap"
-                    style={{ height: "100%" }}
+                    h="100%"
                 >
-                    {/* cover + meta */}
+                    {/* COVER + META */}
                     <Stack
                         gap={6}
                         align="flex-start"
                         className="subtle-scrollbar"
+                        pr={GRID.gap}
                         style={{
-                            width: GRID.coverWidth,
+                            width: GRID.coverWidth + GRID.gap,
                             height: "100%",
                             overflowY: "auto",
                             overflowX: "hidden",
@@ -135,6 +139,11 @@ export function ItemContent({
                                 radius="sm"
                                 fit="cover"
                                 loading="lazy"
+                                style={{
+                                    border: isDark
+                                        ? "2px solid var(--mantine-color-dark-9)"
+                                        : "2px solid var(--mantine-color-gray-3)",
+                                }}
                             />
                         )}
 
@@ -244,7 +253,7 @@ export function ItemContent({
                             style={{
                                 display: "grid",
                                 gridTemplateColumns: `repeat(auto-fill, ${GRID.cardWidth}px)`,
-                                gap: GRID.gap, 
+                                gap: GRID.gap,
                                 justifyContent: "flex-start",
                                 alignContent: "flex-start",
                             }}

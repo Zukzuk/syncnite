@@ -2,6 +2,7 @@ import React from "react";
 import { Box, Image, Stack, Text } from "@mantine/core";
 import { GRID, MAX_ASSOCIATED } from "../../../lib/constants";
 import { GameItem } from "../../../types/types";
+import { getTheme } from "../../../lib/utils";
 
 type Props = {
     label: string;
@@ -18,6 +19,8 @@ export function AssociatedStack({
 }: Props): JSX.Element | null {
     if (items.length === 0) return null;
 
+    const { isDark } = getTheme();
+
     const cards = items.filter((g) => g.coverUrl).slice(0, MAX_ASSOCIATED);
     const previewCards = cards.slice(0, 4);
     const previewSlots = Array.from({ length: 4 }, (_, i) => previewCards[i] ?? null);
@@ -25,19 +28,13 @@ export function AssociatedStack({
     return (
         <Stack
             gap={4}
-            style={{ flex: "0 0 auto", width: GRID.cardWidth }}
+            bg="var(--mantine-color-body)"
+            style={{
+                flex: "0 0 auto",
+                width: GRID.cardWidth,
+                borderRadius: 4,
+            }}
         >
-            <Text
-                size="xs"
-                c="dimmed"
-                style={{
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                }}
-            >
-                {label}
-            </Text>
 
             <Box
                 onClick={(e) => {
@@ -47,9 +44,11 @@ export function AssociatedStack({
                 style={{
                     padding: GRID.gap,
                     borderRadius: 4,
-                    border: isOpen
-                        ? "1px solid var(--mantine-primary-color-4)"
-                        : "1px solid var(--mantine-color-default-border)",
+                    border: isOpen 
+                        ? "2px solid var(--mantine-primary-color-4)"
+                        : isDark
+                            ? "2px solid var(--mantine-color-dark-9)"
+                            : "2px solid var(--mantine-color-gray-3)",
                     backgroundColor: isOpen
                         ? "var(--mantine-primary-color-light)"
                         : "var(--mantine-color-body)",
@@ -60,6 +59,18 @@ export function AssociatedStack({
                     boxShadow: "0 2px 6px rgba(0, 0, 0, 0.15)",
                 }}
             >
+                <Text
+                    size="xs"
+                    c="dimmed"
+                    style={{
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                    }}
+                >
+                    {label}
+                </Text>
+
                 <Box
                     style={{
                         display: "grid",

@@ -65,20 +65,20 @@ export default function LibraryGrid({
 }: Props): JSX.Element {
     const { ui, derived } = useLibraryState({ items: libraryData.items });
     const { ref: controlsRef, height: controlsH } = useElementSize();
-    const { ref: headerRef, height: headerH } = useElementSize();
-    const containerRef = useRef<HTMLDivElement | null>(null);
+    const { ref: sortRef, height: sortH } = useElementSize();
+    const gridRef = useRef<HTMLDivElement | null>(null);
 
     // Data signature for resetting
     const { filteredCount, totalCount, itemsSorted } = derived;
     const { q, sources, tags, series, showHidden, installedOnly, sortKey, sortDir, onToggleSort } = ui;
-    const dataSig = `${derived.filteredCount}|${q}|${sources.join(",")}|${tags.join(",")}|${series.join(",")}|${showHidden}|${installedOnly}`;
+    const dataSig = `${filteredCount}|${q}|${sources.join(",")}|${tags.join(",")}|${series.join(",")}|${showHidden}|${installedOnly}`;
     const groupedKey = `grp:${dataSig}|${sortKey}|${sortDir}`;
     const flatKey = `flt:${dataSig}|${sortKey}|${sortDir}`;
     const isListView = view === "list";
 
     // Reset scroll position when dataset semantics change
     useEffect(() => {
-        const el = containerRef.current;
+        const el = gridRef.current;
         if (el) el.scrollTop = 0;
     }, [flatKey]);
 
@@ -91,17 +91,16 @@ export default function LibraryGrid({
         activeLetter,
         openWidth,
         openHeight,
-        topOffset,
         openIds,
         hasOpenItemInView,
         onScrollJump,
         onToggleItem,
         onAssociatedClick,
     } = useGrid({
-        containerRef,
+        gridRef,
         isListView,
         controlsH,
-        headerH,
+        sortH,
         ui,
         derived,
     });
@@ -124,8 +123,8 @@ export default function LibraryGrid({
             />
 
             <HeaderSort
-                headerRef={
-                    headerRef as unknown as (el: HTMLElement | null) => void
+                sortRef={
+                    sortRef as unknown as (el: HTMLElement | null) => void
                 }
                 aria-label="header-sort"
                 sortKey={sortKey}
@@ -136,7 +135,7 @@ export default function LibraryGrid({
             />
 
             <Box
-                ref={containerRef}
+                ref={gridRef}
                 aria-label="absolute-grid"
                 role="library"
                 style={{
@@ -156,7 +155,7 @@ export default function LibraryGrid({
                     }}
                 />
 
-                { derived.itemsSorted
+                { itemsSorted
                     .slice(visibleRange.startIndex, visibleRange.endIndex)
                     .map((item: GameItem, i: number) => {
                         const index = visibleRange.startIndex + i;
@@ -178,17 +177,17 @@ export default function LibraryGrid({
                         const relatedBySeries = getRelatedBySeries(
                             isOpen,
                             item,
-                            derived.itemsSorted
+                            itemsSorted
                         );
                         const relatedByTags = getRelatedByTags(
                             isOpen,
                             item,
-                            derived.itemsSorted
+                            itemsSorted
                         );
                         const relatedByYear = getRelatedByYear(
                             isOpen,
                             item,
-                            derived.itemsSorted
+                            itemsSorted
                         );
 
                         return (

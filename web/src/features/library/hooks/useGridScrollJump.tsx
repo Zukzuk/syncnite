@@ -1,7 +1,7 @@
 import * as React from "react";
 
 type UseParams = {
-    containerRef: React.RefObject<HTMLDivElement | null>;
+    gridRef: React.RefObject<HTMLDivElement | null>;
     positions: Array<{ left: number; top: number }>;
 };
 
@@ -10,9 +10,9 @@ type UseReturn = {
 };
 
 // A hook to manage scrolling to grid items within a container.
-export function useGridScrollJump({ containerRef, positions }: UseParams): UseReturn {
+export function useGridScrollJump({ gridRef, positions }: UseParams): UseReturn {
     const scrollItemIntoView = React.useCallback((index: number) => {
-        const el = containerRef.current;
+        const el = gridRef.current;
         if (!el) return;
 
         const top = positions[index]?.top ?? 0;
@@ -20,7 +20,7 @@ export function useGridScrollJump({ containerRef, positions }: UseParams): UseRe
         const target = Math.max(0, Math.min(top, maxTop));
 
         el.scrollTo({ top: target, behavior: "auto" });
-    }, [containerRef, positions]);
+    }, [gridRef, positions]);
 
     return { scrollItemIntoView };
 }
