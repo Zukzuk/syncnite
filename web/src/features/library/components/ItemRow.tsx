@@ -13,7 +13,7 @@ type Props = {
     isOpen: boolean;
 };
 
-export function RowItem({ item, isOpen }: Props): JSX.Element {
+export function ItemRow({ item, isOpen }: Props): JSX.Element {
     const { id, isInstalled, iconUrl, title, gameId, year, source, series, link } = item;
     const [hovered, setHovered] = React.useState(false);
 

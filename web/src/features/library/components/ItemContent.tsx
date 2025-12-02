@@ -1,9 +1,10 @@
 import React from "react";
 import { Box, Group, Stack, Paper, Image, Text, Badge, Anchor, Collapse } from "@mantine/core";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
-import { GameItem } from "../../../types/types";
+import { Deck, GameItem } from "../../../types/types";
 import { GRID } from "../../../lib/constants";
-import { ItemAssociatedDetails } from "./ItemAssociatedDetails";
+import { AssociatedDeck } from "./AssociatedDeck";
+import { AssociatedStack } from "./AssociatedStack";
 
 type Props = {
     item: GameItem;
@@ -15,7 +16,7 @@ type Props = {
     onAssociatedClick: (targetId: string) => void;
 };
 
-export function ItemDetails({
+export function ItemContent({
     item,
     isOpen,
     relatedBySeries,
@@ -27,6 +28,56 @@ export function ItemDetails({
     const { sortingName, tags, isInstalled, isHidden, links, coverUrl } = item;
     const isOpenDelayed = useDelayedFlag({ active: isOpen, delayMs: 140 });
 
+    const seriesNames = item.series ?? [];
+    const tagNames = item.tags ?? [];
+
+    // One deck per series
+    const seriesDecks: Deck[] = seriesNames
+        .map((name) => ({
+            key: `series-${name}`,
+            label: name,
+            items: (relatedBySeries ?? []).filter((g) => g.series?.includes(name)),
+        }))
+        .filter((deck) => deck.items.length > 0);
+
+    // One deck per tag
+    const tagDecks: Deck[] = tagNames
+        .map((name) => ({
+            key: `tag-${name}`,
+            label: name,
+            items: (relatedByTags ?? []).filter((g) => g.tags?.includes(name)),
+        }))
+        .filter((deck) => deck.items.length > 0);
+
+    const hasYearDeck = !!relatedByYear && relatedByYear.length > 0;
+    const yearDeck: Deck | null = hasYearDeck
+        ? {
+            key: "year",
+            label: item.year ? `Year ${String(item.year)}` : "Year",
+            items: relatedByYear!,
+        }
+        : null;
+
+    const allDecks: Deck[] = [
+        ...seriesDecks,
+        ...tagDecks,
+        ...(yearDeck ? [yearDeck] : []),
+    ];
+
+    const [openDeckKey, setOpenDeckKey] = React.useState<string | null>(null);
+
+    // Reset when the main item changes (new game opened)
+    React.useEffect(() => {
+        setOpenDeckKey(null);
+    }, [item.id]);
+
+    // Determine which deck is open
+    let openDeck = allDecks[0];
+    if (openDeckKey) {
+        const found = allDecks.find((d) => d.key === openDeckKey);
+        if (found) openDeck = found;
+    }
+
     return (
         <Collapse
             in={isOpen}
@@ -34,7 +85,7 @@ export function ItemDetails({
             py={GRID.gap}
             pr={GRID.gap * 6}
             style={{
-                height: `calc(100% - ${GRID.rowHeight}px)`
+                height: `calc(100% - ${GRID.rowHeight}px)`,
             }}
         >
             <Paper
@@ -53,6 +104,7 @@ export function ItemDetails({
                     transitionDuration: "220ms, 260ms",
                     transitionTimingFunction: "ease, ease",
                     height: "100%",
+                    overflow: "hidden",
                 }}
             >
                 <Group
@@ -61,15 +113,18 @@ export function ItemDetails({
                     wrap="nowrap"
                     style={{ height: "100%" }}
                 >
-                    {/* LEFT: COVER + meta under it (fixed width) */}
+                    {/* cover + meta */}
                     <Stack
                         gap={6}
                         align="flex-start"
-                        style={{ 
+                        className="subtle-scrollbar"
+                        style={{
                             width: GRID.coverWidth,
+                            height: "100%",
                             overflowY: "auto",
                             overflowX: "hidden",
-                         }}
+                            overscrollBehaviorY: "contain",
+                        }}
                     >
                         {coverUrl && (
                             <Image
@@ -101,7 +156,7 @@ export function ItemDetails({
                                 )}
                             </Group>
 
-                            {/* TAGS – badges wrap */}
+                            {/* TAGS */}
                             {tags.length > 0 && (
                                 <Box>
                                     <Text size="xs" c="dimmed">
@@ -117,7 +172,7 @@ export function ItemDetails({
                                 </Box>
                             )}
 
-                            {/* Raw links array */}
+                            {/* LINKS */}
                             {Array.isArray(links) && links.length > 0 && (
                                 <Box>
                                     <Text size="xs" c="dimmed">
@@ -152,24 +207,61 @@ export function ItemDetails({
                         </Stack>
                     </Stack>
 
-                    {/* RIGHT: associated decks – horizontally scrollable, each deck scrolls vertically */}
+                    {/* DECK */}
                     <Box
+                        style={{
+                            flex: "0 0 auto",
+                            height: "100%",
+                            display: "flex",
+                            alignItems: "stretch",
+                            overflow: "hidden",
+                        }}
+                    >
+                        {allDecks.length > 0 && (
+                            <AssociatedDeck
+                                aria-label="item-associated-deck"
+                                key={openDeck.key}
+                                label={openDeck.label}
+                                items={openDeck.items}
+                                onAssociatedClick={onAssociatedClick}
+                            />
+                        )}
+                    </Box>
+
+                    {/* STACKS grid */}
+                    <Box
+                        className="subtle-scrollbar"
                         style={{
                             flex: 1,
                             minWidth: 0,
                             height: "100%",
-                            display: "flex",
+                            overflowY: "auto",
+                            overflowX: "hidden",
+                            overscrollBehaviorY: "contain",
                         }}
                     >
-                        <ItemAssociatedDetails
-                            aria-label="item-associated-details" 
-                            item={item}
-                            bySeries={relatedBySeries}
-                            byTags={relatedByTags}
-                            byYear={relatedByYear}
-                            onAssociatedClick={onAssociatedClick}
-                        />
+                        <Box
+                            style={{
+                                display: "grid",
+                                gridTemplateColumns: `repeat(auto-fill, ${GRID.cardWidth}px)`,
+                                gap: GRID.gap, 
+                                justifyContent: "flex-start",
+                                alignContent: "flex-start",
+                            }}
+                        >
+                            {allDecks.map((deck) => (
+                                <AssociatedStack
+                                    aria-label="item-associated-stack"
+                                    key={deck.key}
+                                    label={deck.label}
+                                    items={deck.items}
+                                    isOpen={deck.key === openDeck.key}
+                                    onDeckClick={() => setOpenDeckKey(deck.key)}
+                                />
+                            ))}
+                        </Box>
                     </Box>
+
                 </Group>
             </Paper>
         </Collapse>

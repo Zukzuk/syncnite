@@ -119,6 +119,12 @@ export interface ItemPositions extends Array<{
   top: number
 }> { };
 
+export interface Deck {
+    key: string;
+    label: string;
+    items: GameItem[];
+};
+
 export type LogListener = (lines: string[]) => void;
 
 export interface ILogBus {

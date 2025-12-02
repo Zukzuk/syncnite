@@ -5,12 +5,13 @@ import { useGridAlphabetRail } from "./useGridAlphabetRail";
 import { useGridOpenItemToggle } from "./useGridOpenItemToggle";
 import { useGridScrollJump } from "./useGridScrollJump";
 import { useGridScrollRestore } from "./useGridScrollRestore";
-import { GameItem, GridRows, ItemPositions, Letter, RowLayout, UIDerivedState, UIState, ViewMode } from "../../../types/types";
+import { GameItem, GridRows, ItemPositions, Letter, RowLayout, UIDerivedState, UIState } from "../../../types/types";
 import { GRID } from "../../../lib/constants";
 
 type UseParams = {
     containerRef: React.RefObject<HTMLDivElement>;
     isListView: boolean;
+    allowMultipleOpen: boolean;
     controlsH: number;
     headerH: number;
     ui: UIState;
@@ -37,6 +38,7 @@ type UseReturn = {
 export function useGrid({
     containerRef,
     isListView,
+    allowMultipleOpen,
     controlsH,
     headerH,
     ui,
@@ -46,7 +48,7 @@ export function useGrid({
     const itemsLen = derived.itemsSorted.length;
     // Base grid sizing (cols + viewport height)
     const { cols, viewportH } = useGridLayout({ containerRef, itemsLen });
-    const colsSafe = isListView ? 1 : Math.max(1, cols || 1);
+    const viewCols = isListView ? 1 : Math.max(1, cols || 1);
 
     // Combined header/controls offset
     const topOffset = controlsH + headerH;
@@ -55,7 +57,7 @@ export function useGrid({
     const openHeight = `calc(100vh - ${topOffset}px)`;
 
     // Open/close state
-    const { openIds, toggleOpen } = useGridOpenItemToggle();
+    const { openIds, toggleOpen } = useGridOpenItemToggle({ allowMultipleOpen: false });
 
     // Build id -> index map once per items change
     const idToIndex = useMemo(() => {
@@ -68,8 +70,8 @@ export function useGrid({
 
     // Build grid rows with open items occupying dedicated full-width rows
     const { rowItems, rowIsOpen } = useMemo(
-        () => buildGridRows(derived.itemsSorted, openIds, colsSafe),
-        [derived.itemsSorted, openIds, colsSafe]
+        () => buildGridRows(derived.itemsSorted, openIds, viewCols),
+        [derived.itemsSorted, openIds, viewCols]
     );
 
     // Compute row layout
@@ -148,7 +150,7 @@ export function useGrid({
     const { visibleRange } = useGridVirtualWindow({
         containerRef, opts: {
             rows: rowTops.length,
-            cols: colsSafe,
+            cols: viewCols,
             itemsLen,
             rowTops,
             rowHeights,

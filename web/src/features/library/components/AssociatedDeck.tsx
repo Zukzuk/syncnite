@@ -8,13 +8,9 @@ type Props = {
     label: string;
     items: GameItem[];
     onAssociatedClick: (targetId: string) => void;
-    /** Whether this deck is the “spread/open” one */
-    isOpen?: boolean;
-    /** Clicking the deck itself (used to swap open/stacked) */
-    onDeckClick?: () => void;
 };
 
-export function ItemAssociatedDeck({
+export function AssociatedDeck({
     label,
     items,
     onAssociatedClick,
@@ -23,33 +19,28 @@ export function ItemAssociatedDeck({
     const [isDeckHovered, setIsDeckHovered] = React.useState(false);
     const { isDark } = getTheme();
 
+    // Filter to items with cover images and limit to MAX_ASSOCIATED
     const cards = items.filter((g) => g.coverUrl).slice(0, MAX_ASSOCIATED);
     if (cards.length === 0) return null;
 
+    // Decide how to split cards into two columns
+    let leftCount: number;
+    if (cards.length <= 5) leftCount = cards.length;
+    else leftCount = Math.ceil(cards.length / 2);
+
+    const rightCount = cards.length - leftCount;
     const cardHeight = (GRID.cardWidth * 32) / 23;
-
-    // Split deck into at most 2 columns: first half left, second half right
-    const splitIndex = Math.ceil(cards.length / 2);
-    const leftCount = splitIndex;
-    const rightCount = cards.length - splitIndex;
-
-    const leftHeight =
-        leftCount > 0 ? cardHeight + ASSOCIATED_CARD_STEP_Y * (leftCount - 1) : 0;
-    const rightHeight =
-        rightCount > 0 ? cardHeight + ASSOCIATED_CARD_STEP_Y * (rightCount - 1) : 0;
-
+    const leftHeight = leftCount > 0 ? cardHeight + ASSOCIATED_CARD_STEP_Y * (leftCount - 1) : 0;
+    const rightHeight = rightCount > 0 ? cardHeight + ASSOCIATED_CARD_STEP_Y * (rightCount - 1) : 0;
     const deckHeight = Math.max(leftHeight, rightHeight);
-
-    // Layout: up to 2 columns wide
     const colWidth = GRID.cardWidth;
     const colGap = GRID.gap * 2;
     const hasRightColumn = rightCount > 0;
     const deckWidth = hasRightColumn ? colWidth * 2 + colGap : colWidth;
-
     const hoveredIndex = hoveredId ? cards.findIndex((c) => c.id === hoveredId) : -1;
     const hasHoveredCard = hoveredIndex >= 0;
-    const maxZ = cards.length + 1;
     const topIndex = hasHoveredCard ? hoveredIndex : -1;
+    const maxZ = cards.length + 1;
 
     return (
         <Stack
@@ -58,7 +49,15 @@ export function ItemAssociatedDeck({
                 flex: "0 0 auto",
             }}
         >
-            <Text size="xs" c="dimmed" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <Text
+                size="xs"
+                c="dimmed"
+                style={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                }}
+            >
                 {label}
             </Text>
 
@@ -72,14 +71,13 @@ export function ItemAssociatedDeck({
                 }}
                 style={{
                     flex: "1 1 auto",
-                    maxHeight: `calc(100% - ${GRID.gap * 4}px)`,
+                    maxHeight: `calc(100% - ${GRID.gap * 3}px)`,
                     overflowY: "scroll",
                     overflowX: "visible",
                     overscrollBehaviorY: "contain",
                 }}
             >
                 <Box
-                    aria-label="item-associated-card"
                     style={{
                         position: "relative",
                         width: deckWidth,
@@ -89,10 +87,10 @@ export function ItemAssociatedDeck({
                 >
                     {cards.map((g, index) => {
                         // Decide column + vertical offset for this card
-                        const inLeftColumn = index < splitIndex;
+                        const inLeftColumn = index < leftCount;
                         const indexInColumn = inLeftColumn
                             ? index
-                            : index - splitIndex;
+                            : index - leftCount;
 
                         const left = inLeftColumn ? 0 : colWidth + colGap;
                         const top = indexInColumn * ASSOCIATED_CARD_STEP_Y;
@@ -113,9 +111,9 @@ export function ItemAssociatedDeck({
                         return (
                             <Box
                                 key={g.id}
+                                aria-label="item-associated-card"
                                 component="a"
-                                title={`${g.title}${g.year ? ` (${g.year})` : ""
-                                    }`}
+                                title={`${g.title}${g.year ? ` (${g.year})` : ""}`}
                                 onClick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
@@ -134,20 +132,17 @@ export function ItemAssociatedDeck({
                                     cursor: "pointer",
                                     borderRadius: 4,
                                     overflow: "hidden",
-                                    backgroundColor:
-                                        "var(--mantine-color-dark-6)",
+                                    backgroundColor: "var(--mantine-color-dark-6)",
                                     boxShadow: isTopCard
                                         ? "0 8px 16px rgba(0, 0, 0, 0.25)"
                                         : "0 4px 8px rgba(0, 0, 0, 0.15)",
-                                    border: isTopCard
-                                        ? isDark
-                                            ? "2px solid var(--mantine-color-dark-9)"
-                                            : "2px solid var(--mantine-color-gray-2)"
-                                        : "none",
+                                    border: isDark
+                                        ? "2px solid var(--mantine-color-dark-9)"
+                                        : "2px solid var(--mantine-color-gray-3)",
                                     transform: isTopCard ? "scale(1.05)" : "scale(1)",
-                                    transition:
-                                        "transform 140ms ease, box-shadow 140ms ease",
+                                    transition: "transform 140ms ease, box-shadow 140ms ease, clip-path 140ms ease",
                                 }}
+
                             >
                                 <Box
                                     style={{
@@ -176,7 +171,7 @@ export function ItemAssociatedDeck({
                                                 position: "absolute",
                                                 inset: 0,
                                                 backgroundColor: isDark
-                                                    ? "color-mix(in srgb, var(--mantine-color-dark-7) 60%, transparent)"
+                                                    ? "color-mix(in srgb, var(--mantine-color-dark-7) 65%, transparent)"
                                                     : "color-mix(in srgb, var(--mantine-color-gray-3) 50%, transparent)",
                                                 transition:
                                                     "background-color 120ms ease",

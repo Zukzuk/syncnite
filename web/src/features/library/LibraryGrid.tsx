@@ -3,7 +3,7 @@ import { Box, Flex } from "@mantine/core";
 import { useElementSize } from "@mantine/hooks";
 import { HeaderSort } from "./components/HeaderSort";
 import { HeaderControls } from "./components/HeaderControls";
-import { ExpandableItem } from "./components/ExpandableItem";
+import { ItemExpandable } from "./components/ItemExpandable";
 import { AlphabeticalRail } from "./components/AlphabeticalRail";
 import { useLibraryState } from "./hooks/useLibraryState";
 import { useGrid } from "./hooks/useGrid";
@@ -106,60 +106,6 @@ export default function LibraryGrid({
         derived,
     });
 
-    // Render visible items only
-    const renderVisibleItems = () => {
-        return derived.itemsSorted
-            .slice(visibleRange.startIndex, visibleRange.endIndex)
-            .map((item: GameItem, i: number) => {
-                const index = visibleRange.startIndex + i;
-                const pos = positions[index] ?? { left: GRID.gap, top: GRID.gap };
-                const isOpen = openIds.has(item.id);
-                const relatedBySeries = getRelatedBySeries(isOpen, item, derived.itemsSorted)
-                const relatedByTags = getRelatedByTags(isOpen, item, derived.itemsSorted)
-                const relatedByYear = getRelatedByYear(isOpen, item, derived.itemsSorted)
-
-                return (
-                    <Box
-                        key={`${String(item.id)}|${installedUpdatedAt ?? ""}`}
-                        aria-label="library-item-container"
-                        role="library-item-container"
-                        tabIndex={0}
-                        style={{
-                            display: "flex",
-                            position: "absolute",
-                            boxSizing: "border-box",
-                            flexDirection: "column",
-                            overflow: "hidden",
-                            backgroundColor: "var(--mantine-color-default-background)",
-                            left: (isOpen || isListView) ? 0 : pos.left,
-                            top: pos.top,
-                            width: (isOpen || isListView) ? openWidth : GRID.cardWidth,
-                            height: isOpen ? openHeight : isListView ? GRID.rowHeight : GRID.cardHeight,
-                            zIndex: isOpen ? Z_INDEX.aboveBase : Z_INDEX.base,
-                        }}
-                    >
-                        <ExpandableItem
-                            aria-label="expandable-item"
-                            item={item}
-                            isOpen={isOpen}
-                            topOffset={topOffset}
-                            openHeight={openHeight}
-                            isListView={isListView}
-                            onToggleItem={() =>
-                                onToggleItem(item.id, index)
-                            }
-                            onAssociatedClick={(targetId) =>
-                                onAssociatedClick(item.id, targetId)
-                            }
-                            relatedBySeries={relatedBySeries}
-                            relatedByTags={relatedByTags}
-                            relatedByYear={relatedByYear}
-                        />
-                    </Box>
-                );
-            });
-    };
-
     return (
         <Flex direction="column" style={{ width: "100%", height: "100%" }}>
             <HeaderControls
@@ -210,7 +156,62 @@ export default function LibraryGrid({
                     }}
                 />
 
-                {itemsSorted && renderVisibleItems()}
+                { derived.itemsSorted
+                    .slice(visibleRange.startIndex, visibleRange.endIndex)
+                    .map((item: GameItem, i: number) => {
+                        const index = visibleRange.startIndex + i;
+                        const pos = positions[index] ?? { left: GRID.gap, top: GRID.gap };
+                        const isOpen = openIds.has(item.id);
+
+                        const containerWidth =
+                            isOpen || isListView ? openWidth : GRID.cardWidth;
+                        const containerHeight = isOpen
+                            ? openHeight
+                            : isListView
+                                ? GRID.rowHeight
+                                : GRID.cardHeight;
+
+                        const containerLeft = isOpen || isListView ? 0 : pos.left;
+                        const containerTop = pos.top;
+                        const containerZIndex = isOpen ? Z_INDEX.aboveBase : Z_INDEX.base;
+
+                        const relatedBySeries = getRelatedBySeries(
+                            isOpen,
+                            item,
+                            derived.itemsSorted
+                        );
+                        const relatedByTags = getRelatedByTags(
+                            isOpen,
+                            item,
+                            derived.itemsSorted
+                        );
+                        const relatedByYear = getRelatedByYear(
+                            isOpen,
+                            item,
+                            derived.itemsSorted
+                        );
+
+                        return (
+                            <ItemExpandable
+                                key={`${String(item.id)}|${installedUpdatedAt ?? ""}`}
+                                item={item}
+                                isOpen={isOpen}
+                                openHeight={openHeight}
+                                isListView={isListView}
+                                relatedBySeries={relatedBySeries}
+                                relatedByTags={relatedByTags}
+                                relatedByYear={relatedByYear}
+                                containerLeft={containerLeft}
+                                containerTop={containerTop}
+                                containerWidth={containerWidth}
+                                containerHeight={containerHeight}
+                                containerZIndex={containerZIndex}
+                                onToggleItem={() => onToggleItem(item.id, index)}
+                                onAssociatedClick={(targetId) => onAssociatedClick(item.id, targetId)}
+                            />
+                        );
+                    })
+                }
             </Box>
 
             {sortKey === "title" && (

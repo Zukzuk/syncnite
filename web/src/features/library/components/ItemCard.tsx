@@ -9,24 +9,28 @@ type Props = {
     isOpen: boolean;
 };
 
-export function GridItem({ item, isOpen }: Props): JSX.Element {
+export function ItemCard({ item, isOpen }: Props): JSX.Element {
 
     const { title, coverUrl, year, source, link, gameId } = item;
 
     return (
         <>
-            <Box style={{ position: "relative", aspectRatio: "23 / 32" }}>
+            <Box style={{
+                position: "relative",
+                aspectRatio: "23 / 32",
+            }}>
                 <Image
                     src={coverUrl || ""}
                     alt={title}
-                    fit="contain"
+                    fit="fill"
                     loading="lazy"
                     style={{
+                        borderRadius: 4,
                         position: "absolute",
                         inset: 0,
                         width: "100%",
                         height: "100%",
-                        objectFit: "contain",
+                        objectFit: "fill",
                     }}
                 />
             </Box>
@@ -67,9 +71,9 @@ export function GridItem({ item, isOpen }: Props): JSX.Element {
                         wrap="nowrap"
                         style={{ justifyContent: "center" }}
                     >
-                        <CopyTitle 
-                            title={title} 
-                            year={year} 
+                        <CopyTitle
+                            title={title}
+                            year={year}
                         />
                         <ExternalLink
                             source={source}

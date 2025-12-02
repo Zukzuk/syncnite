@@ -10,7 +10,7 @@ type Props = {
     onDeckClick: () => void;
 };
 
-export function ItemAssociatedStack({
+export function AssociatedStack({
     label,
     items,
     isOpen,
@@ -20,13 +20,22 @@ export function ItemAssociatedStack({
 
     const cards = items.filter((g) => g.coverUrl).slice(0, MAX_ASSOCIATED);
     const previewCards = cards.slice(0, 4);
+    const previewSlots = Array.from({ length: 4 }, (_, i) => previewCards[i] ?? null);
 
     return (
         <Stack
             gap={4}
             style={{ flex: "0 0 auto", width: GRID.cardWidth }}
         >
-            <Text size="xs" c="dimmed" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <Text
+                size="xs"
+                c="dimmed"
+                style={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                }}
+            >
                 {label}
             </Text>
 
@@ -37,9 +46,13 @@ export function ItemAssociatedStack({
                 }}
                 style={{
                     padding: GRID.gap,
-                    borderRadius: 8,
-                    border: isOpen ? "1px solid var(--mantine-primary-color-4)" : "1px solid var(--mantine-color-default-border)",
-                    backgroundColor: isOpen ? "var(--mantine-primary-color-light)" : "var(--mantine-color-body)",
+                    borderRadius: 4,
+                    border: isOpen
+                        ? "1px solid var(--mantine-primary-color-4)"
+                        : "1px solid var(--mantine-color-default-border)",
+                    backgroundColor: isOpen
+                        ? "var(--mantine-primary-color-light)"
+                        : "var(--mantine-color-body)",
                     cursor: "pointer",
                     display: "flex",
                     flexDirection: "column",
@@ -54,28 +67,33 @@ export function ItemAssociatedStack({
                         gap: 4,
                     }}
                 >
-                    {previewCards.map((g) => (
+                    {previewSlots.map((g, idx) => (
                         <Box
-                            key={g.id}
+                            key={g ? g.id : `placeholder-${idx}`}
                             style={{
                                 width: "100%",
                                 aspectRatio: "23 / 32",
                                 borderRadius: 4,
                                 overflow: "hidden",
-                                boxShadow: "0 2px 4px rgba(0, 0, 0, 0.25)",
+                                boxShadow: g
+                                    ? "0 2px 4px rgba(0, 0, 0, 0.25)"
+                                    : "inset 0 0 0 1px rgba(0, 0, 0, 0.1)",
+                                backgroundColor: "transparent",
                             }}
                         >
-                            <Image
-                                src={g.coverUrl || ""}
-                                alt={g.title}
-                                fit="cover"
-                                loading="lazy"
-                                style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    objectFit: "cover",
-                                }}
-                            />
+                            {g && (
+                                <Image
+                                    src={g.coverUrl || ""}
+                                    alt={g.title}
+                                    fit="cover"
+                                    loading="lazy"
+                                    style={{
+                                        width: "100%",
+                                        height: "100%",
+                                        objectFit: "cover",
+                                    }}
+                                />
+                            )}
                         </Box>
                     ))}
                 </Box>
