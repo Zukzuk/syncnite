@@ -60,7 +60,7 @@ export function RowItem({ item, isOpen }: Props): JSX.Element {
                         style={{
                             position: "relative",
                             display: "flex",
-                            color: "var(--mantine-color-grape-4)",
+                            color: "var(--mantine-primary-color-4)",
                             alignItems: "center",
                             justifyContent: "center",
                             opacity: hovered ? 1 : 0,

@@ -3,7 +3,7 @@ import { Box, Group, Stack, Paper, Image, Text, Badge, Anchor, Collapse } from "
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 import { GameItem } from "../../../types/types";
 import { GRID } from "../../../lib/constants";
-import { ItemAssociatedDecks } from "./ItemAssociatedDeck";
+import { ItemAssociatedDetails } from "./ItemAssociatedDetails";
 
 type Props = {
     item: GameItem;
@@ -157,8 +157,8 @@ export function ItemDetails({
                             display: "flex",
                         }}
                     >
-                        <ItemAssociatedDecks
-                            aria-label="item-associated-decks" 
+                        <ItemAssociatedDetails
+                            aria-label="item-associated-details" 
                             item={item}
                             bySeries={relatedBySeries}
                             byTags={relatedByTags}
