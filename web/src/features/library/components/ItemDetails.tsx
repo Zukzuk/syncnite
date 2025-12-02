@@ -65,7 +65,11 @@ export function ItemDetails({
                     <Stack
                         gap={6}
                         align="flex-start"
-                        style={{ width: GRID.coverWidth, maxWidth: GRID.coverWidth }}
+                        style={{ 
+                            width: GRID.coverWidth,
+                            overflowY: "auto",
+                            overflowX: "hidden",
+                         }}
                     >
                         {coverUrl && (
                             <Image
@@ -73,7 +77,7 @@ export function ItemDetails({
                                 alt={sortingName || "cover"}
                                 w={GRID.coverWidth}
                                 mb={4}
-                                radius="md"
+                                radius="sm"
                                 fit="cover"
                                 loading="lazy"
                             />

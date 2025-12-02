@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Flex, Image, Stack, Text } from "@mantine/core";
+import { Box, Flex, Image, Text } from "@mantine/core";
 import { ASSOCIATED_CARD_STEP_Y, GRID, MAX_ASSOCIATED } from "../../../lib/constants";
 import { GameItem } from "../../../types/types";
 import { getTheme } from "../../../lib/utils";
@@ -26,22 +26,19 @@ export function ItemAssociatedCards({ label, items, onAssociatedClick }: Props):
     const topIndex = hasHoveredCard ? hoveredIndex : -1;
 
     return (
-        <Stack pos="relative">
-            <Text size="xs" c="dimmed" pos="absolute" top={-GRID.halfRowHeight}>
-                {label}
-            </Text>
+        <Flex direction="column">
+            <Box h={GRID.halfRowHeight}>
+                <Text size="xs" c="dimmed" pl={3}>{label}</Text>
+            </Box>
             <Box
                 className="subtle-scrollbar"
-                p={GRID.gap}
+                p={6}
                 onMouseEnter={() => setIsDeckHovered(true)}
-                onMouseLeave={() => {
-                    setIsDeckHovered(false);
-                    setHoveredId(null);
-                }}
+                onMouseLeave={() => setIsDeckHovered(false)}
                 style={{
                     flex: "0 0 auto",
-                    maxHeight: "100%",
-                    overflowY: "scroll",
+                    maxHeight: `calc(100% - ${GRID.halfRowHeight + GRID.gap}px)`,
+                    overflowY: "auto",
                     overflowX: "visible",
                     overscrollBehaviorY: "contain",
                 }}
@@ -55,10 +52,7 @@ export function ItemAssociatedCards({ label, items, onAssociatedClick }: Props):
                         overflow: "visible",
                     }}
                 >
-                    {cards.map((g, index) => {
-                        const top = index * ASSOCIATED_CARD_STEP_Y;
-
-                        // Pyramid z-index around hovered card
+                    {cards.map((g, index) => {                        
                         let zIndex: number;
                         if (!hasHoveredCard) {
                             zIndex = index + 1;
@@ -67,8 +61,8 @@ export function ItemAssociatedCards({ label, items, onAssociatedClick }: Props):
                             zIndex = maxZ - distance;
                         }
 
+                        const top = index * ASSOCIATED_CARD_STEP_Y;
                         const isTopCard = hasHoveredCard && index === topIndex;
-                        // Only dim when an actual top card exists
                         const isDimmed = hasHoveredCard && isDeckHovered && !isTopCard;
 
                         return (
@@ -136,7 +130,7 @@ export function ItemAssociatedCards({ label, items, onAssociatedClick }: Props):
                                                 position: "absolute",
                                                 inset: 0,
                                                 backgroundColor: isDark
-                                                    ? "color-mix(in srgb, var(--mantine-color-dark-7) 60%, transparent)"
+                                                    ? "color-mix(in srgb, var(--mantine-color-dark-7) 65%, transparent)"
                                                     : "color-mix(in srgb, var(--mantine-color-gray-3) 50%, transparent)",
                                                 transition: "background-color 120ms ease",
                                             }}
@@ -148,6 +142,6 @@ export function ItemAssociatedCards({ label, items, onAssociatedClick }: Props):
                     })}
                 </Box>
             </Box>
-        </Stack>
+        </Flex>
     );
 }

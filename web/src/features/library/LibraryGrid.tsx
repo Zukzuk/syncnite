@@ -26,40 +26,31 @@ function intersects(
     return b.some((v) => set.has(v));
 }
 
-function getRelatedBySeries(item: GameItem, all: GameItem[]): GameItem[] {
-    if (!item.series || item.series.length === 0) return [];
-    return all
-        .filter(
-            (other) =>
-                // other.id !== item.id &&
-                !!other.coverUrl &&
-                intersects(other.series, item.series)
-        )
-        .slice(0, MAX_ASSOCIATED);
+function getRelatedBySeries(isOpen: boolean, item: GameItem, all: GameItem[]): GameItem[] {
+    if (!isOpen || !item.series || item.series.length === 0) return [];
+    return all.filter((other) =>
+        // other.id !== item.id &&
+        !!other.coverUrl &&
+        intersects(other.series, item.series)
+    ).slice(0, MAX_ASSOCIATED);
 }
 
-function getRelatedByTags(item: GameItem, all: GameItem[]): GameItem[] {
-    if (!item.tags || item.tags.length === 0) return [];
-    return all
-        .filter(
-            (other) =>
-                other.id !== item.id &&
-                !!other.coverUrl &&
-                intersects(other.tags, item.tags)
-        )
-        .slice(0, MAX_ASSOCIATED);
+function getRelatedByTags(isOpen: boolean, item: GameItem, all: GameItem[]): GameItem[] {
+    if (!isOpen || !item.tags || item.tags.length === 0) return [];
+    return all.filter((other) =>
+        other.id !== item.id &&
+        !!other.coverUrl &&
+        intersects(other.tags, item.tags)
+    ).slice(0, MAX_ASSOCIATED);
 }
 
-function getRelatedByYear(item: GameItem, all: GameItem[]): GameItem[] {
-    if (!item.year) return [];
-    return all
-        .filter(
-            (other) =>
-                other.id !== item.id &&
-                !!other.coverUrl &&
-                other.year === item.year
-        )
-        .slice(0, MAX_ASSOCIATED);
+function getRelatedByYear(isOpen: boolean, item: GameItem, all: GameItem[]): GameItem[] {
+    if (!isOpen || !item.year) return [];
+    return all.filter((other) =>
+        other.id !== item.id &&
+        !!other.coverUrl &&
+        other.year === item.year
+    ).slice(0, MAX_ASSOCIATED);
 }
 
 /**
@@ -120,22 +111,12 @@ export default function LibraryGrid({
         return derived.itemsSorted
             .slice(visibleRange.startIndex, visibleRange.endIndex)
             .map((item: GameItem, i: number) => {
-                const absoluteIndex = visibleRange.startIndex + i;
-                const pos = positions[absoluteIndex] ?? {
-                    left: GRID.gap,
-                    top: GRID.gap,
-                };
+                const index = visibleRange.startIndex + i;
+                const pos = positions[index] ?? { left: GRID.gap, top: GRID.gap };
                 const isOpen = openIds.has(item.id);
-
-                const relatedBySeries = isOpen
-                    ? getRelatedBySeries(item, derived.itemsSorted)
-                    : undefined;
-                const relatedByTags = isOpen
-                    ? getRelatedByTags(item, derived.itemsSorted)
-                    : undefined;
-                const relatedByYear = isOpen
-                    ? getRelatedByYear(item, derived.itemsSorted)
-                    : undefined;
+                const relatedBySeries = getRelatedBySeries(isOpen, item, derived.itemsSorted)
+                const relatedByTags = getRelatedByTags(isOpen, item, derived.itemsSorted)
+                const relatedByYear = getRelatedByYear(isOpen, item, derived.itemsSorted)
 
                 return (
                     <Box
@@ -149,16 +130,11 @@ export default function LibraryGrid({
                             boxSizing: "border-box",
                             flexDirection: "column",
                             overflow: "hidden",
-                            backgroundColor:
-                                "var(--mantine-color-default-background)",
-                            left: isOpen || isListView ? 0 : pos.left,
+                            backgroundColor: "var(--mantine-color-default-background)",
+                            left: (isOpen || isListView) ? 0 : pos.left,
                             top: pos.top,
-                            width: isOpen || isListView ? openWidth : GRID.cardWidth,
-                            height: isOpen
-                                ? openHeight
-                                : isListView
-                                    ? GRID.rowHeight
-                                    : GRID.cardHeight,
+                            width: (isOpen || isListView) ? openWidth : GRID.cardWidth,
+                            height: isOpen ? openHeight : isListView ? GRID.rowHeight : GRID.cardHeight,
                             zIndex: isOpen ? Z_INDEX.aboveBase : Z_INDEX.base,
                         }}
                     >
@@ -170,7 +146,7 @@ export default function LibraryGrid({
                             openHeight={openHeight}
                             isListView={isListView}
                             onToggleItem={() =>
-                                onToggleItem(item.id, absoluteIndex)
+                                onToggleItem(item.id, index)
                             }
                             onAssociatedClick={(targetId) =>
                                 onAssociatedClick(item.id, targetId)
@@ -228,7 +204,10 @@ export default function LibraryGrid({
                 <Box
                     aria-hidden
                     role="grid-height-spacer"
-                    style={{ width: "100%", height: containerHeight }}
+                    style={{
+                        width: "100%",
+                        height: containerHeight
+                    }}
                 />
 
                 {itemsSorted && renderVisibleItems()}

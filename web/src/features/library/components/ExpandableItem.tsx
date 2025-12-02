@@ -31,7 +31,7 @@ export function ExpandableItem({
     onToggleItem,
     onAssociatedClick,
 }: Props): JSX.Element {
-    const { id, title, bgUrl, coverUrl, isHidden, isInstalled } = item;
+    const { id, title, isHidden, isInstalled } = item;
 
     const onKeyDown = useCallback(
         (e: React.KeyboardEvent) => {
@@ -43,30 +43,6 @@ export function ExpandableItem({
         [onToggleItem]
     );
 
-    const outerBase: React.CSSProperties = {
-        position: "relative",
-        overflow: "hidden",
-        isolation: "isolate",
-        cursor: "pointer",
-        userSelect: "none",
-        transition: "background-color 140ms ease",
-        backgroundColor: isInstalled
-            ? "var(--mantine-primary-color-light)"
-            : "transparent",
-    };
-
-    const outerListStyles: React.CSSProperties = {
-        ...outerBase,
-        borderBottom: "1px solid var(--mantine-color-default-border)",
-        padding: "0px 0px 0px 12px",
-    };
-
-    const outerGridStyles: React.CSSProperties = {
-        ...outerBase,
-        borderRadius: isOpen ? 0 : 4,
-        padding: isOpen ? "0px 0px 0px 12px" : "2px 2px 2px 2px",
-    };
-
     return (
         <Box
             key={id}
@@ -75,7 +51,26 @@ export function ExpandableItem({
             aria-expanded={isOpen}
             aria-label={`${title}`}
             onKeyDown={onKeyDown}
-            style={{ ...(isListView ? outerListStyles : outerGridStyles) }}
+            style={{
+                position: "relative",
+                overflow: "hidden",
+                isolation: "isolate",
+                cursor: "pointer",
+                userSelect: "none",
+                transition: "background-color 140ms ease",
+                backgroundColor: isInstalled
+                    ? "var(--mantine-primary-color-light)"
+                    : "transparent",
+                borderBottom: isListView 
+                    ? "1px solid var(--mantine-color-default-border)" 
+                    : undefined,
+                borderRadius: isListView 
+                    ? 0 : 
+                    isOpen ? 0 : 4,
+                padding: (isListView || isOpen) 
+                    ? "0px 0px 0px 12px" 
+                    : "2px 2px 2px 2px",
+            }}
             onClick={onToggleItem}
         >
             <Box
@@ -90,7 +85,7 @@ export function ExpandableItem({
                 h={isOpen ? openHeight : "100%"}
             >
                 {!isOpen && isListView && <RowItem aria-label="library-row-item" item={item} isOpen={isOpen} />}
-                {!isOpen && !isListView && <GridItem aria-label="library-grid-item"  item={item} isOpen={isOpen} />}
+                {!isOpen && !isListView && <GridItem aria-label="library-grid-item" item={item} isOpen={isOpen} />}
                 {isOpen && <RowItem aria-label="library-row-item" item={item} isOpen={isOpen} />}
                 {isOpen && (
                     <ItemDetails
