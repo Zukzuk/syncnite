@@ -18,6 +18,8 @@ export function AssociatedStack({
     onDeckClick,
 }: Props): JSX.Element | null {
     if (items.length === 0) return null;
+    const [isHovered, setIsHovered] = React.useState(false);
+    const isHoveredOrOpen = isHovered || isOpen;
 
     const { isDark } = getTheme();
 
@@ -37,6 +39,8 @@ export function AssociatedStack({
         >
 
             <Box
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
                 onClick={(e) => {
                     e.stopPropagation();
                     onDeckClick();
@@ -44,7 +48,7 @@ export function AssociatedStack({
                 style={{
                     padding: GRID.gap,
                     borderRadius: 4,
-                    border: isOpen 
+                    border: isHoveredOrOpen 
                         ? "2px solid var(--mantine-primary-color-4)"
                         : isDark
                             ? "2px solid var(--mantine-color-dark-9)"

@@ -25,7 +25,6 @@ export function ItemCard({ item, isOpen }: Props): JSX.Element {
                     fit="fill"
                     loading="lazy"
                     style={{
-                        borderRadius: 4,
                         position: "absolute",
                         inset: 0,
                         width: "100%",

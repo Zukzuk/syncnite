@@ -6,6 +6,7 @@ import { ItemContent } from "./ItemContent";
 import { ItemBackground } from "./ItemBackground";
 import { ItemRow } from "./ItemRow";
 import { ItemCard } from "./ItemCard";
+import { getTheme } from "../../../lib/utils";
 
 type Props = {
     item: GameItem;
@@ -42,21 +43,13 @@ export function ItemExpandable({
 }: Props): JSX.Element {
     const { id, title, isHidden, isInstalled } = item;
 
-    const onKeyDown = useCallback(
-        (e: React.KeyboardEvent) => {
-            if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onToggleItem();
-            }
-        },
-        [onToggleItem]
-    );
+    const [isHovered, setIsHovered] = React.useState(false);
+    const isHoveredAndClosed = isHovered && !isOpen;
 
     return (
         <Box
             aria-label="library-item-container"
             role="library-item-container"
-            tabIndex={0}
             style={{
                 display: "flex",
                 position: "absolute",
@@ -76,8 +69,7 @@ export function ItemExpandable({
                 role="library-item-button"
                 tabIndex={0}
                 aria-expanded={isOpen}
-                aria-label={`${title}`}
-                onKeyDown={onKeyDown}
+                aria-label={title}
                 style={{
                     position: "relative",
                     overflow: "hidden",
@@ -88,6 +80,9 @@ export function ItemExpandable({
                     backgroundColor: isInstalled
                         ? "var(--mantine-primary-color-light)"
                         : "transparent",
+                    border: !isListView && isHoveredAndClosed
+                        ? "2px solid var(--mantine-primary-color-4)"
+                        : "2px solid transparent",
                     borderBottom: isListView
                         ? "1px solid var(--mantine-color-default-border)"
                         : undefined,
@@ -99,8 +94,10 @@ export function ItemExpandable({
                     padding:
                         isListView || isOpen
                             ? "0px 0px 0px 12px"
-                            : "2px 2px 2px 2px",
+                            : "0px",
                 }}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
                 onClick={onToggleItem}
             >
                 <Box
