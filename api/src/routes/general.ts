@@ -1,5 +1,5 @@
 import express from "express";
-import { PING_CONNECTED_MS, UPLOADS_DIR } from "../constants";
+import { PING_CONNECTED_MS } from "../constants";
 import { rootLog } from "../logger";
 import { createSSE } from "../sse";
 import { SyncBus } from "../services/EventBusService";

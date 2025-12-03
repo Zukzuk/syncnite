@@ -11,6 +11,7 @@ import { getTheme } from "../../../lib/utils";
 type Props = {
     item: GameItem;
     isOpen: boolean;
+    index: number;
     openHeight: string;
     isListView: boolean;
     relatedBySeries?: GameItem[];
@@ -21,13 +22,14 @@ type Props = {
     containerWidth: number | string;
     containerHeight: number | string;
     containerZIndex: number;
-    onToggleItem: () => void;
-    onAssociatedClick: (targetId: string) => void;
+    onToggleItem: (id: string, index: number) => void;
+    onAssociatedClick: (fromId: string, targetId: string) => void;
 };
 
-export function ItemExpandable({
+export const ItemExpandable = React.memo(function ItemExpandable({
     item,
     isOpen,
+    index,
     openHeight,
     isListView,
     relatedBySeries,
@@ -41,10 +43,18 @@ export function ItemExpandable({
     onToggleItem,
     onAssociatedClick,
 }: Props): JSX.Element {
-    const { id, title, isHidden, isInstalled } = item;
+    const { title, isHidden, isInstalled } = item;
 
     const [isHovered, setIsHovered] = React.useState(false);
-    const isHoveredAndClosed = isHovered && !isOpen;
+
+    const handleToggle = React.useCallback(() => {
+        onToggleItem(item.id, index);
+    }, [onToggleItem, item.id, index]);
+
+    const handleAssociated = React.useCallback(
+        (targetId: string) => onAssociatedClick(item.id, targetId),
+        [onAssociatedClick, item.id]
+    );
 
     return (
         <Box
@@ -65,7 +75,6 @@ export function ItemExpandable({
             }}
         >
             <Box
-                key={id}
                 role="library-item-button"
                 tabIndex={0}
                 aria-expanded={isOpen}
@@ -80,9 +89,11 @@ export function ItemExpandable({
                     backgroundColor: isInstalled
                         ? "var(--mantine-primary-color-light)"
                         : "transparent",
-                    border: !isListView && isHoveredAndClosed
-                        ? "2px solid var(--mantine-primary-color-4)"
-                        : "2px solid transparent",
+                    border: isListView
+                        ? undefined
+                        : !isOpen && isHovered
+                            ? "2px solid var(--mantine-primary-color-4)"
+                            : "2px solid transparent",
                     borderBottom: isListView
                         ? "1px solid var(--mantine-color-default-border)"
                         : undefined,
@@ -98,7 +109,8 @@ export function ItemExpandable({
                 }}
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
-                onClick={onToggleItem}
+                onMouseDown={() => setIsHovered(false)}
+                onClick={handleToggle}
             >
                 <Box
                     aria-label="library-item-inner"
@@ -140,8 +152,8 @@ export function ItemExpandable({
                             relatedBySeries={relatedBySeries}
                             relatedByTags={relatedByTags}
                             relatedByYear={relatedByYear}
-                            onToggleItem={onToggleItem}
-                            onAssociatedClick={onAssociatedClick}
+                            onToggleItem={handleToggle}
+                            onAssociatedClick={handleAssociated}
                         />
                     )}
                 </Box>
@@ -154,4 +166,4 @@ export function ItemExpandable({
             </Box>
         </Box>
     );
-}
+});

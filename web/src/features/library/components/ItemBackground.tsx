@@ -13,7 +13,7 @@ type Props = {
 
 export function ItemBackground({ item, isOpen }: Props): JSX.Element | null {
     const { bgUrl } = item;
-    const isOpenDelayed = useDelayedFlag({ active: isOpen, delayMs: 140 });
+    const isOpenDelayed = useDelayedFlag({ active: isOpen, delayMs: 70 });
     const { isDark } = getTheme();
 
     if (!isOpen || !bgUrl)  return null;

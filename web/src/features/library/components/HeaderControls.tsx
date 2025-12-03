@@ -5,7 +5,7 @@ import { GRID, SOURCE_MAP } from "../../../lib/constants";
 import { ViewMode } from "../../../types/types";
 
 type Props = {
-  controlsRef: (el: HTMLElement | null) => void;
+  controlsRef: (el: HTMLDivElement | null) => void;
   q: string; setQ: (v: string) => void;
   sources: string[]; setSources: (v: string[]) => void;
   tags: string[]; setTags: (v: string[]) => void;
@@ -38,7 +38,7 @@ type Props = {
  * - filteredCount: Number of items after filtering.
  * - totalCount: Total number of items.
  */
-export function HeaderControls(props: Props) {
+export const HeaderControls = React.memo(function HeaderControls(props: Props) {
   const {
     q, setQ, controlsRef,
     view, setView,
@@ -67,7 +67,7 @@ export function HeaderControls(props: Props) {
 
   return (
     <Box
-      ref={controlsRef as unknown as React.RefObject<HTMLDivElement>}
+      ref={controlsRef}
       p="xs"
       style={{
         minHeight: GRID.rowHeight,
@@ -169,4 +169,4 @@ export function HeaderControls(props: Props) {
       </Group>
     </Box >
   );
-}
+});

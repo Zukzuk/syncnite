@@ -9,7 +9,6 @@ services:
       NODE_ENV: production
       APP_VERSION: ${VERSION} # runtime env
     volumes:
-      - ./uploads:/uploads
       - ./data:/data
       - ./extension:/extension:ro
     tmpfs:

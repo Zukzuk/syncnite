@@ -5,7 +5,15 @@ import { useGridAlphabetRail } from "./useGridAlphabetRail";
 import { useGridOpenItemToggle } from "./useGridOpenItemToggle";
 import { useGridScrollJump } from "./useGridScrollJump";
 import { useGridScrollRestore } from "./useGridScrollRestore";
-import { GameItem, GridRows, ItemPositions, Letter, RowLayout, UIDerivedState, UIState } from "../../../types/types";
+import {
+    GameItem,
+    GridRows,
+    ItemPositions,
+    Letter,
+    RowLayout,
+    UIDerivedState,
+    UIState,
+} from "../../../types/types";
 import { GRID } from "../../../lib/constants";
 
 type UseParams = {
@@ -54,7 +62,9 @@ export function useGrid({
     const openHeight = `calc(100vh - ${topOffset}px)`;
 
     // Open/close state
-    const { openIds, toggleOpen } = useGridOpenItemToggle({ allowMultipleOpen: false });
+    const { openIds, toggleOpen } = useGridOpenItemToggle({
+        allowMultipleOpen: false,
+    });
 
     // Build id -> index map once per items change
     const idToIndex = useMemo(() => {
@@ -85,7 +95,7 @@ export function useGrid({
                 rowIsOpen,
                 itemsLen,
                 viewportH,
-                isListView,
+                isListView
             ),
         [rowItems, rowIsOpen, itemsLen, viewportH, isListView]
     );
@@ -143,9 +153,10 @@ export function useGrid({
         }
     };
 
-    // Virtual window (variable-height rows)
-    const { visibleRange } = useGridVirtualWindow({
-        gridRef, opts: {
+    // Virtual window (variable-height rows) + scroll position
+    const { visibleRange, scrollTop } = useGridVirtualWindow({
+        gridRef,
+        opts: {
             rows: rowTops.length,
             cols: viewCols,
             itemsLen,
@@ -155,13 +166,15 @@ export function useGrid({
             viewportH,
             rowFirstItemIndex,
             rowLastItemIndex,
-        }
+        },
     });
 
-    // Compute id -> index map once per items change
+    // Visible index for alphabet rail
     const railVisibleIndex =
         visibleRange.endIndex > visibleRange.startIndex
-            ? Math.floor((visibleRange.startIndex + visibleRange.endIndex - 1) / 2)
+            ? Math.floor(
+                (visibleRange.startIndex + visibleRange.endIndex - 1) / 2
+            )
             : visibleRange.startIndex;
 
     // Alphabet rail (counts, active letter, jump handler)
@@ -173,15 +186,14 @@ export function useGrid({
         scrollItemIntoView,
     });
 
-    // Open item must intersect viewport by >= minIntersection
+    // Open item must be "near" the top: from 100px above its top until its bottom
+    // passes the top of the viewport.
     const hasOpenItemInView = useMemo(() => {
         if (isListView) return false;
-        const el = gridRef.current;
-        if (!el || openIds.size === 0) return false;
+        if (openIds.size === 0) return false;
 
-        const viewportTop = el.scrollTop;
-        const viewportBottom = viewportTop + el.clientHeight;
-        const MIN_INTERSECTION = 80; // tweak as needed
+        const viewportTop = scrollTop;
+        const ACTIVATION_MARGIN = 100; // px
 
         for (const openId of openIds) {
             const idx = idToIndex.get(openId);
@@ -194,10 +206,10 @@ export function useGrid({
             const height = rowHeights[rowIdx] ?? 0;
             const bottom = top + height;
 
-            const intersection =
-                Math.min(bottom, viewportBottom) - Math.max(top, viewportTop);
+            const activationStart = top - ACTIVATION_MARGIN; // item is 100px below top
+            const activationEnd = bottom;                    // bottom aligned with top
 
-            if (intersection >= MIN_INTERSECTION) {
+            if (viewportTop >= activationStart && viewportTop <= activationEnd) {
                 return true;
             }
         }
@@ -210,9 +222,7 @@ export function useGrid({
         itemRowIndex,
         rowTops,
         rowHeights,
-        gridRef,
-        visibleRange.startIndex,
-        visibleRange.endIndex,
+        scrollTop,
     ]);
 
     return {
@@ -234,7 +244,11 @@ export function useGrid({
 /**
  * Build rows for a grid with "open" items occupying a dedicated full-width row.
  */
-function buildGridRows(items: GameItem[], openIds: Set<string>, colsSafe: number): GridRows {
+function buildGridRows(
+    items: GameItem[],
+    openIds: Set<string>,
+    colsSafe: number
+): GridRows {
     const itemsLen = items.length;
     const rows: number[][] = [];
     const rowIsOpen: boolean[] = [];
@@ -277,7 +291,13 @@ function buildGridRows(items: GameItem[], openIds: Set<string>, colsSafe: number
 /**
  * Compute per-row layout, including variable row heights.
  */
-function computeRowLayout(rowItems: number[][], rowIsOpen: boolean[], itemsLen: number, viewportH: number, isListView: boolean): RowLayout {
+function computeRowLayout(
+    rowItems: number[][],
+    rowIsOpen: boolean[],
+    itemsLen: number,
+    viewportH: number,
+    isListView: boolean
+): RowLayout {
     const rowCount = rowItems.length;
     const rowTops = new Array<number>(rowCount);
     const rowHeights = new Array<number>(rowCount);
@@ -320,7 +340,12 @@ function computeRowLayout(rowItems: number[][], rowIsOpen: boolean[], itemsLen: 
 /**
  * Compute absolute item positions from row layout.
  */
-function computeItemPositions(itemsLen: number, itemRowIndex: number[], itemColIndex: number[], rowTops: number[]): ItemPositions {
+function computeItemPositions(
+    itemsLen: number,
+    itemRowIndex: number[],
+    itemColIndex: number[],
+    rowTops: number[]
+): ItemPositions {
     const out: ItemPositions = new Array(itemsLen);
     const strideX = GRID.cardWidth + GRID.gap;
 
@@ -337,4 +362,3 @@ function computeItemPositions(itemsLen: number, itemRowIndex: number[], itemColI
 
     return out;
 }
-

@@ -3,20 +3,24 @@ import { Box, Image, Stack, Text } from "@mantine/core";
 import { ASSOCIATED_CARD_STEP_Y, GRID, MAX_ASSOCIATED } from "../../../lib/constants";
 import { GameItem } from "../../../types/types";
 import { getTheme } from "../../../lib/utils";
+import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 
 type Props = {
     label: string;
+    currentItemId: string;
     items: GameItem[];
     onAssociatedClick: (targetId: string) => void;
 };
 
 export function AssociatedDeck({
     label,
+    currentItemId,
     items,
     onAssociatedClick,
 }: Props): JSX.Element | null {
     const [hoveredId, setHoveredId] = React.useState<string | null>(null);
     const [isDeckHovered, setIsDeckHovered] = React.useState(false);
+    const isOpenDelayed = useDelayedFlag({ active: true, delayMs: 140 });
     const { isDark } = getTheme();
 
     // Filter to items with cover images and limit to MAX_ASSOCIATED
@@ -53,6 +57,16 @@ export function AssociatedDeck({
             gap={4}
             style={{
                 flex: "0 0 auto",
+                height: "100%",
+                display: "flex",
+                alignItems: "stretch",
+                overflow: "hidden",
+                opacity: isOpenDelayed ? 1 : 0,
+                transform: isOpenDelayed ? "translateY(0)" : "translateY(12px)",
+                willChange: "opacity, transform",
+                transitionProperty: "opacity, transform",
+                transitionDuration: "220ms, 260ms",
+                transitionTimingFunction: "ease, ease",
             }}
         >
             <Text
@@ -90,16 +104,16 @@ export function AssociatedDeck({
                         overflow: "visible",
                     }}
                 >
-                    {cards.map((g, index) => {
+                    {cards.map((item, index) => {
+                        const { id, title, year, coverUrl } = item;
+
                         // Decide column + vertical offset for this card
                         const inLeftColumn = index < leftCount;
                         const indexInColumn = inLeftColumn
                             ? index
                             : index - leftCount;
-
                         const left = inLeftColumn ? 0 : colWidth + colGap;
                         const top = indexInColumn * ASSOCIATED_CARD_STEP_Y;
-
                         const maxZInColumn = (inLeftColumn ? leftCount : rightCount) + 1;
 
                         let zIndex: number;
@@ -107,10 +121,10 @@ export function AssociatedDeck({
                             // Simple stacking inside each column when nothing is hovered
                             zIndex = indexInColumn + 1;
                         } else if (
-                            // Same column as hovered -> build a pyramid in this column
                             (inLeftColumn && hoveredInLeftColumn) ||
                             (!inLeftColumn && !hoveredInLeftColumn)
                         ) {
+                            // Same column as hovered -> build a pyramid in this column
                             const distance = Math.abs(indexInColumn - hoveredIndexInColumn);
                             zIndex = maxZInColumn - distance;
                         } else {
@@ -121,21 +135,22 @@ export function AssociatedDeck({
                         const isTopCard = hasHoveredCard && index === topIndex;
                         const isDimmed =
                             hasHoveredCard && isDeckHovered && !isTopCard;
+                        const isCurrentItem = id === currentItemId;
 
                         return (
                             <Box
-                                key={g.id}
+                                key={id}
                                 aria-label="item-associated-card"
                                 component="a"
-                                title={`${g.title}${g.year ? ` (${g.year})` : ""}`}
+                                title={year ? `${title} (${year})` : title}
                                 onClick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
-                                    onAssociatedClick(g.id);
+                                    onAssociatedClick(id);
                                 }}
                                 onMouseEnter={(e) => {
                                     e.stopPropagation();
-                                    setHoveredId(g.id);
+                                    setHoveredId(id);
                                 }}
                                 style={{
                                     position: "absolute",
@@ -150,7 +165,7 @@ export function AssociatedDeck({
                                     boxShadow: isTopCard
                                         ? "0 8px 16px rgba(0, 0, 0, 0.25)"
                                         : "0 4px 8px rgba(0, 0, 0, 0.15)",
-                                    border: isTopCard
+                                    border: isTopCard || isCurrentItem
                                         ? "2px solid var(--mantine-primary-color-4)"
                                         : isDark
                                             ? "2px solid var(--mantine-color-dark-9)"
@@ -167,8 +182,8 @@ export function AssociatedDeck({
                                     }}
                                 >
                                     <Image
-                                        src={g.coverUrl || ""}
-                                        alt={g.title}
+                                        src={coverUrl || ""}
+                                        alt={title}
                                         fit="fill"
                                         loading="lazy"
                                         style={{

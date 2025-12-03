@@ -1,6 +1,7 @@
-import { Box, Paper, UnstyledButton, Text, rem } from "@mantine/core";
+import React from "react";
+import { Box, UnstyledButton, Text } from "@mantine/core";
 import { SortDir, SortKey } from "../../../types/types";
-import { GRID, Z_INDEX } from "../../../lib/constants";
+import { GRID } from "../../../lib/constants";
 
 type Props = {
   sortRef: (el: HTMLElement | null) => void;
@@ -21,7 +22,7 @@ type Props = {
  * - onToggleSort: Callback to toggle sorting by a given key.
  * - gridColumns: CSS grid template columns for layout.
  */
-export function HeaderSort(props: Props) {
+export const HeaderSort = React.memo(function HeaderSort(props: Props) {
   const { sortRef, sortKey, sortDir, isListView, hasOpenItemInView, onToggleSort } = props;
 
   const label = (base: string, key: SortKey) =>
@@ -33,7 +34,7 @@ export function HeaderSort(props: Props) {
 
   return (
     <Box
-      ref={sortRef as unknown as React.RefObject<HTMLDivElement>}
+      ref={sortRef}
       style={{
         position: "relative",
         background: "var(--mantine-color-body)",
@@ -98,4 +99,4 @@ export function HeaderSort(props: Props) {
       </Box>
     </Box>
   );
-}
+});
