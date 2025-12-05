@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.30.9](https://github.com/Zukzuk/syncnite/compare/v1.30.8...v1.30.9) (2025-12-05)
+
+
+### Bug Fixes
+
+* fixed reflow bug after grid update from api ([598e012](https://github.com/Zukzuk/syncnite/commit/598e01233ce621a4dceeef2986eeee46db54e50a))
+
 ### [1.30.8](https://github.com/Zukzuk/syncnite/compare/v1.30.7...v1.30.8) (2025-12-05)
 
 ### [1.30.7](https://github.com/Zukzuk/syncnite/compare/v1.30.6...v1.30.7) (2025-12-03)
