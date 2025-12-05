@@ -4,7 +4,7 @@ import { useLocalStorage } from "@mantine/hooks";
 import { GRID, INTERVAL_MS } from "../../lib/constants";
 import { ViewMode } from "../../types/types";
 import { useLibraryData } from "../../features/library/hooks/useLibraryData";
-import LibraryGrid from "../../features/library/LibraryGrid";
+import Library from "../../features/library/Library";
 
 export default function LibraryPage(): JSX.Element {
     const { libraryData, installedUpdatedAt } = useLibraryData({ pollMs: INTERVAL_MS });
@@ -27,7 +27,7 @@ export default function LibraryPage(): JSX.Element {
     return (
         <Stack style={{ height: "100%", minHeight: 0 }}>
             <Box style={{ height: `calc(100vh)` }}>
-                <LibraryGrid
+                <Library
                     libraryData={libraryData}
                     view={view}
                     setView={setView}

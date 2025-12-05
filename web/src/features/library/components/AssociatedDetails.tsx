@@ -22,8 +22,9 @@ export function AssociatedDetails({
             align="flex-start"
             className="subtle-scrollbar"
             pr={GRID.gap}
+            pb={GRID.gap}
             style={{
-                width: GRID.coverWidth + GRID.gap,
+                width: GRID.coverWidth + GRID.gap + 4,
                 height: "100%",
                 overflowY: "auto",
                 overflowX: "hidden",
@@ -136,6 +137,5 @@ export function AssociatedDetails({
                 )}
             </Stack>
         </Stack>
-
     );
 }

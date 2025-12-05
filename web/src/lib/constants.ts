@@ -28,7 +28,7 @@ export const API_ENDPOINTS = {
 export const GRID = {
   colsList: "40px minmax(0, 45%) 60px 95px minmax(0, 1fr)",
   colsGrid: "0px 60px 60px 95px minmax(0, 1fr)",
-  navBarWidth: 160,
+  navBarWidth: 140,
   coverWidth: 220,
   cardWidth: 160,
   cardHeight: 300,

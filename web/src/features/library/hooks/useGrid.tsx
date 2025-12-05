@@ -5,16 +5,8 @@ import { useGridAlphabetRail } from "./useGridAlphabetRail";
 import { useGridOpenItemToggle } from "./useGridOpenItemToggle";
 import { useGridScrollJump } from "./useGridScrollJump";
 import { useGridScrollRestore } from "./useGridScrollRestore";
-import {
-    GameItem,
-    GridRows,
-    ItemPositions,
-    Letter,
-    RowLayout,
-    UIDerivedState,
-    UIState,
-} from "../../../types/types";
 import { GRID } from "../../../lib/constants";
+import { GameItem, ItemPositions, Letter, UIDerivedState, UIState } from "../../../types/types";
 
 type UseParams = {
     gridRef: React.RefObject<HTMLDivElement>;
@@ -40,7 +32,9 @@ type UseReturn = {
     onAssociatedClick: (fromId: string, targetId: string) => void;
 };
 
-// A hook to manage the absolute grid model: positions, virtual window, jump-to-scroll, alphabetical rail.
+/**
+ * Grid hook: layout, open items, virtual window, alphabet rail.
+ */
 export function useGrid({
     gridRef,
     isListView,
@@ -77,7 +71,45 @@ export function useGrid({
 
     // Build grid rows with open items occupying dedicated full-width rows
     const { rowItems, rowIsOpen } = useMemo(
-        () => buildGridRows(derived.itemsSorted, openIds, viewCols),
+        () => {
+            const itemsLen = derived.itemsSorted.length;
+            const rows: number[][] = [];
+            const rowIsOpen: boolean[] = [];
+
+            let currentRow: number[] = [];
+
+            for (let i = 0; i < itemsLen; i++) {
+                const item = derived.itemsSorted[i];
+                if (!item) continue;
+                const isOpen = openIds.has(item.id);
+
+                if (isOpen) {
+                    // flush partial row before inserting dedicated open row
+                    if (currentRow.length > 0) {
+                        rows.push(currentRow);
+                        rowIsOpen.push(false);
+                        currentRow = [];
+                    }
+                    rows.push([i]);
+                    rowIsOpen.push(true);
+                } else {
+                    currentRow.push(i);
+                    if (currentRow.length === viewCols) {
+                        rows.push(currentRow);
+                        rowIsOpen.push(false);
+                        currentRow = [];
+                    }
+                }
+            }
+
+            // flush trailing partial row (closed)
+            if (currentRow.length > 0) {
+                rows.push(currentRow);
+                rowIsOpen.push(false);
+            }
+
+            return { rowItems: rows, rowIsOpen };
+        },
         [derived.itemsSorted, openIds, viewCols]
     );
 
@@ -89,14 +121,45 @@ export function useGrid({
         itemRowIndex,
         itemColIndex,
     } = useMemo(
-        () =>
-            computeRowLayout(
-                rowItems,
-                rowIsOpen,
-                itemsLen,
-                viewportH,
-                isListView
-            ),
+        () => {
+            const rowCount = rowItems.length;
+            const rowTops = new Array<number>(rowCount);
+            const rowHeights = new Array<number>(rowCount);
+            const itemRowIndex = new Array<number>(itemsLen);
+            const itemColIndex = new Array<number>(itemsLen);
+
+            const closedHeight = isListView ? GRID.rowHeight : GRID.cardHeight;
+            let y = isListView ? 0 : GRID.gap;
+
+            for (let r = 0; r < rowCount; r++) {
+                rowTops[r] = y;
+                const openHeight = Math.max(closedHeight, viewportH);
+                const height = rowIsOpen[r] ? openHeight : closedHeight;
+                rowHeights[r] = height;
+
+                const indices = rowItems[r];
+                for (let c = 0; c < indices.length; c++) {
+                    const idx = indices[c];
+                    itemRowIndex[idx] = r;
+                    itemColIndex[idx] = c;
+                }
+
+                y += height + (isListView ? 0 : GRID.gap);
+            }
+
+            const containerHeight =
+                rowCount === 0
+                    ? GRID.gap * 2 + closedHeight
+                    : y - (isListView ? 0 : GRID.gap * 2);
+
+            return {
+                rowTops,
+                rowHeights,
+                containerHeight,
+                itemRowIndex,
+                itemColIndex,
+            };
+        },
         [rowItems, rowIsOpen, itemsLen, viewportH, isListView]
     );
 
@@ -112,46 +175,25 @@ export function useGrid({
 
     // Compute absolute item positions
     const positions = useMemo(
-        () => computeItemPositions(itemsLen, itemRowIndex, itemColIndex, rowTops),
+        () => {
+            const out: ItemPositions = new Array(itemsLen);
+            const strideX = GRID.cardWidth + GRID.gap;
+
+            for (let i = 0; i < itemsLen; i++) {
+                const r = itemRowIndex[i];
+                if (r == null) continue;
+
+                const c = itemColIndex[i] ?? 0;
+                out[i] = {
+                    left: GRID.gap + c * strideX,
+                    top: rowTops[r] ?? GRID.gap,
+                };
+            }
+
+            return out;
+        },
         [itemsLen, itemRowIndex, itemColIndex, rowTops]
     );
-
-    // Jump-to-scroll, based on positions
-    const { scrollItemIntoView } = useGridScrollJump({
-        gridRef,
-        positions,
-    });
-
-    // Open/close behavior with scroll restore
-    const { onToggleItem } = useGridScrollRestore({
-        gridRef,
-        openIds,
-        items: derived.itemsSorted as GameItem[],
-        scrollItemIntoView,
-        toggleOpen: (id: string) => toggleOpen(id),
-    });
-
-    const onAssociatedClick = (fromId: string, targetId: string) => {
-        if (fromId === targetId) return;
-
-        const items = derived.itemsSorted as GameItem[];
-
-        const targetIndex = items.findIndex((g) => g.id === targetId);
-        if (targetIndex === -1) return;
-
-        // 1. Close the current collapse if it's open
-        if (openIds.has(fromId)) {
-            const fromIndex = items.findIndex((g) => g.id === fromId);
-            if (fromIndex !== -1) {
-                onToggleItem(fromId, fromIndex);
-            }
-        }
-
-        // 2. Open the clicked item (3. scroll is handled by useGridScrollRestore)
-        if (!openIds.has(targetId)) {
-            onToggleItem(targetId, targetIndex);
-        }
-    };
 
     // Virtual window (variable-height rows) + scroll position
     const { visibleRange, scrollTop } = useGridVirtualWindow({
@@ -168,6 +210,44 @@ export function useGrid({
             rowLastItemIndex,
         },
     });
+
+    // Jump-to-scroll, based on positions
+    const { scrollItemIntoView } = useGridScrollJump({
+        gridRef,
+        positions,
+    });
+
+    // Open/close behavior with scroll restore
+    const { onToggleItem } = useGridScrollRestore({
+        gridRef,
+        openIds,
+        items: derived.itemsSorted as GameItem[],
+        scrollItemIntoView,
+        toggleOpen: (id: string) => toggleOpen(id),
+    });
+
+    // Handle associated item clicks (e.g., from within an open item)
+    const onAssociatedClick = (fromId: string, targetId: string) => {
+        if (fromId === targetId) return;
+
+        const items = derived.itemsSorted as GameItem[];
+
+        const targetIndex = items.findIndex((g) => g.id === targetId);
+        if (targetIndex === -1) return;
+
+        // Close the current collapse if it's open
+        if (openIds.has(fromId)) {
+            const fromIndex = items.findIndex((g) => g.id === fromId);
+            if (fromIndex !== -1) {
+                onToggleItem(fromId, fromIndex);
+            }
+        }
+
+        // Open the clicked item (scroll is handled by useGridScrollRestore)
+        if (!openIds.has(targetId)) {
+            onToggleItem(targetId, targetIndex);
+        }
+    };
 
     // Visible index for alphabet rail
     const railVisibleIndex =
@@ -192,9 +272,6 @@ export function useGrid({
         if (isListView) return false;
         if (openIds.size === 0) return false;
 
-        const viewportTop = scrollTop;
-        const ACTIVATION_MARGIN = 100; // px
-
         for (const openId of openIds) {
             const idx = idToIndex.get(openId);
             if (idx == null) continue;
@@ -206,12 +283,10 @@ export function useGrid({
             const height = rowHeights[rowIdx] ?? 0;
             const bottom = top + height;
 
-            const activationStart = top - ACTIVATION_MARGIN; // item is 100px below top
-            const activationEnd = bottom;                    // bottom aligned with top
+            const activationStart = top - 100;
+            const activationEnd = bottom;
 
-            if (viewportTop >= activationStart && viewportTop <= activationEnd) {
-                return true;
-            }
+            if (scrollTop >= activationStart && scrollTop <= activationEnd) return true;
         }
 
         return false;
@@ -241,124 +316,3 @@ export function useGrid({
     } as const;
 }
 
-/**
- * Build rows for a grid with "open" items occupying a dedicated full-width row.
- */
-function buildGridRows(
-    items: GameItem[],
-    openIds: Set<string>,
-    colsSafe: number
-): GridRows {
-    const itemsLen = items.length;
-    const rows: number[][] = [];
-    const rowIsOpen: boolean[] = [];
-
-    let currentRow: number[] = [];
-
-    for (let i = 0; i < itemsLen; i++) {
-        const item = items[i];
-        if (!item) continue;
-        const isOpen = openIds.has(item.id);
-
-        if (isOpen) {
-            // flush partial row before inserting dedicated open row
-            if (currentRow.length > 0) {
-                rows.push(currentRow);
-                rowIsOpen.push(false);
-                currentRow = [];
-            }
-            rows.push([i]);
-            rowIsOpen.push(true);
-        } else {
-            currentRow.push(i);
-            if (currentRow.length === colsSafe) {
-                rows.push(currentRow);
-                rowIsOpen.push(false);
-                currentRow = [];
-            }
-        }
-    }
-
-    // flush trailing partial row (closed)
-    if (currentRow.length > 0) {
-        rows.push(currentRow);
-        rowIsOpen.push(false);
-    }
-
-    return { rowItems: rows, rowIsOpen };
-}
-
-/**
- * Compute per-row layout, including variable row heights.
- */
-function computeRowLayout(
-    rowItems: number[][],
-    rowIsOpen: boolean[],
-    itemsLen: number,
-    viewportH: number,
-    isListView: boolean
-): RowLayout {
-    const rowCount = rowItems.length;
-    const rowTops = new Array<number>(rowCount);
-    const rowHeights = new Array<number>(rowCount);
-    const itemRowIndex = new Array<number>(itemsLen);
-    const itemColIndex = new Array<number>(itemsLen);
-
-    const closedHeight = isListView ? GRID.rowHeight : GRID.cardHeight;
-    let y = isListView ? 0 : GRID.gap;
-
-    for (let r = 0; r < rowCount; r++) {
-        rowTops[r] = y;
-        const openHeight = Math.max(closedHeight, viewportH);
-        const height = rowIsOpen[r] ? openHeight : closedHeight;
-        rowHeights[r] = height;
-
-        const indices = rowItems[r];
-        for (let c = 0; c < indices.length; c++) {
-            const idx = indices[c];
-            itemRowIndex[idx] = r;
-            itemColIndex[idx] = c;
-        }
-
-        y += height + (isListView ? 0 : GRID.gap);
-    }
-
-    const containerHeight =
-        rowCount === 0
-            ? GRID.gap * 2 + closedHeight
-            : y - (isListView ? 0 : GRID.gap * 2);
-
-    return {
-        rowTops,
-        rowHeights,
-        containerHeight,
-        itemRowIndex,
-        itemColIndex,
-    };
-}
-
-/**
- * Compute absolute item positions from row layout.
- */
-function computeItemPositions(
-    itemsLen: number,
-    itemRowIndex: number[],
-    itemColIndex: number[],
-    rowTops: number[]
-): ItemPositions {
-    const out: ItemPositions = new Array(itemsLen);
-    const strideX = GRID.cardWidth + GRID.gap;
-
-    for (let i = 0; i < itemsLen; i++) {
-        const r = itemRowIndex[i];
-        if (r == null) continue;
-
-        const c = itemColIndex[i] ?? 0;
-        out[i] = {
-            left: GRID.gap + c * strideX,
-            top: rowTops[r] ?? GRID.gap,
-        };
-    }
-
-    return out;
-}

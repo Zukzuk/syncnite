@@ -140,7 +140,7 @@ export function AssociatedDeck({
                         return (
                             <Box
                                 key={id}
-                                aria-label="item-associated-card"
+                                aria-label="associated-card"
                                 component="a"
                                 title={year ? `${title} (${year})` : title}
                                 onClick={(e) => {

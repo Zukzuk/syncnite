@@ -9,9 +9,10 @@ import { AssociatedDetails } from "./AssociatedDetails";
 type Props = {
     item: GameItem;
     isOpen: boolean;
-    relatedBySeries?: GameItem[];
-    relatedByTags?: GameItem[];
-    relatedByYear?: GameItem[];
+    associatedBySeries: GameItem[];
+    associatedByTags: GameItem[];
+    associatedByYear: GameItem[];
+    associatedByInstalled: GameItem[];
     onToggleItem: () => void;
     onAssociatedClick: (targetId: string) => void;
 };
@@ -19,9 +20,10 @@ type Props = {
 export function ItemContent({
     item,
     isOpen,
-    relatedBySeries,
-    relatedByTags,
-    relatedByYear,
+    associatedBySeries,
+    associatedByTags,
+    associatedByYear,
+    associatedByInstalled,
     onToggleItem,
     onAssociatedClick,
 }: Props): JSX.Element {
@@ -33,7 +35,7 @@ export function ItemContent({
         .map((name) => ({
             key: `series-${name}`,
             label: name,
-            items: (relatedBySeries ?? []).filter((g) => g.series?.includes(name)),
+            items: (associatedBySeries ?? []).filter((g) => g.series?.includes(name)),
         }))
         .filter((deck) => deck.items.length > 0);
 
@@ -42,23 +44,33 @@ export function ItemContent({
         .map((name) => ({
             key: `tag-${name}`,
             label: name,
-            items: (relatedByTags ?? []).filter((g) => g.tags?.includes(name)),
+            items: (associatedByTags ?? []).filter((g) => g.tags?.includes(name)),
         }))
         .filter((deck) => deck.items.length > 0);
 
     // Year deck
-    const hasYearDeck = !!relatedByYear && relatedByYear.length > 0;
+    const hasYearDeck = !!associatedByYear && associatedByYear.length > 0;
     const yearDeck: Deck | null = hasYearDeck
         ? {
             key: "year",
             label: item.year ? `Year ${String(item.year)}` : "Year",
-            items: relatedByYear!,
+            items: associatedByYear!,
+        }
+        : null;
+
+    const hasInstalledDeck = !!associatedByInstalled && associatedByInstalled.length > 0;
+    const installedDeck: Deck | null = hasInstalledDeck
+        ? {
+            key: "installed",
+            label: "Installed",
+            items: associatedByInstalled!,
         }
         : null;
 
     // Combine all decks
     const allDecks: Deck[] = [
         ...seriesDecks,
+        ...(installedDeck ? [installedDeck] : []),
         ...tagDecks,
         ...(yearDeck ? [yearDeck] : []),
     ];
@@ -83,29 +95,22 @@ export function ItemContent({
                 transitionDuration={140}
                 py={GRID.gap}
                 pr={GRID.gap * 6}
-                style={{ height: `calc(100% - ${GRID.rowHeight}px)` }}
+                style={{
+                    height: `calc(100% - ${GRID.rowHeight}px)`,
+                    backgroundColor: "transparent",
+                    overflowX: "auto",
+                    overflowY: "hidden",
+                }}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleItem();
+                }}
             >
-                <Paper
-                    p={0}
-                    m={0}
-                    radius={0}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onToggleItem();
-                    }}
-                    style={{
-                        backgroundColor: "transparent",
-                        height: "100%",
-                        overflowX: "auto",
-                        overflowY: "hidden",
-                    }}
-                >
-                    <Stack style={{ height: "100%", minHeight: 0 }}>
-                        <Center>
-                            <Text>No associated items found.</Text>
-                        </Center>
-                    </Stack>
-                </Paper>
+                <Stack style={{ height: "100%", minHeight: 0 }}>
+                    <Center>
+                        <Text>No associated items found.</Text>
+                    </Center>
+                </Stack>
             </Collapse>
         )
     }
@@ -115,50 +120,43 @@ export function ItemContent({
             in={isOpen}
             transitionDuration={140}
             py={GRID.gap}
-            pr={GRID.gap * 6}
-            style={{ height: `calc(100% - ${GRID.rowHeight}px)` }}
+            pr={GRID.gap * 4}
+            style={{
+                height: `calc(100% - ${GRID.rowHeight}px)`,
+                backgroundColor: "transparent",
+                overflowX: "auto",
+                overflowY: "hidden",
+            }}
+            onClick={(e) => {
+                e.stopPropagation();
+                onToggleItem();
+            }}
         >
-            <Paper
-                p={0}
-                m={0}
-                radius={0}
-                onClick={(e) => {
-                    e.stopPropagation();
-                    onToggleItem();
-                }}
-                style={{
-                    backgroundColor: "transparent",
-                    height: "100%",
-                    overflowX: "auto",
-                    overflowY: "hidden",
-                }}
+            <Group
+                align="flex-start"
+                gap={GRID.gap * 3}
+                wrap="nowrap"
+                h="100%"
             >
-                <Group
-                    align="flex-start"
-                    gap={GRID.gap * 3}
-                    wrap="nowrap"
-                    h="100%"
-                >
-                    <AssociatedDetails
-                        aria-label="item-associated-details"
-                        item={item}
-                    />
+                <AssociatedDetails
+                    aria-label="associated-details"
+                    item={item}
+                />
 
-                    <AssociatedDeck
-                        aria-label="item-associated-deck"
-                        {...openDeck}
-                        currentItemId={item.id}
-                        onAssociatedClick={onAssociatedClick}
-                    />
+                <AssociatedDeck
+                    aria-label="associated-deck"
+                    {...openDeck}
+                    currentItemId={item.id}
+                    onAssociatedClick={onAssociatedClick}
+                />
 
-                    <AssociatedStacks
-                        aria-label="item-associated-stacks"
-                        allDecks={allDecks}
-                        openDeckKey={openDeck.key}
-                        onDeckClick={setOpenDeckKey}
-                    />
-                </Group>
-            </Paper>
+                <AssociatedStacks
+                    aria-label="associated-stacks"
+                    allDecks={allDecks}
+                    openDeckKey={openDeck.key}
+                    onDeckClick={setOpenDeckKey}
+                />
+            </Group>
         </Collapse>
     );
 }

@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React from "react";
 import { Box } from "@mantine/core";
 import { GameItem } from "../../../types/types";
 import { Z_INDEX } from "../../../lib/constants";
@@ -6,7 +6,6 @@ import { ItemContent } from "./ItemContent";
 import { ItemBackground } from "./ItemBackground";
 import { ItemRow } from "./ItemRow";
 import { ItemCard } from "./ItemCard";
-import { getTheme } from "../../../lib/utils";
 
 type Props = {
     item: GameItem;
@@ -14,9 +13,10 @@ type Props = {
     index: number;
     openHeight: string;
     isListView: boolean;
-    relatedBySeries?: GameItem[];
-    relatedByTags?: GameItem[];
-    relatedByYear?: GameItem[];
+    associatedBySeries: GameItem[];
+    associatedByTags: GameItem[];
+    associatedByYear: GameItem[];
+    associatedByInstalled: GameItem[];
     containerLeft: number;
     containerTop: number;
     containerWidth: number | string;
@@ -26,15 +26,16 @@ type Props = {
     onAssociatedClick: (fromId: string, targetId: string) => void;
 };
 
-export const ItemExpandable = React.memo(function ItemExpandable({
+export const GridCard = React.memo(function GridCard({
     item,
     isOpen,
     index,
     openHeight,
     isListView,
-    relatedBySeries,
-    relatedByTags,
-    relatedByYear,
+    associatedBySeries,
+    associatedByTags,
+    associatedByYear,
+    associatedByInstalled,
     containerLeft,
     containerTop,
     containerWidth,
@@ -58,8 +59,8 @@ export const ItemExpandable = React.memo(function ItemExpandable({
 
     return (
         <Box
-            aria-label="library-item-container"
-            role="library-item-container"
+            aria-label="grid-card"
+            role="card"
             style={{
                 display: "flex",
                 position: "absolute",
@@ -75,7 +76,7 @@ export const ItemExpandable = React.memo(function ItemExpandable({
             }}
         >
             <Box
-                role="library-item-button"
+                role="card-button"
                 tabIndex={0}
                 aria-expanded={isOpen}
                 aria-label={title}
@@ -89,9 +90,9 @@ export const ItemExpandable = React.memo(function ItemExpandable({
                     backgroundColor: isInstalled
                         ? "var(--mantine-primary-color-light)"
                         : "transparent",
-                    border: isListView
+                    border: isListView || isOpen
                         ? undefined
-                        : !isOpen && isHovered
+                        : isHovered
                             ? "2px solid var(--mantine-primary-color-4)"
                             : "2px solid transparent",
                     borderBottom: isListView
@@ -113,8 +114,7 @@ export const ItemExpandable = React.memo(function ItemExpandable({
                 onClick={handleToggle}
             >
                 <Box
-                    aria-label="library-item-inner"
-                    role="library-item-inner"
+                    aria-label="card-inner"
                     style={{
                         opacity: isHidden ? 0.2 : 1,
                         position: "relative",
@@ -125,33 +125,34 @@ export const ItemExpandable = React.memo(function ItemExpandable({
                 >
                     {!isOpen && isListView && (
                         <ItemRow
-                            aria-label="library-row-item"
+                            aria-label="item-row"
                             item={item}
                             isOpen={isOpen}
                         />
                     )}
                     {!isOpen && !isListView && (
                         <ItemCard
-                            aria-label="library-grid-item"
+                            aria-label="item-card"
                             item={item}
                             isOpen={isOpen}
                         />
                     )}
                     {isOpen && (
                         <ItemRow
-                            aria-label="library-row-item"
+                            aria-label="item-row"
                             item={item}
                             isOpen={isOpen}
                         />
                     )}
                     {isOpen && (
                         <ItemContent
-                            aria-label="library-item-details"
+                            aria-label="item-content"
                             item={item}
                             isOpen={isOpen}
-                            relatedBySeries={relatedBySeries}
-                            relatedByTags={relatedByTags}
-                            relatedByYear={relatedByYear}
+                            associatedBySeries={associatedBySeries}
+                            associatedByTags={associatedByTags}
+                            associatedByYear={associatedByYear}
+                            associatedByInstalled={associatedByInstalled}
                             onToggleItem={handleToggle}
                             onAssociatedClick={handleAssociated}
                         />
@@ -159,7 +160,7 @@ export const ItemExpandable = React.memo(function ItemExpandable({
                 </Box>
 
                 <ItemBackground
-                    aria-label="library-item-bg"
+                    aria-label="item-background"
                     item={item}
                     isOpen={isOpen}
                 />

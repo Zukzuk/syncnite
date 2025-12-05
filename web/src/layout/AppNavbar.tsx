@@ -27,7 +27,7 @@ export function AppNavbar({ appVersion }: { appVersion: string }) {
         <Stack h="100%" gap={0}>
             {/* TOP CONTROL PANEL */}
             <Box
-                px="sm"
+                px="xs"
                 style={{
                     minHeight: GRID.rowHeight,
                     borderBottom: "1px solid var(--mantine-color-default-border)",
@@ -36,7 +36,7 @@ export function AppNavbar({ appVersion }: { appVersion: string }) {
                 <Stack gap="xs">
                     {/* Row 1: title + version + theme toggle */}
                     <Group justify="space-between" align="center" gap="xs" wrap="nowrap">
-                        <Stack gap={0} style={{ flex: 1, minWidth: 0 }}>
+                        <Stack gap={0} style={{ flex: 1, minWidth: 0, paddingBlock: 5 }}>
                             <Text fw={700} size="lg" truncate>
                                 Syncnite
                             </Text>
@@ -156,8 +156,8 @@ export function AppNavbar({ appVersion }: { appVersion: string }) {
                                 <Badge
                                     size="xs"
                                     radius="lg"
+                                    fullWidth
                                     color={connected ? "teal" : "gray"}
-                                    style={{ width: "max-content" }}
                                 >
                                     {connected ? "connected" : "offline"}
                                 </Badge>

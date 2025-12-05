@@ -5,11 +5,11 @@ import { Letter } from "../../../types/types";
 
 type Props = {
     activeLetter: Letter;
-    onScrollJump: (letter: Letter) => void;
     railCounts: Record<Letter, number>;
+    onScrollJump: (letter: Letter) => void;
 };
 
-export function AlphabeticalRail({activeLetter, onScrollJump, railCounts}: Props): JSX.Element | null {
+export function AlphabeticalRail({ activeLetter, railCounts, onScrollJump }: Props): JSX.Element | null {
     const letters = LETTERS_LIST.filter((l) => (railCounts[l] ?? 0) > 0);
     if (letters.length < 10) return null;
 
@@ -24,18 +24,18 @@ export function AlphabeticalRail({activeLetter, onScrollJump, railCounts}: Props
             withBorder
             shadow="sm"
             style={{
-                position: "absolute",
-                right: 15,
-                top: "50%",
-                padding: "8px 0",
-                transform: "translateY(-50%)",
-                width: rem(22),
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                position: "absolute",
+                right: 15,
+                top: "50%",
+                width: rem(22),
+                padding: "8px 0",
                 zIndex: Z_INDEX.high,
                 background: backgroundColor,
-                transition: "background-color 120ms ease",
+                transform: "translateY(-50%)",
+                transition: "background-color 140ms ease",
             }}
         >
             <Stack gap={2} align="stretch" justify="center" style={{ width: "100%" }}>
@@ -59,7 +59,7 @@ export function AlphabeticalRail({activeLetter, onScrollJump, railCounts}: Props
                                 fontWeight: isActive ? 300 : 100,
                                 justifyContent: "center",
                                 userSelect: "none",
-                                transition: "background-color 120ms ease, color 120ms ease",
+                                transition: "background-color 140ms ease, color 140ms ease",
                             }}
                         >
                             {letter}

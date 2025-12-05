@@ -1,15 +1,13 @@
 import React from "react";
 import { Box, UnstyledButton, Text } from "@mantine/core";
-import { SortDir, SortKey } from "../../../types/types";
+import { SortKey, UIState } from "../../../types/types";
 import { GRID } from "../../../lib/constants";
 
 type Props = {
   sortRef: (el: HTMLElement | null) => void;
-  sortKey: SortKey;
-  sortDir: SortDir;
+  ui: UIState;
   isListView: boolean;
   hasOpenItemInView?: boolean;
-  onToggleSort: (k: SortKey) => void;
 };
 
 /**
@@ -17,13 +15,18 @@ type Props = {
  * Renders sortable column headers for Title, Year, Platform, and Series.
  * Props:
  * - sortRef: Ref callback for the header element.
- * - sortKey: Current sort key.
- * - sortDir: Current sort direction.
- * - onToggleSort: Callback to toggle sorting by a given key.
- * - gridColumns: CSS grid template columns for layout.
+ * - ui: UI state including sortKey, sortDir, and onToggleSort.
+ * - isListView: Whether the current view is list view.
+ * - hasOpenItemInView: Whether any open item is currently in view.
  */
-export const HeaderSort = React.memo(function HeaderSort(props: Props) {
-  const { sortRef, sortKey, sortDir, isListView, hasOpenItemInView, onToggleSort } = props;
+export const HeaderSort = React.memo(function HeaderSort({ 
+  sortRef, 
+  ui, 
+  isListView, 
+  hasOpenItemInView 
+}: Props) {
+
+  const { sortKey, sortDir, onToggleSort } = ui;
 
   const label = (base: string, key: SortKey) =>
     sortKey === key ? `${base} ${sortDir === "asc" ? "▲" : "▼"}` : base;

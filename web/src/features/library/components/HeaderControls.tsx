@@ -2,53 +2,63 @@ import React from "react";
 import { Group, MultiSelect, Switch, Text, Flex, Box, SegmentedControl } from "@mantine/core";
 import { SearchInput } from "../../../components/SearchInput";
 import { GRID, SOURCE_MAP } from "../../../lib/constants";
-import { ViewMode } from "../../../types/types";
+import { LoadedData, UIDerivedState, UIState, ViewMode } from "../../../types/types";
 
 type Props = {
   controlsRef: (el: HTMLDivElement | null) => void;
-  q: string; setQ: (v: string) => void;
-  sources: string[]; setSources: (v: string[]) => void;
-  tags: string[]; setTags: (v: string[]) => void;
-  series: string[]; setSeries: (v: string[]) => void;
-  view: ViewMode; setView: (view: ViewMode) => void;
-  allSources: string[];
-  allTags: string[];
-  allSeries: string[];
-  showHidden: boolean; setShowHidden: (v: boolean) => void;
-  installedOnly: boolean; setInstalledOnly: (v: boolean) => void;
-  filteredCount: number;
-  totalCount: number;
+  libraryData: LoadedData;
+  ui: UIState;
+  derived: UIDerivedState;
+  view: ViewMode;
+  setView: (view: ViewMode) => void;
 };
 
 /**
  * Header controls component for the library view.
  * Includes search, filters, view mode toggle, and item counts.
  * Props:
- * - controlsRef: Ref callback for the container element.
- * - q, setQ: Search query state and setter.
- * - sources, setSources: Selected platforms state and setter.
- * - tags, setTags: Selected tags state and setter.
- * - series, setSeries: Selected series state and setter.
- * - view, setView: Current view mode and setter.
- * - allSources: All available platforms.
- * - allTags: All available tags.
- * - allSeries: All available series.
- * - showHidden, setShowHidden: Show hidden items state and setter.
- * - installedOnly, setInstalledOnly: Installed only state and setter.
- * - filteredCount: Number of items after filtering.
- * - totalCount: Total number of items.
+ * - controlsRef: Ref callback for the header element. 
+ * - libraryData: Loaded library data including all sources, tags, and series.
+ * - ui: UI state including search query, filters, and toggles.
+ * - derived: Derived UI state including filtered and total item counts.
+ * - view: Current view mode (list or grid).
+ * - setView: Callback to change the view mode.
  */
-export const HeaderControls = React.memo(function HeaderControls(props: Props) {
+export const HeaderControls = React.memo(function HeaderControls({
+  controlsRef,
+  libraryData,
+  ui,
+  derived,
+  view,
+  setView,
+}: Props) {
+
   const {
-    q, setQ, controlsRef,
-    view, setView,
-    sources, setSources, allSources,
-    tags, setTags, allTags,
-    series, setSeries, allSeries,
-    showHidden, setShowHidden,
-    installedOnly, setInstalledOnly,
-    filteredCount, totalCount,
-  } = props;
+    allSources,
+    allTags,
+    allSeries
+  } = libraryData;
+
+  const {
+    q,
+    setQ,
+    sources,
+    setSources,
+    tags,
+    setTags,
+    series,
+    setSeries,
+    showHidden,
+    setShowHidden,
+    installedOnly,
+    setInstalledOnly,
+
+  } = ui;
+
+  const {
+    filteredCount,
+    totalCount,
+  } = derived;
 
   const sourceData = React.useMemo(
     () => Array.from(new Set(allSources)).sort().map((s) => ({ value: s, label: SOURCE_MAP[s]?.label ?? s })),

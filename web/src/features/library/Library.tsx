@@ -4,8 +4,8 @@ import { useElementSize } from "@mantine/hooks";
 import { HeaderSort } from "./components/HeaderSort";
 import { HeaderControls } from "./components/HeaderControls";
 import { useLibraryState } from "./hooks/useLibraryState";
+import { AbsoluteGrid } from "./AbsoluteGrid";
 import { LoadedData, ViewMode } from "../../types/types";
-import { LibraryGridItems } from "./LibraryGridItems";
 
 type Props = {
     libraryData: LoadedData;
@@ -15,10 +15,15 @@ type Props = {
 };
 
 /**
- * Absolute-positioned library grid with expandable items, virtual scrolling
- * and alphabetical rail navigation.
+ * Library main component.
+ * Renders the library view with header controls, sorting, and item grid.
+ * Props:
+ * - libraryData: Loaded library data including all items, sources, tags, and series.
+ * - installedUpdatedAt: Optional timestamp for when installed items were last updated.
+ * - view: Current view mode (list or grid).
+ * - setView: Callback to change the view mode.
  */
-export default function LibraryGrid({
+export default function Library({
     libraryData,
     installedUpdatedAt,
     view,
@@ -27,12 +32,9 @@ export default function LibraryGrid({
     const { ui, derived } = useLibraryState({ items: libraryData.items });
     const { ref: controlsRef, height: controlsH } = useElementSize();
     const { ref: sortRef, height: sortH } = useElementSize();
-
-    const { filteredCount, totalCount } = derived;
-    const { sortKey, sortDir, onToggleSort } = ui;
     const isListView = view === "list";
-
-    // Only piece of scroll-related state that the header cares about
+    
+    // Track if any open item is in view to adjust header styling
     const [hasOpenItemInView, setHasOpenItemInView] = useState(false);
 
     return (
@@ -40,34 +42,29 @@ export default function LibraryGrid({
             <HeaderControls
                 controlsRef={controlsRef as unknown as (el: HTMLElement | null) => void}
                 aria-label="header-controls"
+                libraryData={libraryData}
+                ui={ui}
+                derived={derived}
                 view={view}
-                {...ui}
-                filteredCount={filteredCount}
-                totalCount={totalCount}
-                allSources={libraryData.allSources}
-                allTags={libraryData.allTags}
-                allSeries={libraryData.allSeries}
                 setView={setView}
             />
 
             <HeaderSort
                 sortRef={sortRef as unknown as (el: HTMLElement | null) => void}
                 aria-label="header-sort"
-                sortKey={sortKey}
-                sortDir={sortDir}
+                ui={ui}
                 isListView={isListView}
                 hasOpenItemInView={hasOpenItemInView}
-                onToggleSort={onToggleSort}
             />
 
-            <LibraryGridItems
+            <AbsoluteGrid
                 view={view}
                 ui={ui}
                 derived={derived}
                 controlsH={controlsH}
                 sortH={sortH}
                 installedUpdatedAt={installedUpdatedAt}
-                onOpenItemVisibilityChange={setHasOpenItemInView}
+                setHasOpenItemInView={setHasOpenItemInView}
             />
         </Flex>
     );

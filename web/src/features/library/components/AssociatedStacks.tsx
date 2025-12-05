@@ -25,6 +25,7 @@ export function AssociatedStacks({
     return (
         <Box
             className="subtle-scrollbar"
+            pl={4}
             style={{
                 flex: 1,
                 minWidth: 0,
@@ -64,17 +65,8 @@ export function AssociatedStacks({
                     const previewSlots = Array.from({ length: 4 }, (_, i) => previewCards[i] ?? null);
 
                     return (
-                        // <AssociatedStack
-                        //     aria-label="item-associated-stack"
-                        //     key={deck.key}
-                        //     label={deck.label}
-                        //     items={deck.items}
-                        //     isOpen={deck.key === openDeck.key}
-                        //     onDeckClick={() => setOpenDeckKey(deck.key)}
-                        // />
-
                         <Stack
-                            aria-label="item-associated-stack"
+                            aria-label="associated-stack"
                             gap={4}
                             bg="var(--mantine-color-body)"
                             style={{
