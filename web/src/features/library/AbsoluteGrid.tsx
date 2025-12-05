@@ -164,7 +164,6 @@ export function AbsoluteGrid({
         <>
             <Box
                 ref={gridRef}
-                key={installedUpdatedAt ?? "initial"}
                 aria-label="absolute-grid"
                 role="library"
                 style={{
@@ -217,7 +216,7 @@ export function AbsoluteGrid({
 
                         return (
                             <GridCard
-                                key={String(item.id)}
+                                key={`${item.id}|${installedUpdatedAt}`}
                                 item={item}
                                 index={index}
                                 isOpen={isOpen}
