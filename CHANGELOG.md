@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.32.1](https://github.com/Zukzuk/syncnite/compare/v1.32.0...v1.32.1) (2025-12-06)
+
+
+### Bug Fixes
+
+* fixed version mimatch badge on server ([c19ca5b](https://github.com/Zukzuk/syncnite/commit/c19ca5bf94a00febdf400034f1d631df5c595363))
+
 ## [1.32.0](https://github.com/Zukzuk/syncnite/compare/v1.31.4...v1.32.0) (2025-12-06)
 
 
