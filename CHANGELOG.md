@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.31.2](https://github.com/Zukzuk/syncnite/compare/v1.31.1...v1.31.2) (2025-12-06)
+
+
+### Bug Fixes
+
+* fixed steam widhlist delta and refactor of roues and services ([418000e](https://github.com/Zukzuk/syncnite/commit/418000e9b6519bd79d237278b93e94f35a1dfe52))
+
 ### [1.31.1](https://github.com/Zukzuk/syncnite/compare/v1.31.0...v1.31.1) (2025-12-06)
 
 
