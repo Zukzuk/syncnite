@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.31.0](https://github.com/Zukzuk/syncnite/compare/v1.30.9...v1.31.0) (2025-12-06)
+
+
+### Features
+
+* added steam connection and wishlist download ([a57eeb1](https://github.com/Zukzuk/syncnite/commit/a57eeb13ec593606a36733f4a6cb3fbf84153aba))
+
 ### [1.30.9](https://github.com/Zukzuk/syncnite/compare/v1.30.8...v1.30.9) (2025-12-05)
 
 
