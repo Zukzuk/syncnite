@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.32.0](https://github.com/Zukzuk/syncnite/compare/v1.31.4...v1.32.0) (2025-12-06)
+
+
+### Features
+
+* added bg hover slideshow ([5f39b59](https://github.com/Zukzuk/syncnite/commit/5f39b595c4888a05987c5ab8f5c5652f6e75b969))
+
 ### [1.31.4](https://github.com/Zukzuk/syncnite/compare/v1.31.3...v1.31.4) (2025-12-06)
 
 ### [1.31.3](https://github.com/Zukzuk/syncnite/compare/v1.31.2...v1.31.3) (2025-12-06)
