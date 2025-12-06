@@ -1,13 +1,9 @@
 import React from "react";
-import { Box, Image, Stack, Text } from "@mantine/core";
-import {
-    ASSOCIATED_CARD_STEP_Y,
-    GRID,
-    MAX_ASSOCIATED,
-} from "../../../lib/constants";
+import { Box, Stack, Text } from "@mantine/core";
+import { ASSOCIATED_CARD_STEP_Y, GRID, MAX_ASSOCIATED } from "../../../lib/constants";
 import { AssociatedCardMeta, GameItem } from "../../../types/types";
-import { getTheme } from "../../../lib/utils";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
+import { AssociatedDeckCard } from "./AssociatedDeckCard";
 
 type Props = {
     label: string;
@@ -29,8 +25,6 @@ export function AssociatedDeck({
     const [hoveredId, setHoveredId] = React.useState<string | null>(null);
     const [isDeckHovered, setIsDeckHovered] = React.useState(false);
     const isOpenDelayed = useDelayedFlag({ active: true, delayMs: 140 });
-    const { isDark } = getTheme();
-
     const cards = items.filter((g) => g.coverUrl).slice(0, MAX_ASSOCIATED);
     if (cards.length === 0 || deckColumns <= 0) return null;
 
@@ -46,7 +40,6 @@ export function AssociatedDeck({
                 Math.ceil(total / colCount)
             );
         } else {
-            // Not enough height → deck scrolls, but we keep logical columns
             cardsPerColumn = Math.ceil(total / colCount);
         }
     } else {
@@ -90,7 +83,6 @@ export function AssociatedDeck({
                 overflow: "hidden",
                 opacity: isOpenDelayed ? 1 : 0,
                 transform: isOpenDelayed ? "translateY(0)" : "translateY(12px)",
-                willChange: "opacity, transform",
                 transitionProperty: "opacity, transform",
                 transitionDuration: "220ms, 260ms",
                 transitionTimingFunction: "ease, ease",
@@ -133,106 +125,20 @@ export function AssociatedDeck({
                     }}
                 >
                     {cardMeta.map((meta) => {
-                        const { colIndex, indexInColumn, id, index } = meta;
-                        const item = cards[index];
-                        const { title, year, coverUrl } = item;
-
-                        const left = colIndex * (GRID.cardWidth + GRID.gap * 2);
-                        const top = indexInColumn * ASSOCIATED_CARD_STEP_Y;
-
-                        let zIndex = indexInColumn + 1;
-                        const isTopCard =
-                            hasHoveredCard && hoveredMeta!.index === index;
-                        const isDimmed =
-                            hasHoveredCard && isDeckHovered && !isTopCard;
-                        const isCurrentItem = id === currentItemId;
-
-                        if (hasHoveredCard) {
-                            if (hoveredMeta!.colIndex === colIndex) {
-                                const distance = Math.abs(
-                                    hoveredMeta!.indexInColumn - indexInColumn
-                                );
-                                const maxZInCol = (colLengths[colIndex] || 0) + 1;
-                                zIndex = maxZInCol - distance;
-                            } else {
-                                zIndex = indexInColumn + 1;
-                            }
-                        }
-
+                        const item = cards[meta.index];
                         return (
-                            <Box
-                                key={id}
-                                aria-label="associated-card"
-                                component="a"
-                                title={year ? `${title} (${year})` : title}
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    onAssociatedClick(id);
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.stopPropagation();
-                                    setHoveredId(id);
-                                }}
-                                style={{
-                                    position: "absolute",
-                                    left,
-                                    top,
-                                    width: GRID.cardWidth,
-                                    zIndex,
-                                    cursor: "pointer",
-                                    borderRadius: 4,
-                                    overflow: "hidden",
-                                    backgroundColor: "var(--mantine-color-dark-6)",
-                                    boxShadow: isTopCard
-                                        ? "0 8px 16px rgba(0, 0, 0, 0.25)"
-                                        : "0 4px 8px rgba(0, 0, 0, 0.15)",
-                                    border:
-                                        isTopCard || isCurrentItem
-                                            ? "2px solid var(--mantine-primary-color-4)"
-                                            : isDark
-                                                ? "2px solid var(--mantine-color-dark-9)"
-                                                : "2px solid var(--mantine-color-gray-3)",
-                                    transform: isTopCard ? "scale(1.07)" : "scale(1)",
-                                    transition:
-                                        "transform 140ms ease, box-shadow 140ms ease, clip-path 140ms ease",
-                                }}
-                            >
-                                <Box
-                                    style={{
-                                        position: "relative",
-                                        width: "100%",
-                                        aspectRatio: "23 / 32",
-                                    }}
-                                >
-                                    <Image
-                                        src={coverUrl || ""}
-                                        alt={title}
-                                        fit="fill"
-                                        loading="lazy"
-                                        style={{
-                                            position: "absolute",
-                                            inset: 0,
-                                            width: "100%",
-                                            height: "100%",
-                                            objectFit: "fill",
-                                        }}
-                                    />
-
-                                    {isDimmed && (
-                                        <Box
-                                            style={{
-                                                position: "absolute",
-                                                inset: 0,
-                                                backgroundColor: isDark
-                                                    ? "color-mix(in srgb, var(--mantine-color-dark-7) 65%, transparent)"
-                                                    : "color-mix(in srgb, var(--mantine-color-gray-3) 50%, transparent)",
-                                                transition: "background-color 120ms ease",
-                                            }}
-                                        />
-                                    )}
-                                </Box>
-                            </Box>
+                            <AssociatedDeckCard
+                                key={meta.id}
+                                meta={meta}
+                                item={item}
+                                colLengths={colLengths}
+                                hoveredMeta={hoveredMeta}
+                                hasHoveredCard={hasHoveredCard}
+                                isDeckHovered={isDeckHovered}
+                                currentItemId={currentItemId}
+                                onAssociatedClick={onAssociatedClick}
+                                setHoveredId={setHoveredId}
+                            />
                         );
                     })}
                 </Box>
