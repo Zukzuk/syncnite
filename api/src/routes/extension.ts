@@ -6,6 +6,11 @@ const router = express.Router();
 const log = rootLog.child("route:extension");
 const APP_VERSION = process.env.APP_VERSION ?? "dev";
 
+/**
+ * GET /api/v1/extension/download
+ * Downloads the latest version of the browser extension package.
+ * The package is a .pext file that can be loaded into the browser extension.
+ */
 router.get("/download", (_req, res) => {
   log.info("download: request received");
 

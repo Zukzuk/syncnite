@@ -177,7 +177,7 @@ namespace SyncniteBridge.Helpers
         }
 
         /// <summary>
-        /// POST /sync/snapshot with serialized snapshot JSON. Returns true on 2xx.
+        /// POST /snapshot with serialized snapshot JSON. Returns true on 2xx.
         /// </summary>
         public async Task<bool> UploadSnapshotAsync(string baseSyncUrl, object snapshot)
         {
@@ -214,7 +214,7 @@ namespace SyncniteBridge.Helpers
         }
 
         /// <summary>
-        /// POST /sync/delta with serialized inventory JSON. Returns T or null.
+        /// POST /delta with serialized inventory JSON. Returns T or null.
         /// </summary>
         public async Task<T?> PostJsonAsync<T>(string url, string json)
             where T : class

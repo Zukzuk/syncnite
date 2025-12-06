@@ -14,7 +14,7 @@ using SyncniteBridge.Models;
 namespace SyncniteBridge.Services
 {
     /// <summary>
-    /// Orchestrates CRUD + media binary sync using /sync endpoints.
+    /// Orchestrates CRUD + media binary sync using endpoints.
     /// Now driven entirely by DB events (via ChangeDetection) and snapshots – no file watchers.
     /// </summary>
     internal sealed class PushDeltaService : IDisposable
@@ -66,7 +66,7 @@ namespace SyncniteBridge.Services
         }
 
         /// <summary>
-        /// Update sync base (…/api/sync)
+        /// Update sync base (…/api/playnite)
         /// </summary>
         public void UpdateEndpoints(string endpoint)
         {
@@ -554,7 +554,7 @@ namespace SyncniteBridge.Services
                 snapshotStore.Save(snapshotAfter);
                 blog?.Info("sync", "Snapshot saved locally.");
 
-                // Push snapshot to server so /sync/snapshot returns the fresh state
+                // Push snapshot to server so /snapshot returns the fresh state
                 var pushed = await http.UploadSnapshotAsync(syncUrl, snapshotAfter)
                     .ConfigureAwait(false);
 

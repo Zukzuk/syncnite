@@ -4,10 +4,11 @@ import path from "node:path";
 import type { Request, Response } from "express";
 import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
-import syncRouter from "./routes/sync";
+import playniteRouter from "./routes/playnite";
 import accountsRouter from "./routes/accounts";
 import generalRouter from "./routes/general";
 import extensionRouter from "./routes/extension";
+import steamRouter from "./routes/steam";
 import { errorHandler, notFoundHandler } from "./middleware/errors";
 import { requestLogger } from "./middleware/requestLogger";
 import { createOpenApiMockRouter } from "./openapi/mocks";
@@ -107,8 +108,9 @@ export function createApp() {
     // routes
     app.use("/api/v1", generalRouter);
     app.use("/api/v1/accounts", accountsRouter);
-    app.use("/api/v1/sync", syncRouter);
     app.use("/api/v1/extension", extensionRouter);
+    app.use("/api/v1/playnite", playniteRouter);
+    app.use("/api/v1/steam", steamRouter);
 
     // 404 + error handler
     app.use(notFoundHandler());

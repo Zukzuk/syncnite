@@ -7,6 +7,10 @@ import { COLLECTIONS, DB_ROOT, MEDIA_ROOT } from "../constants";
 import { rootLog } from "../logger";
 import { SyncService } from "../services/SyncService";
 
+// https://steamapi.xpaw.me/
+// https://api.steampowered.com/IWishlistService/GetWishlist/v1/
+// https://store.steampowered.com/api/appdetails?appids=
+
 type ClientManifest = {
     // per collection → list of ids known client-side
     // { "games": ["id1","id2",...], ... }
@@ -25,7 +29,7 @@ type DeltaManifest = {
     toDelete: Record<string, string[]>;
 };
 
-const log = rootLog.child("route:sync2");
+const log = rootLog.child("route:playnite");
 const router = express.Router();
 const syncService = new SyncService();
 const mediaUpload = multer({ storage: multer.memoryStorage() });
@@ -96,6 +100,10 @@ function sameJson(a: any, b: any): boolean {
     try { return JSON.stringify(a) === JSON.stringify(b); } catch { return false; }
 }
 
+/**
+ * POST /api/v1/playnite/installed
+ * Pushes the list of installed items from the client.
+ */
 router.post("/installed", requireSession, async (req, res) => {
     try {
         const email =
@@ -115,6 +123,10 @@ router.post("/installed", requireSession, async (req, res) => {
     }
 });
 
+/**
+ * POST /api/v1/playnite/snapshot
+ * Pushes a full snapshot from the client.
+ */
 router.post("/snapshot", requireAdminSession, async (req, res) => {
     try {
         const email =
@@ -129,6 +141,11 @@ router.post("/snapshot", requireAdminSession, async (req, res) => {
     }
 });
 
+/**
+ * POST /api/v1/playnite/delta
+ * Calculates the delta between client and server manifests.
+ * Returns lists of IDs to upsert and delete on the server.
+ */
 router.post("/delta", requireAdminSession, async (req, res) => {
     try {
         const body = (req.body ?? {}) as ClientManifest;
@@ -226,6 +243,13 @@ router.post("/delta", requireAdminSession, async (req, res) => {
     }
 });
 
+/**
+ * PUT /api/v1/playnite/media/*
+ * Uploads a media file to the server.
+ * The path after /media/ is used as the relative path under MEDIA_ROOT.
+ * Supports raw application/octet-stream or multipart/form-data.
+ * Optional "x-hash" header can be provided to skip upload if file exists with same hash.
+ */
 router.put(
     "/media/*",
     requireAdminSession,
@@ -286,6 +310,12 @@ router.put(
     }
 );
 
+/**
+ * GET /api/v1/playnite/media/*
+ * Retrieves a media file from the server.
+ * The path after /media/ is used as the relative path under MEDIA_ROOT.
+ * Streams the file with correct headers if found.
+ */
 router.get("/media/*", requireSession, async (req, res) => {
     try {
         const tail = req.params[0] ?? "";
@@ -311,6 +341,10 @@ router.get("/media/*", requireSession, async (req, res) => {
     }
 });
 
+/**
+ * GET /api/v1/playnite/collection/:collection
+ * Returns all entities in the specified collection.
+ */
 router.get("/collection/:collection", requireSession, async (req, res) => {
     try {
         const collection = sanitizeCollection(req.params.collection);
@@ -366,6 +400,11 @@ router.get("/collection/:collection", requireSession, async (req, res) => {
     }
 });
 
+/**
+ * PUT /api/v1/playnite/:collection/:id
+ * Creates or updates an entity in the specified collection.
+ * If the entity already exists and is identical, no action is taken.
+ */
 router.put("/:collection/:id", requireAdminSession, async (req, res) => {
     try {
         const collection = sanitizeCollection(req.params.collection);
@@ -386,6 +425,11 @@ router.put("/:collection/:id", requireAdminSession, async (req, res) => {
     }
 });
 
+/**
+ * DELETE /api/v1/playnite/:collection/:id
+ * Deletes an entity from the specified collection.
+ * If the entity does not exist, no action is taken.
+ */
 router.delete("/:collection/:id", requireAdminSession, async (req, res) => {
     try {
         const collection = sanitizeCollection(req.params.collection);

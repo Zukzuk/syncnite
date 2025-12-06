@@ -15,7 +15,8 @@ type Props = {
 
 export function ItemRow({ item, isOpen }: Props): JSX.Element {
     const { id, isInstalled, iconUrl, title, gameId, year, source, series, link } = item;
-    const [hovered, setHovered] = React.useState(false);
+    const [isHovered, setIsHovered] = React.useState(false);
+    const playniteUrl = `playnite://playnite/${isInstalled ? "start" : "showgame"}/${id}`;
 
     return (
         <Box
@@ -30,10 +31,11 @@ export function ItemRow({ item, isOpen }: Props): JSX.Element {
             <Flex align="center" gap={GRID.gap} style={{ width: GRID.iconSize }}>
                 <Box
                     component="a"
-                    href={`playnite://play/${id}`}
+                    href={playniteUrl}
+                    onMouseEnter={() => setIsHovered(true)}
+                    onMouseLeave={() => setIsHovered(false)}
+                    onClick={(e) => e.stopPropagation()}
                     title={title}
-                    onMouseEnter={() => setHovered(true)}
-                    onMouseLeave={() => setHovered(false)}
                     style={{
                         position: "relative",
                         width: GRID.iconSize,
@@ -49,7 +51,7 @@ export function ItemRow({ item, isOpen }: Props): JSX.Element {
                         style={{
                             position: "absolute",
                             inset: 0,
-                            opacity: hovered ? 0.2 : 1,
+                            opacity: isHovered ? 0.2 : 1,
                             transition: "opacity 140ms ease",
                         }}
                     >
@@ -63,11 +65,10 @@ export function ItemRow({ item, isOpen }: Props): JSX.Element {
                             color: "var(--mantine-primary-color-4)",
                             alignItems: "center",
                             justifyContent: "center",
-                            opacity: hovered ? 1 : 0,
-                            transform: hovered ? "scale(1)" : "scale(0.96)",
+                            opacity: isHovered ? 1 : 0,
+                            transform: isHovered ? "scale(1)" : "scale(0.96)",
                             transition: "opacity 140ms ease, transform 140ms ease",
                         }}
-                        onMouseDown={(e) => e.preventDefault()}
                     >
                         {isInstalled ? (
                             <IconPlayerPlay size={26} stroke={2} />

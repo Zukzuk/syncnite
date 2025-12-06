@@ -22,6 +22,10 @@ async function setConnectedLabel(email: string) {
     }
 }
 
+/**
+ * GET /api/v1/ping
+ * Ping endpoint to check server availability and update admin connection status.
+ */
 router.get("/ping", requireSession, (_req, res) => {
     const APP_VERSION = process.env.APP_VERSION ?? "dev";
     const email = _req.auth?.email;
@@ -31,6 +35,10 @@ router.get("/ping", requireSession, (_req, res) => {
     return res.json({ ok: true, version: `v${APP_VERSION}` });
 });
 
+/**
+ * GET /api/v1/ping/status
+ * Returns the connection status of the admin.
+ */
 router.get("/ping/status", requireSession, (req, res) => {
     const now = Date.now();
     const connected = !!LAST_PING && now - LAST_PING <= PING_CONNECTED_MS;
@@ -42,19 +50,27 @@ router.get("/ping/status", requireSession, (req, res) => {
     });
 });
 
+/**
+ * POST /api/v1/log
+ * Accepts log entries from clients.
+ */
 router.post("/log", async (req, res) => {
   try {
     const count = log.raw(req.body);
     if (!count) return res.status(400).json({ ok: false, error: "invalid payload" });
     
-    log.debug("sync/log accepted", { count });
+    log.debug("log accepted", { count });
     return res.sendStatus(204);
   } catch (e) {
-    log.error("sync/log failed", { err: (e as Error).message });
+    log.error("log failed", { err: (e as Error).message });
     return res.status(400).json({ ok: false, error: "invalid log payload" });
   }
 });
 
+/**
+ * GET /api/v1/sse
+ * Server-Sent Events endpoint for streaming sync progress and logs to clients.
+ */
 router.get("/sse", (req, res) => {
   const sse = createSSE(res);
 
@@ -66,7 +82,7 @@ router.get("/sse", (req, res) => {
   });
 
   // welcome line (optional)
-  sse.log("connected to api/sync/sse");
+  sse.log("connected to api/sse");
 
   // cleanup on disconnect
   req.on("close", () => {

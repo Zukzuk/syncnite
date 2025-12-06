@@ -1,11 +1,11 @@
 import * as React from "react";
 import type { Game, GameLink, GameReleaseDate, Series, Source, Tag } from "../../../types/playnite";
-import { COLLECTIONS, FILE_BASE, FALLBACK_ICON, SOURCE_MAP } from "../../../lib/constants";
+import { PLAYNITE_COLLECTIONS, FILE_BASE, FALLBACK_ICON, SOURCE_MAP } from "../../../lib/constants";
 import { loadDbCollection } from "../../../lib/api";
 import { fetchUser } from "../../../lib/utils";
 import { GameItem, LoadedData } from "../../../types/types";
 import { useLibraryRefresh } from "./useLibraryRefresh";
-import { useLocalInstalled } from "./useLocalInstalled";
+import { useLocalInstalled } from "../../../hooks/useLocalInstalled";
 
 // Get the Playnite Game.Id
 function getPlayniteId(g: Game): string {
@@ -151,36 +151,26 @@ function sourcishLinkFallback(source: string, id: string): string | null {
     switch (s) {
         case "steam":
             return `${SOURCE_MAP.steam.online}/app/${encodeURIComponent(id)}`;
-
         case "gog":
             return `${SOURCE_MAP.gog.online}/game/${encodeURIComponent(id)}`;
-
         case "ubisoft connect":
         case "uplay":
         case "ubisoft":
             return `${SOURCE_MAP["ubisoft connect"].online}/en-us/search?gss-q=${encodeURIComponent(id)}`;
-
         case "ea app":
             return null;
-
         case "battle.net":
             return null;
-
         case "epic":
             return `${SOURCE_MAP.epic.online}/store/en-US/p/${encodeURIComponent(id)}`;
-
         case "xbox":
             return `${SOURCE_MAP.xbox.online}/en-us/Search/Results?q=${encodeURIComponent(id)}`;
-
         case "humble":
             return `${SOURCE_MAP.humble.online}/store/search?search=${encodeURIComponent(id)}`;
-
         case "nintendo":
             return `${SOURCE_MAP.nintendo.online}/us/search/?q=${encodeURIComponent(id)}`;
-
         case "microsoft store":
             return `${SOURCE_MAP["microsoft store"].online}/search?query=${encodeURIComponent(id)}`;
-
         default:
             return null;
     }
@@ -287,10 +277,10 @@ function getBgUrl(bg: string | null | undefined): string | null {
 // Load and process the full library data
 async function loadLibrary(): Promise<LoadedData> {
     // load raw data
-    const games = await loadDbCollection<Game>(COLLECTIONS.games);
-    const tags = await loadDbCollection<Tag>(COLLECTIONS.tags);
-    const sources = await loadDbCollection<Source>(COLLECTIONS.sources);
-    const series = await loadDbCollection<Series>(COLLECTIONS.series);
+    const games = await loadDbCollection<Game>(PLAYNITE_COLLECTIONS.games);
+    const tags = await loadDbCollection<Tag>(PLAYNITE_COLLECTIONS.tags);
+    const sources = await loadDbCollection<Source>(PLAYNITE_COLLECTIONS.sources);
+    const series = await loadDbCollection<Series>(PLAYNITE_COLLECTIONS.series);
 
     // index maps (Id -> Name)
     const tagById = new Map<string, string>(tags.map((t) => [t.Id, t.Name]));

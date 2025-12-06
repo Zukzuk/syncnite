@@ -1,7 +1,7 @@
 import { promises as fs } from "node:fs";
 import { join } from "node:path";
 import { rootLog } from "../logger";
-import { DATA_DIR } from "../constants";
+import { DATA_DIR, INSTALLED_ROOT } from "../constants";
 
 const log = rootLog.child("syncService");
 
@@ -79,9 +79,8 @@ export class SyncService {
 
         // sanitize email for filename
         const safeEmail = email.trim().toLowerCase().replace(/[\\/:*?"<>|]/g, "_");
-        const outDir = join(DATA_DIR, "installed");
-        await fs.mkdir(outDir, { recursive: true });
-        const outPath = join(outDir, `${safeEmail}.installed.json`);
+        await fs.mkdir(INSTALLED_ROOT, { recursive: true });
+        const outPath = join(INSTALLED_ROOT, `${safeEmail}.installed.json`);
 
         // Write to disk
         log.debug(`Writing Installed list to ${outPath}`);

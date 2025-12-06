@@ -133,3 +133,19 @@ export interface ILogBus {
     get(): string[];
     subscribe(fn: LogListener): () => void;
 }
+
+export type SteamStatusResponse = {
+  ok: boolean;
+  connected: boolean;
+  steam?: {
+    webApiKey?: string; // masked as "***" from backend
+    steamId?: string | null;
+    linkedAt?: string | null;
+  };
+};
+
+export type SteamWishlistResponse = {
+  ok: boolean;
+  lastSynced: string | null;
+  items: any[]; // raw items for now; can type later if you want
+};

@@ -2,7 +2,7 @@ tags:
   - name: App
   - name: Extension
   - name: Accounts
-  - name: Sync
+  - name: Playnite
 
 components:
   securitySchemes:
@@ -86,6 +86,96 @@ components:
     EntityBody:
       type: object
       additionalProperties: true
+    SteamProfile:
+      type: object
+      description: Basic profile data returned by Steam OpenID helper
+      properties:
+        personaname:
+          type: string
+          nullable: true
+        avatar:
+          type: string
+          format: uri
+          nullable: true
+        avatarfull:
+          type: string
+          format: uri
+          nullable: true
+        profileurl:
+          type: string
+          format: uri
+          nullable: true
+    SteamConnection:
+      type: object
+      description: Steam link info stored on the Syncnite account
+      properties:
+        steamId:
+          type: string
+          description: SteamID64
+        linkedAt:
+          type: string
+          format: date-time
+          description: When this Steam account was linked
+    SteamWishlistItemDetails:
+      type: object
+      description: Hydrated store details for a Steam app
+      properties:
+        appid:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+          nullable: true
+        headerImage:
+          type: string
+          format: uri
+          nullable: true
+        price:
+          type: object
+          nullable: true
+          properties:
+            currency: { type: string }
+            initial:
+              type: integer
+              description: Price in minor units (e.g. cents)
+            final:
+              type: integer
+              description: Discounted price in minor units (e.g. cents)
+            discountPercent:
+              type: integer
+        releaseDate:
+          type: object
+          nullable: true
+          properties:
+            date:
+              type: string
+            comingSoon:
+              type: boolean
+    SteamWishlistItem:
+      type: object
+      description: Wishlist entry with optional hydrated game details
+      properties:
+        appid:
+          type: integer
+        priority:
+          type: integer
+        dateAdded:
+          type: string
+          format: date-time
+        details:
+          $ref: "#/components/schemas/SteamWishlistItemDetails"
+    SteamWishlistSnapshot:
+      type: object
+      description: Last synced wishlist snapshot for an account
+      properties:
+        lastSynced:
+          type: string
+          format: date-time
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/SteamWishlistItem"
 
 paths:
 
@@ -409,11 +499,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-# Sync endpoints
+# Playnite endpoints
 
-  /sync/installed:
+  /playnite/installed:
     post:
-      tags: [Sync]
+      tags: [Playnite]
       summary: Push installed game IDs (minimal)
       security:
         - XAuthEmail: []
@@ -448,9 +538,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /sync/delta:
+  /playnite/delta:
     post:
-      tags: [Sync]
+      tags: [Playnite]
       summary: Compute server delta
       description: >
         Compute the delta between client-known ids and server state, optionally
@@ -491,9 +581,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /sync/snapshot:
+  /playnite/snapshot:
     post:
-      tags: [Sync]
+      tags: [Playnite]
       summary: Push full snapshot
       description: >
         Push a full snapshot object for the current user. The server stores it
@@ -537,9 +627,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /sync/collection/{collection}:
+  /playnite/collection/{collection}:
     get:
-      tags: [Sync]
+      tags: [Playnite]
       summary: List all entities in a collection
       description: >
         Returns all JSON rows for the given collection from the server-side
@@ -591,7 +681,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /sync/{collection}/{id}:
+  /playnite/{collection}/{id}:
     parameters:
       - name: collection
         in: path
@@ -620,7 +710,7 @@ paths:
           type: string
 
     put:
-      tags: [Sync]
+      tags: [Playnite]
       summary: Upsert entity (idempotent)
       security:
         - XAuthEmail: []
@@ -677,7 +767,7 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
     delete:
-      tags: [Sync]
+      tags: [Playnite]
       summary: Delete entity (idempotent)
       security:
         - XAuthEmail: []
@@ -705,7 +795,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /sync/media/{path}:
+  /playnite/media/{path}:
     parameters:
       - name: path
         in: path
@@ -716,7 +806,7 @@ paths:
             Relative path under the media root (libraryfiles). Encode slashes if
             tooling cannot send wildcard segments (e.g. `%2F`).
     get:
-      tags: [Sync]
+      tags: [Playnite]
       summary: Download media (binary)
       description: >
         Download a media file from the libraryfiles tree. The `path` is the
@@ -759,7 +849,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
     put:
-      tags: [Sync]
+      tags: [Playnite]
       summary: Upload media (binary)
       description: >
         Upload a media file into the libraryfiles tree. **Note:** encode slashes in
@@ -821,3 +911,226 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+
+# Steam endpoints
+
+  /steam:
+    get:
+      tags: [Steam]
+      summary: Get Steam link status for current account
+      security:
+        - XAuthEmail: []
+          XAuthPassword: []
+          XClientId: []
+      responses:
+        "200":
+          description: Steam link status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  connected:
+                    type: boolean
+                  steam:
+                    allOf:
+                      - $ref: "#/components/schemas/SteamConnection"
+                    nullable: true
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /steam/link:
+    post:
+      tags: [Steam]
+      summary: Link a Steam account to the current Syncnite account
+      description: >
+        Links the given SteamID64 to the currently authenticated Syncnite
+        account. Typically called after a successful /steam/auth/callback.
+      security:
+        - XAuthEmail: []
+          XAuthPassword: []
+          XClientId: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                steamId:
+                  type: string
+                  description: SteamID64 obtained from /steam/auth/callback
+              required: [steamId]
+      responses:
+        "200":
+          description: Steam account linked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  steam:
+                    $ref: "#/components/schemas/SteamConnection"
+        "400":
+          description: Missing or invalid SteamID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Failed to persist Steam connection
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /steam/auth:
+    get:
+      tags: [Steam]
+      summary: Start Steam login (OpenID)
+      description: >
+        Redirects the browser to Steam's OpenID login page. This endpoint does
+        not require Syncnite authentication and is typically called by the web
+        app to start the "Sign in through Steam" flow.
+      responses:
+        "302":
+          description: Redirect to Steam OpenID login
+        "500":
+          description: Failed to construct redirect
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /steam/auth/callback:
+    get:
+      tags: [Steam]
+      summary: Steam OpenID callback
+      description: >
+        Callback endpoint for Steam OpenID. Steam redirects the user here after
+        login. Returns the SteamID64 and basic profile information.
+      responses:
+        "200":
+          description: Authenticated Steam user info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  steamId:
+                    type: string
+                    description: SteamID64 of the authenticated user
+                  profile:
+                    $ref: "#/components/schemas/SteamProfile"
+        "401":
+          description: OpenID validation failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /steam/wishlist:
+    get:
+      tags: [Steam]
+      summary: Get last synced Steam wishlist snapshot
+      description: >
+        Returns the last synced Steam wishlist snapshot for the current
+        account, loaded from the per-account `/steam/<email>.<role>.json` file.
+      security:
+        - XAuthEmail: []
+          XAuthPassword: []
+          XClientId: []
+      responses:
+        "200":
+          description: Wishlist snapshot
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  lastSynced:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SteamWishlistItem"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /steam/wishlist/sync:
+    post:
+      tags: [Steam]
+      summary: Sync Steam wishlist from Steam into Syncnite storage
+      description: >
+        Fetches the wishlist for the linked Steam account via the Steam Web API
+        and stores a snapshot on the server under a per-account steam file.
+      security:
+        - XAuthEmail: []
+          XAuthPassword: []
+          XClientId: []
+      responses:
+        "200":
+          description: Wishlist synced and snapshot stored
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  count:
+                    type: integer
+                    description: Number of wishlist entries in the snapshot
+                  lastSynced:
+                    type: string
+                    format: date-time
+        "400":
+          description: Steam not linked or Steam API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Failed to persist snapshot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+

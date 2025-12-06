@@ -21,8 +21,13 @@ export const API_ENDPOINTS = {
   // Backup management
   BACKUP_UPLOAD: `${API_BASE}/backup/upload`,
   ZIP_PROCESS: `${API_BASE}/backup/process`,
-  // Sync API
-  SYNC_COLLECTION: `${API_BASE}/sync/collection/`,
+  // Playnite API
+  PLAYNITE_COLLECTION: `${API_BASE}/playnite/collection/`,
+  // Steam API
+  STEAM_STATUS: "/api/v1/steam",
+  STEAM_WISHLIST: "/api/v1/steam/wishlist",
+  STEAM_WISHLIST_SYNC: "/api/v1/steam/wishlist/sync",
+  STEAM_AUTH_START: "/api/v1/steam/auth/start",
 }
 
 export const GRID = {
@@ -107,7 +112,7 @@ export const COOKIE_DEFAULTS = {
   sortDir: "asc" as SortDir,
 };
 
-export const COLLECTIONS = {
+export const PLAYNITE_COLLECTIONS = {
   games: "games",
   companies: "companies",
   tags: "tags",
