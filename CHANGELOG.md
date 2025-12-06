@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.31.1](https://github.com/Zukzuk/syncnite/compare/v1.31.0...v1.31.1) (2025-12-06)
+
+
+### Bug Fixes
+
+* moved to .env file for needed env vars so we can fix the steam prd redirect ([d3657f5](https://github.com/Zukzuk/syncnite/commit/d3657f5e25486f17a67d3dabcd002ede157e2c54))
+
 ## [1.31.0](https://github.com/Zukzuk/syncnite/compare/v1.30.9...v1.31.0) (2025-12-06)
 
 
