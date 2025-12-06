@@ -185,10 +185,20 @@ paths:
     get:
       tags: [App]
       summary: Ping API
+      description: >
+        Ping endpoint to check server availability and update admin connection status.
+        The extension should send its version in the `x-ext-version` header.
       security:
         - XAuthEmail: []
           XAuthPassword: []
           XClientId: []
+      parameters:
+        - in: header
+          name: x-ext-version
+          schema:
+            type: string
+          required: false
+          description: Extension version, e.g. "1.2.3" or "v1.2.3".
       responses:
         "200":
           description: OK
@@ -197,8 +207,10 @@ paths:
               schema:
                 type: object
                 properties:
-                  ok: { type: boolean }
-                  version: { type: string }
+                  ok:
+                    type: boolean
+                  version:
+                    type: string
         "401":
           description: Unauthorized
           content:
@@ -210,6 +222,8 @@ paths:
     get:
       tags: [App]
       summary: Extension ping status
+      description: >
+        Returns the connection status of the admin and extension version info.
       security:
         - XAuthEmail: []
           XAuthPassword: []
@@ -222,16 +236,34 @@ paths:
               schema:
                 type: object
                 properties:
-                  ok: { type: boolean }
-                  connected: { type: boolean }
+                  ok:
+                    type: boolean
+                  connected:
+                    type: boolean
+                  extVersion:
+                    type: string
+                    nullable: true
+                    description: Last seen extension version, if any.
+                  versionMismatch:
+                    type: boolean
+                    description: >
+                      True if both app and extension versions are known and differ.
                   lastPingAt:
                     type: string
                     format: date-time
                     nullable: true
         "401":
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "403":
           description: Forbidden (session required)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         
   /sse:
     get:

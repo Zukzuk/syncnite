@@ -53,6 +53,7 @@ export const GridCard = React.memo(function GridCard({
 
     const handleToggle = React.useCallback(() => {
         onToggleItem(item.id, index);
+        setBgIsHovered(false);
     }, [onToggleItem, item.id, index]);
 
     const handleAssociated = React.useCallback(
