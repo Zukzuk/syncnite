@@ -1,21 +1,7 @@
 import { promises as fs } from "node:fs";
 import { join } from "node:path";
-import { ACCOUNTS_ROOT, ADMIN_SUFFIX, STEAM_ROOT, USER_SUFFIX } from "../constants";
-import { SteamWishlistSnapshot } from "./SteamService";
-
-export type SteamConnection = {
-    steamId: string;
-    linkedAt: string;
-};
-
-export type Account = {
-    email: string;
-    password: string;
-    clientId?: string;
-    steam?: SteamConnection;
-};
-
-export type Role = "admin" | "user" | "unknown";
+import { ACCOUNTS_ROOT, ADMIN_SUFFIX, USER_SUFFIX } from "../constants";
+import { Account, Role, SteamConnection } from "../types/types";
 
 // Ensure the accounts directory exists
 async function ensureDir(dir: string) {
@@ -24,19 +10,27 @@ async function ensureDir(dir: string) {
 
 // List all account files
 async function listAllAccounts(): Promise<string[]> {
-    try { return (await fs.readdir(ACCOUNTS_ROOT)); } catch { return []; }
+    try {
+        return await fs.readdir(ACCOUNTS_ROOT);
+    } catch {
+        return [];
+    }
 }
 
 // List all admin account files
 async function listAdmins(): Promise<string[]> {
     const files = await listAllAccounts();
-    return files.filter(f => f.endsWith(ADMIN_SUFFIX));
+    return files.filter((f) => f.endsWith(ADMIN_SUFFIX));
 }
 
 // Get the filename for an account by email
 async function getFilenameByEmail(email: string): Promise<string | null> {
     const allAccounts = await listAllAccounts();
-    const fileName = allAccounts.find(f => f.startsWith(email + ".") && (f.endsWith(ADMIN_SUFFIX) || f.endsWith(USER_SUFFIX)));
+    const fileName = allAccounts.find(
+        (f) =>
+            f.startsWith(email + ".") &&
+            (f.endsWith(ADMIN_SUFFIX) || f.endsWith(USER_SUFFIX)),
+    );
     return fileName || null;
 }
 
@@ -61,7 +55,9 @@ async function readAccount(email: string): Promise<Account | null> {
 }
 
 // Update an account
-async function updateAccount(acc: Account): Promise<{ ok: true } | { ok: false; error: string }> {
+async function updateAccount(
+    acc: Account,
+): Promise<{ ok: true } | { ok: false; error: string }> {
     const fileName = await getFilenameByEmail(acc.email);
     if (!fileName) return { ok: false, error: "not_found" };
 
@@ -96,22 +92,11 @@ async function writeAdmin(acc: Account) {
     );
 }
 
-// Write Steam wishlist snapshot to file
-async function writeSteamWishlist(email: string, snapshot: any) {
-    await ensureDir(STEAM_ROOT);
-    await fs.writeFile(
-        join(STEAM_ROOT, `${email}.steam.wishlist.json`),
-        JSON.stringify(snapshot, null, 2),
-        "utf8"
-    );
-}
-
-/** 
+/**
  * Service for managing user and admin accounts.
  * Provides methods for login, registration, admin binding, and role retrieval.
  */
 export const AccountsService = {
-
     /**
      * Logs in a user by verifying email and password.
      * @param email
@@ -130,7 +115,10 @@ export const AccountsService = {
      * @param password
      * @return { ok: true } on success, { ok: false, error: string } on failure
      */
-    async registerUser(email: string, password: string): Promise<{ ok: true } | { ok: false; error: string }> {
+    async registerUser(
+        email: string,
+        password: string,
+    ): Promise<{ ok: true } | { ok: false; error: string }> {
         await ensureDir(ACCOUNTS_ROOT);
         // require that an admin already exists
         const hasAdmin = await this.hasAdmin();
@@ -143,13 +131,16 @@ export const AccountsService = {
         return { ok: true };
     },
 
-    /** 
+    /**
      * Registers an admin account. Fails if an admin already exists.
      * @param email
      * @param password
      * @return { ok: true } on success, { ok: false, error: string } on failure
      */
-    async registerAdmin(email: string, password: string): Promise<{ ok: true } | { ok: false; error: string }> {
+    async registerAdmin(
+        email: string,
+        password: string,
+    ): Promise<{ ok: true } | { ok: false; error: string }> {
         await ensureDir(ACCOUNTS_ROOT);
         // check if an admin already exists
         const existing = await this.hasAdmin();
@@ -161,12 +152,6 @@ export const AccountsService = {
 
     /**
      * Bind (or validate) the admin's clientId.
-     * - First call with a clientId will *store* it on the admin account.
-     * - Subsequent calls with the same clientId are OK.
-     * - Calls with a different clientId return { ok: false, error: "admin_locked_elsewhere" }.
-     * @param email
-     * @param clientId
-     * @return { ok: true } on success, { ok: false, error: string } on failure
      */
     async bindAdminClient(
         email: string,
@@ -202,8 +187,6 @@ export const AccountsService = {
 
     /**
      * Removes an admin account. Fails if the account is not an admin.
-     * @param email
-     * @return { ok: true } on success, { ok: false, error: string } on failure
      */
     async removeAdmin(email: string): Promise<{ ok: true } | { ok: false; error: string }> {
         const fileName = await getFilenameByEmail(email);
@@ -221,17 +204,14 @@ export const AccountsService = {
 
     /**
      * Checks if at least one admin account exists.
-     * @return true if an admin exists, false otherwise
      */
     async hasAdmin(): Promise<boolean> {
         const admins = await listAdmins();
-        return admins.length ? true : false
+        return admins.length ? true : false;
     },
 
     /**
      * Gets an account by email.
-     * @param email
-     * @return Account or null if not found
      */
     async getAccount(email: string): Promise<Account | null> {
         return await readAccount(email);
@@ -239,8 +219,6 @@ export const AccountsService = {
 
     /**
      * Gets the role of a user by email.
-     * @param email
-     * @return "admin", "user", or "unknown"
      */
     async getRole(email: string): Promise<Role> {
         const fileName = await getFilenameByEmail(email);
@@ -252,9 +230,7 @@ export const AccountsService = {
 
     /**
      * Sets or updates the Steam connection for an account.
-     * @param email
-     * @param steam
-     * @return { ok: true } on success, { ok: false, error: string } on failure
+     * (Steam link metadata lives on the account.)
      */
     async setSteamConnection(
         email: string,
@@ -264,67 +240,5 @@ export const AccountsService = {
         if (!acc) return { ok: false, error: "not_found" };
         acc.steam = steam;
         return await updateAccount(acc);
-    },
-
-    /**
-     * Stores a Steam wishlist snapshot for an account.
-     * @param email
-     * @param snapshot
-     * @return { ok: true } on success, { ok: false, error: string } on failure
-     */
-    async setSteamWishlistFile(
-        email: string,
-        snapshot: SteamWishlistSnapshot,
-    ): Promise<{ ok: true } | { ok: false; error: string }> {
-        const fileName = await getFilenameByEmail(email);
-        if (!fileName) return { ok: false, error: "not_found" };
-
-        try {
-            await writeSteamWishlist(email, snapshot);
-            return { ok: true };
-        } catch {
-            return { ok: false, error: "io_error" };
-        }
-    },
-
-    /**
-     * Appends a single wishlist entry to the snapshot file for an account.
-     * Updates lastSynced on each append.
-     * @param email
-     * @param entry
-     * @return { ok: true } on success, { ok: false, error: string } on failure
-     */
-    async appendSteamWishlistItem(
-        email: string,
-        entry: any,
-    ): Promise<{ ok: true } | { ok: false; error: string }> {
-        const existing = (await this.getSteamWishlistFile(email)) as SteamWishlistSnapshot | null;
-
-        const now = new Date().toISOString();
-        const snapshot: SteamWishlistSnapshot = {
-            lastSynced: existing?.lastSynced ?? now,
-            items: Array.isArray(existing?.items) ? [...existing!.items, entry] : [entry],
-        };
-
-        return this.setSteamWishlistFile(email, snapshot);
-    },
-
-    /**
-     * Gets the Steam wishlist snapshot for an account.
-     * @param email
-     * @return SteamWishlistSnapshot or null if not found
-     */
-    async getSteamWishlistFile(email: string): Promise<any | null> {
-        const fileName = await getFilenameByEmail(email);
-        if (!fileName) return null;
-
-        const snapshotFile = join(STEAM_ROOT, `${email}.steam.wishlist.json`);
-
-        try {
-            const raw = await fs.readFile(snapshotFile, "utf8");
-            return JSON.parse(raw);
-        } catch {
-            return null;
-        }
     },
 };

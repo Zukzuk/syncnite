@@ -1,16 +1,15 @@
 import { LOG_LEVEL } from "./constants";
 import { SyncBus } from "./services/EventBusService";
+import { LogLevel } from "./types/types";
 
-type Level = "error" | "warn" | "info" | "debug" | "trace";
-
-const levelOrder: Record<Level, number> = { error: 0, warn: 1, info: 2, debug: 3, trace: 4 };
-const validLevels: readonly Level[] = ["error", "warn", "info", "debug", "trace"] as const;
+const levelOrder: Record<LogLevel, number> = { error: 0, warn: 1, info: 2, debug: 3, trace: 4 };
+const validLevels: readonly LogLevel[] = ["error", "warn", "info", "debug", "trace"] as const;
 const APP_VERSION = process.env.APP_VERSION ?? "dev";
-const env = (process.env.LOG_LEVEL ?? LOG_LEVEL).toLowerCase() as Level;
+const env = (process.env.LOG_LEVEL ?? LOG_LEVEL).toLowerCase() as LogLevel;
 const threshold: number = levelOrder[env] ?? levelOrder.info;
 
 export type Logger = {
-    level: Level;
+    level: LogLevel;
     // INTERNAL logging (adds [api] + scopes)
     error: (...a: any[]) => void;
     warn: (...a: any[]) => void;
@@ -27,13 +26,13 @@ export type Logger = {
     child: (scope: string) => Logger;
 };
 
-function toLevel(raw: unknown): Level {
+function toLevel(raw: unknown): LogLevel {
     const s = String(raw ?? "info").toLowerCase();
-    return (validLevels as readonly string[]).includes(s as Level) ? (s as Level) : "info";
+    return (validLevels as readonly string[]).includes(s as LogLevel) ? (s as LogLevel) : "info";
 }
 
 // helper to select console method based on level
-function consoleFor(level: Level) {
+function consoleFor(level: LogLevel) {
     return level === "error" ? console.error : level === "warn" ? console.warn : console.log;
 }
 
@@ -83,7 +82,7 @@ function raw(payload: unknown): number {
 }
 
 // internal emit: adds [api][version][level][scopes], enforce threshold, single console sink.
-function emitInternal(scopes: string[], level: Level, parts?: any[]) {
+function emitInternal(scopes: string[], level: LogLevel, parts?: any[]) {
     if (levelOrder[level] > threshold) return;
 
     const prefix = `[api][v${APP_VERSION}][${level.toUpperCase()}]`;
@@ -107,7 +106,7 @@ function emitInternal(scopes: string[], level: Level, parts?: any[]) {
 }
 
 // raw emit: sanitize payload, KEEP sender's prefix/line if provided, enforce threshold, single console sink.
-function emitRaw(level: Level, line: string, meta?: Record<string, unknown>) {
+function emitRaw(level: LogLevel, line: string, meta?: Record<string, unknown>) {
     if (levelOrder[level] > threshold) return;
 
     if (threshold >= levelOrder.debug && meta && Object.keys(meta).length > 0) {

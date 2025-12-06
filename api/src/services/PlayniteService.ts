@@ -1,31 +1,111 @@
 import { promises as fs } from "node:fs";
-import { join } from "node:path";
+import { join, dirname, resolve, sep } from "node:path";
+import { createHash } from "node:crypto";
 import { rootLog } from "../logger";
-import { DATA_DIR, INSTALLED_ROOT } from "../constants";
+import {
+    DATA_DIR,
+    INSTALLED_ROOT,
+    DB_ROOT,
+    MEDIA_ROOT,
+    COLLECTIONS,
+} from "../constants";
+import { PlayniteClientManifest, PlayniteDeltaManifest, PlayniteError } from "../types/types";
 
 const log = rootLog.child("playniteService");
 
+async function ensureDir(p: string) {
+    await fs.mkdir(p, { recursive: true });
+}
+
+function sanitizeId(id: string): string {
+    const trimmed = String(id ?? "").trim();
+    if (!trimmed) throw new PlayniteError(400, "missing_id", "missing id");
+    const safe = trimmed.replace(/[^A-Za-z0-9_\-.]/g, "");
+    if (!safe) throw new PlayniteError(400, "invalid_id", "invalid id");
+    return safe;
+}
+
+function sanitizeCollection(col: string): string {
+    const c = String(col ?? "").trim().toLowerCase();
+    if (!COLLECTIONS.has(c)) {
+        throw new PlayniteError(
+            400,
+            "unknown_collection",
+            `unknown collection: ${c}`
+        );
+    }
+    return c;
+}
+
+function resolveDocPath(collection: string, id: string) {
+    return join(DB_ROOT, collection, `${id}.json`);
+}
+
+async function readJsonIfExists(p: string): Promise<any | null> {
+    try {
+        const buf = await fs.readFile(p, "utf8");
+        return JSON.parse(buf);
+    } catch (e: any) {
+        if (e?.code === "ENOENT") return null;
+        throw e;
+    }
+}
+
+async function writeJson(p: string, obj: any) {
+    await ensureDir(dirname(p));
+    const data = JSON.stringify(obj, null, 2);
+    await fs.writeFile(p, data, "utf8");
+}
+
+function safeJoinMedia(root: string, urlTail: string) {
+    const rel = urlTail.replace(/^\/+/, "");
+    const abs = resolve(root, rel);
+    if (!abs.startsWith(resolve(root) + sep)) {
+        throw new PlayniteError(400, "invalid_media_path", "invalid media path");
+    }
+    return abs;
+}
+
+async function fileStatOrNull(p: string) {
+    try {
+        return await fs.stat(p);
+    } catch {
+        return null;
+    }
+}
+
+function sameJson(a: any, b: any): boolean {
+    try {
+        return JSON.stringify(a) === JSON.stringify(b);
+    } catch {
+        return false;
+    }
+}
+
+// ---------- service ----------
+
 export class PlayniteService {
-    
     /**
      * Pushes a snapshot object to the server.
-     * @param snapshot - snapshot object
-     * @param email - user's email
      */
     async pushSnapshot(snapshot: unknown, email: string): Promise<void> {
         if (!snapshot || typeof snapshot !== "object") {
             log.warn("Invalid snapshot payload, expected snapshot object");
-            throw new Error("Body must be a snapshot object");
+            throw new PlayniteError(
+                400,
+                "invalid_snapshot",
+                "Body must be a snapshot object"
+            );
         }
         if (!email) {
-            throw new Error("missing email");
+            throw new PlayniteError(400, "missing_email", "missing email");
         }
 
-        const safeEmail = email.trim().toLowerCase().replace(/[\\/:*?"<>|]/g, "_") || "unknown";
+        const safeEmail =
+            email.trim().toLowerCase().replace(/[\\/:*?"<>|]/g, "_") || "unknown";
         const now = new Date().toISOString();
         const s: any = snapshot;
 
-        // Normalise updatedAt (extension may send UpdatedAt or updatedAt)
         const updatedAt: string =
             typeof s?.updatedAt === "string"
                 ? s.updatedAt
@@ -34,12 +114,12 @@ export class PlayniteService {
                     : now;
 
         const outDir = join(DATA_DIR, "snapshot");
-        await fs.mkdir(outDir, { recursive: true });
+        await ensureDir(outDir);
         const outPath = join(outDir, "snapshot.json");
 
         const out = {
             ...s,
-            updatedAt, // always provide a lowercase key for the web UI
+            updatedAt,
             source: s?.source ?? "playnite-extension",
             pushedBy: safeEmail,
             serverUpdatedAt: now,
@@ -51,42 +131,286 @@ export class PlayniteService {
 
     /**
      * Pushes installed game IDs to the server.
-     * @param installed - array of installed game IDs
-     * @param email - user's email
-     * @returns number of successfully pushed IDs 
      */
     async pushInstalled(installed: unknown, email: string): Promise<number> {
         if (!Array.isArray(installed)) {
             log.warn("Invalid payload, expected { installed: string[] }");
-            throw new Error("Body must be { installed: string[] }");
+            throw new PlayniteError(
+                400,
+                "invalid_installed_payload",
+                "Body must be { installed: string[] }"
+            );
         }
         if (!email) {
-            throw new Error("missing email");
+            throw new PlayniteError(400, "missing_email", "missing email");
         }
 
         log.info(`Received ${installed.length} installed entries`);
 
-        // Normalize & dedupe
         const uniq = Array.from(new Set(installed.map((s: any) => String(s))));
         log.info(`Normalized and deduped → ${uniq.length} unique entries`);
 
-        // Prepare output object
         const out = {
             installed: uniq,
             updatedAt: new Date().toISOString(),
             source: "playnite-extension",
         };
 
-        // sanitize email for filename
-        const safeEmail = email.trim().toLowerCase().replace(/[\\/:*?"<>|]/g, "_");
-        await fs.mkdir(INSTALLED_ROOT, { recursive: true });
+        const safeEmail = email
+            .trim()
+            .toLowerCase()
+            .replace(/[\\/:*?"<>|]/g, "_");
+        await ensureDir(INSTALLED_ROOT);
         const outPath = join(INSTALLED_ROOT, `${safeEmail}.installed.json`);
 
-        // Write to disk
         log.debug(`Writing Installed list to ${outPath}`);
         await fs.writeFile(outPath, JSON.stringify(out, null, 2), "utf8");
 
         log.info(`Installed list written`, { outPath, count: uniq.length });
         return uniq.length;
+    }
+
+    /**
+     * Computes delta between client and server manifests.
+     */
+    async computeDelta(body: PlayniteClientManifest): Promise<PlayniteDeltaManifest> {
+        const incoming = body.json ?? {};
+        const versions = body.versions ?? {};
+
+        log.info(
+            `incoming delta request for ${Object.keys(incoming).length} collections`
+        );
+        log.debug("delta request", { collections: Object.keys(incoming) });
+
+        const toUpsert: PlayniteDeltaManifest["toUpsert"] = {};
+        const toDelete: PlayniteDeltaManifest["toDelete"] = {};
+
+        for (const key of Object.keys(incoming)) {
+            const collection = sanitizeCollection(key);
+            const idsFromClient = new Set(
+                (incoming[collection] ?? []).map(sanitizeId)
+            );
+
+            const dir = join(DB_ROOT, collection);
+            let serverIds: string[] = [];
+            try {
+                const entries = await fs.readdir(dir, { withFileTypes: true });
+                serverIds = entries
+                    .filter(
+                        (e) =>
+                            e.isFile() &&
+                            e.name.toLowerCase().endsWith(".json")
+                    )
+                    .map((e) => e.name.replace(/\.json$/i, ""));
+            } catch {
+                // dir may not exist yet
+            }
+
+            const serverSet = new Set(serverIds);
+            const versionsForCollection = versions[collection] ?? {};
+
+            const upserts: string[] = [];
+
+            for (const id of idsFromClient) {
+                log.debug(`checking upsert for collection=${collection} id=${id}`);
+
+                let needsUpsert = false;
+
+                if (!serverSet.has(id)) {
+                    needsUpsert = true;
+                } else {
+                    const clientVer = versionsForCollection[id];
+
+                    if (typeof clientVer === "string" && clientVer.length > 0) {
+                        try {
+                            const p = resolveDocPath(collection, id);
+                            const existing = await readJsonIfExists(p);
+                            const serverVer =
+                                existing &&
+                                    typeof existing.MetadataVersion === "string"
+                                    ? existing.MetadataVersion
+                                    : undefined;
+
+                            if (!serverVer || serverVer !== clientVer) {
+                                needsUpsert = true;
+                            }
+                        } catch (e: any) {
+                            log.warn("delta: version compare failed", {
+                                collection,
+                                id,
+                                err: String(e?.message ?? e),
+                            });
+                            // stay conservative: don't upsert on error
+                        }
+                    }
+                }
+
+                if (needsUpsert) upserts.push(id);
+            }
+
+            const deletes: string[] = [];
+            for (const id of serverSet) {
+                log.debug(`checking delete for id=${id}`);
+                if (!idsFromClient.has(id)) deletes.push(id);
+            }
+
+            log.info(
+                `delta for collection=${collection}: toUpsert=${upserts.length}, toDelete=${deletes.length}`
+            );
+
+            if (upserts.length) toUpsert[collection] = upserts;
+            if (deletes.length) toDelete[collection] = deletes;
+        }
+
+        return { toUpsert, toDelete };
+    }
+
+    /**
+     * Save / update media file.
+     */
+    async putMedia(
+        tail: string,
+        buffer: Buffer,
+        wantHash?: string
+    ): Promise<{ status: number; bytes?: number }> {
+        const abs = safeJoinMedia(MEDIA_ROOT, tail);
+        const st = await fileStatOrNull(abs);
+
+        if (st && st.size === buffer.length) {
+            if (!wantHash) {
+                return { status: 204 };
+            }
+            const existing = await fs.readFile(abs);
+            const got = createHash("sha1").update(existing).digest("hex");
+            if (got === wantHash) {
+                return { status: 204 };
+            }
+        }
+
+        await ensureDir(dirname(abs));
+        await fs.writeFile(abs, buffer);
+        log.debug(`put media for ${tail}: ${buffer.length} bytes`);
+
+        return { status: st ? 200 : 201, bytes: buffer.length };
+    }
+
+    /**
+     * Resolve a media path and check it exists.
+     */
+    async getMediaPath(tail: string): Promise<string> {
+        const abs = safeJoinMedia(MEDIA_ROOT, tail);
+        const st = await fileStatOrNull(abs);
+        if (!st || !st.isFile()) {
+            throw new PlayniteError(404, "not_found", "not_found");
+        }
+        return abs;
+    }
+
+    /**
+     * Return all entities in a collection (flattened).
+     */
+    async listCollection(collectionRaw: string): Promise<any[]> {
+        const collection = sanitizeCollection(collectionRaw);
+        const dir = join(DB_ROOT, collection);
+
+        let rows: any[] = [];
+
+        try {
+            const entries = await fs.readdir(dir, { withFileTypes: true });
+
+            const jsonFiles = entries.filter(
+                (e) =>
+                    e.isFile() &&
+                    e.name.toLowerCase().endsWith(".json")
+            );
+
+            const all = await Promise.all(
+                jsonFiles.map(async (e) => {
+                    const p = join(dir, e.name);
+                    const json = await readJsonIfExists(p);
+                    if (!json) return [];
+                    return Array.isArray(json) ? json : [json];
+                })
+            );
+
+            rows = all.flat();
+        } catch (e: any) {
+            if (e?.code === "ENOENT") {
+                rows = [];
+            } else {
+                throw e;
+            }
+        }
+
+        rows.sort((a: any, b: any) => {
+            const aId =
+                a && typeof a === "object" && "Id" in a ? String(a.Id) : "";
+            const bId =
+                b && typeof b === "object" && "Id" in b ? String(b.Id) : "";
+            if (aId || bId) return aId.localeCompare(bId);
+
+            const aName =
+                a && typeof a === "object" && "Name" in a
+                    ? String(a.Name)
+                    : "";
+            const bName =
+                b && typeof b === "object" && "Name" in b
+                    ? String(b.Name)
+                    : "";
+            if (aName || bName) return aName.localeCompare(bName);
+
+            return JSON.stringify(a).localeCompare(JSON.stringify(b));
+        });
+
+        return rows;
+    }
+
+    /**
+     * Create/update entity, with status decision.
+     */
+    async upsertEntity(
+        collectionRaw: string,
+        idRaw: string,
+        data: any
+    ): Promise<{ status: number; body?: any }> {
+        const collection = sanitizeCollection(collectionRaw);
+        const id = sanitizeId(idRaw);
+        const p = resolveDocPath(collection, id);
+
+        const existing = await readJsonIfExists(p);
+        if (existing && sameJson(existing, data)) {
+            return { status: 204 };
+        }
+
+        await writeJson(p, data ?? {});
+        const created = !existing;
+
+        return {
+            status: created ? 201 : 200,
+            body: { ok: true, id, collection, created },
+        };
+    }
+
+    /**
+     * Delete entity (idempotent).
+     */
+    async deleteEntity(
+        collectionRaw: string,
+        idRaw: string
+    ): Promise<{ status: number }> {
+        const collection = sanitizeCollection(collectionRaw);
+        const id = sanitizeId(idRaw);
+        const p = resolveDocPath(collection, id);
+
+        try {
+            await fs.unlink(p);
+            return { status: 204 };
+        } catch (e: any) {
+            if (e?.code === "ENOENT") {
+                return { status: 204 };
+            }
+            log.warn("delete entity failed", { err: String(e?.message ?? e) });
+            throw new PlayniteError(400, "delete_failed", String(e?.message ?? e));
+        }
     }
 }

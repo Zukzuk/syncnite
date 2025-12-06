@@ -1,17 +1,5 @@
 import express from "express";
-import { AccountsService, Role } from "../services/AccountsService";
-
-// augment Express.Request so routes can use req.auth
-declare global {
-    namespace Express {
-        interface Request {
-            auth?: {
-                email: string;
-                role: Role;
-            };
-        }
-    }
-}
+import { AccountsService } from "../services/AccountsService";
 
 /** 
  * Middleware to require a valid user session.

@@ -1,106 +1,41 @@
 import type express from "express";
 import crypto from "node:crypto";
 import { rootLog } from "../logger";
-import { GameLink } from "../types/playnite";
 import { AccountsService } from "./AccountsService";
+import { type SteamAppDetails, type SteamWishlistSnapshot, type SteamWishlistEntry, SteamError } from "../types/types";
+import {
+    getSteamWishlistSnapshot,
+    saveSteamWishlistSnapshot,
+    appendSteamWishlistItemToFile,
+} from "./SteamWishlistStore";
+import { GameLink } from "../types/playnite";
+
+// https://steamapi.xpaw.me/
+// https://api.steampowered.com/IWishlistService/GetWishlist/v1/
+// https://store.steampowered.com/api/appdetails?appids=
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const SteamAuth = require("node-steam-openid");
 const log = rootLog.child("steamService");
 
-// Base URL of your web frontend (what Steam redirects back to)
-// e.g. http://localhost:3003 in dev, https://your.domain.tld in prod
+// Base URL of your web frontend
 const SERVER_REALM = process.env.SERVER_REALM;
 if (!SERVER_REALM) {
     throw new Error("SERVER_REALM is not set");
 }
 
+// Steam OpenID return URL
 const STEAM_RETURN_PATH = process.env.STEAM_RETURN_PATH;
-
-// Optional override; by default we just use realm + path
 const STEAM_RETURN_URL = `${SERVER_REALM}${STEAM_RETURN_PATH}`;
-
-// Steam Web API key: MUST be set via environment
 const STEAM_WEB_API_KEY = process.env.STEAM_WEB_API_KEY || "";
 if (!STEAM_WEB_API_KEY) {
     log.warn("STEAM_WEB_API_KEY is not set – Steam Web API calls will fail");
 }
 
+// Steam Web API endpoints
 const STEAM_API_BASE = "https://api.steampowered.com";
 const STEAM_STORE_API_BASE = "https://store.steampowered.com/api";
 const LINK_TOKEN_TTL_MS = 10 * 60 * 1000; // 10 minutes
-
-export class SteamError extends Error {
-    status: number;
-    code: string;
-
-    constructor(status: number, code: string, message?: string) {
-        super(message ?? code);
-        this.status = status;
-        this.code = code;
-    }
-}
-
-interface AppDetails {
-    appid: number;
-    name: string;
-    type: string;
-
-    images: {
-        cover: string;
-        cover2x: string;
-        coverTall: string | null;
-
-        header: string | null;
-        capsule: string | null;
-        capsulev5: string | null;
-        capsuleSmall: string | null;
-        capsuleLarge: string | null;
-
-        wallpaper: string | null;
-        hero: string | null;
-
-        libraryCapsule: string | null;
-        libraryLogo: string | null;
-        libraryHero: string | null;
-
-        icon: string | null;
-    };
-
-    price: {
-        currency: string;
-        initial: number;
-        final: number;
-        discountPercent: number;
-    } | null;
-
-    releaseDate: {
-        date: string;
-        comingSoon: boolean;
-    } | null;
-
-    /** GameItem–aligned derived fields */
-    link: string | null;
-    links: GameLink[] | null;
-    year: number | null;
-    tags: string[];
-    series: string[];
-    iconUrl: string | null;
-    coverUrl: string | null;
-    bgUrl: string | null;
-}
-
-type WishlistEntry = {
-    appid: number;
-    priority: number;
-    dateAdded: string;
-    details?: AppDetails | null;
-};
-
-export type SteamWishlistSnapshot = {
-    lastSynced: string;
-    items: WishlistEntry[];
-};
 
 // In-memory link-token store: linkToken -> { email, createdAt }
 const linkTokens = new Map<string, { email: string; createdAt: number }>();
@@ -124,7 +59,7 @@ function consumeLinkToken(token: string): string | null {
     return entry.email;
 }
 
-async function getWishlist(steamId: string): Promise<WishlistEntry[]> {
+async function getWishlist(steamId: string): Promise<SteamWishlistEntry[]> {
     if (!STEAM_WEB_API_KEY) {
         throw new SteamError(500, "missing_steam_webapi_key");
     }
@@ -162,12 +97,12 @@ function extractYearFromReleaseDate(dateStr?: string | null): number | null {
 }
 
 async function getWishlistDetails(
-    wishlist: WishlistEntry[],
-    onEntry: (entry: WishlistEntry) => void,
+    wishlist: SteamWishlistEntry[],
+    onEntry: (entry: SteamWishlistEntry) => void | Promise<void>,
     cc: string,
-    lang: string
-): Promise<WishlistEntry[]> {
-    const result: WishlistEntry[] = [];
+    lang: string,
+): Promise<SteamWishlistEntry[]> {
+    const result: SteamWishlistEntry[] = [];
 
     for (const w of wishlist) {
         const appid = w.appid;
@@ -178,7 +113,7 @@ async function getWishlistDetails(
             `&cc=${encodeURIComponent(cc)}` +
             `&l=${encodeURIComponent(lang)}`;
 
-        let details: AppDetails | null = null;
+        let details: SteamAppDetails | null = null;
 
         try {
             const res = await fetch(url, {
@@ -189,7 +124,7 @@ async function getWishlistDetails(
 
             if (!res.ok) {
                 const body = await res.text().catch(() => "");
-                log.warn(`appdetails ${appid} single failed`, {
+                log.warn(`Wishlist item ${appid} single failed`, {
                     appid,
                     status: res.status,
                     body,
@@ -199,7 +134,7 @@ async function getWishlistDetails(
                 try {
                     json = await res.json();
                 } catch (e: any) {
-                    log.warn(`appdetails ${appid} json parse failed`, {
+                    log.warn(`Wishlist item ${appid} json parse failed`, {
                         appid,
                         err: String(e?.message ?? e),
                     });
@@ -210,14 +145,16 @@ async function getWishlistDetails(
                     const key = String(appid);
                     const entry = json[key];
                     if (!entry?.success || !entry.data) {
-                        log.warn(`appdetails ${appid} missing or unsuccessful`, {
+                        log.warn(`Wishlist item ${appid} missing or unsuccessful`, {
                             appid,
                             entry: entry ? { success: entry.success } : null,
                         });
                     } else {
                         const data = entry.data;
                         const storeUrl = `https://store.steampowered.com/app/${appid}`;
-                        const year = extractYearFromReleaseDate(data.release_date?.date);
+                        const year = extractYearFromReleaseDate(
+                            data.release_date?.date,
+                        );
                         const tags: string[] = [
                             ...(Array.isArray(data.genres)
                                 ? data.genres.map((g: any) => String(g.description))
@@ -246,7 +183,6 @@ async function getWishlistDetails(
                             appid,
                             name: data.name,
                             type: data.type,
-
                             images: {
                                 cover: coverImage,
                                 cover2x: coverImage2x,
@@ -258,25 +194,27 @@ async function getWishlistDetails(
                                 capsuleLarge: data.large_capsule_image ?? null,
                                 wallpaper: data.background ?? data.background_raw ?? null,
                                 hero: data.library_assets?.library_hero ?? null,
-                                libraryCapsule: data.library_assets?.library_capsule ?? null,
+                                libraryCapsule:
+                                    data.library_assets?.library_capsule ?? null,
                                 libraryLogo: data.library_assets?.library_logo ?? null,
                                 libraryHero: data.library_assets?.library_hero ?? null,
                                 icon: data.icon ?? data.icon_img ?? null,
                             },
-
                             price: data.price_overview
                                 ? {
                                     currency: data.price_overview.currency,
                                     initial: data.price_overview.initial,
                                     final: data.price_overview.final,
-                                    discountPercent: data.price_overview.discount_percent,
+                                    discountPercent:
+                                        data.price_overview.discount_percent,
                                 }
                                 : null,
-
                             releaseDate: data.release_date
                                 ? {
                                     date: data.release_date.date,
-                                    comingSoon: Boolean(data.release_date.coming_soon),
+                                    comingSoon: Boolean(
+                                        data.release_date.coming_soon,
+                                    ),
                                 }
                                 : null,
                             link: storeUrl,
@@ -284,25 +222,29 @@ async function getWishlistDetails(
                             year,
                             tags,
                             series,
-                            iconUrl: data.capsule_imagev5 ?? data.capsule_image ?? null,
+                            iconUrl:
+                                data.capsule_imagev5 ??
+                                data.capsule_image ??
+                                null,
                             coverUrl: coverImage ?? coverImage2x ?? null,
                             bgUrl: data.background_raw ?? data.background ?? null,
                         };
 
-                        log.info(`appdetails ${appid} ${data.name} fetched successfully`, {
-                            appid,
-                        });
+                        log.info(
+                            `Wishlist item ${appid} ${data.name} fetched successfully`,
+                            { appid },
+                        );
                     }
                 }
             }
         } catch (e: any) {
-            log.warn("appdetails request error", {
+            log.warn("Wishlist item request error", {
                 appid,
                 err: String(e?.message ?? e),
             });
         }
 
-        const entryWithDetails: WishlistEntry = {
+        const entryWithDetails: SteamWishlistEntry = {
             ...w,
             details,
         };
@@ -322,11 +264,11 @@ async function getWishlistDetails(
 
         await delay(2000);
     }
+
     return result;
 }
 
 export const SteamService = {
-
     // Steam OpenID operation
     async getAuthRedirectUrl(linkToken?: string): Promise<string> {
         const returnUrl = linkToken
@@ -343,7 +285,9 @@ export const SteamService = {
     },
 
     // Authenticate the OpenID response and return the SteamID and profile info
-    async authenticateOpenId(req: express.Request): Promise<{
+    async authenticateOpenId(
+        req: express.Request,
+    ): Promise<{
         steamId: string;
         profile: {
             personaname?: string;
@@ -385,8 +329,8 @@ export const SteamService = {
         steamId: string,
         cc = "NL",
         lang = "en",
-        onEntry: (entry: WishlistEntry) => Promise<void> | void
-    ): Promise<WishlistEntry[]> {
+        onEntry: (entry: SteamWishlistEntry) => Promise<void> | void,
+    ): Promise<SteamWishlistEntry[]> {
         const wishlist = await getWishlist(steamId);
         if (!wishlist.length) return [];
         return await getWishlistDetails(wishlist, onEntry, cc, lang);
@@ -431,7 +375,9 @@ export const SteamService = {
     },
 
     // Handles the Steam OpenID callback and links the Steam account
-    async handleAuthCallback(req: express.Request): Promise<{ redirectTo: string }> {
+    async handleAuthCallback(
+        req: express.Request,
+    ): Promise<{ redirectTo: string }> {
         try {
             const linkToken =
                 typeof req.query.linkToken === "string" ? req.query.linkToken : "";
@@ -456,7 +402,11 @@ export const SteamService = {
             });
 
             if (!r.ok) {
-                log.warn("setSteamConnection failed", { email, steamId, error: r.error });
+                log.warn("setSteamConnection failed", {
+                    email,
+                    steamId,
+                    error: r.error,
+                });
                 throw new SteamError(500, "persist_steam_connection_failed");
             }
 
@@ -470,81 +420,188 @@ export const SteamService = {
             if (e instanceof SteamError) {
                 throw e;
             }
-            log.warn("steam auth callback failed", { err: String(e?.message ?? e) });
+            log.warn("steam auth callback failed", {
+                err: String(e?.message ?? e),
+            });
             throw new SteamError(401, "steam_authentication_failed");
         }
     },
 
-    // Wishlist operations at account level
+    // Retrieves the latest cached Steam wishlist snapshot for the given email/account
     async getWishlistSnapshot(email: string): Promise<{
-        lastSynced: string | null;
-        items: WishlistEntry[];
+        lastSynced: string;
+        items: SteamWishlistEntry[];
+        syncInProgress: boolean;
     }> {
         const acc = await AccountsService.getAccount(email);
         if (!acc) {
             throw new SteamError(404, "not_found");
         }
 
-        const snapshot = await AccountsService.getSteamWishlistFile(email);
+        const snapshot = await getSteamWishlistSnapshot(email);
 
         if (!snapshot) {
             return {
-                lastSynced: null,
+                lastSynced: "",
                 items: [],
+                syncInProgress: false,
             };
         }
 
         return {
-            lastSynced: snapshot.lastSynced ?? null,
+            lastSynced: snapshot.lastSynced,
             items: snapshot.items ?? [],
+            syncInProgress: Boolean(snapshot.syncInProgress),
         };
     },
 
-    // Starts a background Steam wishlist sync
+    // Starts a background delta sync of the Steam wishlist for the given email/account
     async startWishlistSync(email: string): Promise<{
         lastSynced: string;
-        items: WishlistEntry[];
+        items: SteamWishlistEntry[];
+        syncInProgress: boolean;
     }> {
         const acc = await AccountsService.getAccount(email);
         if (!acc || !acc.steam) {
             throw new SteamError(400, "steam_not_linked");
         }
 
-        const startedAt = new Date().toISOString();
+        const existingSnapshot = await getSteamWishlistSnapshot(email);
 
-        const initSnapshot = {
-            lastSynced: startedAt,
-            items: [] as WishlistEntry[],
-        };
+        const now = new Date().toISOString();
 
-        const r = await AccountsService.setSteamWishlistFile(email, initSnapshot);
-        if (!r.ok) {
-            throw new SteamError(500, r.error ?? "wishlist_snapshot_init_failed");
+        // If sync already running → return the current snapshot
+        if (existingSnapshot?.syncInProgress) {
+            return {
+                lastSynced: existingSnapshot.lastSynced ?? now,
+                items: existingSnapshot.items ?? [],
+                syncInProgress: true,
+            };
         }
 
-        // Fire-and-forget background job
+        // 1. Immediately mark sync as in-progress, keep current items for now
+        const inProgressSnapshot: SteamWishlistSnapshot = {
+            lastSynced: existingSnapshot?.lastSynced ?? now,
+            items: existingSnapshot?.items ?? [],
+            syncInProgress: true,
+        };
+
+        await saveSteamWishlistSnapshot(email, inProgressSnapshot);
+
+        // Background delta sync
         void (async () => {
             try {
-                await SteamService.getWishlistWithDetails(
-                    acc.steam!.steamId,
-                    "NL",
-                    "en",
-                    async (entry) => {
-                        await AccountsService.appendSteamWishlistItem(email, entry);
-                    }
+                // 2. Fetch current Steam wishlist (core info only)
+                const remoteWishlist = await getWishlist(acc.steam!.steamId);
+
+                const existingItems = existingSnapshot?.items ?? [];
+                const existingMap = new Map<number, SteamWishlistEntry>(
+                    existingItems.map((i: SteamWishlistEntry) => [i.appid, i]),
                 );
-                log.info("steam wishlist sync completed", { email });
+
+                // 3. Keep only entries that are still on Steam (remove deleted appids)
+                const kept: SteamWishlistEntry[] = [];
+                for (const remote of remoteWishlist) {
+                    const existing = existingMap.get(remote.appid);
+                    if (existing) {
+                        kept.push({
+                            ...existing,
+                            priority: remote.priority,
+                            dateAdded: remote.dateAdded,
+                        });
+                    }
+                }
+
+                // 4. Write snapshot with "kept" only (this reflects deletions immediately)
+                const afterDeleteTime = new Date().toISOString();
+                const afterDeleteSnapshot: SteamWishlistSnapshot = {
+                    lastSynced: afterDeleteTime,
+                    items: kept,
+                    syncInProgress: true,
+                };
+                await saveSteamWishlistSnapshot(email, afterDeleteSnapshot);
+
+                // 5. Determine truly new items (present on Steam, absent locally)
+                const newEntriesCore = remoteWishlist.filter(
+                    (w) => !existingMap.has(w.appid),
+                );
+
+                let detailedNew: SteamWishlistEntry[] = [];
+
+                if (newEntriesCore.length > 0) {
+                    // Fetch details only for the delta,
+                    // and append each entry as soon as it's fetched.
+                    detailedNew = await getWishlistDetails(
+                        newEntriesCore,
+                        async (entryWithDetails) => {
+                            await appendSteamWishlistItemToFile(
+                                email,
+                                entryWithDetails,
+                            );
+                        },
+                        "NL",
+                        "en",
+                    );
+                }
+
+                // 6. Build final ordered list according to remoteWishlist
+                const detailedNewMap = new Map<number, SteamWishlistEntry>(
+                    detailedNew.map((e) => [e.appid, e]),
+                );
+                const keptMap = new Map<number, SteamWishlistEntry>(
+                    kept.map((e) => [e.appid, e]),
+                );
+
+                const finalItems: SteamWishlistEntry[] = [];
+                for (const remote of remoteWishlist) {
+                    const fromNew = detailedNewMap.get(remote.appid);
+                    const fromKept = keptMap.get(remote.appid);
+
+                    if (fromNew) {
+                        finalItems.push(fromNew);
+                    } else if (fromKept) {
+                        finalItems.push(fromKept);
+                    }
+                }
+
+                // 7. Final snapshot: syncInProgress = false
+                const finalSnapshot: SteamWishlistSnapshot = {
+                    lastSynced: new Date().toISOString(),
+                    items: finalItems,
+                    syncInProgress: false,
+                };
+
+                await saveSteamWishlistSnapshot(email, finalSnapshot);
+
+                log.info("steam wishlist delta sync completed", {
+                    email,
+                    removedCount: existingItems.length - kept.length,
+                    addedCount: detailedNew.length,
+                });
             } catch (e: any) {
-                log.warn("background steam wishlist sync failed", {
+                log.warn("Delta wishlist sync failed", {
                     email,
                     err: String(e?.message ?? e),
                 });
+
+                // best effort unlock
+                const current = await getSteamWishlistSnapshot(email);
+                if (current) {
+                    const fallback: SteamWishlistSnapshot = {
+                        lastSynced: current.lastSynced,
+                        items: current.items ?? [],
+                        syncInProgress: false,
+                    };
+                    await saveSteamWishlistSnapshot(email, fallback);
+                }
             }
         })();
 
+        // Immediate response: whatever we just stored with syncInProgress: true
         return {
-            lastSynced: startedAt,
-            items: [],
+            lastSynced: inProgressSnapshot.lastSynced,
+            items: inProgressSnapshot.items,
+            syncInProgress: true,
         };
     },
 };
