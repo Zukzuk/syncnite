@@ -1,5 +1,13 @@
 import React from "react";
-import { Box, Group, Stack, Image, Text, Badge, Anchor, Collapse } from "@mantine/core";
+import {
+    Box,
+    Group,
+    Stack,
+    Image,
+    Text,
+    Badge,
+    Anchor,
+} from "@mantine/core";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 import { GameItem } from "../../../types/types";
 import { GRID } from "../../../lib/constants";
@@ -9,10 +17,8 @@ type Props = {
     item: GameItem;
 };
 
-export function AssociatedDetails({
-    item,
-}: Props): JSX.Element {
-    const { sortingName, tags, isInstalled, isHidden, links, coverUrl, bgUrl } = item;
+export function AssociatedDetails({ item }: Props): JSX.Element {
+    const { sortingName, tags = [], isInstalled, isHidden, links, coverUrl, bgUrl } = item;
     const isOpenDelayed = useDelayedFlag({ active: true, delayMs: 70 });
     const { isDark } = getTheme();
 
@@ -70,7 +76,7 @@ export function AssociatedDetails({
                     )}
                 </Group>
 
-                {/* TAGS */}
+                {/* Tags */}
                 {tags.length > 0 && (
                     <Box>
                         <Text size="xs" c="dimmed">
@@ -103,7 +109,7 @@ export function AssociatedDetails({
             />
 
             <Stack gap={6} align="stretch" style={{ width: "100%" }}>
-                {/* LINKS */}
+                {/* Links */}
                 {Array.isArray(links) && links.length > 0 && (
                     <Box>
                         <Text size="xs" c="dimmed">

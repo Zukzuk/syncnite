@@ -119,10 +119,24 @@ export interface ItemPositions extends Array<{
   top: number
 }> { };
 
-export interface Deck {
+export type AssociatedLayout = {
+    deckColumns: number;
+    stackColumns: number;
+    maxCardsPerDeckColumn: number | null;
+    minStackColumns: number;
+};
+
+export interface AssociatedDeckMeta {
     key: string;
     label: string;
     items: GameItem[];
+};
+
+export type AssociatedCardMeta = {
+    id: string;
+    index: number;
+    colIndex: number;  
+    indexInColumn: number;
 };
 
 export type LogListener = (lines: string[]) => void;

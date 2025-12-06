@@ -220,6 +220,7 @@ export function AbsoluteGrid({
                                 item={item}
                                 index={index}
                                 isOpen={isOpen}
+                                openWidth={openWidth}
                                 openHeight={openHeight}
                                 isListView={isListView}
                                 associatedBySeries={associatedSeries}

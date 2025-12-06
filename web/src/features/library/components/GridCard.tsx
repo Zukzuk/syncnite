@@ -11,6 +11,7 @@ type Props = {
     item: GameItem;
     isOpen: boolean;
     index: number;
+    openWidth: string;
     openHeight: string;
     isListView: boolean;
     associatedBySeries: GameItem[];
@@ -30,6 +31,7 @@ export const GridCard = React.memo(function GridCard({
     item,
     isOpen,
     index,
+    openWidth,
     openHeight,
     isListView,
     associatedBySeries,
@@ -149,6 +151,8 @@ export const GridCard = React.memo(function GridCard({
                             aria-label="item-content"
                             item={item}
                             isOpen={isOpen}
+                            openWidth={openWidth}
+                            openHeight={openHeight}
                             associatedBySeries={associatedBySeries}
                             associatedByTags={associatedByTags}
                             associatedByYear={associatedByYear}

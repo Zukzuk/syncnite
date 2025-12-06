@@ -1,7 +1,11 @@
 import React from "react";
 import { Box, Image, Stack, Text } from "@mantine/core";
-import { ASSOCIATED_CARD_STEP_Y, GRID, MAX_ASSOCIATED } from "../../../lib/constants";
-import { GameItem } from "../../../types/types";
+import {
+    ASSOCIATED_CARD_STEP_Y,
+    GRID,
+    MAX_ASSOCIATED,
+} from "../../../lib/constants";
+import { AssociatedCardMeta, GameItem } from "../../../types/types";
 import { getTheme } from "../../../lib/utils";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 
@@ -9,6 +13,8 @@ type Props = {
     label: string;
     currentItemId: string;
     items: GameItem[];
+    deckColumns: number;
+    maxCardsPerColumn: number | null;
     onAssociatedClick: (targetId: string) => void;
 };
 
@@ -17,40 +23,61 @@ export function AssociatedDeck({
     currentItemId,
     items,
     onAssociatedClick,
+    deckColumns,
+    maxCardsPerColumn,
 }: Props): JSX.Element | null {
     const [hoveredId, setHoveredId] = React.useState<string | null>(null);
     const [isDeckHovered, setIsDeckHovered] = React.useState(false);
     const isOpenDelayed = useDelayedFlag({ active: true, delayMs: 140 });
     const { isDark } = getTheme();
 
-    // Filter to items with cover images and limit to MAX_ASSOCIATED
     const cards = items.filter((g) => g.coverUrl).slice(0, MAX_ASSOCIATED);
-    if (cards.length === 0) return null;
+    if (cards.length === 0 || deckColumns <= 0) return null;
 
-    // Decide how to split cards into two columns
-    let leftCount: number;
-    if (cards.length <= 5) leftCount = cards.length;
-    else leftCount = Math.ceil(cards.length / 2);
+    const colCount = Math.max(1, deckColumns);
+    const total = cards.length;
 
-    const rightCount = cards.length - leftCount;
+    let cardsPerColumn: number;
+    if (maxCardsPerColumn && maxCardsPerColumn > 0) {
+        const maxTotalCapacity = colCount * maxCardsPerColumn;
+        if (total <= maxTotalCapacity) {
+            cardsPerColumn = Math.min(
+                maxCardsPerColumn,
+                Math.ceil(total / colCount)
+            );
+        } else {
+            // Not enough height → deck scrolls, but we keep logical columns
+            cardsPerColumn = Math.ceil(total / colCount);
+        }
+    } else {
+        cardsPerColumn = Math.ceil(total / colCount);
+    }
+
     const cardHeight = (GRID.cardWidth * 32) / 23;
-    const leftHeight = leftCount > 0 ? cardHeight + ASSOCIATED_CARD_STEP_Y * (leftCount - 1) : 0;
-    const rightHeight = rightCount > 0 ? cardHeight + ASSOCIATED_CARD_STEP_Y * (rightCount - 1) : 0;
-    const deckHeight = Math.max(leftHeight, rightHeight);
-    const colWidth = GRID.cardWidth;
-    const colGap = GRID.gap * 2;
-    const hasRightColumn = rightCount > 0;
-    const deckWidth = hasRightColumn ? colWidth * 2 + colGap : colWidth;
+    const columnHeight =
+        cardsPerColumn > 0
+            ? cardHeight + ASSOCIATED_CARD_STEP_Y * (cardsPerColumn - 1)
+            : 0;
 
-    const hoveredIndex = hoveredId ? cards.findIndex((c) => c.id === hoveredId) : -1;
+    const cardMeta: AssociatedCardMeta[] = cards.map((c, index) => {
+        const colIndex = Math.floor(index / cardsPerColumn);
+        const indexInColumn = index % cardsPerColumn;
+        return { id: c.id, index, colIndex, indexInColumn };
+    });
+
+    const colLengths: number[] = Array.from({ length: colCount }, () => 0);
+    cardMeta.forEach((m) => {
+        colLengths[m.colIndex] = Math.max(
+            colLengths[m.colIndex] || 0,
+            m.indexInColumn + 1
+        );
+    });
+
+    const hoveredIndex = hoveredId
+        ? cardMeta.findIndex((m) => m.id === hoveredId)
+        : -1;
     const hasHoveredCard = hoveredIndex >= 0;
-    const topIndex = hasHoveredCard ? hoveredIndex : -1;
-    const hoveredInLeftColumn = hasHoveredCard && hoveredIndex < leftCount;
-    const hoveredIndexInColumn = !hasHoveredCard
-        ? -1
-        : hoveredInLeftColumn
-            ? hoveredIndex
-            : hoveredIndex - leftCount;
+    const hoveredMeta = hasHoveredCard ? cardMeta[hoveredIndex] : null;
 
     return (
         <Stack
@@ -67,6 +94,7 @@ export function AssociatedDeck({
                 transitionProperty: "opacity, transform",
                 transitionDuration: "220ms, 260ms",
                 transitionTimingFunction: "ease, ease",
+                maxWidth: colCount * (GRID.cardWidth + GRID.gap * 2) + GRID.gap,
             }}
         >
             <Text
@@ -85,9 +113,9 @@ export function AssociatedDeck({
                 p={GRID.gap}
                 style={{
                     flex: "1 1 auto",
-                    maxHeight: `calc(100% - ${GRID.gap * 3}px)`,
+                    height: "100%",
                     overflowY: "auto",
-                    overflowX: "visible",
+                    overflowX: "hidden",
                     overscrollBehaviorY: "contain",
                 }}
             >
@@ -99,43 +127,37 @@ export function AssociatedDeck({
                     }}
                     style={{
                         position: "relative",
-                        width: deckWidth,
-                        height: deckHeight,
+                        width: colCount * (GRID.cardWidth + GRID.gap * 2),
+                        height: columnHeight,
                         overflow: "visible",
                     }}
                 >
-                    {cards.map((item, index) => {
-                        const { id, title, year, coverUrl } = item;
+                    {cardMeta.map((meta) => {
+                        const { colIndex, indexInColumn, id, index } = meta;
+                        const item = cards[index];
+                        const { title, year, coverUrl } = item;
 
-                        // Decide column + vertical offset for this card
-                        const inLeftColumn = index < leftCount;
-                        const indexInColumn = inLeftColumn
-                            ? index
-                            : index - leftCount;
-                        const left = inLeftColumn ? 0 : colWidth + colGap;
+                        const left = colIndex * (GRID.cardWidth + GRID.gap * 2);
                         const top = indexInColumn * ASSOCIATED_CARD_STEP_Y;
-                        const maxZInColumn = (inLeftColumn ? leftCount : rightCount) + 1;
 
-                        let zIndex: number;
-                        if (!hasHoveredCard) {
-                            // Simple stacking inside each column when nothing is hovered
-                            zIndex = indexInColumn + 1;
-                        } else if (
-                            (inLeftColumn && hoveredInLeftColumn) ||
-                            (!inLeftColumn && !hoveredInLeftColumn)
-                        ) {
-                            // Same column as hovered -> build a pyramid in this column
-                            const distance = Math.abs(indexInColumn - hoveredIndexInColumn);
-                            zIndex = maxZInColumn - distance;
-                        } else {
-                            // Other column: keep its own natural stacking
-                            zIndex = indexInColumn + 1;
-                        }
-
-                        const isTopCard = hasHoveredCard && index === topIndex;
+                        let zIndex = indexInColumn + 1;
+                        const isTopCard =
+                            hasHoveredCard && hoveredMeta!.index === index;
                         const isDimmed =
                             hasHoveredCard && isDeckHovered && !isTopCard;
                         const isCurrentItem = id === currentItemId;
+
+                        if (hasHoveredCard) {
+                            if (hoveredMeta!.colIndex === colIndex) {
+                                const distance = Math.abs(
+                                    hoveredMeta!.indexInColumn - indexInColumn
+                                );
+                                const maxZInCol = (colLengths[colIndex] || 0) + 1;
+                                zIndex = maxZInCol - distance;
+                            } else {
+                                zIndex = indexInColumn + 1;
+                            }
+                        }
 
                         return (
                             <Box
@@ -165,13 +187,15 @@ export function AssociatedDeck({
                                     boxShadow: isTopCard
                                         ? "0 8px 16px rgba(0, 0, 0, 0.25)"
                                         : "0 4px 8px rgba(0, 0, 0, 0.15)",
-                                    border: isTopCard || isCurrentItem
-                                        ? "2px solid var(--mantine-primary-color-4)"
-                                        : isDark
-                                            ? "2px solid var(--mantine-color-dark-9)"
-                                            : "2px solid var(--mantine-color-gray-3)",
+                                    border:
+                                        isTopCard || isCurrentItem
+                                            ? "2px solid var(--mantine-primary-color-4)"
+                                            : isDark
+                                                ? "2px solid var(--mantine-color-dark-9)"
+                                                : "2px solid var(--mantine-color-gray-3)",
                                     transform: isTopCard ? "scale(1.07)" : "scale(1)",
-                                    transition: "transform 140ms ease, box-shadow 140ms ease, clip-path 140ms ease",
+                                    transition:
+                                        "transform 140ms ease, box-shadow 140ms ease, clip-path 140ms ease",
                                 }}
                             >
                                 <Box
@@ -203,8 +227,7 @@ export function AssociatedDeck({
                                                 backgroundColor: isDark
                                                     ? "color-mix(in srgb, var(--mantine-color-dark-7) 65%, transparent)"
                                                     : "color-mix(in srgb, var(--mantine-color-gray-3) 50%, transparent)",
-                                                transition:
-                                                    "background-color 120ms ease",
+                                                transition: "background-color 120ms ease",
                                             }}
                                         />
                                     )}
