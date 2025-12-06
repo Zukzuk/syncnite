@@ -26,8 +26,8 @@
   },
   "devDependencies": {
     "@types/node": "^20.19.13",
-    "standard-version": "^9.5.0",
-    "cz-conventional-changelog": "^3.3.0"
+    "cz-conventional-changelog": "^3.3.0",
+    "standard-version": "^9.5.0"
   },
   "config": {
     "commitizen": {
