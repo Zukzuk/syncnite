@@ -49,6 +49,7 @@ export const GridCard = React.memo(function GridCard({
     const { title, isHidden, isInstalled } = item;
 
     const [isHovered, setIsHovered] = React.useState(false);
+    const [bgIsHovered, setBgIsHovered] = React.useState(false);
 
     const handleToggle = React.useCallback(() => {
         onToggleItem(item.id, index);
@@ -88,7 +89,6 @@ export const GridCard = React.memo(function GridCard({
                     isolation: "isolate",
                     cursor: "pointer",
                     userSelect: "none",
-                    transition: "background-color 140ms ease",
                     backgroundColor: isInstalled
                         ? "var(--mantine-primary-color-light)"
                         : "transparent",
@@ -118,9 +118,13 @@ export const GridCard = React.memo(function GridCard({
                 <Box
                     aria-label="card-inner"
                     style={{
-                        opacity: isHidden ? 0.2 : 1,
                         position: "relative",
                         zIndex: Z_INDEX.base,
+                        opacity: bgIsHovered ? 0 : isHidden ? 0.2 : 1,
+                        willChange: "opacity",
+                        transitionProperty: "opacity",
+                        transitionDuration: "220ms",
+                        transitionTimingFunction: "ease",
                     }}
                     w={"100%"}
                     h={isOpen ? openHeight : "100%"}
@@ -159,6 +163,7 @@ export const GridCard = React.memo(function GridCard({
                             associatedByInstalled={associatedByInstalled}
                             onToggleItem={handleToggle}
                             onAssociatedClick={handleAssociated}
+                            onBgHovered={setBgIsHovered}
                         />
                     )}
                 </Box>
@@ -167,6 +172,7 @@ export const GridCard = React.memo(function GridCard({
                     aria-label="item-background"
                     item={item}
                     isOpen={isOpen}
+                    bgIsHovered={bgIsHovered}
                 />
             </Box>
         </Box>

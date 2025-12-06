@@ -9,9 +9,10 @@ import { GameItem } from "../../../types/types";
 type Props = {
     item: Pick<GameItem, "bgUrl">;
     isOpen: boolean;
+    bgIsHovered: boolean;
 };
 
-export function ItemBackground({ item, isOpen }: Props): JSX.Element | null {
+export function ItemBackground({ item, isOpen, bgIsHovered }: Props): JSX.Element | null {
     const { bgUrl } = item;
     const isOpenDelayed = useDelayedFlag({ active: isOpen, delayMs: 70 });
     const { isDark } = getTheme();
@@ -30,7 +31,7 @@ export function ItemBackground({ item, isOpen }: Props): JSX.Element | null {
                 pointerEvents: "none",
                 zIndex: Z_INDEX.belowBase,
                 transform: isOpenDelayed ? "scale(1.02)" : "scale(1)",
-                opacity: isOpenDelayed ? (isDark ? 0.1 : 0.3) : 0,
+                opacity: bgIsHovered ? 1 : isOpenDelayed ? (isDark ? 0.1 : 0.3) : 0,
                 willChange: "opacity, transform",
                 transitionProperty: "opacity, transform",
                 transitionDuration: "220ms, 260ms",

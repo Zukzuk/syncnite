@@ -1,11 +1,7 @@
 import React from "react";
-import { Group, Stack, Text, Collapse, Center, Box } from "@mantine/core";
+import { Group, Collapse, Box } from "@mantine/core";
 import { AssociatedLayout, AssociatedDeckMeta, GameItem } from "../../../types/types";
-import {
-    GRID,
-    ASSOCIATED_CARD_STEP_Y,
-    MAX_ASSOCIATED,
-} from "../../../lib/constants";
+import { GRID, ASSOCIATED_CARD_STEP_Y, MAX_ASSOCIATED } from "../../../lib/constants";
 import { AssociatedDeck } from "./AssociatedDeck";
 import { AssociatedStacks } from "./AssociatedStacks";
 import { AssociatedDetails } from "./AssociatedDetails";
@@ -123,6 +119,7 @@ type Props = {
     associatedByInstalled: GameItem[];
     onToggleItem: () => void;
     onAssociatedClick: (targetId: string) => void;
+    onBgHovered: (hovered: boolean) => void;
 };
 
 export function ItemContent({
@@ -132,10 +129,11 @@ export function ItemContent({
     associatedByTags,
     associatedByYear,
     associatedByInstalled,
-    onToggleItem,
-    onAssociatedClick,
     openWidth,
     openHeight,
+    onToggleItem,
+    onAssociatedClick,
+    onBgHovered,
 }: Props): JSX.Element {
     const seriesNames = item.series ?? [];
     const tagNames = item.tags ?? [];
@@ -195,34 +193,6 @@ export function ItemContent({
     React.useEffect(() => {
         setOpenDeckKey(null);
     }, [item.id]);
-
-    if (allDecks.length === 0) {
-        return (
-            <Collapse
-                in={isOpen}
-                transitionDuration={140}
-                py={GRID.gap}
-                pr={GRID.gap * 5}
-                style={{
-                    width: openWidth,
-                    height: `calc(${openHeight} - ${GRID.rowHeight}px)`,
-                    backgroundColor: "transparent",
-                    overflowX: "hidden",
-                    overflowY: "hidden",
-                }}
-                onClick={(e) => {
-                    e.stopPropagation();
-                    onToggleItem();
-                }}
-            >
-                <Stack style={{ height: "100%", minHeight: 0 }}>
-                    <Center>
-                        <Text>No associated items found.</Text>
-                    </Center>
-                </Stack>
-            </Collapse>
-        );
-    }
 
     // Determine which deck is open
     let openDeck = allDecks[0];
@@ -287,10 +257,11 @@ export function ItemContent({
                 wrap="nowrap"
                 h="100%"
             >
-                {/* left: cover column, fixed width, vertical scroll only */}
-                <AssociatedDetails item={item} />
+                <AssociatedDetails 
+                    item={item} 
+                    onBgHovered={onBgHovered} 
+                />
 
-                {/* right: decks + stacks, math based on ResizeObserver */}
                 <Box
                     ref={layoutRef}
                     style={{
@@ -302,7 +273,7 @@ export function ItemContent({
                         overflow: "hidden",
                     }}
                 >
-                    {/* Decks */}
+                    {/* Deck columns */}
                     {layout.deckColumns > 0 && (
                         <AssociatedDeck
                             label={openDeck.label}

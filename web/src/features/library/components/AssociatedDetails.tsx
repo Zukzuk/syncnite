@@ -1,13 +1,5 @@
 import React from "react";
-import {
-    Box,
-    Group,
-    Stack,
-    Image,
-    Text,
-    Badge,
-    Anchor,
-} from "@mantine/core";
+import { Anchor, Badge, Box, Group, Image, Stack, Text } from "@mantine/core";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 import { GameItem } from "../../../types/types";
 import { GRID } from "../../../lib/constants";
@@ -15,9 +7,10 @@ import { getTheme } from "../../../lib/utils";
 
 type Props = {
     item: GameItem;
+    onBgHovered: (hovered: boolean) => void;
 };
 
-export function AssociatedDetails({ item }: Props): JSX.Element {
+export function AssociatedDetails({ item, onBgHovered }: Props): JSX.Element {
     const { sortingName, tags = [], isInstalled, isHidden, links, coverUrl, bgUrl } = item;
     const isOpenDelayed = useDelayedFlag({ active: true, delayMs: 70 });
     const { isDark } = getTheme();
@@ -106,6 +99,8 @@ export function AssociatedDetails({ item }: Props): JSX.Element {
                         ? "2px solid var(--mantine-color-dark-9)"
                         : "2px solid var(--mantine-color-gray-3)",
                 }}
+                onMouseOver={() => onBgHovered(true)}
+                onMouseOut={() => onBgHovered(false)}
             />
 
             <Stack gap={6} align="stretch" style={{ width: "100%" }}>
