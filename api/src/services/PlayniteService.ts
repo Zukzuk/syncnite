@@ -3,9 +3,9 @@ import { join } from "node:path";
 import { rootLog } from "../logger";
 import { DATA_DIR, INSTALLED_ROOT } from "../constants";
 
-const log = rootLog.child("syncService");
+const log = rootLog.child("playniteService");
 
-export class SyncService {
+export class PlayniteService {
     
     /**
      * Pushes a snapshot object to the server.

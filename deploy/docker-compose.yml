@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   api:
     image: zukzuk/syncnite-api:latest
@@ -7,19 +5,22 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
+    env_file:
+      - .env
     ports:
       - "3004:3004"
     volumes:
-      - /volume1/docker/syncnite/uploads:/uploads
       - /volume1/docker/syncnite/data:/data
       - /volume1/docker/syncnite/extension:/extension:ro
-    tmpfs:
-      - /work
 
   web:
     image: zukzuk/syncnite-web:latest
     container_name: syncnite-web
     restart: unless-stopped
+    environment:
+      NODE_ENV: production
+    env_file:
+      - .env
     ports:
       - "3003:3003"
     volumes:

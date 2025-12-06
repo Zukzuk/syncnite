@@ -5,7 +5,7 @@ import { join, dirname, resolve, sep } from "node:path";
 import { requireAdminSession, requireSession } from "../middleware/requireAuth";
 import { COLLECTIONS, DB_ROOT, MEDIA_ROOT } from "../constants";
 import { rootLog } from "../logger";
-import { SyncService } from "../services/SyncService";
+import { PlayniteService } from "../services/PlayniteService";
 
 // https://steamapi.xpaw.me/
 // https://api.steampowered.com/IWishlistService/GetWishlist/v1/
@@ -31,7 +31,7 @@ type DeltaManifest = {
 
 const log = rootLog.child("route:playnite");
 const router = express.Router();
-const syncService = new SyncService();
+const playniteService = new PlayniteService();
 const mediaUpload = multer({ storage: multer.memoryStorage() });
 
 // Ensure a directory exists
@@ -110,7 +110,7 @@ router.post("/installed", requireSession, async (req, res) => {
             (req as any).auth?.email ??
             String(req.header("x-auth-email") || "").toLowerCase();
 
-        const count = await syncService.pushInstalled(req.body?.installed, email);
+        const count = await playniteService.pushInstalled(req.body?.installed, email);
         return res.json({ ok: true, count });
     } catch (e: any) {
         const msg = String(e?.message || e);
@@ -133,7 +133,7 @@ router.post("/snapshot", requireAdminSession, async (req, res) => {
             (req as any).auth?.email ??
             String(req.header("x-auth-email") || "").toLowerCase();
 
-        await syncService.pushSnapshot(req.body, email);
+        await playniteService.pushSnapshot(req.body, email);
         return res.json({ ok: true });
     } catch (e: any) {
         log.warn("snapshot: failed", { err: String(e?.message || e) });

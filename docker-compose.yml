@@ -6,13 +6,13 @@ services:
       args:
         APP_VERSION: ${VERSION} # bakes into image
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
       APP_VERSION: ${VERSION} # runtime env
+    env_file:
+      - .env
     volumes:
       - ./data:/data
       - ./extension:/extension:ro
-    tmpfs:
-      - /work
     ports:
       - "3004:3004"
 
@@ -23,11 +23,12 @@ services:
       args:
         APP_VERSION: ${VERSION} # bakes into image
     environment:
+      NODE_ENV: development
       APP_VERSION: ${VERSION} # runtime env
+    env_file:
+      - .env
     volumes:
       - ./data:/usr/share/nginx/html/data:ro
       - ./extension:/usr/share/nginx/html/extension:ro
     ports:
       - "3003:3003"
-    depends_on:
-      - api
