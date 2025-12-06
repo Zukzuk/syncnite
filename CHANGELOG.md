@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.32.2](https://github.com/Zukzuk/syncnite/compare/v1.32.1...v1.32.2) (2025-12-06)
+
+
+### Bug Fixes
+
+* fixed bg rollover click alpha bug ([cca6d57](https://github.com/Zukzuk/syncnite/commit/cca6d571ea167a69ff13d13bf143b50634bf21c1))
+
 ### [1.32.1](https://github.com/Zukzuk/syncnite/compare/v1.32.0...v1.32.1) (2025-12-06)
 
 
