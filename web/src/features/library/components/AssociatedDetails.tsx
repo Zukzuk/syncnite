@@ -101,6 +101,7 @@ export function AssociatedDetails({ item, onBgHovered }: Props): JSX.Element {
                 }}
                 onMouseOver={() => onBgHovered(true)}
                 onMouseOut={() => onBgHovered(false)}
+                onClick={(e) => e.stopPropagation()}
             />
 
             <Stack gap={6} align="stretch" style={{ width: "100%" }}>

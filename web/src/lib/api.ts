@@ -96,10 +96,14 @@ export async function loadDbCollection<T>(collection: string): Promise<T[]> {
 
 // Fetch the status of the browser extension connection
 export async function fetchExtensionStatus(): Promise<{
-  ok: boolean; connected: boolean; lastPingAt: string | null;
+  ok: boolean;
+  connected: boolean;
+  extVersion: string | null;
+  versionMismatch: boolean;
+  lastPingAt: string | null;
 }> {
   const creds = getCreds();
-  if (!creds) return { ok: false, connected: false, lastPingAt: null };
+  if (!creds) return { ok: false, connected: false, extVersion: null, versionMismatch: false, lastPingAt: null };
 
   const resp = await fetch(API_ENDPOINTS.EXTENSION_STATUS, {
     headers: {
@@ -109,7 +113,7 @@ export async function fetchExtensionStatus(): Promise<{
   });
 
   if (!resp.ok) {
-    return { ok: false, connected: false, lastPingAt: null };
+    return { ok: false, connected: false, extVersion: null, versionMismatch: false, lastPingAt: null };
   }
 
   const payload = await resp.json();

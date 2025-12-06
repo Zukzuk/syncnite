@@ -44,15 +44,26 @@ namespace SyncniteBridge.Helpers
         }
 
         /// <summary>
-        /// Ping the given URL and try to read a version from the JSON body:
-        /// { ok: true, version: "v1.22.3" }.
-        /// Returns (reachable, versionOrNull).
+        /// Ping the given URL and return (reachable, version).
+        /// If the server responds with valid JSON including a "version" field,
+        /// that version string is returned; otherwise, version is null.
         /// </summary>
-        public async Task<(bool reachable, string? version)> PingWithVersionAsync(string url)
+        public async Task<(bool reachable, string? version)> PingWithVersionAsync(
+            string url,
+            string? clientVersion = null
+        )
         {
             try
             {
-                var resp = await http.GetAsync(url).ConfigureAwait(false);
+                using var req = new HttpRequestMessage(HttpMethod.Get, url);
+
+                if (!string.IsNullOrWhiteSpace(clientVersion))
+                {
+                    // Extension version sent to the server on each ping
+                    req.Headers.TryAddWithoutValidation("x-ext-version", clientVersion);
+                }
+
+                var resp = await http.SendAsync(req).ConfigureAwait(false);
                 if (!resp.IsSuccessStatusCode)
                 {
                     return (false, null);
@@ -62,13 +73,12 @@ namespace SyncniteBridge.Helpers
 
                 try
                 {
-                    // matches: { ok: true, version: "v1.22.3" }
                     var dto = Playnite.SDK.Data.Serialization.FromJson<PingResponse>(body);
                     return (true, dto?.version);
                 }
                 catch
                 {
-                    // 200 OK but no/invalid JSON – treat as reachable but unknown version
+                    // 200 OK but no/invalid JSON – reachable but unknown version
                     return (true, null);
                 }
             }

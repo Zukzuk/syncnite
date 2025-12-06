@@ -9,7 +9,7 @@ export function AppNavbar({ appVersion }: { appVersion: string }) {
     const location = useLocation();
     const { state, logout } = useAuth({ pollMs: 0 });
     const { colorScheme, setColorScheme } = useMantineColorScheme();
-    const { connected, lastPingAt, loading } = useExtensionStatus({ pollMs: INTERVAL_MS });
+    const { connected, lastPingAt, loading, versionMismatch, extVersion } = useExtensionStatus({ pollMs: INTERVAL_MS });
 
     const isAdmin = state.role === "admin";
     const isLoggedIn = state.loggedIn;
@@ -143,13 +143,13 @@ export function AppNavbar({ appVersion }: { appVersion: string }) {
                             <Tooltip
                                 withArrow
                                 label={
-                                    connected
-                                        ? lastPingAt
-                                            ? `Admin extension last ping: ${new Date(
-                                                lastPingAt
-                                            ).toLocaleTimeString()}`
-                                            : "Admin extension is currently pinging the API"
-                                        : "No recent ping from admin extension"
+                                    !connected
+                                        ? "No recent ping from admin extension"
+                                        : versionMismatch
+                                            ? `Version mismatch: server ${appVersion ?? "?"}, extension ${extVersion ?? "?"}`
+                                            : lastPingAt
+                                                ? `Admin extension last ping: ${new Date(lastPingAt).toLocaleTimeString()}`
+                                                : "Admin extension is currently pinging the API"
                                 }
                                 style={{ fontSize: 10 }}
                             >
@@ -157,9 +157,19 @@ export function AppNavbar({ appVersion }: { appVersion: string }) {
                                     size="xs"
                                     radius="lg"
                                     fullWidth
-                                    color={connected ? "teal" : "gray"}
+                                    color={
+                                        !connected
+                                            ? "gray"
+                                            : versionMismatch
+                                                ? "yellow"
+                                                : "teal"
+                                    }
                                 >
-                                    {connected ? "connected" : "offline"}
+                                    {!connected
+                                        ? "offline"
+                                        : versionMismatch
+                                            ? "version mismatch"
+                                            : "connected"}
                                 </Badge>
                             </Tooltip>
                         )}

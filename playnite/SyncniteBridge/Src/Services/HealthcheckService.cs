@@ -134,11 +134,15 @@ namespace SyncniteBridge.Services
         /// </summary>
         private async Task TickAsync()
         {
+            var extVersionRaw = BridgeVersion.Current;
+
             // 1) Reachability + server version from /ping
-            var (reachable, serverVersionRaw) = await http.PingWithVersionAsync(pingUrl)
+            var (reachable, serverVersionRaw) = await http.PingWithVersionAsync(
+                    pingUrl,
+                    extVersionRaw
+                )
                 .ConfigureAwait(false);
 
-            var extVersionRaw = BridgeVersion.Current;
             var serverVersion = NormalizeVersion(serverVersionRaw);
             var extVersion = NormalizeVersion(extVersionRaw);
 
