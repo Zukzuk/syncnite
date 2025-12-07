@@ -1,7 +1,9 @@
 import { Box, Image } from "@mantine/core";
-import { GRID, ASSOCIATED_CARD_STEP_Y } from "../../../lib/constants";
+import { GRID, ASSOCIATED_CARD_STEP_Y, Z_INDEX } from "../../../lib/constants";
 import { getTheme } from "../../../lib/utils";
 import { AssociatedCardMeta, GameItem } from "../../../types/types";
+import { IconIsInstalled } from "../../../components/IconIsInstalled";
+import { IconIsHidden } from "../../../components/IconIsHidden";
 
 type Props = {
     meta: AssociatedCardMeta;
@@ -15,6 +17,7 @@ type Props = {
     setHoveredId: (id: string | null) => void;
 };
 
+// Card component for an associated deck in the library view.       
 export function AssociatedDeckCard({
     meta,
     item,
@@ -28,7 +31,7 @@ export function AssociatedDeckCard({
 }: Props) {
     const { isDark } = getTheme();
     const { colIndex, indexInColumn, id, index } = meta;
-    const { title, year, coverUrl } = item;
+    const { title, year, coverUrl, isInstalled, isHidden } = item;
 
     const left = colIndex * (GRID.cardWidth + GRID.gap * 2);
     const top = indexInColumn * ASSOCIATED_CARD_STEP_Y;
@@ -76,7 +79,7 @@ export function AssociatedDeckCard({
                     : "0 4px 8px rgba(0, 0, 0, 0.15)",
                 border:
                     isTopCard || isCurrentItem
-                        ? "2px solid var(--mantine-primary-color-4)"
+                        ? "2px solid var(--interlinked-color-primary-soft)"
                         : isDark
                             ? "2px solid var(--mantine-color-dark-9)"
                             : "2px solid var(--mantine-color-gray-3)",
@@ -92,6 +95,16 @@ export function AssociatedDeckCard({
                     aspectRatio: "23 / 32",
                 }}
             >
+                <IconIsInstalled
+                    isListView={false}
+                    isInstalled={isInstalled}
+                />
+
+                <IconIsHidden
+                    isListView={false}
+                    isHidden={isHidden}
+                />
+                
                 <Image
                     src={coverUrl || ""}
                     alt={title}
@@ -111,6 +124,7 @@ export function AssociatedDeckCard({
                         style={{
                             position: "absolute",
                             inset: 0,
+                            zIndex: Z_INDEX.aboveBase,
                             backgroundColor: isDark
                                 ? "color-mix(in srgb, var(--mantine-color-dark-7) 65%, transparent)"
                                 : "color-mix(in srgb, var(--mantine-color-gray-3) 50%, transparent)",

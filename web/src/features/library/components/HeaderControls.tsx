@@ -2,15 +2,13 @@ import React from "react";
 import { Group, MultiSelect, Switch, Text, Flex, Box, SegmentedControl } from "@mantine/core";
 import { SearchInput } from "../../../components/SearchInput";
 import { GRID, SOURCE_MAP } from "../../../lib/constants";
-import { LoadedData, UIDerivedState, UIState, ViewMode } from "../../../types/types";
+import { LoadedData, UIControls, UIDerivedData, ViewMode } from "../../../types/types";
 
 type Props = {
   controlsRef: (el: HTMLDivElement | null) => void;
   libraryData: LoadedData;
-  ui: UIState;
-  derived: UIDerivedState;
-  view: ViewMode;
-  setView: (view: ViewMode) => void;
+  ui: UIControls;
+  derived: UIDerivedData;
 };
 
 /**
@@ -21,16 +19,12 @@ type Props = {
  * - libraryData: Loaded library data including all sources, tags, and series.
  * - ui: UI state including search query, filters, and toggles.
  * - derived: Derived UI state including filtered and total item counts.
- * - view: Current view mode (list or grid).
- * - setView: Callback to change the view mode.
  */
 export const HeaderControls = React.memo(function HeaderControls({
   controlsRef,
   libraryData,
   ui,
   derived,
-  view,
-  setView,
 }: Props) {
 
   const {
@@ -40,18 +34,13 @@ export const HeaderControls = React.memo(function HeaderControls({
   } = libraryData;
 
   const {
-    q,
-    setQ,
-    sources,
-    setSources,
-    tags,
-    setTags,
-    series,
-    setSeries,
-    showHidden,
-    setShowHidden,
-    installedOnly,
-    setInstalledOnly,
+    view, setView,
+    q, setQ,
+    sources, setSources,
+    tags, setTags,
+    series, setSeries,
+    showHidden, setShowHidden,
+    installedOnly, setInstalledOnly,
 
   } = ui;
 
@@ -97,6 +86,7 @@ export const HeaderControls = React.memo(function HeaderControls({
                 value={view}
                 size="xs"
                 radius="sm"
+                color="var(--interlinked-color-primary)"
                 onChange={(v) => setView(v as ViewMode)}
                 data={[
                   { value: "list", label: "List" },

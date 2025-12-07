@@ -6,7 +6,7 @@ import { GameItem } from "../types/types";
 
 type Props = Pick<GameItem, "title" | "year">;
 
-export const CopyTitle = React.memo(function CopyTitle({
+export const IconCopyTitle = React.memo(function IconCopyTitle({
     title,
     year,
 }: Props) {
@@ -26,7 +26,12 @@ export const CopyTitle = React.memo(function CopyTitle({
     };
 
     return (
-        <Tooltip label={copied ? "Copied!" : "Copy title"} withArrow position="top">
+        <Tooltip 
+            style={{ fontSize: 10 }} 
+            label={copied ? "Copied!" : "Copy title"} 
+            withArrow 
+            position="top"
+        >
             <ActionIcon
                 component="a"
                 rel="noopener"
@@ -37,7 +42,7 @@ export const CopyTitle = React.memo(function CopyTitle({
                 size="sm"
                 style={{ lineHeight: 0, height: "100%", display: "flex", alignItems: "center" }}
             >
-                <IconCopy size={14} stroke={2}  />
+                <IconCopy size={14} stroke={2} />
             </ActionIcon>
         </Tooltip>
     );

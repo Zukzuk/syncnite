@@ -7,14 +7,17 @@ import { GameItem } from "../types/types";
 
 type Props = Pick<GameItem, "link" | "title" | "source">;
 
-export const ExternalLink = React.memo(function ExternalLink({
-    link,
-    title,
-    source,
+export const IconLinkExternal = React.memo(function IconLinkExternal({
+    link, title, source,
 }: Props) {
     if (!link) return null;
     return (
-        <Tooltip label={SOURCE_MAP[source]?.online} withArrow position="top">
+        <Tooltip 
+            style={{ fontSize: 10 }} 
+            label={SOURCE_MAP[source]?.online} 
+            withArrow 
+            position="top"
+        >
              <ActionIcon
                 component="a"
                 href={link}

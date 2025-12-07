@@ -2,19 +2,22 @@ import React from "react";
 import { Box, Flex, Text, Group } from "@mantine/core";
 import { IconPlayerPlay, IconDownload } from "@tabler/icons-react";
 import { GRID } from "../../../lib/constants";
-import { IconImage } from "../../../components/IconImage";
-import { ExternalLink } from "../../../components/ExternalLink";
-import { IconSourceLink } from "../../../components/IconSourceLink";
-import { CopyTitle } from "../../../components/CopyTitle";
 import { GameItem } from "../../../types/types";
+import { IconGame } from "../../../components/IconGame";
+import { IconIsInstalled } from "../../../components/IconIsInstalled";
+import { IconIsHidden } from "../../../components/IconIsHidden";
+import { IconCopyTitle } from "../../../components/IconCopyTitle";
+import { IconLinkExternal } from "../../../components/IconExternalLink";
+import { IconLinkSource } from "../../../components/IconSourceLink";
 
 type Props = {
     item: GameItem;
     isOpen: boolean;
 };
 
+// Row component for a library item in list view.
 export function ItemRow({ item, isOpen }: Props): JSX.Element {
-    const { id, isInstalled, iconUrl, title, gameId, year, source, series, link } = item;
+    const { id, isInstalled, isHidden, iconUrl, title, gameId, year, source, series, link } = item;
     const [isHovered, setIsHovered] = React.useState(false);
     const playniteUrl = `playnite://playnite/${isInstalled ? "start" : "showgame"}/${id}`;
 
@@ -55,14 +58,14 @@ export function ItemRow({ item, isOpen }: Props): JSX.Element {
                             transition: "opacity 140ms ease",
                         }}
                     >
-                        <IconImage src={iconUrl ?? ""} />
+                        <IconGame src={iconUrl} />
                     </Box>
 
                     <Box
                         style={{
                             position: "relative",
                             display: "flex",
-                            color: "var(--mantine-primary-color-4)",
+                            color: "var(--interlinked-color-primary-soft)",
                             alignItems: "center",
                             justifyContent: "center",
                             opacity: isHovered ? 1 : 0,
@@ -79,12 +82,14 @@ export function ItemRow({ item, isOpen }: Props): JSX.Element {
                 </Box>
             </Flex>
 
-            <Flex gap={8} style={{ minWidth: 0 }}>
+            <Flex gap={8} align="center" style={{ minWidth: 0 }}>
                 <Text
                     fw={600}
                     title={title}
                     className="item-title"
                     style={{
+                        flex: 1, // let title take remaining space
+                        minWidth: 0, // allow shrinking for ellipsis
                         overflow: isOpen ? undefined : "hidden",
                         textOverflow: isOpen ? undefined : "ellipsis",
                         whiteSpace: isOpen ? undefined : "nowrap",
@@ -95,9 +100,18 @@ export function ItemRow({ item, isOpen }: Props): JSX.Element {
                 </Text>
 
                 {/* push utility icons to the far right */}
-                <Box style={{ marginLeft: "auto" }}>
-                    <CopyTitle title={title} year={year} />
-                </Box>
+                <Group
+                    gap={4}
+                    style={{
+                        marginLeft: "auto",
+                        flexShrink: 0,
+                        alignItems: "center",
+                    }}
+                >
+                    <IconIsInstalled isListView={true} isInstalled={isInstalled} />
+                    <IconIsHidden isListView={true} isHidden={isHidden} />
+                    <IconCopyTitle title={title} year={year} />
+                </Group>
             </Flex>
 
             <Box ta="center">
@@ -107,9 +121,9 @@ export function ItemRow({ item, isOpen }: Props): JSX.Element {
             </Box>
 
             <Box>
-                <Group gap={6} wrap="nowrap" style={{ justifyContent: "center" }}>
-                    <ExternalLink source={source} link={link} title={title} />
-                    <IconSourceLink source={source} gameId={gameId} link={link} />
+                <Group gap={4} wrap="nowrap" style={{ justifyContent: "center" }}>
+                    <IconLinkExternal source={source} link={link} title={title} />
+                    <IconLinkSource source={source} gameId={gameId} link={link} />
                 </Group>
             </Box>
 

@@ -18,15 +18,16 @@ type Props = {
     associatedByTags: GameItem[];
     associatedByYear: GameItem[];
     associatedByInstalled: GameItem[];
-    containerLeft: number;
-    containerTop: number;
-    containerWidth: number | string;
-    containerHeight: number | string;
-    containerZIndex: number;
+    cardLeft: number;
+    cardTop: number;
+    cardWidth: number | string;
+    cardHeight: number | string;
+    cardZIndex: number;
     onToggleItem: (id: string, index: number) => void;
     onAssociatedClick: (fromId: string, targetId: string) => void;
 };
 
+// Card component for a library item in grid view.
 export const GridCard = React.memo(function GridCard({
     item,
     isOpen,
@@ -38,15 +39,15 @@ export const GridCard = React.memo(function GridCard({
     associatedByTags,
     associatedByYear,
     associatedByInstalled,
-    containerLeft,
-    containerTop,
-    containerWidth,
-    containerHeight,
-    containerZIndex,
+    cardLeft,
+    cardTop,
+    cardWidth,
+    cardHeight,
+    cardZIndex,
     onToggleItem,
     onAssociatedClick,
 }: Props): JSX.Element {
-    const { title, isHidden, isInstalled } = item;
+    const { title } = item;
 
     const [isHovered, setIsHovered] = React.useState(false);
     const [bgIsHovered, setBgIsHovered] = React.useState(false);
@@ -72,11 +73,11 @@ export const GridCard = React.memo(function GridCard({
                 flexDirection: "column",
                 overflow: "hidden",
                 backgroundColor: "var(--mantine-color-default-background)",
-                left: containerLeft,
-                top: containerTop,
-                width: containerWidth,
-                height: containerHeight,
-                zIndex: containerZIndex,
+                left: cardLeft,
+                top: cardTop,
+                width: cardWidth,
+                height: cardHeight,
+                zIndex: cardZIndex,
             }}
         >
             <Box
@@ -90,13 +91,10 @@ export const GridCard = React.memo(function GridCard({
                     isolation: "isolate",
                     cursor: "pointer",
                     userSelect: "none",
-                    backgroundColor: isInstalled
-                        ? "var(--mantine-primary-color-light)"
-                        : "transparent",
                     border: isListView || isOpen
                         ? undefined
                         : isHovered
-                            ? "2px solid var(--mantine-primary-color-4)"
+                            ? "2px solid var(--interlinked-color-primary-soft)"
                             : "2px solid transparent",
                     borderBottom: isListView
                         ? "1px solid var(--mantine-color-default-border)"
@@ -121,7 +119,7 @@ export const GridCard = React.memo(function GridCard({
                     style={{
                         position: "relative",
                         zIndex: Z_INDEX.base,
-                        opacity: bgIsHovered ? 0 : isHidden ? 0.2 : 1,
+                        opacity: bgIsHovered ? 0 : 1,
                         willChange: "opacity",
                         transitionProperty: "opacity",
                         transitionDuration: "220ms",

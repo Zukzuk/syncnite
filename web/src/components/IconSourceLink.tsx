@@ -79,7 +79,7 @@ function sourceProtocolLink(source: string, gameId: string | null, href: string 
     }
 }
 
-export const IconSourceLink = React.memo(function IconSourceLink({
+export const IconLinkSource = React.memo(function IconLinkSource({
     source,
     link,
     gameId,
@@ -90,7 +90,12 @@ export const IconSourceLink = React.memo(function IconSourceLink({
     const Icon = iconForSource(source);
 
     return (
-        <Tooltip label={SOURCE_MAP[source]?.platform} withArrow position="top">
+        <Tooltip 
+            style={{ fontSize: 10 }} 
+            label={SOURCE_MAP[source]?.platform} 
+            withArrow 
+            position="top"
+        >
             <ActionIcon
                 component="a"
                 rel="noopener"

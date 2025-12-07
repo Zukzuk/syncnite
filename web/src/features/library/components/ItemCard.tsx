@@ -1,17 +1,19 @@
 import { Box, Group, Image, Text } from "@mantine/core";
-import { CopyTitle } from "../../../components/CopyTitle";
-import { ExternalLink } from "../../../components/ExternalLink";
-import { IconSourceLink } from "../../../components/IconSourceLink";
 import { GameItem } from "../../../types/types";
+import { IconIsInstalled } from "../../../components/IconIsInstalled";
+import { IconIsHidden } from "../../../components/IconIsHidden";
+import { IconCopyTitle } from "../../../components/IconCopyTitle";
+import { IconLinkExternal } from "../../../components/IconExternalLink";
+import { IconLinkSource } from "../../../components/IconSourceLink";
 
 type Props = {
     item: GameItem;
     isOpen: boolean;
 };
 
+// Card component for a library item in grid view.
 export function ItemCard({ item, isOpen }: Props): JSX.Element {
-
-    const { title, coverUrl, year, source, link, gameId } = item;
+    const { title, coverUrl, year, source, link, gameId, isHidden, isInstalled } = item;
 
     return (
         <>
@@ -24,6 +26,7 @@ export function ItemCard({ item, isOpen }: Props): JSX.Element {
                     alt={title}
                     fit="fill"
                     loading="lazy"
+                    radius={4}
                     style={{
                         position: "absolute",
                         inset: 0,
@@ -33,6 +36,16 @@ export function ItemCard({ item, isOpen }: Props): JSX.Element {
                     }}
                 />
             </Box>
+
+            <IconIsInstalled 
+                isListView={false} 
+                isInstalled={isInstalled}
+            />
+
+            <IconIsHidden 
+                isListView={false} 
+                isHidden={isHidden}
+            />
 
             <Text
                 size="sm"
@@ -70,16 +83,16 @@ export function ItemCard({ item, isOpen }: Props): JSX.Element {
                         wrap="nowrap"
                         style={{ justifyContent: "center" }}
                     >
-                        <CopyTitle
+                        <IconCopyTitle
                             title={title}
                             year={year}
                         />
-                        <ExternalLink
+                        <IconLinkExternal
                             source={source}
                             link={link}
                             title={title}
                         />
-                        <IconSourceLink
+                        <IconLinkSource
                             source={source}
                             gameId={gameId}
                             link={link}

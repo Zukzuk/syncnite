@@ -6,15 +6,15 @@ import { useGridOpenItemToggle } from "./useGridOpenItemToggle";
 import { useGridScrollJump } from "./useGridScrollJump";
 import { useGridScrollRestore } from "./useGridScrollRestore";
 import { GRID } from "../../../lib/constants";
-import { GameItem, ItemPositions, Letter, UIDerivedState, UIState } from "../../../types/types";
+import { GameItem, ItemPositions, Letter, UIControls, UIDerivedData } from "../../../types/types";
 
 type UseParams = {
     gridRef: React.RefObject<HTMLDivElement>;
     isListView: boolean;
     controlsH: number;
     sortH: number;
-    ui: UIState;
-    derived: UIDerivedState;
+    ui: UIControls;
+    derived: UIDerivedData;
 };
 
 type UseReturn = {

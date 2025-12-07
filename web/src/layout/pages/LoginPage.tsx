@@ -120,7 +120,7 @@ export default function LoginPage(): JSX.Element {
             <form onSubmit={handleUserRegister}>
               <Stack>
                 {!hasAdmin && (
-                  <Alert color="yellow">An admin must exist before you can register.</Alert>
+                  <Alert color="var(--interlinked-color-warning)">An admin must exist before you can register.</Alert>
                 )}
                 <TextInput label="Email" {...registerUserForm.getInputProps("email")} />
                 <PasswordInput
@@ -139,7 +139,7 @@ export default function LoginPage(): JSX.Element {
             <form onSubmit={handleAdminRegister}>
               <Stack>
                 {hasAdmin && (
-                  <Alert color="yellow">An admin already exists in this system.</Alert>
+                  <Alert color="var(--interlinked-color-warning)">An admin already exists in this system.</Alert>
                 )}
                 <TextInput label="Admin Email" {...registerAdminForm.getInputProps("email")} />
                 <PasswordInput
@@ -157,7 +157,7 @@ export default function LoginPage(): JSX.Element {
         {error && (
           <>
             <Space h="md" />
-            <Alert color="red">
+            <Alert color="var(--interlinked-color-error)">
               <Text size="sm">{error}</Text>
             </Alert>
           </>

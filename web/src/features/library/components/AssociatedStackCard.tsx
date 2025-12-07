@@ -10,6 +10,7 @@ type Props = {
     onClick: () => void
 };
 
+// Card component for an associated stack of decks in the library view.
 export function AssociatedStackCard({ deck, isOpen, onClick }: Props): JSX.Element | null {
     const { label, items } = deck;
     const [isHovered, setIsHovered] = React.useState(false);
@@ -48,12 +49,12 @@ export function AssociatedStackCard({ deck, isOpen, onClick }: Props): JSX.Eleme
                     padding: GRID.gap,
                     borderRadius: 4,
                     border: isHoveredOrOpen
-                        ? "2px solid var(--mantine-primary-color-4)"
+                        ? "2px solid var(--interlinked-color-primary-soft)"
                         : isDark
                             ? "2px solid var(--mantine-color-dark-9)"
                             : "2px solid var(--mantine-color-gray-3)",
                     backgroundColor: isOpen
-                        ? "var(--mantine-primary-color-light)"
+                        ? "var(--interlinked-color-primary-translucent)"
                         : "var(--mantine-color-body)",
                     cursor: "pointer",
                     display: "flex",
@@ -99,12 +100,12 @@ export function AssociatedStackCard({ deck, isOpen, onClick }: Props): JSX.Eleme
                                 <Image
                                     src={g.coverUrl || ""}
                                     alt={g.title}
-                                    fit="cover"
+                                    fit="fill"
                                     loading="lazy"
                                     style={{
                                         width: "100%",
                                         height: "100%",
-                                        objectFit: "cover",
+                                        objectFit: "fill",
                                     }}
                                 />
                             )}

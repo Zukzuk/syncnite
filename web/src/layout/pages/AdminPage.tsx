@@ -12,7 +12,7 @@ export default function AdminPage(): JSX.Element {
             <Card withBorder>
                 <Text fw={600} mb="xs">Admin</Text>
                 <Group>
-                    <Badge color="green" variant="filled">active</Badge>
+                    <Badge color="var(--interlinked-color-success)" variant="filled">active</Badge>
                     <Text size="md">Signed in as&nbsp;<Code>{state.email}</Code></Text>
                 </Group>
                 <Divider my="sm" />

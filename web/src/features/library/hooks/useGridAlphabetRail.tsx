@@ -1,13 +1,47 @@
 import React from "react";
-import { AlphabeticalGroup, GameItem, ItemGroupedByLetter, Letter, UIDerivedState, UIState } from "../../../types/types";
+import { AlphabeticalGroup, GameItem, ItemGroupedByLetter, Letter, UIControls, UIDerivedData } from "../../../types/types";
 import { LETTERS } from "../../../lib/constants";
 import { orderedLetters } from "../../../lib/utils";
+
+
+/**
+ * Compute alphabetical groups from sorted items.
+ */
+function computeAlphabetGroups({ sortKey, itemsGroupedByLetter, itemsSorted }: {
+    sortKey: string; itemsGroupedByLetter: ItemGroupedByLetter[] | null; itemsSorted: GameItem[] | null
+}): {
+    alphabeticalGroups: AlphabeticalGroup[] | null; isGrouped: boolean; flatItems: GameItem[];
+} {
+    const alphabeticalGroups = React.useMemo<AlphabeticalGroup[] | null>(() => {
+        if (sortKey !== "title" || !itemsGroupedByLetter || itemsGroupedByLetter.length === 0) {
+            return null;
+        }
+
+        const out: AlphabeticalGroup[] = [];
+        let current: AlphabeticalGroup | null = null;
+
+        for (const { item, itemLetter } of itemsGroupedByLetter) {
+            const gp = (itemLetter || orderedLetters(item?.title, item?.sortingName));
+            if (!current || current.groupLetter !== gp) {
+                current = { groupLetter: gp, items: [] };
+                out.push(current);
+            }
+            current.items.push(item);
+        }
+        return out;
+    }, [sortKey, itemsGroupedByLetter]);
+
+    const isGrouped = !!alphabeticalGroups && alphabeticalGroups.length > 0;
+    const flatItems = itemsSorted ?? [];
+
+    return { alphabeticalGroups, isGrouped, flatItems };
+}
 
 type UseParams = {
     railVisibleIndex: number;
     itemsLen: number;
-    ui: UIState;
-    derived: UIDerivedState;
+    ui: UIControls;
+    derived: UIDerivedData;
     scrollItemIntoView: (index: number) => void;
 };
 
@@ -19,13 +53,17 @@ type UseReturn = {
 
 // A hook to manage alphabetical rail navigation for the absolute grid.
 export function useGridAlphabetRail({ scrollItemIntoView, ui, derived, railVisibleIndex, itemsLen }: UseParams): UseReturn {
+
+    const { sortKey } = ui;
+    const { itemsGroupedByLetter, itemsSorted } = derived;
+
     // Alphabet groups for rail
     const { alphabeticalGroups, isGrouped, flatItems } = computeAlphabetGroups({
-        sortKey: ui.sortKey,
-        itemsGroupedByLetter: derived.itemsGroupedByLetter,
-        itemsSorted: derived.itemsSorted,
+        sortKey,
+        itemsGroupedByLetter,
+        itemsSorted,
     });
-    
+
     // flat
     const { flatFirstIndex, flatCounts } = React.useMemo(() => {
         const firstIndex = Object.fromEntries(
@@ -122,37 +160,4 @@ export function useGridAlphabetRail({ scrollItemIntoView, ui, derived, railVisib
     const railCounts = isGrouped ? groupCounts : flatCounts;
 
     return { railCounts, activeLetter, onScrollJump };
-}
-
-/**
- * Compute alphabetical groups from sorted items.
- */
-function computeAlphabetGroups({ sortKey, itemsGroupedByLetter, itemsSorted }: { 
-    sortKey: string; itemsGroupedByLetter: ItemGroupedByLetter[] | null; itemsSorted: GameItem[] | null 
-}): {
-    alphabeticalGroups: AlphabeticalGroup[] | null; isGrouped: boolean; flatItems: GameItem[];
-} {
-    const alphabeticalGroups = React.useMemo<AlphabeticalGroup[] | null>(() => {
-        if (sortKey !== "title" || !itemsGroupedByLetter || itemsGroupedByLetter.length === 0) {
-            return null;
-        }
-        
-        const out: AlphabeticalGroup[] = [];
-        let current: AlphabeticalGroup | null = null;
-
-        for (const { item, itemLetter } of itemsGroupedByLetter) {
-            const gp = (itemLetter || orderedLetters(item?.title, item?.sortingName));
-            if (!current || current.groupLetter !== gp) {
-                current = { groupLetter: gp, items: [] };
-                out.push(current);
-            }
-            current.items.push(item);
-        }
-        return out;
-    }, [sortKey, itemsGroupedByLetter]);
-
-    const isGrouped = !!alphabeticalGroups && alphabeticalGroups.length > 0;
-    const flatItems = itemsSorted ?? [];
-
-    return { alphabeticalGroups, isGrouped, flatItems };
 }

@@ -1,4 +1,3 @@
-import React from "react";
 import { Anchor, Badge, Box, Group, Image, Stack, Text } from "@mantine/core";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 import { GameItem } from "../../../types/types";
@@ -10,8 +9,9 @@ type Props = {
     onBgHovered: (hovered: boolean) => void;
 };
 
+// Component to display associated details of a library item.   
 export function AssociatedDetails({ item, onBgHovered }: Props): JSX.Element {
-    const { sortingName, tags = [], isInstalled, isHidden, links, coverUrl, bgUrl } = item;
+    const { sortingName, tags = [], series = [], isInstalled, isHidden, links, coverUrl, bgUrl } = item;
     const isOpenDelayed = useDelayedFlag({ active: true, delayMs: 70 });
     const { isDark } = getTheme();
 
@@ -52,27 +52,57 @@ export function AssociatedDetails({ item, onBgHovered }: Props): JSX.Element {
             />
 
             <Stack gap={6} align="stretch" style={{ width: "100%" }}>
-                {/* Installed + Hidden badges */}
+                {/* Badges */}
                 <Group gap={6} wrap="wrap">
                     <Badge
                         size="xs"
-                        color={isInstalled ? "green" : "gray"}
+                        color={isInstalled ? "var(--interlinked-color-success)" : "var(--interlinked-color-suppressed)"}
                         variant="filled"
                     >
                         {isInstalled ? "Installed" : "Not installed"}
                     </Badge>
 
                     {isHidden && (
-                        <Badge size="xs" color="yellow" variant="filled">
+                        <Badge size="xs" color="var(--interlinked-color-warning)" variant="filled">
                             Hidden
                         </Badge>
                     )}
                 </Group>
 
+                {/* Series */}
+                {series.length > 0 && (
+                    <Box>
+                        <Text
+                            size="xs"
+                            style={{
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                            }}
+                        >
+                            Series
+                        </Text>
+                        <Group gap={6} mt={6} wrap="wrap">
+                            {series.map((s) => (
+                                <Badge key={s} size="xs" variant="filled">
+                                    {s}
+                                </Badge>
+                            ))}
+                        </Group>
+                    </Box>
+                )}
+
                 {/* Tags */}
                 {tags.length > 0 && (
                     <Box>
-                        <Text size="xs" c="dimmed">
+                        <Text
+                            size="xs"
+                            style={{
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                            }}
+                        >
                             Tags
                         </Text>
                         <Group gap={6} mt={6} wrap="wrap">
@@ -86,6 +116,7 @@ export function AssociatedDetails({ item, onBgHovered }: Props): JSX.Element {
                 )}
             </Stack>
 
+            {/* Background Image */}
             <Image
                 src={bgUrl}
                 alt={sortingName || "wallpaper"}
@@ -104,11 +135,18 @@ export function AssociatedDetails({ item, onBgHovered }: Props): JSX.Element {
                 onClick={(e) => e.stopPropagation()}
             />
 
+            {/* Links */}
             <Stack gap={6} align="stretch" style={{ width: "100%" }}>
-                {/* Links */}
                 {Array.isArray(links) && links.length > 0 && (
                     <Box>
-                        <Text size="xs" c="dimmed">
+                        <Text
+                            size="xs"
+                            style={{
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                            }}
+                        >
                             Links
                         </Text>
                         <Stack gap={2} mt={2} style={{ width: "100%" }}>

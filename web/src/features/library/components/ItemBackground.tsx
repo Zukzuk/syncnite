@@ -1,5 +1,4 @@
 
-import React from "react";
 import { Box } from "@mantine/core";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 import { Z_INDEX } from "../../../lib/constants";
@@ -12,6 +11,7 @@ type Props = {
     bgIsHovered: boolean;
 };
 
+// Background component for a library item.
 export function ItemBackground({ item, isOpen, bgIsHovered }: Props): JSX.Element | null {
     const { bgUrl } = item;
     const isOpenDelayed = useDelayedFlag({ active: isOpen, delayMs: 70 });

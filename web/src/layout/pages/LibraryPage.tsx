@@ -9,11 +9,6 @@ import Library from "../../features/library/Library";
 export default function LibraryPage(): JSX.Element {
     const { libraryData, installedUpdatedAt } = useLibraryData({ pollMs: INTERVAL_MS });
 
-    const [view, setView] = useLocalStorage<ViewMode>({
-        key: "library.view",
-        defaultValue: "grid",
-    });
-
     if (!libraryData) {
         return (
             <Stack style={{ height: "100%", minHeight: 0 }}>
@@ -29,8 +24,6 @@ export default function LibraryPage(): JSX.Element {
             <Box style={{ height: `calc(100vh)` }}>
                 <Library
                     libraryData={libraryData}
-                    view={view}
-                    setView={setView}
                     installedUpdatedAt={installedUpdatedAt || ""}
                 />
             </Box>

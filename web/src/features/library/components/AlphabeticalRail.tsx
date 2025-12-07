@@ -9,6 +9,7 @@ type Props = {
     onScrollJump: (letter: Letter) => void;
 };
 
+// Component to display an alphabetical rail for quick navigation in the library view.
 export function AlphabeticalRail({ activeLetter, railCounts, onScrollJump }: Props): JSX.Element | null {
     const letters = LETTERS_LIST.filter((l) => (railCounts[l] ?? 0) > 0);
     if (letters.length < 10) return null;
@@ -45,7 +46,7 @@ export function AlphabeticalRail({ activeLetter, railCounts, onScrollJump }: Pro
                         <Button
                             type="button"
                             variant={isActive ? "filled" : "subtle"}
-                            color={theme.primaryColor}
+                            color="var(--interlinked-color-primary)"
                             size="compact-xs"
                             fullWidth
                             radius={0}

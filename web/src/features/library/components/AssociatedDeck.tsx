@@ -14,6 +14,7 @@ type Props = {
     onAssociatedClick: (targetId: string) => void;
 };
 
+// Component to display an associated deck of items in the library view.
 export function AssociatedDeck({
     label,
     currentItemId,

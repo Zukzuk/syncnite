@@ -4,40 +4,46 @@ import { GridCard } from "./components/GridCard";
 import { AlphabeticalRail } from "./components/AlphabeticalRail";
 import { useGrid } from "./hooks/useGrid";
 import { GRID, Z_INDEX, MAX_ASSOCIATED } from "../../lib/constants";
-import { GameItem, ViewMode, UIState, UIDerivedState, ItemPositions } from "../../types/types";
+import { GameItem, ItemPositions, UIControls, UIDerivedData } from "../../types/types";
 
-function calculatePositions(
+function calcCardPosition(
     index: number, 
     isOpen: boolean, 
     positions: ItemPositions, 
     isListView: boolean, 
     openWidth: string, 
     openHeight: string,
-) {
+): {
+    cardLeft: number;
+    cardTop: number;
+    cardWidth: number | string;
+    cardHeight: number | string;
+    cardZIndex: number;
+} {
     const pos = positions[index] ?? { left: GRID.gap, top: GRID.gap };
-    const containerWidth = isOpen || isListView 
+    const cardWidth = isOpen || isListView 
         ? openWidth : GRID.cardWidth;
-    const containerHeightItem = isOpen
+    const cardHeight = isOpen
         ? openHeight
         : isListView
             ? GRID.rowHeight
             : GRID.cardHeight;
-    const containerLeft = isOpen || isListView 
+    const cardLeft = isOpen || isListView 
         ? 0 : pos.left;
-    const containerTop = pos.top;
-    const containerZIndex = isOpen 
+    const cardTop = pos.top;
+    const cardZIndex = isOpen 
         ? Z_INDEX.aboveBase : Z_INDEX.base;
 
     return {
-        containerLeft,
-        containerTop,
-        containerWidth,
-        containerHeightItem,
-        containerZIndex,
+        cardLeft,
+        cardTop,
+        cardWidth,
+        cardHeight,
+        cardZIndex,
     };
 }
 
-function getRelated(isOpen: boolean, item: GameItem, all: GameItem[]) {
+function getAssociatedCards(isOpen: boolean, item: GameItem, all: GameItem[]) {
     const associatedSeries: GameItem[] = [];
     const associatedTags: GameItem[] = [];
     const associatedYear: GameItem[] = [];
@@ -108,9 +114,8 @@ function getRelated(isOpen: boolean, item: GameItem, all: GameItem[]) {
 
 type Props = {
     installedUpdatedAt?: string;
-    view: ViewMode;
-    ui: UIState;
-    derived: UIDerivedState;
+    ui: UIControls;
+    derived: UIDerivedData;
     controlsH: number;
     sortH: number;
     setHasOpenItemInView: (value: boolean) => void;
@@ -122,7 +127,6 @@ type Props = {
  */
 export function AbsoluteGrid({
     installedUpdatedAt,
-    view,
     ui,
     derived,
     controlsH,
@@ -130,8 +134,8 @@ export function AbsoluteGrid({
     setHasOpenItemInView,
 }: Props) {
     const gridRef = useRef<HTMLDivElement | null>(null);
-    const isListView = view === "list";
-    const { itemsSorted } = derived;
+    const isListView = ui.view === "list";
+    const { itemsSorted, itemsAssociated } = derived;
 
     const {
         containerHeight,
@@ -190,12 +194,12 @@ export function AbsoluteGrid({
                         const isOpen = openIds.has(item.id);
 
                         const { 
-                            containerLeft, 
-                            containerTop, 
-                            containerWidth, 
-                            containerHeightItem, 
-                            containerZIndex,
-                        } = calculatePositions(
+                            cardLeft, 
+                            cardTop, 
+                            cardWidth, 
+                            cardHeight, 
+                            cardZIndex,
+                        } = calcCardPosition(
                             index, 
                             isOpen, 
                             positions, 
@@ -203,15 +207,16 @@ export function AbsoluteGrid({
                             openWidth,
                             openHeight,
                         );
+
                         const { 
                             associatedSeries, 
                             associatedTags, 
                             associatedYear, 
                             associatedInstalled,
-                        } = getRelated(
+                        } = getAssociatedCards(
                             isOpen, 
                             item, 
-                            itemsSorted,
+                            itemsAssociated,
                         );
 
                         return (
@@ -227,11 +232,11 @@ export function AbsoluteGrid({
                                 associatedByTags={associatedTags}
                                 associatedByYear={associatedYear}
                                 associatedByInstalled={associatedInstalled}
-                                containerLeft={containerLeft}
-                                containerTop={containerTop}
-                                containerWidth={containerWidth}
-                                containerHeight={containerHeightItem}
-                                containerZIndex={containerZIndex}
+                                cardLeft={cardLeft}
+                                cardTop={cardTop}
+                                cardWidth={cardWidth}
+                                cardHeight={cardHeight}
+                                cardZIndex={cardZIndex}
                                 onToggleItem={onToggleItem}
                                 onAssociatedClick={onAssociatedClick}
                             />

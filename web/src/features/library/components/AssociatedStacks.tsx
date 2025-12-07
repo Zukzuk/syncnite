@@ -12,6 +12,7 @@ type Props = {
     onDeckClick: (key: string) => void;
 };
 
+// Component to display associated stacks of decks in the library view.
 export function AssociatedStacks({
     allDecks,
     openDeckKey,

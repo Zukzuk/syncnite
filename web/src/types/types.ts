@@ -1,6 +1,8 @@
 import { LETTERS } from "../lib/constants";
 import { GameLink } from "./playnite";
 
+declare global { interface Window { __APP_VERSION__?: string } }
+
 export type SortKey = "title" | "series" | "year" | "source" | "tags";
 
 export type SortDir = "asc" | "desc";
@@ -38,7 +40,9 @@ export interface CookieState {
   sortDir: SortDir;
 };
 
-export interface UIState {
+export interface UIControls {
+  view: ViewMode,
+  setView: (view: ViewMode) => void;
   q: string;
   setQ: React.Dispatch<React.SetStateAction<string>>;
   sources: string[];
@@ -57,9 +61,10 @@ export interface UIState {
   setInstalledOnly: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export interface UIDerivedState {
+export interface UIDerivedData {
   filteredCount: number;
   totalCount: number;
+  itemsAssociated: GameItem[];
   itemsSorted: GameItem[];
   itemsGroupedByLetter: ItemGroupedByLetter[];
 };
@@ -77,7 +82,7 @@ export interface GameItem {
   link: string | null;
   links: GameLink[] | null;
   year: number | null;
-  iconUrl: string | null;
+  iconUrl: string;
   coverUrl: string | null;
   bgUrl: string | null;
 };
@@ -120,32 +125,32 @@ export interface ItemPositions extends Array<{
 }> { };
 
 export type AssociatedLayout = {
-    deckColumns: number;
-    stackColumns: number;
-    maxCardsPerDeckColumn: number | null;
-    minStackColumns: number;
+  deckColumns: number;
+  stackColumns: number;
+  maxCardsPerDeckColumn: number | null;
+  minStackColumns: number;
 };
 
 export interface AssociatedDeckMeta {
-    key: string;
-    label: string;
-    items: GameItem[];
+  key: string;
+  label: string;
+  items: GameItem[];
 };
 
 export type AssociatedCardMeta = {
-    id: string;
-    index: number;
-    colIndex: number;  
-    indexInColumn: number;
+  id: string;
+  index: number;
+  colIndex: number;
+  indexInColumn: number;
 };
 
 export type LogListener = (lines: string[]) => void;
 
 export interface ILogBus {
-    append(line: string): void;
-    clear(): void;
-    get(): string[];
-    subscribe(fn: LogListener): () => void;
+  append(line: string): void;
+  clear(): void;
+  get(): string[];
+  subscribe(fn: LogListener): () => void;
 }
 
 export type SteamStatusResponse = {

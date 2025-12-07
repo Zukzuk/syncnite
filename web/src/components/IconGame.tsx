@@ -2,11 +2,6 @@ import React from "react";
 import ICO from "icojs";
 import { GRID } from "../lib/constants";
 
-type Props = {
-  src: string;
-  alt?: string
-};
-
 function isIcoPath(url: string): boolean {
   try {
     const u = new URL(url, window.location.origin);
@@ -36,7 +31,12 @@ async function icoToPngDataUrl(icoUrl: string): Promise<string | null> {
   }
 }
 
-export function IconImage({ src, alt }: Props) {
+type Props = {
+  src: string;
+  alt?: string
+};
+
+export function IconGame({ src, alt }: Props) {
   const [url, setUrl] = React.useState(src);
   const retriedRef = React.useRef(false);
 

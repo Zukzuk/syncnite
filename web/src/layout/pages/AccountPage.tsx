@@ -125,7 +125,7 @@ export default function AccountPage(): JSX.Element {
                                 </Text>
                             </div>
                         </Group>
-                        <Badge color={isAdmin ? "green" : "gray"} variant="filled">
+                        <Badge color={isAdmin ? "var(--interlinked-color-success)" : "var(--interlinked-color-suppressed)"} variant="filled">
                             {isAdmin ? "Admin" : "User"}
                         </Badge>
                     </Group>
@@ -146,7 +146,7 @@ export default function AccountPage(): JSX.Element {
                 <Card withBorder shadow="sm" radius="md">
                     <Group justify="space-between" align="flex-start" mb="sm">
                         <Group gap="sm">
-                            <ThemeIcon radius="xl" variant="light" color="dark">
+                            <ThemeIcon radius="xl" variant="light" color="var(--interlinked-color-suppressed)">
                                 <IconSteam size={18} />
                             </ThemeIcon>
                             <div>
@@ -158,11 +158,11 @@ export default function AccountPage(): JSX.Element {
                         </Group>
 
                         {steamConnected ? (
-                            <Badge color="green" variant="filled">
+                            <Badge color="var(--interlinked-color-success)" variant="filled">
                                 Linked
                             </Badge>
                         ) : (
-                            <Badge color="gray">Not linked</Badge>
+                            <Badge color="var(--interlinked-color-suppressed)" variant="filled">Not linked</Badge>
                         )}
                     </Group>
 

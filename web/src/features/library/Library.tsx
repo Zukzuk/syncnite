@@ -5,13 +5,11 @@ import { HeaderSort } from "./components/HeaderSort";
 import { HeaderControls } from "./components/HeaderControls";
 import { useLibraryState } from "./hooks/useLibraryState";
 import { AbsoluteGrid } from "./AbsoluteGrid";
-import { LoadedData, ViewMode } from "../../types/types";
+import { LoadedData } from "../../types/types";
 
 type Props = {
     libraryData: LoadedData;
-    view: ViewMode;
     installedUpdatedAt?: string;
-    setView: (view: ViewMode) => void;
 };
 
 /**
@@ -20,20 +18,16 @@ type Props = {
  * Props:
  * - libraryData: Loaded library data including all items, sources, tags, and series.
  * - installedUpdatedAt: Optional timestamp for when installed items were last updated.
- * - view: Current view mode (list or grid).
- * - setView: Callback to change the view mode.
  */
 export default function Library({
     libraryData,
     installedUpdatedAt,
-    view,
-    setView,
 }: Props): JSX.Element {
-    const { ui, derived } = useLibraryState({ items: libraryData.items });
+    const { uiControls, derivedData } = useLibraryState(libraryData.items);
     const { ref: controlsRef, height: controlsH } = useElementSize();
     const { ref: sortRef, height: sortH } = useElementSize();
-    const isListView = view === "list";
-    
+    const isListView = uiControls.view === "list";
+
     // Track if any open item is in view to adjust header styling
     const [hasOpenItemInView, setHasOpenItemInView] = useState(false);
 
@@ -43,24 +37,21 @@ export default function Library({
                 controlsRef={controlsRef as unknown as (el: HTMLElement | null) => void}
                 aria-label="header-controls"
                 libraryData={libraryData}
-                ui={ui}
-                derived={derived}
-                view={view}
-                setView={setView}
+                ui={uiControls}
+                derived={derivedData}
             />
 
             <HeaderSort
                 sortRef={sortRef as unknown as (el: HTMLElement | null) => void}
                 aria-label="header-sort"
-                ui={ui}
+                ui={uiControls}
                 isListView={isListView}
                 hasOpenItemInView={hasOpenItemInView}
             />
 
             <AbsoluteGrid
-                view={view}
-                ui={ui}
-                derived={derived}
+                ui={uiControls}
+                derived={derivedData}
                 controlsH={controlsH}
                 sortH={sortH}
                 installedUpdatedAt={installedUpdatedAt}

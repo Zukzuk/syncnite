@@ -159,10 +159,10 @@ export function AppNavbar({ appVersion }: { appVersion: string }) {
                                     fullWidth
                                     color={
                                         !connected
-                                            ? "gray"
+                                            ? "var(--interlinked-color-suppressed)"
                                             : versionMismatch
-                                                ? "yellow"
-                                                : "teal"
+                                                ? "var(--interlinked-color-warning)"
+                                                : "var(--interlinked-color-success)"
                                     }
                                 >
                                     {!connected
@@ -185,9 +185,11 @@ export function AppNavbar({ appVersion }: { appVersion: string }) {
                                 href={API_ENDPOINTS.EXTENSION_DOWNLOAD}
                                 size="xs"
                                 radius="sm"
-                                leftSection={<IconDownload size={14} />}
                                 variant="light"
                                 fullWidth
+                                justify="space-between"
+                                rightSection={<span />}
+                                leftSection={<IconDownload size={14} />}
                             >
                                 Download<br />extension
                             </Button>
@@ -204,9 +206,11 @@ export function AppNavbar({ appVersion }: { appVersion: string }) {
                                 onClick={logout}
                                 size="xs"
                                 radius="sm"
-                                leftSection={<IconLogout2 size={14} />}
                                 variant="light"
                                 fullWidth
+                                justify="space-between"
+                                rightSection={<span />}
+                                leftSection={<IconLogout2 size={14} />}
                             >
                                 Logout
                             </Button>

@@ -1,39 +1,27 @@
 import React from "react";
 import { Box, UnstyledButton, Text } from "@mantine/core";
-import { SortKey, UIState } from "../../../types/types";
+import { SortKey, UIControls } from "../../../types/types";
 import { GRID } from "../../../lib/constants";
 
 type Props = {
   sortRef: (el: HTMLElement | null) => void;
-  ui: UIState;
+  ui: UIControls;
   isListView: boolean;
   hasOpenItemInView?: boolean;
 };
 
-/**
- * Header sort component for the library view.
- * Renders sortable column headers for Title, Year, Platform, and Series.
- * Props:
- * - sortRef: Ref callback for the header element.
- * - ui: UI state including sortKey, sortDir, and onToggleSort.
- * - isListView: Whether the current view is list view.
- * - hasOpenItemInView: Whether any open item is currently in view.
- */
-export const HeaderSort = React.memo(function HeaderSort({ 
-  sortRef, 
-  ui, 
-  isListView, 
-  hasOpenItemInView 
+// Header sort component for the library view.
+export const HeaderSort = React.memo(function HeaderSort({
+  sortRef,
+  ui,
+  isListView,
+  hasOpenItemInView
 }: Props) {
 
   const { sortKey, sortDir, onToggleSort } = ui;
 
   const label = (base: string, key: SortKey) =>
     sortKey === key ? `${base} ${sortDir === "asc" ? "▲" : "▼"}` : base;
-
-  // For a11y: map to aria-sort values
-  const ariaSort = (key: SortKey): React.AriaAttributes["aria-sort"] =>
-    sortKey !== key ? "none" : sortDir === "asc" ? "ascending" : "descending";
 
   return (
     <Box
@@ -63,41 +51,38 @@ export const HeaderSort = React.memo(function HeaderSort({
         <UnstyledButton
           onClick={() => onToggleSort("title")}
           role="columnheader"
-          aria-sort={ariaSort("title")}
           aria-label="Sort by Title"
           style={{ textAlign: "left", cursor: "pointer" }}
         >
-          <Text size="sm" fw={400}>{label("Title", "title")}</Text>
+          <Text c={sortKey === "title" ? "var(--interlinked-color-primary)" : undefined} size="sm" fw={400}>{label("Title", "title")}</Text>
         </UnstyledButton>
 
         <UnstyledButton
           onClick={() => onToggleSort("year")}
           role="columnheader"
-          aria-sort={ariaSort("year")}
           aria-label="Sort by Year"
           style={{ textAlign: "center", cursor: "pointer" }}
+          
         >
-          <Text size="sm" fw={400}>{label("Year", "year")}</Text>
+          <Text c={sortKey === "year" ? "var(--interlinked-color-primary)" : undefined} size="sm" fw={400}>{label("Year", "year")}</Text>
         </UnstyledButton>
 
         <UnstyledButton
           onClick={() => onToggleSort("source")}
           role="columnheader"
-          aria-sort={ariaSort("source")}
           aria-label="Sort by Platform"
           style={{ textAlign: "center", cursor: "pointer" }}
         >
-          <Text size="sm" fw={400}>{label("Platform", "source")}</Text>
+          <Text c={sortKey === "source" ? "var(--interlinked-color-primary)" : undefined} size="sm" fw={400}>{label("Platform", "source")}</Text>
         </UnstyledButton>
 
         <UnstyledButton
           onClick={() => onToggleSort("series")}
           role="columnheader"
-          aria-sort={ariaSort("series")}
           aria-label="Sort by Series"
           style={{ textAlign: "left", cursor: "pointer" }}
         >
-          <Text size="sm" fw={400}>{label("Series", "series")}</Text>
+          <Text c={sortKey === "series" ? "var(--interlinked-color-primary)" : undefined} size="sm" fw={400}>{label("Series", "series")}</Text>
         </UnstyledButton>
       </Box>
     </Box>
