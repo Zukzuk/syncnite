@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.32.5](https://github.com/Zukzuk/syncnite/compare/v1.32.4...v1.32.5) (2025-12-09)
+
+
+### Bug Fixes
+
+* more ux updates, scoll jump on close still janky ([613f194](https://github.com/Zukzuk/syncnite/commit/613f194412e67af984d96f277200856a0776661d))
+
 ### [1.32.4](https://github.com/Zukzuk/syncnite/compare/v1.32.3...v1.32.4) (2025-12-07)
 
 ### [1.32.3](https://github.com/Zukzuk/syncnite/compare/v1.32.2...v1.32.3) (2025-12-06)
