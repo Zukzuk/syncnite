@@ -8,16 +8,16 @@ import { GameItem } from "../../../types/types";
 type Props = {
     item: Pick<GameItem, "bgUrl">;
     isOpen: boolean;
-    bgIsHovered: boolean;
+    wallpaperBg: boolean;
 };
 
 // Background component for a library item.
-export function ItemBackground({ item, isOpen, bgIsHovered }: Props): JSX.Element | null {
+export function ItemBackground({ item, isOpen, wallpaperBg }: Props): JSX.Element | null {
     const { bgUrl } = item;
     const isOpenDelayed = useDelayedFlag({ active: isOpen, delayMs: 70 });
     const { isDark } = getTheme();
 
-    if (!isOpen || !bgUrl)  return null;
+    if (!isOpen || !bgUrl) return null;
 
     return (
         <Box
@@ -31,7 +31,7 @@ export function ItemBackground({ item, isOpen, bgIsHovered }: Props): JSX.Elemen
                 pointerEvents: "none",
                 zIndex: Z_INDEX.belowBase,
                 transform: isOpenDelayed ? "scale(1.02)" : "scale(1)",
-                opacity: bgIsHovered ? 1 : isOpenDelayed ? (isDark ? 0.1 : 0.3) : 0,
+                opacity: wallpaperBg ? 1 : isOpenDelayed ? (isDark ? 0.1 : 0.3) : 0,
                 willChange: "opacity, transform",
                 transitionProperty: "opacity, transform",
                 transitionDuration: "220ms, 260ms",

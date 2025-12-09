@@ -5,7 +5,7 @@ import { useAuth } from "../hooks/useAuth";
 import { useExtensionStatus } from "../hooks/useExtensionStatus";
 import { API_ENDPOINTS, GRID, INTERVAL_MS } from "../lib/constants";
 
-export function AppNavbar({ appVersion }: { appVersion: string }) {
+export function AppNavbar({ appVersion }: { appVersion: string; }) {
     const location = useLocation();
     const { state, logout } = useAuth({ pollMs: 0 });
     const { colorScheme, setColorScheme } = useMantineColorScheme();

@@ -24,9 +24,7 @@ type UseReturn = {
     };
 };
 
-// A hook to calculate visible range in a virtual scrolling window.
-// Supports variable row heights via rowTops + rowHeights and optional
-// per-row item index mapping for uneven rows (e.g. open rows).
+// Hook to manage virtual windowing for a grid layout
 export function useGridVirtualWindow({ gridRef, opts }: UseParams): UseReturn {
     const {
         rows,

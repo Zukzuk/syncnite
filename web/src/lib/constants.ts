@@ -58,7 +58,7 @@ export const Z_INDEX = {
 
 export const MAX_ASSOCIATED = 1000;
 
-export const ASSOCIATED_CARD_STEP_Y = 60;
+export const ASSOCIATED_CARD_STEP_Y = 90;
 
 export const FILE_BASE = "/data";
 

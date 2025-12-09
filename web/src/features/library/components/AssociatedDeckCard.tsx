@@ -13,7 +13,7 @@ type Props = {
     hasHoveredCard: boolean;
     isDeckHovered: boolean;
     currentItemId: string;
-    onAssociatedClick: (targetId: string) => void;
+    onToggleClickBounded: (associatedTarget: {id: string, index: number} | null) => void;
     setHoveredId: (id: string | null) => void;
 };
 
@@ -26,18 +26,18 @@ export function AssociatedDeckCard({
     hasHoveredCard,
     isDeckHovered,
     currentItemId,
-    onAssociatedClick,
+    onToggleClickBounded,
     setHoveredId,
 }: Props) {
     const { isDark } = getTheme();
-    const { colIndex, indexInColumn, id, index } = meta;
-    const { title, year, coverUrl, isInstalled, isHidden } = item;
+    const { colIndex, indexInColumn, id, metaIndex } = meta;
+    const { title, year, coverUrl, isInstalled, isHidden, index } = item;
 
     const left = colIndex * (GRID.cardWidth + GRID.gap * 2);
     const top = indexInColumn * ASSOCIATED_CARD_STEP_Y;
 
     let zIndex = indexInColumn + 1;
-    const isTopCard = hasHoveredCard && hoveredMeta!.index === index;
+    const isTopCard = hasHoveredCard && hoveredMeta!.metaIndex === metaIndex;
     const isDimmed = hasHoveredCard && isDeckHovered && !isTopCard;
     const isCurrentItem = id === currentItemId;
 
@@ -58,7 +58,7 @@ export function AssociatedDeckCard({
             onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                onAssociatedClick(id);
+                onToggleClickBounded({id, index: index as number});
             }}
             onMouseEnter={(e) => {
                 e.stopPropagation();

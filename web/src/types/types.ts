@@ -9,6 +9,8 @@ export type SortDir = "asc" | "desc";
 
 export type ViewMode = "list" | "grid";
 
+export type SwitchesMode = "enabled" | "disabled";
+
 export type Role = "admin" | "user" | "unknown";
 
 export interface AuthState {
@@ -43,6 +45,9 @@ export interface CookieState {
 export interface UIControls {
   view: ViewMode,
   setView: (view: ViewMode) => void;
+  isListView: boolean;
+  switches: SwitchesMode,
+  setSwitches: (mode: SwitchesMode) => void;
   q: string;
   setQ: React.Dispatch<React.SetStateAction<string>>;
   sources: string[];
@@ -71,6 +76,7 @@ export interface UIDerivedData {
 
 export interface GameItem {
   id: string;
+  index?: number;
   title: string;
   sortingName: string | null;
   gameId: string;
@@ -139,7 +145,7 @@ export interface AssociatedDeckMeta {
 
 export type AssociatedCardMeta = {
   id: string;
-  index: number;
+  metaIndex: number;
   colIndex: number;
   indexInColumn: number;
 };

@@ -12,13 +12,7 @@ type Props = {
     installedUpdatedAt?: string;
 };
 
-/**
- * Library main component.
- * Renders the library view with header controls, sorting, and item grid.
- * Props:
- * - libraryData: Loaded library data including all items, sources, tags, and series.
- * - installedUpdatedAt: Optional timestamp for when installed items were last updated.
- */
+// Main library component that sets up state and layout for the library view.
 export default function Library({
     libraryData,
     installedUpdatedAt,
@@ -26,16 +20,14 @@ export default function Library({
     const { uiControls, derivedData } = useLibraryState(libraryData.items);
     const { ref: controlsRef, height: controlsH } = useElementSize();
     const { ref: sortRef, height: sortH } = useElementSize();
-    const isListView = uiControls.view === "list";
 
     // Track if any open item is in view to adjust header styling
-    const [hasOpenItemInView, setHasOpenItemInView] = useState(false);
+    const [hasOpenItemInView, readOpenItemInView] = useState(false);
 
     return (
         <Flex direction="column" style={{ width: "100%", height: "100%" }}>
             <HeaderControls
                 controlsRef={controlsRef as unknown as (el: HTMLElement | null) => void}
-                aria-label="header-controls"
                 libraryData={libraryData}
                 ui={uiControls}
                 derived={derivedData}
@@ -43,9 +35,7 @@ export default function Library({
 
             <HeaderSort
                 sortRef={sortRef as unknown as (el: HTMLElement | null) => void}
-                aria-label="header-sort"
                 ui={uiControls}
-                isListView={isListView}
                 hasOpenItemInView={hasOpenItemInView}
             />
 
@@ -55,7 +45,7 @@ export default function Library({
                 controlsH={controlsH}
                 sortH={sortH}
                 installedUpdatedAt={installedUpdatedAt}
-                setHasOpenItemInView={setHasOpenItemInView}
+                readOpenItemInView={readOpenItemInView}
             />
         </Flex>
     );

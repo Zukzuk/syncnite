@@ -3,10 +3,7 @@ import { AlphabeticalGroup, GameItem, ItemGroupedByLetter, Letter, UIControls, U
 import { LETTERS } from "../../../lib/constants";
 import { orderedLetters } from "../../../lib/utils";
 
-
-/**
- * Compute alphabetical groups from sorted items.
- */
+// Compute alphabetical groups from grouped items
 function computeAlphabetGroups({ sortKey, itemsGroupedByLetter, itemsSorted }: {
     sortKey: string; itemsGroupedByLetter: ItemGroupedByLetter[] | null; itemsSorted: GameItem[] | null
 }): {
@@ -38,10 +35,10 @@ function computeAlphabetGroups({ sortKey, itemsGroupedByLetter, itemsSorted }: {
 }
 
 type UseParams = {
-    railVisibleIndex: number;
-    itemsLen: number;
     ui: UIControls;
     derived: UIDerivedData;
+    railVisibleIndex: number;
+    itemsLen: number;
     scrollItemIntoView: (index: number) => void;
 };
 
@@ -51,8 +48,14 @@ type UseReturn = {
     onScrollJump: (L: Letter) => void;
 };
 
-// A hook to manage alphabetical rail navigation for the absolute grid.
-export function useGridAlphabetRail({ scrollItemIntoView, ui, derived, railVisibleIndex, itemsLen }: UseParams): UseReturn {
+// Hook to manage alphabet rail state and behavior
+export function useGridAlphabetRail({
+    ui, 
+    derived, 
+    railVisibleIndex, 
+    itemsLen, 
+    scrollItemIntoView,
+}: UseParams): UseReturn {
 
     const { sortKey } = ui;
     const { itemsGroupedByLetter, itemsSorted } = derived;
@@ -113,11 +116,14 @@ export function useGridAlphabetRail({ scrollItemIntoView, ui, derived, railVisib
         return { groupFirstItemIndex: firstIndex, groupCounts: counts };
     }, [alphabeticalGroups]);
 
+    // Active letter state
     const [activeLetter, setActiveLetter] = React.useState<string>("");
 
+    // Determine the letter at a given item index
     const currentLetterAtIndex = React.useCallback(
         (idx: number): string | null => {
             if (idx == null || idx < 0 || idx >= itemsLen) return null;
+
             if (isGrouped && alphabeticalGroups && alphabeticalGroups.length) {
                 let i = idx;
                 for (const g of alphabeticalGroups) {
@@ -126,12 +132,14 @@ export function useGridAlphabetRail({ scrollItemIntoView, ui, derived, railVisib
                 }
                 return null;
             }
+
             const item = flatItems[idx];
             return item ? orderedLetters(item.title, item.sortingName) : null;
         },
         [isGrouped, alphabeticalGroups, flatItems, itemsLen]
     );
 
+    // Scroll jump handler
     const onScrollJump = React.useCallback(
         (L: string) => {
             const targetIdx = isGrouped
@@ -157,6 +165,7 @@ export function useGridAlphabetRail({ scrollItemIntoView, ui, derived, railVisib
         setActiveLetter("");
     }, [isGrouped, alphabeticalGroups?.length, flatItems.length, itemsLen]);
 
+    // Choose counts based on grouping
     const railCounts = isGrouped ? groupCounts : flatCounts;
 
     return { railCounts, activeLetter, onScrollJump };

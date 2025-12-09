@@ -36,7 +36,7 @@ export const IconIsInstalled = React.memo(function IconIsInstalled({
         right: -18,
         width: 50,
         height: 30,
-        background: "var(--interlinked-color-success)",
+        background: "var(--interlinked-color-primary)",
         transform: "rotate(45deg)",
         zIndex: Z_INDEX.base,
     }

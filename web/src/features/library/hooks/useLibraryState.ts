@@ -1,5 +1,5 @@
 import * as React from "react";
-import type { SortKey, SortDir, GameItem, UIControls, UIDerivedData, ViewMode } from "../../../types/types";
+import type { SortKey, SortDir, GameItem, UIControls, UIDerivedData, ViewMode, SwitchesMode } from "../../../types/types";
 import { loadStateFromCookie, orderedLetters, saveStateToCookie } from "../../../lib/utils";
 import { useLocalStorage } from "@mantine/hooks";
 
@@ -73,21 +73,28 @@ type UseReturn = {
 
 // A hook to manage library state including filtering, sorting, and persistence.
 export function useLibraryState(items: UseParams): UseReturn {
-  const cookieState = React.useMemo(loadStateFromCookie, []);
 
   const [view, setView] = useLocalStorage<ViewMode>({
     key: "library.view",
     defaultValue: "grid",
   });
+  const isListView = view === "list";
+
+  const [switches, setSwitches] = useLocalStorage<SwitchesMode>({
+    key: "library.switches",
+    defaultValue: "enabled",
+  });
+
+  const cookieState = React.useMemo(loadStateFromCookie, []);
 
   const [q, setQ] = React.useState<string>(cookieState.q);
   const [sources, setSources] = React.useState<string[]>(cookieState.sources);
   const [tags, setTags] = React.useState<string[]>(cookieState.tags);
   const [series, setSeries] = React.useState<string[]>(cookieState.series);
   const [showHidden, setShowHidden] = React.useState<boolean>(cookieState.showHidden);
+  const [installedOnly, setInstalledOnly] = React.useState<boolean>(cookieState.installedOnly);
   const [sortKey, setSortKey] = React.useState<SortKey>(cookieState.sortKey);
   const [sortDir, setSortDir] = React.useState<SortDir>(cookieState.sortDir);
-  const [installedOnly, setInstalledOnly] = React.useState<boolean>(cookieState.installedOnly);
 
   React.useEffect(() => {
     const toSave = { q, sources, tags, series, showHidden, installedOnly, sortKey, sortDir };
@@ -137,7 +144,8 @@ export function useLibraryState(items: UseParams): UseReturn {
 
   return {
     uiControls: {
-      view, setView,
+      view, setView, isListView,
+      switches, setSwitches,
       q, setQ,
       sources, setSources,
       tags, setTags,

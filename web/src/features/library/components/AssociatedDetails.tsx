@@ -6,11 +6,11 @@ import { getTheme } from "../../../lib/utils";
 
 type Props = {
     item: GameItem;
-    onBgHovered: (hovered: boolean) => void;
+    onWallpaperBg: (hovered: boolean) => void;
 };
 
 // Component to display associated details of a library item.   
-export function AssociatedDetails({ item, onBgHovered }: Props): JSX.Element {
+export function AssociatedDetails({ item, onWallpaperBg }: Props): JSX.Element {
     const { sortingName, tags = [], series = [], isInstalled, isHidden, links, coverUrl, bgUrl } = item;
     const isOpenDelayed = useDelayedFlag({ active: true, delayMs: 70 });
     const { isDark } = getTheme();
@@ -130,9 +130,8 @@ export function AssociatedDetails({ item, onBgHovered }: Props): JSX.Element {
                         ? "2px solid var(--mantine-color-dark-9)"
                         : "2px solid var(--mantine-color-gray-3)",
                 }}
-                onMouseOver={() => onBgHovered(true)}
-                onMouseOut={() => onBgHovered(false)}
-                onClick={(e) => e.stopPropagation()}
+                onMouseOver={() => onWallpaperBg(true)}
+                onMouseOut={() => onWallpaperBg(false)}
             />
 
             {/* Links */}

@@ -6,22 +6,151 @@ import { AssociatedDeck } from "./AssociatedDeck";
 import { AssociatedStacks } from "./AssociatedStacks";
 import { AssociatedDetails } from "./AssociatedDetails";
 
-function computeLayout(
+function buildAssociatedDecks(
+    isOpen: boolean,
+    item: GameItem,
+    all: GameItem[]
+): { associatedDecks: AssociatedDeckMeta[] } {
+    if (!isOpen) return { associatedDecks: [] };
+
+    const associatedSeries: GameItem[] = [];
+    const associatedTags: GameItem[] = [];
+    const associatedYear: GameItem[] = [];
+    const associatedInstalled: GameItem[] = [];
+    const associatedHidden: GameItem[] = [];
+
+    const seriesSet = item.series ? new Set(item.series) : null;
+    const tagsSet = item.tags ? new Set(item.tags) : null;
+
+    for (let i = 0; i < all.length; i++) {
+        const other = all[i];
+
+        if (seriesSet &&
+            associatedSeries.length < MAX_ASSOCIATED &&
+            other.series &&
+            other.series.some((s) => seriesSet.has(s))
+        ) {
+            other.index = i;
+            associatedSeries.push(other);
+        }
+
+        if (tagsSet &&
+            associatedTags.length < MAX_ASSOCIATED &&
+            other.tags &&
+            other.tags.some((t) => tagsSet.has(t))
+        ) {
+            other.index = i;
+            associatedTags.push(other);
+        }
+
+        if (item.year &&
+            associatedYear.length < MAX_ASSOCIATED &&
+            other.year === item.year
+        ) {
+            other.index = i;
+            associatedYear.push(other);
+        }
+
+        if (item.isInstalled &&
+            associatedInstalled.length < MAX_ASSOCIATED &&
+            other.isInstalled
+        ) {
+            other.index = i;
+            associatedInstalled.push(other);
+        }
+
+        if (item.isHidden &&
+            associatedHidden.length < MAX_ASSOCIATED &&
+            other.isHidden
+        ) {
+            other.index = i;
+            associatedHidden.push(other);
+        }
+
+        // Early stop if all buckets are full or not applicable
+        if ((!seriesSet || associatedSeries.length >= MAX_ASSOCIATED) &&
+            (!tagsSet || associatedTags.length >= MAX_ASSOCIATED) &&
+            associatedYear.length >= MAX_ASSOCIATED &&
+            associatedInstalled.length >= MAX_ASSOCIATED &&
+            associatedHidden.length >= MAX_ASSOCIATED
+        ) {
+            break;
+        }
+    }
+
+    const seriesNames = item.series ?? [];
+    const tagNames = item.tags ?? [];
+
+    // One deck per series
+    const seriesDecks: AssociatedDeckMeta[] = seriesNames
+        .map((name) => ({
+            key: `series-${name}`,
+            label: name,
+            items: associatedSeries.filter((g) => g.series?.includes(name)),
+        }))
+        .filter((deck) => deck.items.length > 0);
+
+    // One deck per tag
+    const tagDecks: AssociatedDeckMeta[] = tagNames
+        .map((name) => ({
+            key: `tag-${name}`,
+            label: name,
+            items: associatedTags.filter((g) => g.tags?.includes(name)),
+        }))
+        .filter((deck) => deck.items.length > 0);
+
+    // Year deck
+    const yearDeck: AssociatedDeckMeta | null =
+        associatedYear.length > 0
+            ? {
+                key: "year",
+                label: item.year ? `Year ${String(item.year)}` : "Year",
+                items: associatedYear,
+            }
+            : null;
+
+    // Installed deck
+    const installedDeck: AssociatedDeckMeta | null =
+        associatedInstalled.length > 0
+            ? {
+                key: "installed",
+                label: "Installed",
+                items: associatedInstalled,
+            }
+            : null;
+
+    // Hidden deck
+    const hiddenDeck: AssociatedDeckMeta | null =
+        associatedHidden.length > 0
+            ? {
+                key: "hidden",
+                label: "Hidden",
+                items: associatedHidden,
+            }
+            : null;
+
+    const associatedDecks: AssociatedDeckMeta[] = [
+        ...seriesDecks,
+        ...(installedDeck ? [installedDeck] : []),
+        ...(hiddenDeck ? [hiddenDeck] : []),
+        ...tagDecks,
+        ...(yearDeck ? [yearDeck] : []),
+    ];
+
+    return { associatedDecks };
+}
+
+function calcAssociatedLayout(
     width: number,
     height: number,
     totalCards: number
 ): AssociatedLayout {
-    const MIN_STACK_COLUMNS = 1;
-
     if (width <= 0 || height <= 0 || totalCards === 0) {
         return {
             deckColumns: 0,
-            stackColumns: Math.max(
-                1,
-                Math.floor(width / GRID.cardWidth)
-            ),
+            stackColumns: Math.max(1, Math.floor(width / GRID.cardWidth)),
             maxCardsPerDeckColumn: null,
-            minStackColumns: MIN_STACK_COLUMNS,
+            minStackColumns: 1,
         };
     }
 
@@ -31,51 +160,55 @@ function computeLayout(
     const cardHeight = (GRID.cardWidth * 32) / 23;
     const stepY = ASSOCIATED_CARD_STEP_Y;
 
-    // how many cards fit vertically in one deck column
     const maxCardsPerColumnByHeight = Math.max(
         1,
         Math.floor((height - cardHeight) / stepY) + 1
     );
 
-    // minimal deck columns needed for all cards without vertical overflow
     const visibleCards = Math.min(MAX_ASSOCIATED, totalCards);
     const neededColsByHeight = Math.max(
         1,
         Math.ceil(visibleCards / maxCardsPerColumnByHeight)
     );
 
-    // decks: how many columns we *can* afford while keeping at least 1 stacks column
     let maxDeckColsByWidth = 0;
+
+    // Try increasing deck columns; only accept a value if we still
+    // have enough width left for the *dynamic* minimum stack columns.
     for (let cols = 1; cols <= neededColsByHeight; cols++) {
+        const minStackColsForCols = cols >= 6 ? 2 : 1;
         const usedWidthForDeck = cols * deckColWidth;
         const remainingWidth = width - usedWidthForDeck;
-        if (remainingWidth < stackColWidth * MIN_STACK_COLUMNS) {
+
+        if (remainingWidth < stackColWidth * minStackColsForCols) {
             break;
         }
+
         maxDeckColsByWidth = cols;
     }
 
-    // even 1 deck + 1 stack doesn’t really fit: fallback, deck scrolls
     if (maxDeckColsByWidth === 0) {
         const deckColumns = 1;
+        const minStackColumns = deckColumns >= 6 ? 2 : 1; // = 1 here
         const remainingWidth = width - deckColumns * deckColWidth;
         const stackColumns =
             remainingWidth >= stackColWidth
                 ? Math.max(
-                    MIN_STACK_COLUMNS,
-                    Math.floor(remainingWidth / stackColWidth)
-                )
+                      minStackColumns,
+                      Math.floor(remainingWidth / stackColWidth)
+                  )
                 : 0;
 
         return {
             deckColumns,
             stackColumns,
             maxCardsPerDeckColumn: null,
-            minStackColumns: MIN_STACK_COLUMNS,
+            minStackColumns,
         };
     }
 
     const deckColumns = Math.min(neededColsByHeight, maxDeckColsByWidth);
+    const minStackColumns = deckColumns >= 6 ? 2 : 1;
     const hitWidthLimit = deckColumns < neededColsByHeight;
 
     const usedWidthForDeck = deckColumns * deckColWidth;
@@ -88,23 +221,19 @@ function computeLayout(
     if (maxStackColsByWidth <= 0) {
         stackColumns = 0;
     } else if (hitWidthLimit) {
-        // decks *wanted* more columns but can’t because of width
-        // → stacks at most deckColumns
         stackColumns = Math.max(
-            MIN_STACK_COLUMNS,
+            minStackColumns,
             Math.min(deckColumns, maxStackColsByWidth)
         );
     } else {
-        // decks have all columns they need by height
-        // → stacks can expand to the right, bounded only by width
-        stackColumns = Math.max(MIN_STACK_COLUMNS, maxStackColsByWidth);
+        stackColumns = Math.max(minStackColumns, maxStackColsByWidth);
     }
 
     return {
         deckColumns,
         stackColumns,
         maxCardsPerDeckColumn: hitWidthLimit ? null : maxCardsPerColumnByHeight,
-        minStackColumns: MIN_STACK_COLUMNS,
+        minStackColumns,
     };
 }
 
@@ -113,93 +242,41 @@ type Props = {
     isOpen: boolean;
     openWidth: string;
     openHeight: string;
-    associatedBySeries: GameItem[];
-    associatedByTags: GameItem[];
-    associatedByYear: GameItem[];
-    associatedByInstalled: GameItem[];
-    onToggleItem: () => void;
-    onAssociatedClick: (targetId: string) => void;
-    onBgHovered: (hovered: boolean) => void;
+    itemsAssociated: GameItem[];
+    onWallpaperBg: (on: boolean) => void;
+    onToggleClickBounded: () => void;
 };
 
+// Content component for an expanded library item, showing associated decks and stacks.
 export function ItemContent({
     item,
     isOpen,
-    associatedBySeries,
-    associatedByTags,
-    associatedByYear,
-    associatedByInstalled,
     openWidth,
     openHeight,
-    onToggleItem,
-    onAssociatedClick,
-    onBgHovered,
+    itemsAssociated,
+    onWallpaperBg,
+    onToggleClickBounded,
 }: Props): JSX.Element {
-    const seriesNames = item.series ?? [];
-    const tagNames = item.tags ?? [];
+    const {
+        associatedDecks
+    } = buildAssociatedDecks(
+        isOpen,
+        item,
+        itemsAssociated
+    );
 
-    // One deck per series
-    const seriesDecks: AssociatedDeckMeta[] = seriesNames
-        .map((name) => ({
-            key: `series-${name}`,
-            label: name,
-            items: (associatedBySeries ?? []).filter((g) =>
-                g.series?.includes(name)
-            ),
-        }))
-        .filter((deck) => deck.items.length > 0);
+    const [openDeckKey, onDeckClick] = React.useState<string | null>(null);
+    React.useEffect(() => onDeckClick(null), [item.id]);
 
-    // One deck per tag
-    const tagDecks: AssociatedDeckMeta[] = tagNames
-        .map((name) => ({
-            key: `tag-${name}`,
-            label: name,
-            items: (associatedByTags ?? []).filter((g) => g.tags?.includes(name)),
-        }))
-        .filter((deck) => deck.items.length > 0);
-
-    // Year deck
-    const hasYearDeck = !!associatedByYear && associatedByYear.length > 0;
-    const yearDeck: AssociatedDeckMeta | null = hasYearDeck
-        ? {
-            key: "year",
-            label: item.year ? `Year ${String(item.year)}` : "Year",
-            items: associatedByYear!,
+    // select the open deck
+    const openDeck = React.useMemo<AssociatedDeckMeta | null>(() => {
+        if (!associatedDecks || associatedDecks.length === 0) return null;
+        if (openDeckKey) {
+            const found = associatedDecks.find((d) => d.key === openDeckKey);
+            if (found) return found;
         }
-        : null;
-
-    // Installed deck
-    const hasInstalledDeck =
-        !!associatedByInstalled && associatedByInstalled.length > 0;
-    const installedDeck: AssociatedDeckMeta | null = hasInstalledDeck
-        ? {
-            key: "installed",
-            label: "Installed",
-            items: associatedByInstalled!,
-        }
-        : null;
-
-    // Combine all decks
-    const allDecks: AssociatedDeckMeta[] = [
-        ...seriesDecks,
-        ...(installedDeck ? [installedDeck] : []),
-        ...tagDecks,
-        ...(yearDeck ? [yearDeck] : []),
-    ];
-
-    const [openDeckKey, setOpenDeckKey] = React.useState<string | null>(null);
-
-    // when item changes, reset open deck
-    React.useEffect(() => {
-        setOpenDeckKey(null);
-    }, [item.id]);
-
-    // Determine which deck is open
-    let openDeck = allDecks[0];
-    if (openDeckKey) {
-        const found = allDecks.find((d) => d.key === openDeckKey);
-        if (found) openDeck = found;
-    }
+        return associatedDecks[0];
+    }, [associatedDecks, openDeckKey]);
 
     // smart layout
     const layoutRef = React.useRef<HTMLDivElement | null>(null);
@@ -210,20 +287,34 @@ export function ItemContent({
         minStackColumns: 1,
     });
 
+    // update layout on size or deck changes
     React.useEffect(() => {
         const el = layoutRef.current;
-        if (!el) return;
+        if (!el || !openDeck) {
+            setLayout((prev) => ({
+                ...prev,
+                deckColumns: 0,
+                stackColumns: 0,
+            }));
+            return;
+        }
 
         const update = () => {
             const rect = el.getBoundingClientRect();
-            const width = rect.width;
+            const width = rect.width - GRID.gap * 5;
             const height = rect.height;
 
             const totalCards = openDeck.items
                 .filter((g) => g.coverUrl)
                 .slice(0, MAX_ASSOCIATED).length;
 
-            setLayout(computeLayout(width, height, totalCards));
+            setLayout(
+                calcAssociatedLayout(
+                    width,
+                    height,
+                    totalCards
+                )
+            );
         };
 
         const ro = new ResizeObserver(update);
@@ -231,7 +322,7 @@ export function ItemContent({
         update();
 
         return () => ro.disconnect();
-    }, [openDeck.key, openDeck.items.length]);
+    }, [openDeck?.key, openDeck?.items.length]);
 
     return (
         <Collapse
@@ -246,22 +337,12 @@ export function ItemContent({
                 overflowX: "hidden",
                 overflowY: "hidden",
             }}
-            onClick={(e) => {
-                e.stopPropagation();
-                onToggleItem();
-            }}
         >
-            <Group
-                align="flex-start"
-                gap={GRID.gap * 3}
-                wrap="nowrap"
-                h="100%"
-            >
-                <AssociatedDetails 
-                    item={item} 
-                    onBgHovered={onBgHovered} 
+            <Group align="flex-start" gap={GRID.gap * 3} wrap="nowrap" h="100%">
+                <AssociatedDetails
+                    item={item}
+                    onWallpaperBg={onWallpaperBg} 
                 />
-
                 <Box
                     ref={layoutRef}
                     style={{
@@ -273,25 +354,24 @@ export function ItemContent({
                         overflow: "hidden",
                     }}
                 >
-                    {/* Deck columns */}
-                    {layout.deckColumns > 0 && (
+                    {openDeck && layout.deckColumns > 0 && (
                         <AssociatedDeck
                             label={openDeck.label}
                             items={openDeck.items}
                             currentItemId={item.id}
-                            onAssociatedClick={onAssociatedClick}
                             deckColumns={layout.deckColumns}
                             maxCardsPerColumn={layout.maxCardsPerDeckColumn}
+                            onToggleClickBounded={onToggleClickBounded}
                         />
                     )}
-
-                    {/* Stacks grid */}
-                    <AssociatedStacks
-                        allDecks={allDecks}
-                        openDeckKey={openDeck.key}
-                        onDeckClick={setOpenDeckKey}
-                        columns={Math.max(layout.stackColumns, layout.minStackColumns)}
-                    />
+                    {associatedDecks.length > 0 && (
+                        <AssociatedStacks
+                            associatedDecks={associatedDecks}
+                            openDeckKey={openDeck ? openDeck.key : null}
+                            stackColumns={Math.max(layout.stackColumns, layout.minStackColumns)}
+                            onDeckClick={onDeckClick}
+                        />
+                    )}
                 </Box>
             </Group>
         </Collapse>

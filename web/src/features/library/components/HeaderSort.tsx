@@ -6,7 +6,6 @@ import { GRID } from "../../../lib/constants";
 type Props = {
   sortRef: (el: HTMLElement | null) => void;
   ui: UIControls;
-  isListView: boolean;
   hasOpenItemInView?: boolean;
 };
 
@@ -14,11 +13,10 @@ type Props = {
 export const HeaderSort = React.memo(function HeaderSort({
   sortRef,
   ui,
-  isListView,
   hasOpenItemInView
 }: Props) {
 
-  const { sortKey, sortDir, onToggleSort } = ui;
+  const { sortKey, sortDir, onToggleSort, isListView } = ui;
 
   const label = (base: string, key: SortKey) =>
     sortKey === key ? `${base} ${sortDir === "asc" ? "▲" : "▼"}` : base;
@@ -26,6 +24,7 @@ export const HeaderSort = React.memo(function HeaderSort({
   return (
     <Box
       ref={sortRef}
+      aria-label="header-sort"
       style={{
         position: "relative",
         background: "var(--mantine-color-body)",

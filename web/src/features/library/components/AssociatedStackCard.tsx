@@ -7,12 +7,12 @@ import { getTheme } from "../../../lib/utils";
 type Props = { 
     deck: AssociatedDeckMeta; 
     isOpen: boolean; 
-    onClick: () => void
+    onDeckClick: (key: string) => void;
 };
 
 // Card component for an associated stack of decks in the library view.
-export function AssociatedStackCard({ deck, isOpen, onClick }: Props): JSX.Element | null {
-    const { label, items } = deck;
+export function AssociatedStackCard({ deck, isOpen, onDeckClick }: Props): JSX.Element | null {
+    const { label, items, key } = deck;
     const [isHovered, setIsHovered] = React.useState(false);
     const { isDark } = getTheme();
 
@@ -43,7 +43,7 @@ export function AssociatedStackCard({ deck, isOpen, onClick }: Props): JSX.Eleme
                 onMouseLeave={() => setIsHovered(false)}
                 onClick={(e) => {
                     e.stopPropagation();
-                    onClick();
+                    onDeckClick(key);
                 }}
                 style={{
                     padding: GRID.gap,

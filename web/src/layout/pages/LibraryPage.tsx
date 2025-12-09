@@ -1,18 +1,20 @@
-import React from "react";
 import { Stack, Loader, Box, Center } from "@mantine/core";
-import { useLocalStorage } from "@mantine/hooks";
+import { useMediaQuery } from "@mantine/hooks";
 import { GRID, INTERVAL_MS } from "../../lib/constants";
-import { ViewMode } from "../../types/types";
 import { useLibraryData } from "../../features/library/hooks/useLibraryData";
 import Library from "../../features/library/Library";
+import { getTheme } from "../../lib/utils";
 
 export default function LibraryPage(): JSX.Element {
     const { libraryData, installedUpdatedAt } = useLibraryData({ pollMs: INTERVAL_MS });
 
+    const { theme } = getTheme();
+    const isDesktop = useMediaQuery(`(min-width: ${theme.breakpoints.sm})`);
+
     if (!libraryData) {
         return (
             <Stack style={{ height: "100%", minHeight: 0 }}>
-                <Center w={`calc(100vw - ${GRID.navBarWidth}px)`} h={`calc(100vh)`}>
+                <Center w={`calc(100vw - ${isDesktop ? GRID.navBarWidth : 0}px)`} h={`calc(100vh)`}>
                     <Loader size="lg" />
                 </Center>
             </Stack>

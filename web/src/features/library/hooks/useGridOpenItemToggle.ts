@@ -24,7 +24,7 @@ export function useGridOpenItemToggle(
 
       if (willOpen) {
         if (!allowMultipleOpen) {
-          // accordion mode: close everything else
+          // Close all others
           next.clear();
         }
         next.add(id);

@@ -11,7 +11,7 @@ type Props = {
     items: GameItem[];
     deckColumns: number;
     maxCardsPerColumn: number | null;
-    onAssociatedClick: (targetId: string) => void;
+    onToggleClickBounded: (associatedTarget: {id: string, index: number} | null) => void;
 };
 
 // Component to display an associated deck of items in the library view.
@@ -19,9 +19,9 @@ export function AssociatedDeck({
     label,
     currentItemId,
     items,
-    onAssociatedClick,
     deckColumns,
     maxCardsPerColumn,
+    onToggleClickBounded,
 }: Props): JSX.Element | null {
     const [hoveredId, setHoveredId] = React.useState<string | null>(null);
     const [isDeckHovered, setIsDeckHovered] = React.useState(false);
@@ -56,7 +56,7 @@ export function AssociatedDeck({
     const cardMeta: AssociatedCardMeta[] = cards.map((c, index) => {
         const colIndex = Math.floor(index / cardsPerColumn);
         const indexInColumn = index % cardsPerColumn;
-        return { id: c.id, index, colIndex, indexInColumn };
+        return { id: c.id, metaIndex: index, colIndex, indexInColumn };
     });
 
     const colLengths: number[] = Array.from({ length: colCount }, () => 0);
@@ -125,23 +125,23 @@ export function AssociatedDeck({
                         overflow: "visible",
                     }}
                 >
-                    {cardMeta.map((meta) => {
-                        const item = cards[meta.index];
+                    {cardMeta.map((cardMeta => {
+                        const item = cards[cardMeta.metaIndex];
                         return (
                             <AssociatedDeckCard
-                                key={meta.id}
-                                meta={meta}
+                                key={cardMeta.id}
+                                meta={cardMeta}
                                 item={item}
                                 colLengths={colLengths}
                                 hoveredMeta={hoveredMeta}
                                 hasHoveredCard={hasHoveredCard}
                                 isDeckHovered={isDeckHovered}
                                 currentItemId={currentItemId}
-                                onAssociatedClick={onAssociatedClick}
+                                onToggleClickBounded={onToggleClickBounded}
                                 setHoveredId={setHoveredId}
                             />
                         );
-                    })}
+                    }))}
                 </Box>
             </Box>
         </Stack>

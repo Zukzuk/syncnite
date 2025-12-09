@@ -30,7 +30,9 @@ export default function AppShellLayout({
     >
       {!hideSite && (
         <AppShell.Navbar p={0}>
-          <AppNavbar appVersion={WEB_APP_VERSION} />
+          <AppNavbar 
+            appVersion={WEB_APP_VERSION} 
+          />
         </AppShell.Navbar>
       )}
 

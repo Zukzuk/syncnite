@@ -6,22 +6,22 @@ import { AssociatedStackCard } from "./AssociatedStackCard";
 
 
 type Props = {
-    allDecks: AssociatedDeckMeta[];
+    associatedDecks: AssociatedDeckMeta[];
     openDeckKey: string | null;
-    columns: number;
+    stackColumns: number;
     onDeckClick: (key: string) => void;
 };
 
 // Component to display associated stacks of decks in the library view.
 export function AssociatedStacks({
-    allDecks,
+    associatedDecks,
     openDeckKey,
-    columns,
+    stackColumns,
     onDeckClick,
 }: Props): JSX.Element | null {
     const isOpenDelayed = useDelayedFlag({ active: true, delayMs: 210 });
 
-    if (!allDecks.length || columns <= 0) return null;
+    if (!associatedDecks.length || stackColumns <= 0) return null;
 
     return (
         <Box
@@ -45,18 +45,18 @@ export function AssociatedStacks({
             <Box
                 style={{
                     display: "grid",
-                    gridTemplateColumns: `repeat(${columns}, ${GRID.cardWidth}px)`,
+                    gridTemplateColumns: `repeat(${stackColumns}, ${GRID.cardWidth}px)`,
                     gap: GRID.gap,
                     justifyContent: "flex-start",
                     alignContent: "flex-start",
                 }}
             >
-                {allDecks.map((deck) => (
+                {associatedDecks.map((deck) => (
                     <AssociatedStackCard
                         key={deck.key}
                         deck={deck}
                         isOpen={openDeckKey === deck.key}
-                        onClick={() => onDeckClick(deck.key)}
+                        onDeckClick={onDeckClick}
                     />
                 ))}
             </Box>

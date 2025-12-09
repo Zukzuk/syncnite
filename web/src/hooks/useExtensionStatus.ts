@@ -1,7 +1,7 @@
 import React from "react";
 import { fetchExtensionStatus } from "../lib/api";
 import { useAuth } from "./useAuth";
-import { INTERVAL_MS, EXT_STATE_DEFAULTS } from "../lib/constants";
+import { INTERVAL_MS } from "../lib/constants";
 
 type UseParams = {
     pollMs?: number;

@@ -10,10 +10,7 @@ type UseParams = {
 
 type UseReturn = SteamWishlistResponse | null;
 
-/**
- * Polls the Steam wishlist snapshot JSON periodically, similar to useLocalInstalled.
- * Stops polling when the user is logged out, and restarts on auth change.
- */
+// Hook to manage fetching and updating the Steam wishlist periodically
 export function useSteamWishlist({ pollMs }: UseParams): UseReturn {
     const [state, setState] = React.useState<UseReturn>(null);
 

@@ -1,30 +1,58 @@
 import React from "react";
 import { Box } from "@mantine/core";
-import { GameItem } from "../../../types/types";
-import { Z_INDEX } from "../../../lib/constants";
+import { GameItem, ItemPositions } from "../../../types/types";
+import { GRID, Z_INDEX } from "../../../lib/constants";
 import { ItemContent } from "./ItemContent";
 import { ItemBackground } from "./ItemBackground";
 import { ItemRow } from "./ItemRow";
 import { ItemCard } from "./ItemCard";
 
-type Props = {
-    item: GameItem;
-    isOpen: boolean;
-    index: number;
-    openWidth: string;
-    openHeight: string;
-    isListView: boolean;
-    associatedBySeries: GameItem[];
-    associatedByTags: GameItem[];
-    associatedByYear: GameItem[];
-    associatedByInstalled: GameItem[];
+function calcCardPosition(
+    index: number,
+    isOpen: boolean,
+    positions: ItemPositions,
+    isListView: boolean,
+    openWidth: string,
+    openHeight: string
+): {
     cardLeft: number;
     cardTop: number;
     cardWidth: number | string;
     cardHeight: number | string;
     cardZIndex: number;
+} {
+    const pos = positions[index] ?? { left: GRID.gap, top: GRID.gap };
+    const cardWidth = isOpen || isListView ? openWidth : GRID.cardWidth;
+    const cardHeight = isOpen
+        ? openHeight
+        : isListView
+            ? GRID.rowHeight
+            : GRID.cardHeight;
+    const cardTop = pos.top;
+    const cardLeft = isOpen || isListView ? 0 : pos.left;
+    const cardZIndex = isOpen ? Z_INDEX.aboveBase : Z_INDEX.base;
+
+    return {
+        cardLeft,
+        cardTop,
+        cardWidth,
+        cardHeight,
+        cardZIndex,
+    };
+}
+
+type Props = {
+    item: GameItem;
+    index: number;
+    isOpen: boolean;
+    openWidth: string;
+    openHeight: string;
+    isListView: boolean;
+    itemsAssociated: GameItem[],
+    positions: ItemPositions,
+    wallpaperBg: boolean;
+    onWallpaperBg: (value: boolean) => void;
     onToggleItem: (id: string, index: number) => void;
-    onAssociatedClick: (fromId: string, targetId: string) => void;
 };
 
 // Card component for a library item in grid view.
@@ -35,31 +63,39 @@ export const GridCard = React.memo(function GridCard({
     openWidth,
     openHeight,
     isListView,
-    associatedBySeries,
-    associatedByTags,
-    associatedByYear,
-    associatedByInstalled,
-    cardLeft,
-    cardTop,
-    cardWidth,
-    cardHeight,
-    cardZIndex,
+    itemsAssociated,
+    positions,
+    wallpaperBg,
+    onWallpaperBg,
     onToggleItem,
-    onAssociatedClick,
 }: Props): JSX.Element {
     const { title } = item;
 
     const [isHovered, setIsHovered] = React.useState(false);
-    const [bgIsHovered, setBgIsHovered] = React.useState(false);
 
-    const handleToggle = React.useCallback(() => {
-        onToggleItem(item.id, index);
-        setBgIsHovered(false);
-    }, [onToggleItem, item.id, index]);
+    const onToggleClickBounded = React.useCallback(
+        (associatedTarget: {id: string, index: number} | null = null) => {
+            console.log(associatedTarget, item.id, index);
+            associatedTarget
+                ? onToggleItem(associatedTarget.id, associatedTarget.index)
+                : onToggleItem(item.id, index);
+        },
+        [onToggleItem, item.id, index]
+    );
 
-    const handleAssociated = React.useCallback(
-        (targetId: string) => onAssociatedClick(item.id, targetId),
-        [onAssociatedClick, item.id]
+    const {
+        cardLeft,
+        cardTop,
+        cardWidth,
+        cardHeight,
+        cardZIndex
+    } = calcCardPosition(
+        index,
+        isOpen,
+        positions,
+        isListView,
+        openWidth,
+        openHeight
     );
 
     return (
@@ -112,14 +148,14 @@ export const GridCard = React.memo(function GridCard({
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
                 onMouseDown={() => setIsHovered(false)}
-                onClick={handleToggle}
+                onClick={() => onToggleClickBounded()}
             >
                 <Box
                     aria-label="card-inner"
                     style={{
                         position: "relative",
                         zIndex: Z_INDEX.base,
-                        opacity: bgIsHovered ? 0 : 1,
+                        opacity: wallpaperBg ? 0 : 1,
                         willChange: "opacity",
                         transitionProperty: "opacity",
                         transitionDuration: "220ms",
@@ -156,13 +192,9 @@ export const GridCard = React.memo(function GridCard({
                             isOpen={isOpen}
                             openWidth={openWidth}
                             openHeight={openHeight}
-                            associatedBySeries={associatedBySeries}
-                            associatedByTags={associatedByTags}
-                            associatedByYear={associatedByYear}
-                            associatedByInstalled={associatedByInstalled}
-                            onToggleItem={handleToggle}
-                            onAssociatedClick={handleAssociated}
-                            onBgHovered={setBgIsHovered}
+                            itemsAssociated={itemsAssociated}
+                            onWallpaperBg={onWallpaperBg}
+                            onToggleClickBounded={onToggleClickBounded}
                         />
                     )}
                 </Box>
@@ -171,7 +203,7 @@ export const GridCard = React.memo(function GridCard({
                     aria-label="item-background"
                     item={item}
                     isOpen={isOpen}
-                    bgIsHovered={bgIsHovered}
+                    wallpaperBg={wallpaperBg}
                 />
             </Box>
         </Box>
