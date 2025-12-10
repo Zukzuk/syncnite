@@ -40,12 +40,14 @@ const LINK_TOKEN_TTL_MS = 10 * 60 * 1000; // 10 minutes
 // In-memory link-token store: linkToken -> { email, createdAt }
 const linkTokens = new Map<string, { email: string; createdAt: number }>();
 
+// Creates a link token for the given email/account
 function createLinkToken(email: string): string {
     const token = crypto.randomBytes(16).toString("hex");
     linkTokens.set(token, { email, createdAt: Date.now() });
     return token;
 }
 
+// Consumes a link token and returns the associated email/account
 function consumeLinkToken(token: string): string | null {
     const entry = linkTokens.get(token);
     if (!entry) return null;
@@ -59,6 +61,7 @@ function consumeLinkToken(token: string): string | null {
     return entry.email;
 }
 
+// Fetches the Steam wishlist for the given SteamID
 async function getWishlist(steamId: string): Promise<SteamWishlistEntry[]> {
     if (!STEAM_WEB_API_KEY) {
         throw new SteamError(500, "missing_steam_webapi_key");
@@ -86,8 +89,10 @@ async function getWishlist(steamId: string): Promise<SteamWishlistEntry[]> {
     }));
 }
 
+// Simple delay utility
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Extracts a four-digit year from a release date string
 function extractYearFromReleaseDate(dateStr?: string | null): number | null {
     if (!dateStr) return null;
     const match = dateStr.match(/\b(\d{4})\b/);
@@ -96,6 +101,7 @@ function extractYearFromReleaseDate(dateStr?: string | null): number | null {
     return Number.isFinite(year) ? year : null;
 }
 
+// Fetches detailed info for each wishlist entry
 async function getWishlistDetails(
     wishlist: SteamWishlistEntry[],
     onEntry: (entry: SteamWishlistEntry) => void | Promise<void>,
@@ -268,8 +274,12 @@ async function getWishlistDetails(
     return result;
 }
 
+// Steam service class
 export const SteamService = {
-    // Steam OpenID operation
+    /**
+     * Gets the Steam OpenID authentication redirect URL.
+     * @param linkToken - optional link token to include in return URL
+     */
     async getAuthRedirectUrl(linkToken?: string): Promise<string> {
         const returnUrl = linkToken
             ? `${STEAM_RETURN_URL}?linkToken=${encodeURIComponent(linkToken)}`
@@ -284,7 +294,10 @@ export const SteamService = {
         return await steamOpenId.getRedirectUrl();
     },
 
-    // Authenticate the OpenID response and return the SteamID and profile info
+    /**
+     * Authenticates a Steam OpenID request and returns the SteamID and profile.
+     * @param req - Express request object
+     */
     async authenticateOpenId(
         req: express.Request,
     ): Promise<{
@@ -324,7 +337,13 @@ export const SteamService = {
         return { steamId, profile };
     },
 
-    // Wishlist operations
+    /**
+     * Gets the Steam wishlist with detailed info for the given SteamID.
+     * @param steamId - SteamID to fetch wishlist for
+     * @param cc - country code for store localization (default: "NL")
+     * @param lang - language code for store localization (default: "en")
+     * @param onEntry - optional callback invoked for each entry as it's fetched
+     */
     async getWishlistWithDetails(
         steamId: string,
         cc = "NL",
@@ -336,7 +355,11 @@ export const SteamService = {
         return await getWishlistDetails(wishlist, onEntry, cc, lang);
     },
 
-    // App / account-level operations used by routes
+    /**
+     * Gets the Steam connection status for the given email/account.
+     * @param email - email/account to check
+     * @param steam - steam connection info
+     */
     async getConnectionStatus(email: string): Promise<{
         connected: boolean;
         steam?: { steamId: string; linkedAt: string };
@@ -359,7 +382,10 @@ export const SteamService = {
         };
     },
 
-    // Starts the Steam OpenID flow for the given email/account
+    /**
+     * Starts the Steam OpenID authentication process for the given email/account.
+     * @param email - email/account to link Steam with
+     */
     async startAuthForEmail(email: string): Promise<{ redirectUrl: string }> {
         try {
             const token = createLinkToken(email);
@@ -374,7 +400,10 @@ export const SteamService = {
         }
     },
 
-    // Handles the Steam OpenID callback and links the Steam account
+    /**
+     * Handles the Steam OpenID authentication callback.
+     * @param req - Express request object
+     */
     async handleAuthCallback(
         req: express.Request,
     ): Promise<{ redirectTo: string }> {
@@ -427,7 +456,12 @@ export const SteamService = {
         }
     },
 
-    // Retrieves the latest cached Steam wishlist snapshot for the given email/account
+    /**
+     * Gets the Steam wishlist snapshot for the given email/account.
+     * @param email - email/account to get wishlist for
+     * @param items - wishlist items
+     * @param syncInProgress - whether a sync is in progress
+     */
     async getWishlistSnapshot(email: string): Promise<{
         lastSynced: string;
         items: SteamWishlistEntry[];
@@ -455,7 +489,12 @@ export const SteamService = {
         };
     },
 
-    // Starts a background delta sync of the Steam wishlist for the given email/account
+    /**
+     * Starts a Steam wishlist sync for the given email/account.
+     * @param email - email/account to sync wishlist for
+     * @param items - wishlist items
+     * @param syncInProgress - whether a sync is in progress
+     */
     async startWishlistSync(email: string): Promise<{
         lastSynced: string;
         items: SteamWishlistEntry[];

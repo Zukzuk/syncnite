@@ -43,6 +43,7 @@ export const GRID = {
   scrollbarWidth: 15,
   listLeftPadding: 12,
   gap: 8,
+  card_step_y: 90,
   overscan: { top: 600, bottom: 800 } as const,
 
 } as const;
@@ -55,10 +56,6 @@ export const Z_INDEX = {
   high: 100,
   top: 1000,
 } as const;
-
-export const MAX_ASSOCIATED = 1000;
-
-export const ASSOCIATED_CARD_STEP_Y = 90;
 
 export const FILE_BASE = "/data";
 

@@ -1,15 +1,14 @@
 import { Box } from "@mantine/core";
 import { GRID } from "../../../lib/constants";
-import { AssociatedDeckMeta } from "../../../types/types";
+import { AssociatedItems } from "../../../types/types";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 import { AssociatedStackCard } from "./AssociatedStackCard";
 
-
 type Props = {
-    associatedDecks: AssociatedDeckMeta[];
+    associatedDecks: AssociatedItems[];
     openDeckKey: string | null;
     stackColumns: number;
-    onDeckClick: (key: string) => void;
+    onStackClick: (key: string) => void;
 };
 
 // Component to display associated stacks of decks in the library view.
@@ -17,7 +16,7 @@ export function AssociatedStacks({
     associatedDecks,
     openDeckKey,
     stackColumns,
-    onDeckClick,
+    onStackClick,
 }: Props): JSX.Element | null {
     const isOpenDelayed = useDelayedFlag({ active: true, delayMs: 210 });
 
@@ -51,12 +50,12 @@ export function AssociatedStacks({
                     alignContent: "flex-start",
                 }}
             >
-                {associatedDecks.map((deck) => (
+                {associatedDecks.map((stack) => (
                     <AssociatedStackCard
-                        key={deck.key}
-                        deck={deck}
-                        isOpen={openDeckKey === deck.key}
-                        onDeckClick={onDeckClick}
+                        key={stack.key}
+                        stack={stack}
+                        isOpen={openDeckKey === stack.key}
+                        onStackClick={onStackClick}
                     />
                 ))}
             </Box>

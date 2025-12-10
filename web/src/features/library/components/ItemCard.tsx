@@ -16,11 +16,15 @@ export function ItemCard({ item, isOpen }: Props): JSX.Element {
     const { title, coverUrl, year, source, link, gameId, isHidden, isInstalled } = item;
 
     return (
-        <>
-            <Box style={{
-                position: "relative",
-                aspectRatio: "23 / 32",
-            }}>
+        <Box
+            aria-label="item-card"
+        >
+            <Box 
+                style={{
+                    position: "relative",
+                    aspectRatio: "23 / 32",
+                }}
+            >
                 <Image
                     src={coverUrl || ""}
                     alt={title}
@@ -100,6 +104,6 @@ export function ItemCard({ item, isOpen }: Props): JSX.Element {
                     </Group>
                 </Box>
             </Box>
-        </>
+        </Box>
     );
 }

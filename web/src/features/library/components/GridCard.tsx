@@ -75,6 +75,7 @@ export const GridCard = React.memo(function GridCard({
 
     const onToggleClickBounded = React.useCallback(
         (associatedTarget: {id: string, index: number} | null = null) => {
+            if (wallpaperBg) return;
             console.log(associatedTarget, item.id, index);
             associatedTarget
                 ? onToggleItem(associatedTarget.id, associatedTarget.index)
@@ -117,7 +118,7 @@ export const GridCard = React.memo(function GridCard({
             }}
         >
             <Box
-                role="card-button"
+                role="grid-card-button"
                 tabIndex={0}
                 aria-expanded={isOpen}
                 aria-label={title}
@@ -151,7 +152,6 @@ export const GridCard = React.memo(function GridCard({
                 onClick={() => onToggleClickBounded()}
             >
                 <Box
-                    aria-label="card-inner"
                     style={{
                         position: "relative",
                         zIndex: Z_INDEX.base,
@@ -166,28 +166,24 @@ export const GridCard = React.memo(function GridCard({
                 >
                     {!isOpen && isListView && (
                         <ItemRow
-                            aria-label="item-row"
                             item={item}
                             isOpen={isOpen}
                         />
                     )}
                     {!isOpen && !isListView && (
                         <ItemCard
-                            aria-label="item-card"
                             item={item}
                             isOpen={isOpen}
                         />
                     )}
                     {isOpen && (
                         <ItemRow
-                            aria-label="item-row"
                             item={item}
                             isOpen={isOpen}
                         />
                     )}
                     {isOpen && (
                         <ItemContent
-                            aria-label="item-content"
                             item={item}
                             isOpen={isOpen}
                             openWidth={openWidth}
@@ -200,7 +196,6 @@ export const GridCard = React.memo(function GridCard({
                 </Box>
 
                 <ItemBackground
-                    aria-label="item-background"
                     item={item}
                     isOpen={isOpen}
                     wallpaperBg={wallpaperBg}

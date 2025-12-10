@@ -13,10 +13,12 @@ import { PlayniteClientManifest, PlayniteDeltaManifest, PlayniteError } from "..
 
 const log = rootLog.child("playniteService");
 
+// Ensure directory exists
 async function ensureDir(p: string) {
     await fs.mkdir(p, { recursive: true });
 }
 
+// Sanitize ID
 function sanitizeId(id: string): string {
     const trimmed = String(id ?? "").trim();
     if (!trimmed) throw new PlayniteError(400, "missing_id", "missing id");
@@ -25,6 +27,7 @@ function sanitizeId(id: string): string {
     return safe;
 }
 
+// Sanitize collection
 function sanitizeCollection(col: string): string {
     const c = String(col ?? "").trim().toLowerCase();
     if (!COLLECTIONS.has(c)) {
@@ -37,10 +40,12 @@ function sanitizeCollection(col: string): string {
     return c;
 }
 
+// Resolve document path
 function resolveDocPath(collection: string, id: string) {
     return join(DB_ROOT, collection, `${id}.json`);
 }
 
+// Read JSON file if exists
 async function readJsonIfExists(p: string): Promise<any | null> {
     try {
         const buf = await fs.readFile(p, "utf8");
@@ -51,12 +56,14 @@ async function readJsonIfExists(p: string): Promise<any | null> {
     }
 }
 
+// Write JSON file
 async function writeJson(p: string, obj: any) {
     await ensureDir(dirname(p));
     const data = JSON.stringify(obj, null, 2);
     await fs.writeFile(p, data, "utf8");
 }
 
+// Safely join media path
 function safeJoinMedia(root: string, urlTail: string) {
     const rel = urlTail.replace(/^\/+/, "");
     const abs = resolve(root, rel);
@@ -66,6 +73,7 @@ function safeJoinMedia(root: string, urlTail: string) {
     return abs;
 }
 
+// Get file stat or null
 async function fileStatOrNull(p: string) {
     try {
         return await fs.stat(p);
@@ -74,6 +82,7 @@ async function fileStatOrNull(p: string) {
     }
 }
 
+// Compare two objects via JSON.stringify
 function sameJson(a: any, b: any): boolean {
     try {
         return JSON.stringify(a) === JSON.stringify(b);
@@ -82,11 +91,15 @@ function sameJson(a: any, b: any): boolean {
     }
 }
 
-// ---------- service ----------
+// In-memory collection cache
+const collectionCache = new Map<string, any[]>();
 
+// Playnite service class
 export class PlayniteService {
     /**
      * Pushes a snapshot object to the server.
+     * @param snapshot Snapshot object
+     * @param email User email
      */
     async pushSnapshot(snapshot: unknown, email: string): Promise<void> {
         if (!snapshot || typeof snapshot !== "object") {
@@ -131,6 +144,8 @@ export class PlayniteService {
 
     /**
      * Pushes installed game IDs to the server.
+     * @param installed Installed game IDs
+     * @param email User email
      */
     async pushInstalled(installed: unknown, email: string): Promise<number> {
         if (!Array.isArray(installed)) {
@@ -172,6 +187,8 @@ export class PlayniteService {
 
     /**
      * Computes delta between client and server manifests.
+     * @param body Client manifest
+     * @return Delta manifest
      */
     async computeDelta(body: PlayniteClientManifest): Promise<PlayniteDeltaManifest> {
         const incoming = body.json ?? {};
@@ -267,6 +284,9 @@ export class PlayniteService {
 
     /**
      * Save / update media file.
+     * @param tail Media path tail
+     * @param buffer Media data
+     * @param wantHash Optional SHA1 hash to check against existing
      */
     async putMedia(
         tail: string,
@@ -296,6 +316,7 @@ export class PlayniteService {
 
     /**
      * Resolve a media path and check it exists.
+     * @param tail Media path tail
      */
     async getMediaPath(tail: string): Promise<string> {
         const abs = safeJoinMedia(MEDIA_ROOT, tail);
@@ -308,8 +329,13 @@ export class PlayniteService {
 
     /**
      * Return all entities in a collection (flattened).
+     * @param collectionRaw Collection name
      */
     async listCollection(collectionRaw: string): Promise<any[]> {
+        if (collectionCache.has(collectionRaw)) {
+            return collectionCache.get(collectionRaw)!;
+        }
+
         const collection = sanitizeCollection(collectionRaw);
         const dir = join(DB_ROOT, collection);
 
@@ -342,31 +368,16 @@ export class PlayniteService {
             }
         }
 
-        rows.sort((a: any, b: any) => {
-            const aId =
-                a && typeof a === "object" && "Id" in a ? String(a.Id) : "";
-            const bId =
-                b && typeof b === "object" && "Id" in b ? String(b.Id) : "";
-            if (aId || bId) return aId.localeCompare(bId);
-
-            const aName =
-                a && typeof a === "object" && "Name" in a
-                    ? String(a.Name)
-                    : "";
-            const bName =
-                b && typeof b === "object" && "Name" in b
-                    ? String(b.Name)
-                    : "";
-            if (aName || bName) return aName.localeCompare(bName);
-
-            return JSON.stringify(a).localeCompare(JSON.stringify(b));
-        });
+        collectionCache.set(collectionRaw, rows);
 
         return rows;
     }
 
     /**
      * Create/update entity, with status decision.
+     * @param collectionRaw Collection name
+     * @param idRaw Entity ID
+     * @param data Entity data
      */
     async upsertEntity(
         collectionRaw: string,
@@ -393,6 +404,8 @@ export class PlayniteService {
 
     /**
      * Delete entity (idempotent).
+     * @param collectionRaw Collection name
+     * @param idRaw Entity ID
      */
     async deleteEntity(
         collectionRaw: string,

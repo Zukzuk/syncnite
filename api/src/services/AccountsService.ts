@@ -92,10 +92,7 @@ async function writeAdmin(acc: Account) {
     );
 }
 
-/**
- * Service for managing user and admin accounts.
- * Provides methods for login, registration, admin binding, and role retrieval.
- */
+// A service for managing user and admin accounts.
 export const AccountsService = {
     /**
      * Logs in a user by verifying email and password.

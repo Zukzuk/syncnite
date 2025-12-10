@@ -92,8 +92,8 @@ export function AbsoluteGrid({
                                 openWidth={openWidth}
                                 openHeight={openHeight}
                                 isListView={isListView}
-                                wallpaperBg={wallpaperBg}
                                 itemsAssociated={itemsAssociated}
+                                wallpaperBg={wallpaperBg}
                                 onWallpaperBg={onWallpaperBg}
                                 onToggleItem={onToggleItem}
                             />

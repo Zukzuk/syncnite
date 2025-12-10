@@ -21,7 +21,7 @@ export function ItemBackground({ item, isOpen, wallpaperBg }: Props): JSX.Elemen
 
     return (
         <Box
-            aria-hidden
+            aria-label="item-background"
             style={{
                 position: "absolute",
                 inset: 0,

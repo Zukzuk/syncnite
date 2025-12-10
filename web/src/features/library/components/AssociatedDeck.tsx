@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Stack, Text } from "@mantine/core";
-import { ASSOCIATED_CARD_STEP_Y, GRID, MAX_ASSOCIATED } from "../../../lib/constants";
-import { AssociatedCardMeta, GameItem } from "../../../types/types";
+import { GRID } from "../../../lib/constants";
+import { GameItem } from "../../../types/types";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 import { AssociatedDeckCard } from "./AssociatedDeckCard";
 
@@ -24,9 +24,8 @@ export function AssociatedDeck({
     onToggleClickBounded,
 }: Props): JSX.Element | null {
     const [hoveredId, setHoveredId] = React.useState<string | null>(null);
-    const [isDeckHovered, setIsDeckHovered] = React.useState(false);
     const isOpenDelayed = useDelayedFlag({ active: true, delayMs: 140 });
-    const cards = items.filter((g) => g.coverUrl).slice(0, MAX_ASSOCIATED);
+    const cards = items.filter((g) => g.coverUrl);
     if (cards.length === 0 || deckColumns <= 0) return null;
 
     const colCount = Math.max(1, deckColumns);
@@ -50,10 +49,10 @@ export function AssociatedDeck({
     const cardHeight = (GRID.cardWidth * 32) / 23;
     const columnHeight =
         cardsPerColumn > 0
-            ? cardHeight + ASSOCIATED_CARD_STEP_Y * (cardsPerColumn - 1)
+            ? cardHeight + GRID.card_step_y * (cardsPerColumn - 1)
             : 0;
 
-    const cardMeta: AssociatedCardMeta[] = cards.map((c, index) => {
+    const cardMeta = cards.map((c, index) => {
         const colIndex = Math.floor(index / cardsPerColumn);
         const indexInColumn = index % cardsPerColumn;
         return { id: c.id, metaIndex: index, colIndex, indexInColumn };
@@ -113,11 +112,7 @@ export function AssociatedDeck({
                 }}
             >
                 <Box
-                    onMouseEnter={() => setIsDeckHovered(true)}
-                    onMouseLeave={() => {
-                        setIsDeckHovered(false);
-                        setHoveredId(null);
-                    }}
+                    onMouseLeave={() => setHoveredId(null)}
                     style={{
                         position: "relative",
                         width: colCount * (GRID.cardWidth + GRID.gap * 2),
@@ -135,7 +130,6 @@ export function AssociatedDeck({
                                 colLengths={colLengths}
                                 hoveredMeta={hoveredMeta}
                                 hasHoveredCard={hasHoveredCard}
-                                isDeckHovered={isDeckHovered}
                                 currentItemId={currentItemId}
                                 onToggleClickBounded={onToggleClickBounded}
                                 setHoveredId={setHoveredId}

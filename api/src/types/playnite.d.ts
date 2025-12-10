@@ -46,12 +46,10 @@ export interface Game {
   SourceId?: string | null;
   TagIds?: string[];
   PlatformIds?: string[];
-  PrimaryPlatformId?: string | null;
   GenreIds?: string[];
   CategoryIds?: string[];
   FeatureIds?: string[];
   SeriesIds?: string[];
-  PrimarySeriesId?: string | null;
   CompletionStatusId?: string | null;
   AgeRatingIds?: string[];
   RegionIds?: string[];

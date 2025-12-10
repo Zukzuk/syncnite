@@ -5,10 +5,12 @@ import { SteamWishlistSnapshot, SteamWishlistEntry } from "../types/types";
 
 const SNAPSHOT_SUFFIX = ".steam.wishlist.json";
 
+// Ensure the directory exists
 async function ensureDir(dir: string) {
     await fs.mkdir(dir, { recursive: true });
 }
 
+// Get the full path for an account's snapshot file
 function snapshotPath(email: string): string {
     return join(STEAM_ROOT, `${email}${SNAPSHOT_SUFFIX}`);
 }

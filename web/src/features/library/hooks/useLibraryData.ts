@@ -318,10 +318,10 @@ async function loadLibrary(): Promise<LoadedData> {
         };
     });
 
-    // all unique sources/tags/series (alphabetically sorted)
+    // all unique (new Set dedupes) and sorted lists
     const allSources = Array.from(new Set(items.map((r) => r.source).filter(Boolean))).sort();
     const allTags = Array.from(new Set(items.flatMap((r) => r.tags).filter(Boolean))).sort();
-    const allSeries = Array.from(new Set(items.flatMap((r) => r.series).filter(Boolean))).sort();
+    const allSeries = Array.from(new Set(items.flatMap((r) => r.series).filter(Boolean)))// .sort();
 
     // return full data
     return { items, allSources, allTags, allSeries };

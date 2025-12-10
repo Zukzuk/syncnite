@@ -23,6 +23,7 @@ export function ItemRow({ item, isOpen }: Props): JSX.Element {
 
     return (
         <Box
+            aria-label="item-row"
             style={{
                 display: "grid",
                 alignItems: "center",

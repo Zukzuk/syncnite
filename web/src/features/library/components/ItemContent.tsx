@@ -1,16 +1,67 @@
 import React from "react";
 import { Group, Collapse, Box } from "@mantine/core";
-import { AssociatedLayout, AssociatedDeckMeta, GameItem } from "../../../types/types";
-import { GRID, ASSOCIATED_CARD_STEP_Y, MAX_ASSOCIATED } from "../../../lib/constants";
+import { AssociatedLayout, AssociatedItems, GameItem, ScoredHit } from "../../../types/types";
+import { GRID } from "../../../lib/constants";
 import { AssociatedDeck } from "./AssociatedDeck";
 import { AssociatedStacks } from "./AssociatedStacks";
 import { AssociatedDetails } from "./AssociatedDetails";
+
+/**
+ * Very simple fuzzy search:
+ *  1. A hit happens if query and item share at least one full word (case-insensitive).
+ *  2. Score = length (in characters) of the *longest* overlapping word.
+ *  3. Returns *all* items reordered by score (desc).
+ */
+export function fuzzyWordOverlap<T>(
+    query: string,
+    items: T[],
+    toString: (item: T) => string = (x => String(x))
+): ScoredHit<T>[] {
+    const queryWords = tokenize(query);
+
+    const hits: ScoredHit<T>[] = [];
+
+    for (const item of items) {
+        const text = toString(item);
+        const candidateWords = tokenize(text);
+
+        let maxScore = 0;
+
+        for (const q of queryWords) {
+            for (const w of candidateWords) {
+                if (q && w && q === w) {
+                    const wordLen = w.length;
+                    if (wordLen > maxScore) {
+                        maxScore = wordLen;
+                    }
+                }
+            }
+        }
+
+        // Always include item — even if maxScore = 0
+        hits.push({ item, score: maxScore });
+    }
+
+    // Sort by score (desc), stable for equal scores
+    hits.sort((a, b) => b.score - a.score);
+
+    return hits;
+}
+
+// Tokenize a string into lowercase words, removing non-alphanumeric characters.
+function tokenize(input: string): string[] {
+    return input
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/gi, " ")
+        .split(/\s+/)
+        .filter(Boolean);
+}
 
 function buildAssociatedDecks(
     isOpen: boolean,
     item: GameItem,
     all: GameItem[]
-): { associatedDecks: AssociatedDeckMeta[] } {
+): { associatedDecks: AssociatedItems[] } {
     if (!isOpen) return { associatedDecks: [] };
 
     const associatedSeries: GameItem[] = [];
@@ -26,7 +77,6 @@ function buildAssociatedDecks(
         const other = all[i];
 
         if (seriesSet &&
-            associatedSeries.length < MAX_ASSOCIATED &&
             other.series &&
             other.series.some((s) => seriesSet.has(s))
         ) {
@@ -35,7 +85,6 @@ function buildAssociatedDecks(
         }
 
         if (tagsSet &&
-            associatedTags.length < MAX_ASSOCIATED &&
             other.tags &&
             other.tags.some((t) => tagsSet.has(t))
         ) {
@@ -44,7 +93,6 @@ function buildAssociatedDecks(
         }
 
         if (item.year &&
-            associatedYear.length < MAX_ASSOCIATED &&
             other.year === item.year
         ) {
             other.index = i;
@@ -52,7 +100,6 @@ function buildAssociatedDecks(
         }
 
         if (item.isInstalled &&
-            associatedInstalled.length < MAX_ASSOCIATED &&
             other.isInstalled
         ) {
             other.index = i;
@@ -60,29 +107,20 @@ function buildAssociatedDecks(
         }
 
         if (item.isHidden &&
-            associatedHidden.length < MAX_ASSOCIATED &&
             other.isHidden
         ) {
             other.index = i;
             associatedHidden.push(other);
         }
-
-        // Early stop if all buckets are full or not applicable
-        if ((!seriesSet || associatedSeries.length >= MAX_ASSOCIATED) &&
-            (!tagsSet || associatedTags.length >= MAX_ASSOCIATED) &&
-            associatedYear.length >= MAX_ASSOCIATED &&
-            associatedInstalled.length >= MAX_ASSOCIATED &&
-            associatedHidden.length >= MAX_ASSOCIATED
-        ) {
-            break;
-        }
     }
 
-    const seriesNames = item.series ?? [];
+    const scoredWords = fuzzyWordOverlap(item.sortingName ?? item.title, item.series ?? []);
+    const seriesNames = scoredWords.sort((a, b) => b.score - a.score).map((w) => w.item);
     const tagNames = item.tags ?? [];
 
     // One deck per series
-    const seriesDecks: AssociatedDeckMeta[] = seriesNames
+
+    const seriesDecks = seriesNames
         .map((name) => ({
             key: `series-${name}`,
             label: name,
@@ -91,7 +129,7 @@ function buildAssociatedDecks(
         .filter((deck) => deck.items.length > 0);
 
     // One deck per tag
-    const tagDecks: AssociatedDeckMeta[] = tagNames
+    const tagDecks = tagNames
         .map((name) => ({
             key: `tag-${name}`,
             label: name,
@@ -100,7 +138,7 @@ function buildAssociatedDecks(
         .filter((deck) => deck.items.length > 0);
 
     // Year deck
-    const yearDeck: AssociatedDeckMeta | null =
+    const yearDeck =
         associatedYear.length > 0
             ? {
                 key: "year",
@@ -110,7 +148,7 @@ function buildAssociatedDecks(
             : null;
 
     // Installed deck
-    const installedDeck: AssociatedDeckMeta | null =
+    const installedDeck =
         associatedInstalled.length > 0
             ? {
                 key: "installed",
@@ -120,7 +158,7 @@ function buildAssociatedDecks(
             : null;
 
     // Hidden deck
-    const hiddenDeck: AssociatedDeckMeta | null =
+    const hiddenDeck =
         associatedHidden.length > 0
             ? {
                 key: "hidden",
@@ -129,7 +167,7 @@ function buildAssociatedDecks(
             }
             : null;
 
-    const associatedDecks: AssociatedDeckMeta[] = [
+    const associatedDecks = [
         ...seriesDecks,
         ...(installedDeck ? [installedDeck] : []),
         ...(hiddenDeck ? [hiddenDeck] : []),
@@ -158,17 +196,16 @@ function calcAssociatedLayout(
     const stackColWidth = GRID.cardWidth + GRID.gap;
 
     const cardHeight = (GRID.cardWidth * 32) / 23;
-    const stepY = ASSOCIATED_CARD_STEP_Y;
+    const stepY = GRID.card_step_y;
 
     const maxCardsPerColumnByHeight = Math.max(
         1,
         Math.floor((height - cardHeight) / stepY) + 1
     );
 
-    const visibleCards = Math.min(MAX_ASSOCIATED, totalCards);
     const neededColsByHeight = Math.max(
         1,
-        Math.ceil(visibleCards / maxCardsPerColumnByHeight)
+        Math.ceil(totalCards / maxCardsPerColumnByHeight)
     );
 
     let maxDeckColsByWidth = 0;
@@ -194,9 +231,9 @@ function calcAssociatedLayout(
         const stackColumns =
             remainingWidth >= stackColWidth
                 ? Math.max(
-                      minStackColumns,
-                      Math.floor(remainingWidth / stackColWidth)
-                  )
+                    minStackColumns,
+                    Math.floor(remainingWidth / stackColWidth)
+                )
                 : 0;
 
         return {
@@ -265,11 +302,11 @@ export function ItemContent({
         itemsAssociated
     );
 
-    const [openDeckKey, onDeckClick] = React.useState<string | null>(null);
-    React.useEffect(() => onDeckClick(null), [item.id]);
+    const [openDeckKey, onStackClick] = React.useState<string | null>(null);
+    React.useEffect(() => onStackClick(null), [item.id]);
 
     // select the open deck
-    const openDeck = React.useMemo<AssociatedDeckMeta | null>(() => {
+    const openDeck = React.useMemo<AssociatedItems | null>(() => {
         if (!associatedDecks || associatedDecks.length === 0) return null;
         if (openDeckKey) {
             const found = associatedDecks.find((d) => d.key === openDeckKey);
@@ -305,8 +342,7 @@ export function ItemContent({
             const height = rect.height;
 
             const totalCards = openDeck.items
-                .filter((g) => g.coverUrl)
-                .slice(0, MAX_ASSOCIATED).length;
+                .filter((g) => g.coverUrl).length;
 
             setLayout(
                 calcAssociatedLayout(
@@ -326,6 +362,7 @@ export function ItemContent({
 
     return (
         <Collapse
+            aria-label="item-content"
             in={isOpen}
             transitionDuration={140}
             py={GRID.gap}
@@ -341,7 +378,7 @@ export function ItemContent({
             <Group align="flex-start" gap={GRID.gap * 3} wrap="nowrap" h="100%">
                 <AssociatedDetails
                     item={item}
-                    onWallpaperBg={onWallpaperBg} 
+                    onWallpaperBg={onWallpaperBg}
                 />
                 <Box
                     ref={layoutRef}
@@ -369,7 +406,7 @@ export function ItemContent({
                             associatedDecks={associatedDecks}
                             openDeckKey={openDeck ? openDeck.key : null}
                             stackColumns={Math.max(layout.stackColumns, layout.minStackColumns)}
-                            onDeckClick={onDeckClick}
+                            onStackClick={onStackClick}
                         />
                     )}
                 </Box>

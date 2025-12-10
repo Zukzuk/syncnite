@@ -3,6 +3,7 @@ import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 import { GameItem } from "../../../types/types";
 import { GRID } from "../../../lib/constants";
 import { getTheme } from "../../../lib/utils";
+import { IconShowMaximized } from "../../../components/IconShowMaximized";
 
 type Props = {
     item: GameItem;
@@ -117,22 +118,25 @@ export function AssociatedDetails({ item, onWallpaperBg }: Props): JSX.Element {
             </Stack>
 
             {/* Background Image */}
-            <Image
-                src={bgUrl}
-                alt={sortingName || "wallpaper"}
-                w={GRID.coverWidth}
-                my={6}
-                radius="sm"
-                fit="cover"
-                loading="lazy"
-                style={{
-                    border: isDark
-                        ? "2px solid var(--mantine-color-dark-9)"
-                        : "2px solid var(--mantine-color-gray-3)",
-                }}
-                onMouseOver={() => onWallpaperBg(true)}
-                onMouseOut={() => onWallpaperBg(false)}
-            />
+            <Stack gap={6} align="stretch" style={{ position: "relative", width: "100%" }}>
+                <Image
+                    src={bgUrl}
+                    alt={sortingName || "wallpaper"}
+                    w={GRID.coverWidth}
+                    radius="sm"
+                    fit="cover"
+                    loading="lazy"
+                    style={{
+                        border: isDark
+                            ? "2px solid var(--mantine-color-dark-9)"
+                            : "2px solid var(--mantine-color-gray-3)",
+                    }}
+                />
+
+                <IconShowMaximized
+                    onHoverChange={onWallpaperBg}
+                />
+            </Stack>
 
             {/* Links */}
             <Stack gap={6} align="stretch" style={{ width: "100%" }}>

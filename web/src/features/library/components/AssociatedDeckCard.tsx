@@ -1,17 +1,16 @@
 import { Box, Image } from "@mantine/core";
-import { GRID, ASSOCIATED_CARD_STEP_Y, Z_INDEX } from "../../../lib/constants";
+import { GRID } from "../../../lib/constants";
 import { getTheme } from "../../../lib/utils";
-import { AssociatedCardMeta, GameItem } from "../../../types/types";
+import { AssociatedItemCard, GameItem } from "../../../types/types";
 import { IconIsInstalled } from "../../../components/IconIsInstalled";
 import { IconIsHidden } from "../../../components/IconIsHidden";
 
 type Props = {
-    meta: AssociatedCardMeta;
+    meta: AssociatedItemCard;
     item: GameItem;
     colLengths: number[];
-    hoveredMeta: AssociatedCardMeta | null;
+    hoveredMeta: AssociatedItemCard | null;
     hasHoveredCard: boolean;
-    isDeckHovered: boolean;
     currentItemId: string;
     onToggleClickBounded: (associatedTarget: {id: string, index: number} | null) => void;
     setHoveredId: (id: string | null) => void;
@@ -24,7 +23,6 @@ export function AssociatedDeckCard({
     colLengths,
     hoveredMeta,
     hasHoveredCard,
-    isDeckHovered,
     currentItemId,
     onToggleClickBounded,
     setHoveredId,
@@ -34,11 +32,10 @@ export function AssociatedDeckCard({
     const { title, year, coverUrl, isInstalled, isHidden, index } = item;
 
     const left = colIndex * (GRID.cardWidth + GRID.gap * 2);
-    const top = indexInColumn * ASSOCIATED_CARD_STEP_Y;
+    const top = indexInColumn * GRID.card_step_y;
 
     let zIndex = indexInColumn + 1;
     const isTopCard = hasHoveredCard && hoveredMeta!.metaIndex === metaIndex;
-    const isDimmed = hasHoveredCard && isDeckHovered && !isTopCard;
     const isCurrentItem = id === currentItemId;
 
     if (hasHoveredCard) {
@@ -58,7 +55,7 @@ export function AssociatedDeckCard({
             onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                onToggleClickBounded({id, index: index as number});
+                if (!isCurrentItem) onToggleClickBounded({id, index: index as number});
             }}
             onMouseEnter={(e) => {
                 e.stopPropagation();
@@ -75,8 +72,8 @@ export function AssociatedDeckCard({
                 overflow: "hidden",
                 backgroundColor: "var(--mantine-color-dark-6)",
                 boxShadow: isTopCard
-                    ? "0 8px 16px rgba(0, 0, 0, 0.25)"
-                    : "0 4px 8px rgba(0, 0, 0, 0.15)",
+                    ? "0 0px 30px rgba(0, 0, 0, 1)"
+                    : "0 0px 8px rgba(0, 0, 0, 0.15)",
                 border:
                     isTopCard || isCurrentItem
                         ? "2px solid var(--interlinked-color-primary-soft)"
@@ -85,7 +82,7 @@ export function AssociatedDeckCard({
                             : "2px solid var(--mantine-color-gray-3)",
                 transform: isTopCard ? "scale(1.07)" : "scale(1)",
                 transition:
-                    "transform 140ms ease, box-shadow 140ms ease, clip-path 140ms ease",
+                    "transform 140ms ease, box-shadow 140ms ease",
             }}
         >
             <Box
@@ -118,20 +115,6 @@ export function AssociatedDeckCard({
                         objectFit: "fill",
                     }}
                 />
-
-                {isDimmed && (
-                    <Box
-                        style={{
-                            position: "absolute",
-                            inset: 0,
-                            zIndex: Z_INDEX.aboveBase,
-                            backgroundColor: isDark
-                                ? "color-mix(in srgb, var(--mantine-color-dark-7) 65%, transparent)"
-                                : "color-mix(in srgb, var(--mantine-color-gray-3) 50%, transparent)",
-                            transition: "background-color 120ms ease",
-                        }}
-                    />
-                )}
             </Box>
         </Box>
     );

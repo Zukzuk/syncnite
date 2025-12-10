@@ -1,5 +1,5 @@
 import { COOKIE_DEFAULTS } from "./constants";
-import type { AccountCreds, CookieState, Letter, Role, SortDir, SortKey } from "../types/types";
+import type { AccountCreds, CookieState, Letter, Role } from "../types/types";
 import { useComputedColorScheme, useMantineTheme } from "@mantine/core";
 
 // Returns the current theme and whether dark mode is active

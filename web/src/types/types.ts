@@ -130,6 +130,11 @@ export interface ItemPositions extends Array<{
   top: number
 }> { };
 
+export type ScoredHit<T = string> = {
+    item: T;
+    score: number;
+};
+
 export type AssociatedLayout = {
   deckColumns: number;
   stackColumns: number;
@@ -137,13 +142,13 @@ export type AssociatedLayout = {
   minStackColumns: number;
 };
 
-export interface AssociatedDeckMeta {
+export interface AssociatedItems {
   key: string;
   label: string;
   items: GameItem[];
 };
 
-export type AssociatedCardMeta = {
+export type AssociatedItemCard = {
   id: string;
   metaIndex: number;
   colIndex: number;

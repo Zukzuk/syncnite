@@ -3,6 +3,7 @@ import { BusEvent } from "../types/types";
 
 export const SyncBus = createEventBus(200);
 
+// Creates an event bus with a bounded buffer.
 function createEventBus(bufferMax = 200) {
     const ee = new EventEmitter();
     const buffer: BusEvent[] = [];

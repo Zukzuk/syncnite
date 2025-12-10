@@ -1,28 +1,27 @@
 import React from "react";
 import { Box, Image, Stack, Text } from "@mantine/core";
-import { GRID, MAX_ASSOCIATED } from "../../../lib/constants";
-import { AssociatedDeckMeta } from "../../../types/types";
+import { GRID } from "../../../lib/constants";
+import { AssociatedItems } from "../../../types/types";
 import { getTheme } from "../../../lib/utils";
 
 type Props = { 
-    deck: AssociatedDeckMeta; 
+    stack: AssociatedItems; 
     isOpen: boolean; 
-    onDeckClick: (key: string) => void;
+    onStackClick: (key: string) => void;
 };
 
 // Card component for an associated stack of decks in the library view.
-export function AssociatedStackCard({ deck, isOpen, onDeckClick }: Props): JSX.Element | null {
-    const { label, items, key } = deck;
+export function AssociatedStackCard({ stack, isOpen, onStackClick }: Props): JSX.Element | null {
+    const { label, items, key } = stack;
     const [isHovered, setIsHovered] = React.useState(false);
     const { isDark } = getTheme();
 
     if (!items.length) return null;
 
-    const cards = items.filter((g) => g.coverUrl).slice(0, MAX_ASSOCIATED);
-    const previewCards = cards.slice(0, 4);
+    const cards = items.filter((g) => g.coverUrl);
     const previewSlots = Array.from(
         { length: 4 },
-        (_, i) => previewCards[i] ?? null
+        (_, i) => cards.slice(0, 4)[i] ?? null
     );
 
     const isHoveredOrOpen = isHovered || isOpen;
@@ -43,7 +42,7 @@ export function AssociatedStackCard({ deck, isOpen, onDeckClick }: Props): JSX.E
                 onMouseLeave={() => setIsHovered(false)}
                 onClick={(e) => {
                     e.stopPropagation();
-                    onDeckClick(key);
+                    onStackClick(key);
                 }}
                 style={{
                     padding: GRID.gap,

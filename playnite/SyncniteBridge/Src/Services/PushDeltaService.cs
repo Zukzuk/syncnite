@@ -656,16 +656,10 @@ namespace SyncniteBridge.Services
                     g.SourceId,
                     TagIds = (g.TagIds ?? new List<Guid>()).ToList(),
                     PlatformIds = (g.PlatformIds ?? new List<Guid>()).ToList(),
-                    PrimaryPlatformId = (g.PlatformIds != null && g.PlatformIds.Count > 0)
-                        ? (Guid?)g.PlatformIds[0]
-                        : null,
+                    SeriesIds = (g.SeriesIds ?? new List<Guid>()).ToList(),
                     g.GenreIds,
                     g.CategoryIds,
                     g.FeatureIds,
-                    SeriesIds = g.SeriesIds,
-                    PrimarySeriesId = (g.SeriesIds != null && g.SeriesIds.Count > 0)
-                        ? (Guid?)g.SeriesIds[0]
-                        : null,
                     g.CompletionStatusId,
                     g.AgeRatingIds,
                     g.RegionIds,
