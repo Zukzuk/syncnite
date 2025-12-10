@@ -1,7 +1,7 @@
 {
   "name": "syncnite",
   "private": true,
-  "version": "1.32.5",
+  "version": "1.33.0",
   "workspaces": [
     "web",
     "api",

@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.33.0](https://github.com/Zukzuk/syncnite/compare/v1.32.5...v1.33.0) (2025-12-10)
+
+
+### Features
+
+* added better associated series ordering ([1a90a8d](https://github.com/Zukzuk/syncnite/commit/1a90a8d80130b4ff70bd4cd3cd745e0175690513))
+
 ### [1.32.5](https://github.com/Zukzuk/syncnite/compare/v1.32.4...v1.32.5) (2025-12-09)
 
 
