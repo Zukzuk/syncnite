@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.34.0](https://github.com/Zukzuk/syncnite/compare/v1.33.1...v1.34.0) (2025-12-12)
+
+
+### Features
+
+* added narrowcasting page ([406146c](https://github.com/Zukzuk/syncnite/commit/406146cbf83aac31eb6fbd8ebabe14766755252f))
+
 ### [1.33.1](https://github.com/Zukzuk/syncnite/compare/v1.33.0...v1.33.1) (2025-12-12)
 
 
