@@ -1,5 +1,9 @@
 import * as React from "react";
 import { createBrowserRouter, Navigate, Outlet, useNavigate } from "react-router-dom";
+import { useAuth } from "./hooks/useAuth";
+import { useAdminGate } from "./hooks/useAdminGate";
+import { INTERVAL_MS } from "./lib/constants";
+import { clearCreds } from "./lib/utils";
 import AppShellLayout from "./layout/AppShellLayout";
 import HomePage from "./layout/pages/HomePage";
 import LibraryPage from "./layout/pages/LibraryPage";
@@ -7,10 +11,7 @@ import BridgePage from "./layout/pages/BridgePage";
 import LoginPage from "./layout/pages/LoginPage";
 import AdminPage from "./layout/pages/AdminPage";
 import AccountPage from "./layout/pages/AccountPage";
-import { useAuth } from "./hooks/useAuth";
-import { useAdminGate } from "./hooks/useAdminGate";
-import { INTERVAL_MS } from "./lib/constants";
-import { clearCreds } from "./lib/utils";
+import NarrowcastPage from "./layout/pages/NarrowcastPage";
 
 function WithShell({ hideSite = false }: { hideSite?: boolean }) {
   return (
@@ -67,8 +68,19 @@ export const router = createBrowserRouter([
       {
         element: <WithShell hideSite />,
         children: [
-          { path: "/login", element: <LoggedOutOnly />, children: [{ index: true, element: <LoginPage /> }] },
-          { path: "/logout", element: <LogoutAction /> },
+          {
+            path: "/login",
+            element: <LoggedOutOnly />,
+            children: [{ index: true, element: <LoginPage /> }]
+          },
+          {
+            path: "/logout",
+            element: <LogoutAction />
+          },
+          {
+            element: <LoggedInOnly />,
+            children: [{ path: "/narrowcast/:id?", element: <NarrowcastPage /> }],
+          },
         ],
       },
       {

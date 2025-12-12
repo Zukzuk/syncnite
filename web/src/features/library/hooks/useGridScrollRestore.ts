@@ -6,10 +6,7 @@ type UseParams = {
   gridRef: React.RefObject<HTMLDivElement | null>;
   openIds: Set<string>;
   items: GameItem[];
-
-  // NEW: canonical id -> current index in `items`
   idToIndex: Map<string, number>;
-
   viewportH: number;
   closedHeight: number;
   openRowHeight: number;
@@ -30,7 +27,7 @@ export function useGridScrollRestore({
   gridRef,
   openIds,
   items,
-  idToIndex, // NEW
+  idToIndex,
   viewportH,
   closedHeight,
   openRowHeight,

@@ -30,7 +30,7 @@ export const themeResolver: CSSVariablesResolver = (theme) => ({
     light: {
         '--interlinked-color-primary': `var(--mantine-color-${COLOR}-5)`,
         '--interlinked-color-primary-soft': `var(--mantine-color-${COLOR}-3)`,
-        '--interlinked-color-primary-translucent': `var(--mantine-color-${COLOR}-0)`,
+        '--interlinked-color-primary-translucent': `var(--mantine-color-${COLOR}-light-hover)`,
         '--interlinked-color-success': `var(--mantine-color-${SUCCESS_COLOR}-5)`,
         '--interlinked-color-success-soft': `var(--mantine-color-${SUCCESS_COLOR}-1)`,
         '--interlinked-color-error': `var(--mantine-color-${ERROR_COLOR}-5)`,
@@ -40,7 +40,7 @@ export const themeResolver: CSSVariablesResolver = (theme) => ({
     dark: {
         '--interlinked-color-primary': `var(--mantine-color-${COLOR}-6)`,
         '--interlinked-color-primary-soft': `var(--mantine-color-${COLOR}-4)`,
-        '--interlinked-color-primary-translucent': `var(--mantine-color-${COLOR}-light)`,
+        '--interlinked-color-primary-translucent': `var(--mantine-color-${COLOR}-light-hover)`,
         '--interlinked-color-success': `var(--mantine-color-${SUCCESS_COLOR}-8)`,
         '--interlinked-color-success-soft': `var(--mantine-color-${SUCCESS_COLOR}-4)`,
         '--interlinked-color-error': `var(--mantine-color-${ERROR_COLOR}-7)`,

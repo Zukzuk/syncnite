@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { Box, Stack, Group, Text, ActionIcon, Button, Tooltip, ScrollArea, NavLink, Badge, useMantineColorScheme } from "@mantine/core";
-import { IconSun, IconMoon, IconDownload, IconHome2, IconBooks, IconAB2, IconUser, IconShield, IconLogout2 } from "@tabler/icons-react";
+import { IconSun, IconMoon, IconDownload, IconHome2, IconBooks, IconAB2, IconUser, IconShield, IconLogout2, IconDeviceTv } from "@tabler/icons-react";
 import { useAuth } from "../hooks/useAuth";
 import { useExtensionStatus } from "../hooks/useExtensionStatus";
 import { API_ENDPOINTS, GRID, INTERVAL_MS } from "../lib/constants";
@@ -93,10 +93,9 @@ export function AppNavbar({ appVersion }: { appVersion: string; }) {
                         />
                         <NavLink
                             component={Link}
-                            to="/bridge"
-                            label="Bridge"
-                            leftSection={<IconAB2 size={18} />}
-                            active={isBridge}
+                            to="/narrowcast"
+                            label="Narrowcast"
+                            leftSection={<IconDeviceTv size={18} />}
                             variant="light"
                         />
                         {isLoggedIn && (
@@ -119,6 +118,14 @@ export function AppNavbar({ appVersion }: { appVersion: string; }) {
                                 variant="light"
                             />
                         )}
+                        <NavLink
+                            component={Link}
+                            to="/bridge"
+                            label="Bridge"
+                            leftSection={<IconAB2 size={18} />}
+                            active={isBridge}
+                            variant="light"
+                        />
                     </Stack>
                 </ScrollArea>
             </Box>

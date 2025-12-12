@@ -1,16 +1,19 @@
 import * as React from "react";
 import { Container, Stack, Text, Card, Group, ThemeIcon, Badge, Divider, Code, Button, Loader } from "@mantine/core";
 import { IconUser, IconSteam, IconClock, IconListDetails } from "@tabler/icons-react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { useSteamWishlist } from "../../hooks/useSteamWishlist";
 import { getCreds } from "../../lib/utils";
 import { API_ENDPOINTS } from "../../lib/constants";
-import type { SteamStatusResponse } from "../../types/types";
 import { fetchSteamStatus, syncSteamWishlist } from "../../lib/api";
+import type { SteamStatusResponse } from "../../types/types";
 
 export default function AccountPage(): JSX.Element {
     const { state } = useAuth({ pollMs: 0 });
     const isAdmin = state.role === "admin";
+    const { id } = useParams<{ id?: string }>();
+    const navigate = useNavigate();
 
     const [steamStatus, setSteamStatus] = React.useState<SteamStatusResponse | null>(null);
     const [loadingStatus, setLoadingStatus] = React.useState(true);

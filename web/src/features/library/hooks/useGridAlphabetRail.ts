@@ -4,8 +4,10 @@ import { LETTERS } from "../../../lib/constants";
 import { orderedLetters } from "../../../lib/utils";
 
 // Compute alphabetical groups from grouped items
-function computeAlphabetGroups({ sortKey, itemsGroupedByLetter, itemsSorted }: {
-    sortKey: string; itemsGroupedByLetter: ItemGroupedByLetter[] | null; itemsSorted: GameItem[] | null
+function calcAlphabetGroups({ sortKey, itemsGroupedByLetter, itemsSorted }: {
+    sortKey: UIControls["sortKey"];
+    itemsGroupedByLetter: ItemGroupedByLetter[] | null;
+    itemsSorted: GameItem[] | null;
 }): {
     alphabeticalGroups: AlphabeticalGroup[] | null; isGrouped: boolean; flatItems: GameItem[];
 } {
@@ -50,10 +52,10 @@ type UseReturn = {
 
 // Hook to manage alphabet rail state and behavior
 export function useGridAlphabetRail({
-    ui, 
-    derived, 
-    railVisibleIndex, 
-    itemsLen, 
+    ui,
+    derived,
+    railVisibleIndex,
+    itemsLen,
     scrollItemIntoView,
 }: UseParams): UseReturn {
 
@@ -61,7 +63,7 @@ export function useGridAlphabetRail({
     const { itemsGroupedByLetter, itemsSorted } = derived;
 
     // Alphabet groups for rail
-    const { alphabeticalGroups, isGrouped, flatItems } = computeAlphabetGroups({
+    const { alphabeticalGroups, isGrouped, flatItems } = calcAlphabetGroups({
         sortKey,
         itemsGroupedByLetter,
         itemsSorted,

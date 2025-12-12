@@ -230,7 +230,6 @@ export function useGrid({
         replaceOpen,
     });
 
-
     // Visible index for alphabet rail
     const railVisibleIndex =
         visibleRange.endIndex > visibleRange.startIndex
@@ -283,12 +282,14 @@ export function useGrid({
         scrollTop,
     ]);
 
+    // keep open item in view on layout changes
     const layoutRef = useRef({
         viewportH,
         containerHeight,
         itemsLen,
     });
 
+    // Effect to keep open item in view on layout changes
     useEffect(() => {
         // Only if we actually have an open item
         if (openIds.size === 0) return;
