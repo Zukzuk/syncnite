@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.33.1](https://github.com/Zukzuk/syncnite/compare/v1.33.0...v1.33.1) (2025-12-12)
+
+
+### Bug Fixes
+
+* fixed some scroll issues around decks/grid ([96ed3b9](https://github.com/Zukzuk/syncnite/commit/96ed3b9b6901371effcb2aeded37a94910cb7059))
+
 ## [1.33.0](https://github.com/Zukzuk/syncnite/compare/v1.32.5...v1.33.0) (2025-12-10)
 
 
