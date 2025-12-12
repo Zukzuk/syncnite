@@ -52,7 +52,7 @@ type Props = {
     positions: ItemPositions,
     wallpaperBg: boolean;
     onWallpaperBg: (value: boolean) => void;
-    onToggleItem: (id: string, index: number) => void;
+    onToggleItem: (id: string) => void;
 };
 
 // Card component for a library item in grid view.
@@ -74,14 +74,10 @@ export const GridCard = React.memo(function GridCard({
     const [isHovered, setIsHovered] = React.useState(false);
 
     const onToggleClickBounded = React.useCallback(
-        (associatedTarget: {id: string, index: number} | null = null) => {
-            if (wallpaperBg) return;
-            console.log(associatedTarget, item.id, index);
-            associatedTarget
-                ? onToggleItem(associatedTarget.id, associatedTarget.index)
-                : onToggleItem(item.id, index);
+        (id?: string) => {
+            id ? onToggleItem(id) : onToggleItem(item.id);
         },
-        [onToggleItem, item.id, index]
+        [onToggleItem, item.id]
     );
 
     const {

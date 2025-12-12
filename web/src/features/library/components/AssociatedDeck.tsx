@@ -11,7 +11,7 @@ type Props = {
     items: GameItem[];
     deckColumns: number;
     maxCardsPerColumn: number | null;
-    onToggleClickBounded: (associatedTarget: {id: string, index: number} | null) => void;
+    onToggleClickBounded: (id?: string) => void;
 };
 
 // Component to display an associated deck of items in the library view.

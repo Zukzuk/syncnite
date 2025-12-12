@@ -25,6 +25,10 @@ export const IconShowMaximized = React.memo(function IconShowMaximized({ onHover
             size="sm"
             onMouseOver={() => onHoverChange(true)}
             onMouseOut={() => onHoverChange(false)}
+            onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            }}
         >
             <IconMaximize size={14} stroke={2} />
         </ActionIcon>

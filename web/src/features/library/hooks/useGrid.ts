@@ -29,7 +29,7 @@ type UseReturn = {
     openIds: Set<string>;
     hasOpenItemInView: boolean;
     onScrollJump: (letter: Letter) => void;
-    onToggleItem: (id: string, index: number) => void;
+    onToggleItem: (id: string) => void;
 };
 
 // Main grid hook
@@ -57,7 +57,7 @@ export function useGrid({
     const openHeight = `calc(100vh - ${topOffset}px)`;
 
     // Open/close state
-    const { openIds, toggleOpen } = useGridOpenItemToggle({
+    const { openIds, toggleOpen, replaceOpen } = useGridOpenItemToggle({
         allowMultipleOpen: false,
     });
 
@@ -218,6 +218,7 @@ export function useGrid({
         gridRef,
         openIds,
         items: derived.itemsSorted as GameItem[],
+        idToIndex,
         viewportH,
         closedHeight,
         openRowHeight,
@@ -226,7 +227,9 @@ export function useGrid({
         isListView,
         scrollItemIntoView,
         toggleOpen,
+        replaceOpen,
     });
+
 
     // Visible index for alphabet rail
     const railVisibleIndex =

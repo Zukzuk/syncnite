@@ -281,7 +281,7 @@ type Props = {
     openHeight: string;
     itemsAssociated: GameItem[];
     onWallpaperBg: (on: boolean) => void;
-    onToggleClickBounded: () => void;
+    onToggleClickBounded: (id?: string) => void;
 };
 
 // Content component for an expanded library item, showing associated decks and stacks.

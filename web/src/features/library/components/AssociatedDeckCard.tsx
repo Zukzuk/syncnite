@@ -12,7 +12,7 @@ type Props = {
     hoveredMeta: AssociatedItemCard | null;
     hasHoveredCard: boolean;
     currentItemId: string;
-    onToggleClickBounded: (associatedTarget: {id: string, index: number} | null) => void;
+    onToggleClickBounded: (id?: string) => void;
     setHoveredId: (id: string | null) => void;
 };
 
@@ -55,7 +55,7 @@ export function AssociatedDeckCard({
             onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                if (!isCurrentItem) onToggleClickBounded({id, index: index as number});
+                if (!isCurrentItem) onToggleClickBounded(id);
             }}
             onMouseEnter={(e) => {
                 e.stopPropagation();

@@ -60,7 +60,7 @@ export function useGridLayout({ gridRef, itemsLen }: UseParams): UseReturn {
         const rows = Math.ceil(itemsLen / cols);
         const containerHeight = rows === 0 
             ? GRID.gap * 2 + GRID.cardHeight 
-            : GRID.gap * 2 + rows * (GRID.cardHeight + GRID.gap) - GRID.gap;
+            : GRID.gap + rows * (GRID.cardHeight + GRID.gap);
 
         return { cols, rows, strideY, positions, containerHeight };
     }, [width, itemsLen]);

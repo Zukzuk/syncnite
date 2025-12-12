@@ -2,13 +2,7 @@ import { promises as fs } from "node:fs";
 import { join, dirname, resolve, sep } from "node:path";
 import { createHash } from "node:crypto";
 import { rootLog } from "../logger";
-import {
-    DATA_DIR,
-    INSTALLED_ROOT,
-    DB_ROOT,
-    MEDIA_ROOT,
-    COLLECTIONS,
-} from "../constants";
+import { DB_ROOT, INSTALLED_ROOT, MEDIA_ROOT, SNAPSHOT_ROOT, COLLECTIONS } from "../constants";   
 import { PlayniteClientManifest, PlayniteDeltaManifest, PlayniteError } from "../types/types";
 
 const log = rootLog.child("playniteService");
@@ -92,7 +86,66 @@ function sameJson(a: any, b: any): boolean {
 }
 
 // In-memory collection cache
-const collectionCache = new Map<string, any[]>();
+const collectionCache = new Map<
+    string,
+    { rows: any[]; snapshotMtimeMs: number | null }
+>();
+
+// Get global snapshot.json mtimeMs
+async function getSnapshotMtimeMs(): Promise<number | null> {
+    const snapshotPath = join(SNAPSHOT_ROOT, "snapshot.json");
+
+    try {
+        const stat = await fs.stat(snapshotPath);
+        return stat.mtimeMs;
+    } catch (e: any) {
+        if (e?.code === "ENOENT") {
+            // No snapshot.json → treat as null; we'll still cache under "null"
+            return null;
+        }
+        throw e;
+    }
+}
+
+// Load collection from disk
+async function loadCollectionFromDisk(
+    collectionRaw: string,
+    snapshotMtimeMs: number | null
+): Promise<any[]> {
+    let rows: any[] = [];
+
+    try {
+        const collection = sanitizeCollection(collectionRaw);
+        const dir = join(DB_ROOT, collection);
+        const entries = await fs.readdir(dir, { withFileTypes: true });
+
+        const jsonFiles = entries.filter(
+            (e) =>
+                e.isFile() &&
+                e.name.toLowerCase().endsWith(".json")
+        );
+
+        const all = await Promise.all(
+            jsonFiles.map(async (e) => {
+                const p = join(dir, e.name);
+                const json = await readJsonIfExists(p);
+                if (!json) return [];
+                return Array.isArray(json) ? json : [json];
+            })
+        );
+
+        rows = all.flat();
+    } catch (e: any) {
+        if (e?.code === "ENOENT") {
+            rows = [];
+        } else {
+            throw e;
+        }
+    }
+
+    collectionCache.set(collectionRaw, { rows, snapshotMtimeMs });
+    return rows;
+}
 
 // Playnite service class
 export class PlayniteService {
@@ -119,26 +172,17 @@ export class PlayniteService {
         const now = new Date().toISOString();
         const s: any = snapshot;
 
-        const updatedAt: string =
-            typeof s?.updatedAt === "string"
-                ? s.updatedAt
-                : typeof s?.UpdatedAt === "string"
-                    ? s.UpdatedAt
-                    : now;
-
-        const outDir = join(DATA_DIR, "snapshot");
-        await ensureDir(outDir);
-        const outPath = join(outDir, "snapshot.json");
+        await ensureDir(SNAPSHOT_ROOT);
+        const outPath = join(SNAPSHOT_ROOT, "snapshot.json");
 
         const out = {
             ...s,
-            updatedAt,
-            source: s?.source ?? "playnite-extension",
-            pushedBy: safeEmail,
-            serverUpdatedAt: now,
+            Source: s?.source ?? "playnite-extension",
+            PushedBy: safeEmail,
+            ServerUpdatedAt: now,
         };
 
-        log.info("Writing snapshot.json", { outPath, updatedAt });
+        log.info("Writing snapshot.json", { outPath, updatedAt: s.updatedAt });
         await fs.writeFile(outPath, JSON.stringify(out, null, 2), "utf8");
     }
 
@@ -332,45 +376,15 @@ export class PlayniteService {
      * @param collectionRaw Collection name
      */
     async listCollection(collectionRaw: string): Promise<any[]> {
-        if (collectionCache.has(collectionRaw)) {
-            return collectionCache.get(collectionRaw)!;
+        const currentSnapshotMtime = await getSnapshotMtimeMs();
+        const cached = collectionCache.get(collectionRaw);
+
+        // If we have cache AND snapshot mtime matches → return cache
+        if (cached && cached.snapshotMtimeMs === currentSnapshotMtime) {
+            return cached.rows;
         }
-
-        const collection = sanitizeCollection(collectionRaw);
-        const dir = join(DB_ROOT, collection);
-
-        let rows: any[] = [];
-
-        try {
-            const entries = await fs.readdir(dir, { withFileTypes: true });
-
-            const jsonFiles = entries.filter(
-                (e) =>
-                    e.isFile() &&
-                    e.name.toLowerCase().endsWith(".json")
-            );
-
-            const all = await Promise.all(
-                jsonFiles.map(async (e) => {
-                    const p = join(dir, e.name);
-                    const json = await readJsonIfExists(p);
-                    if (!json) return [];
-                    return Array.isArray(json) ? json : [json];
-                })
-            );
-
-            rows = all.flat();
-        } catch (e: any) {
-            if (e?.code === "ENOENT") {
-                rows = [];
-            } else {
-                throw e;
-            }
-        }
-
-        collectionCache.set(collectionRaw, rows);
-
-        return rows;
+        // Else load from disk
+        return loadCollectionFromDisk(collectionRaw, currentSnapshotMtime);
     }
 
     /**

@@ -9,6 +9,7 @@ export const ACCOUNTS_ROOT = join(DATA_DIR, "accounts");
 export const DB_ROOT = join(DATA_DIR, "db");
 export const MEDIA_ROOT = join(DATA_DIR, "libraryfiles");
 export const INSTALLED_ROOT = join(DATA_DIR, "installed");
+export const SNAPSHOT_ROOT = join(DATA_DIR, "snapshot");
 export const STEAM_ROOT = join(DATA_DIR, "steam");
 
 export const ADMIN_SUFFIX = ".admin.json";
