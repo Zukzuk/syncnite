@@ -403,10 +403,24 @@ export default function NarrowcastPage(): JSX.Element {
                             borderRight: isDark ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid rgba(0, 0, 0, 0.12)",
                         }}
                     >
-                        <Text fw={600} size="sm" truncate title={current?.title ?? ""}>
+                        <Text 
+                            fw={600} 
+                            size="sm" 
+                            truncate 
+                            title={current?.title ?? ""}
+                            style={{ 
+                                textShadow: "0px 1px 2px var(--interlinked-color-suppressed)",
+                            }}
+                        >
                             {current?.title ?? ""}
                         </Text>
-                        <Text size="xs" c="var(--interlinked-color-primary)" truncate>
+                        <Text 
+                            size="xs" 
+                            truncate
+                            style={{ 
+                                textShadow: "0px 1px 2px var(--interlinked-color-suppressed)",
+                            }}
+                        >
                             {current?.source ? `${SOURCE_MAP[current.source].label}` : " "}
                         </Text>
                     </Box>
@@ -418,8 +432,10 @@ export default function NarrowcastPage(): JSX.Element {
                     >
                         <Text
                             size="xs"
-                            c="var(--interlinked-color-primary)"
-                            style={{ whiteSpace: "nowrap" }}
+                            style={{ 
+                                whiteSpace: "nowrap",
+                                textShadow: "0px 1px 2px var(--interlinked-color-suppressed)",
+                            }}
                         >
                             {clampIndex(idx, n) + 1}/{n}
                         </Text>
