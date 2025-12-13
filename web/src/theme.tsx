@@ -28,6 +28,7 @@ export const themeResolver: CSSVariablesResolver = (theme) => ({
         //'--mantine-hero-height': theme.other.heroHeight,
     },
     light: {
+        '--interlinked-color-body': `var(--mantine-color-body)`,
         '--interlinked-color-primary': `var(--mantine-color-${COLOR}-5)`,
         '--interlinked-color-primary-soft': `var(--mantine-color-${COLOR}-3)`,
         '--interlinked-color-primary-translucent': `var(--mantine-color-${COLOR}-light-hover)`,
@@ -38,6 +39,7 @@ export const themeResolver: CSSVariablesResolver = (theme) => ({
         '--interlinked-color-suppressed': `var(--mantine-color-${SUPPRESSED_COLOR}-6)`,
     },
     dark: {
+        '--interlinked-color-body': `var(--mantine-color-body)`,
         '--interlinked-color-primary': `var(--mantine-color-${COLOR}-6)`,
         '--interlinked-color-primary-soft': `var(--mantine-color-${COLOR}-4)`,
         '--interlinked-color-primary-translucent': `var(--mantine-color-${COLOR}-light-hover)`,

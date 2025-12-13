@@ -1,5 +1,7 @@
 import { SortDir, SortKey } from "../types/types";
 
+export const WEB_APP_VERSION = `v${window.__APP_VERSION__}`;
+
 const API_BASE = "/api/v1";
 
 export const API_ENDPOINTS = {

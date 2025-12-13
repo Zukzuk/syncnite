@@ -1,19 +1,18 @@
 import * as React from "react";
-import { Container, Stack, Text, Card, Group, ThemeIcon, Badge, Divider, Code, Button, Loader } from "@mantine/core";
-import { IconUser, IconSteam, IconClock, IconListDetails } from "@tabler/icons-react";
-import { useNavigate, useParams } from "react-router-dom";
-import { useAuth } from "../../hooks/useAuth";
-import { useSteamWishlist } from "../../hooks/useSteamWishlist";
+import { Container, Stack, Text, Card, Group, ThemeIcon, Badge, Divider, Button, Loader, Tooltip } from "@mantine/core";
+import { IconUser, IconClock, IconListDetails, IconPlugConnected, IconPlugConnectedX, IconDownload } from "@tabler/icons-react";
 import { getCreds } from "../../lib/utils";
-import { API_ENDPOINTS } from "../../lib/constants";
+import { API_ENDPOINTS, GRID, INTERVAL_MS, WEB_APP_VERSION } from "../../lib/constants";
 import { fetchSteamStatus, syncSteamWishlist } from "../../lib/api";
 import type { SteamStatusResponse } from "../../types/types";
+import { useAuth } from "../../hooks/useAuth";
+import { useSteamWishlist } from "../../hooks/useSteamWishlist";
+import { useExtensionStatus } from "../../hooks/useExtensionStatus";
+import { TextDataRow } from "../../components/TextDataRow";
 
 export default function AccountPage(): JSX.Element {
     const { state } = useAuth({ pollMs: 0 });
     const isAdmin = state.role === "admin";
-    const { id } = useParams<{ id?: string }>();
-    const navigate = useNavigate();
 
     const [steamStatus, setSteamStatus] = React.useState<SteamStatusResponse | null>(null);
     const [loadingStatus, setLoadingStatus] = React.useState(true);
@@ -22,6 +21,9 @@ export default function AccountPage(): JSX.Element {
 
     // Polling wishlist via hook (similar behaviour to useLocalInstalled)
     const wishlist = useSteamWishlist({ pollMs: 3000 });
+
+    // Extension status via hook
+    const { connected, lastPingAt, loading, versionMismatch, extVersion } = useExtensionStatus({ pollMs: INTERVAL_MS });
 
     // Initial load of Steam status (one-shot)
     React.useEffect(() => {
@@ -110,7 +112,7 @@ export default function AccountPage(): JSX.Element {
                         My account
                     </Text>
                     <Text size="sm" c="dimmed">
-                        Manage your Syncnite account and link your Steam wishlist.
+                        Manage your InterLinked account and connected services.
                     </Text>
                 </Stack>
 
@@ -128,19 +130,105 @@ export default function AccountPage(): JSX.Element {
                                 </Text>
                             </div>
                         </Group>
-                        <Badge color={isAdmin ? "var(--interlinked-color-success)" : "var(--interlinked-color-suppressed)"} variant="filled">
+                        <Badge
+                            color={isAdmin ? "var(--interlinked-color-success)" : "var(--interlinked-color-suppressed)"}
+                            variant="filled"
+                            size="sm"
+                            style={{ position: "absolute", top: GRID.gap, right: GRID.gap }}
+                        >
                             {isAdmin ? "Admin" : "User"}
                         </Badge>
                     </Group>
 
                     <Divider my="sm" />
 
-                    <Stack gap="xs">
-                        <Group gap="xs">
-                            <Text size="sm" c="dimmed" fw={500}>
-                                Email
-                            </Text>
-                            <Code>{state.email ?? "(unknown)"}</Code>
+                    <Stack gap={4}>
+                        <TextDataRow label="Email" value={state.email ?? "(unknown)"} />
+                    </Stack>
+                </Card>
+
+                {/* Extension download + status */}
+                <Card withBorder shadow="sm" radius="md">
+                    <Group justify="space-between" align="flex-start" mb="sm">
+                        <Group gap="sm">
+                            <ThemeIcon radius="xl" variant="light">
+                                {connected ? <IconPlugConnected size={18} /> : <IconPlugConnectedX size={18} />}
+                            </ThemeIcon>
+                            <div>
+                                <Text fw={600}>SyncniteBridge extension</Text>
+                                <Text size="xs" c="dimmed">
+                                    Download and install the Playnite extension. Admins can also see whether it’s currently connected.
+                                </Text>
+                            </div>
+                        </Group>
+
+                        {/* Admin-only status badge, same semantics as navbar */}
+                        {isAdmin && !loading && (
+                            <Tooltip
+                                withArrow
+                                style={{ fontSize: 10 }}
+                                label={
+                                    !connected
+                                        ? "No recent ping from admin extension"
+                                        : versionMismatch
+                                            ? `Version mismatch: server ${WEB_APP_VERSION ?? "?"}, extension ${extVersion ?? "?"}`
+                                            : lastPingAt
+                                                ? `Admin extension last ping: ${new Date(lastPingAt).toLocaleTimeString()}`
+                                                : "Admin extension is currently pinging the API"
+                                }
+                            >
+                                <Badge
+                                    color={
+                                        !connected
+                                            ? "var(--interlinked-color-suppressed)"
+                                            : versionMismatch
+                                                ? "var(--interlinked-color-warning)"
+                                                : "var(--interlinked-color-success)"
+                                    }
+                                    variant="filled"
+                                    size="sm"
+                                    style={{ position: "absolute", top: GRID.gap, right: GRID.gap }}
+                                >
+                                    {!connected ? "offline" : versionMismatch ? "version mismatch" : "connected"}
+                                </Badge>
+                            </Tooltip>
+                        )}
+                    </Group>
+
+                    <Divider my="sm" />
+
+                    <Stack gap="sm">
+                        <Stack gap={4}>
+                            <TextDataRow label="Server version" value={`${WEB_APP_VERSION}`} />
+
+                            {isAdmin && (
+                                <>
+                                    <TextDataRow
+                                        label="Extension version"
+                                        value={extVersion ? `v${extVersion}` : "(unknown)"}
+                                    />
+                                    <TextDataRow
+                                        icon={<IconClock size={14} />}
+                                        label="Last ping"
+                                        value={lastPingAt ? new Date(lastPingAt).toLocaleString() : "(unknown)"}
+                                        size="xs"
+                                    />
+                                </>
+                            )}
+                        </Stack>
+
+                        <Group mt="xs" gap="sm">
+                            <Tooltip withArrow style={{ fontSize: 10 }} label={`Download SyncniteBridge ${WEB_APP_VERSION} (.pext)`}>
+                                <Button
+                                    component="a"
+                                    href={API_ENDPOINTS.EXTENSION_DOWNLOAD}
+                                    leftSection={<IconDownload size={14} />}
+                                    variant="light"
+                                    size="xs"
+                                >
+                                    Download extension
+                                </Button>
+                            </Tooltip>
                         </Group>
                     </Stack>
                 </Card>
@@ -149,8 +237,8 @@ export default function AccountPage(): JSX.Element {
                 <Card withBorder shadow="sm" radius="md">
                     <Group justify="space-between" align="flex-start" mb="sm">
                         <Group gap="sm">
-                            <ThemeIcon radius="xl" variant="light" color="var(--interlinked-color-suppressed)">
-                                <IconSteam size={18} />
+                            <ThemeIcon radius="xl" variant="light">
+                                {steamConnected ? <IconPlugConnected size={18} /> : <IconPlugConnectedX size={18} />}
                             </ThemeIcon>
                             <div>
                                 <Text fw={600}>Steam connection</Text>
@@ -161,11 +249,23 @@ export default function AccountPage(): JSX.Element {
                         </Group>
 
                         {steamConnected ? (
-                            <Badge color="var(--interlinked-color-success)" variant="filled">
+                            <Badge
+                                color="var(--interlinked-color-success)"
+                                variant="filled"
+                                size="sm"
+                                style={{ position: "absolute", top: GRID.gap, right: GRID.gap }}
+                            >
                                 Linked
                             </Badge>
                         ) : (
-                            <Badge color="var(--interlinked-color-suppressed)" variant="filled">Not linked</Badge>
+                            <Badge
+                                color="var(--interlinked-color-suppressed)"
+                                variant="filled"
+                                size="sm"
+                                style={{ position: "absolute", top: GRID.gap, right: GRID.gap }}
+                            >
+                                Not linked
+                            </Badge>
                         )}
                     </Group>
 
@@ -183,70 +283,49 @@ export default function AccountPage(): JSX.Element {
                             {/* Connection details */}
                             {steamConnected ? (
                                 <Stack gap={4}>
-                                    <Group gap="xs">
-                                        <Text size="sm" c="dimmed" fw={500}>
-                                            SteamID
-                                        </Text>
-                                        <Code>{steamId || "(unknown)"}</Code>
-                                    </Group>
-                                    <Group gap="xs">
-                                        <IconClock size={14} />
-                                        <Text size="xs" c="dimmed">
-                                            Linked at <Code>{linkedAt || "(unknown)"}</Code>
-                                        </Text>
-                                    </Group>
+                                    <TextDataRow label="Linked SteamID" value={steamId || "(unknown)"} />
+                                    <TextDataRow label="Wishlist items" value={wishlistCount} />
+                                    <TextDataRow
+                                        icon={<IconClock size={14} />}
+                                        label="Linked at"
+                                        value={linkedAt || "(unknown)"}
+                                        size="xs"
+                                    />
+                                    <TextDataRow
+                                        icon={<IconClock size={14} />}
+                                        label="Synced at"
+                                        value={lastSynced || "(never)"}
+                                        size="xs"
+                                    />
                                 </Stack>
                             ) : (
-                                <Text size="sm" c="dimmed">
-                                    No Steam account linked yet. Click{" "}
-                                    <Text span fw={500}>
-                                        Link Steam account
-                                    </Text>{" "}
-                                    to sign in with Steam and connect your wishlist.
-                                </Text>
+                                <Stack gap={4}>
+                                    <TextDataRow label="Status" value="Not linked" />
+                                </Stack>
                             )}
 
                             {/* Actions */}
                             <Group mt="xs" gap="sm">
-                                <Button
-                                    size="xs"
-                                    onClick={handleLinkSteam}
-                                    loading={linking}
-                                    variant={steamConnected ? "default" : "filled"}
-                                >
-                                    {steamConnected ? "Re-link Steam account" : "Link Steam account"}
-                                </Button>
+                                <Tooltip withArrow style={{ fontSize: 10 }} label={steamConnected ? "Re-link your Steam account" : "Link your Steam account"}>
+                                    <Button size="xs" onClick={handleLinkSteam} loading={linking} variant={steamConnected ? "default" : "filled"}>
+                                        {steamConnected ? "Re-link" : "Link"}
+                                    </Button>
+                                </Tooltip>
 
                                 {steamConnected && (
-                                    <Button
-                                        size="xs"
-                                        variant="light"
-                                        onClick={handleSyncWishlist}
-                                        loading={syncing}
-                                        leftSection={<IconListDetails size={14} />}
-                                    >
-                                        {syncing ? "Syncing wishlist…" : "Sync wishlist now"}
-                                    </Button>
+                                    <Tooltip withArrow style={{ fontSize: 10 }} label={"Sync your Steam wishlist items now"}>
+                                        <Button
+                                            size="xs"
+                                            variant="light"
+                                            onClick={handleSyncWishlist}
+                                            loading={syncing}
+                                            leftSection={<IconListDetails size={14} />}
+                                        >
+                                            {syncing ? "Syncing wishlist…" : "Sync wishlist now"}
+                                        </Button>
+                                    </Tooltip>
                                 )}
                             </Group>
-
-                            {/* Wishlist info */}
-                            {steamConnected && (
-                                <Group gap="xs" mt="xs">
-                                    <Text size="xs" c="dimmed">
-                                        Wishlist items saved:{" "}
-                                        <Text span fw={600}>
-                                            {wishlistCount}
-                                        </Text>
-                                        {lastSynced && (
-                                            <>
-                                                {" • "}
-                                                Last synced: <Code>{lastSynced}</Code>
-                                            </>
-                                        )}
-                                    </Text>
-                                </Group>
-                            )}
                         </Stack>
                     )}
                 </Card>

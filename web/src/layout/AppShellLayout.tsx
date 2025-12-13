@@ -4,8 +4,6 @@ import { useDisclosure } from "@mantine/hooks";
 import { AppNavbar } from "./AppNavbar";
 import { GRID, Z_INDEX } from "../lib/constants";
 
-const WEB_APP_VERSION = `v${window.__APP_VERSION__}`;
-
 export default function AppShellLayout({
   children,
   hideSite = false,
@@ -30,9 +28,7 @@ export default function AppShellLayout({
     >
       {!hideSite && (
         <AppShell.Navbar p={0}>
-          <AppNavbar 
-            appVersion={WEB_APP_VERSION} 
-          />
+          <AppNavbar />
         </AppShell.Navbar>
       )}
 

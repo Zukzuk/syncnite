@@ -1,15 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
-import { Box, Stack, Group, Text, ActionIcon, Button, Tooltip, ScrollArea, NavLink, Badge, useMantineColorScheme } from "@mantine/core";
-import { IconSun, IconMoon, IconDownload, IconHome2, IconBooks, IconAB2, IconUser, IconShield, IconLogout2, IconDeviceTv } from "@tabler/icons-react";
+import { Box, Stack, Group, Text, ActionIcon, Button, Tooltip, ScrollArea, NavLink, useMantineColorScheme } from "@mantine/core";
+import { IconSun, IconMoon, IconHome2, IconBooks, IconAB2, IconUser, IconShield, IconLogout2, IconDeviceTv } from "@tabler/icons-react";
 import { useAuth } from "../hooks/useAuth";
-import { useExtensionStatus } from "../hooks/useExtensionStatus";
-import { API_ENDPOINTS, GRID, INTERVAL_MS } from "../lib/constants";
+import { GRID, WEB_APP_VERSION } from "../lib/constants";
 
-export function AppNavbar({ appVersion }: { appVersion: string; }) {
+export function AppNavbar(): JSX.Element {
     const location = useLocation();
     const { state, logout } = useAuth({ pollMs: 0 });
     const { colorScheme, setColorScheme } = useMantineColorScheme();
-    const { connected, lastPingAt, loading, versionMismatch, extVersion } = useExtensionStatus({ pollMs: INTERVAL_MS });
 
     const isAdmin = state.role === "admin";
     const isLoggedIn = state.loggedIn;
@@ -38,10 +36,10 @@ export function AppNavbar({ appVersion }: { appVersion: string; }) {
                     <Group justify="space-between" align="center" gap="xs" wrap="nowrap">
                         <Stack gap={0} style={{ flex: 1, minWidth: 0, paddingBlock: 5 }}>
                             <Text fw={700} size="lg" truncate>
-                                Syncnite
+                                InterLinked
                             </Text>
                             <Text size="xs" c="dimmed">
-                                {appVersion}
+                                {WEB_APP_VERSION}
                             </Text>
                         </Stack>
 
@@ -144,63 +142,6 @@ export function AppNavbar({ appVersion }: { appVersion: string; }) {
                         <Text size="sm" truncate>
                             {state.email}
                         </Text>
-
-                        {/* connected badge (admin only) */}
-                        {isAdmin && !loading && (
-                            <Tooltip
-                                withArrow
-                                label={
-                                    !connected
-                                        ? "No recent ping from admin extension"
-                                        : versionMismatch
-                                            ? `Version mismatch: server ${appVersion ?? "?"}, extension ${extVersion ?? "?"}`
-                                            : lastPingAt
-                                                ? `Admin extension last ping: ${new Date(lastPingAt).toLocaleTimeString()}`
-                                                : "Admin extension is currently pinging the API"
-                                }
-                                style={{ fontSize: 10 }}
-                            >
-                                <Badge
-                                    size="xs"
-                                    radius="lg"
-                                    fullWidth
-                                    color={
-                                        !connected
-                                            ? "var(--interlinked-color-suppressed)"
-                                            : versionMismatch
-                                                ? "var(--interlinked-color-warning)"
-                                                : "var(--interlinked-color-success)"
-                                    }
-                                >
-                                    {!connected
-                                        ? "offline"
-                                        : versionMismatch
-                                            ? "version mismatch"
-                                            : "connected"}
-                                </Badge>
-                            </Tooltip>
-                        )}
-
-                        {/* download button */}
-                        <Tooltip
-                            withArrow
-                            label={`Download SyncniteBridge ${appVersion} (.pext)`}
-                            style={{ fontSize: 10 }}
-                        >
-                            <Button
-                                component="a"
-                                href={API_ENDPOINTS.EXTENSION_DOWNLOAD}
-                                size="xs"
-                                radius="sm"
-                                variant="light"
-                                fullWidth
-                                justify="space-between"
-                                rightSection={<span />}
-                                leftSection={<IconDownload size={14} />}
-                            >
-                                Download<br />extension
-                            </Button>
-                        </Tooltip>
 
                         {/* logout button */}
                         <Tooltip

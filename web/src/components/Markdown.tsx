@@ -20,7 +20,11 @@ function toText(node: React.ReactNode): string {
     return "";
 }
 
-export default function Markdown({ content }: { content: string }) {
+type Props = {
+    content: string;
+};
+
+export default function Markdown({ content }: Props): JSX.Element {
     const { theme, isDark } = getTheme();
     const border = isDark ? theme.colors.dark[4] : theme.colors.gray[3];
     const zebra = isDark ? theme.colors.dark[6] : theme.colors.gray[0];

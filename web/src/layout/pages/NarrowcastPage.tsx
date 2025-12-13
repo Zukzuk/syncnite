@@ -1,10 +1,10 @@
 import * as React from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ActionIcon, Box, Center, Group, Loader, Paper, Text, Tooltip, useMantineColorScheme } from "@mantine/core";
 import { useFullscreen } from "@mantine/hooks";
+import { ActionIcon, Box, Center, Group, Loader, Paper, Text, Tooltip, useMantineColorScheme } from "@mantine/core";
 import { IconArrowsMaximize, IconArrowsMinimize, IconChevronLeft, IconChevronRight, IconMoon, IconSun, IconX } from "@tabler/icons-react";
 import { useLibraryData } from "../../features/library/hooks/useLibraryData";
-import { INTERVAL_MS } from "../../lib/constants";
+import { GRID, INTERVAL_MS, SOURCE_MAP } from "../../lib/constants";
 import type { GameItem } from "../../types/types";
 import { getTheme } from "../../lib/utils";
 
@@ -52,7 +52,7 @@ export default function NarrowcastPage(): JSX.Element {
 
     const items = React.useMemo(() => {
         const src = libraryData?.items ?? [];
-        return src.filter((g) => !!g.coverUrl) as CoverItem[];
+        return src.filter((g) => !!g.coverUrl && !g.isHidden) as CoverItem[];
     }, [libraryData]);
 
     const [order, setOrder] = React.useState<CoverItem[]>([]);
@@ -252,7 +252,7 @@ export default function NarrowcastPage(): JSX.Element {
                 <Group gap={8} justify="flex-end">
                     <Tooltip withArrow label={isDark ? "Switch to light mode" : "Switch to dark mode"} style={{ fontSize: 10 }}>
                         <ActionIcon
-                            variant="light"
+                            variant="subtle"
                             size="lg"
                             radius="xl"
                             onClick={(e) => {
@@ -277,7 +277,7 @@ export default function NarrowcastPage(): JSX.Element {
 
                     <Tooltip withArrow label={fullscreen ? "Exit fullscreen (F)" : "Fullscreen (F)"} style={{ fontSize: 10 }}>
                         <ActionIcon
-                            variant="light"
+                            variant="subtle"
                             size="lg"
                             radius="xl"
                             onClick={(e) => {
@@ -298,7 +298,7 @@ export default function NarrowcastPage(): JSX.Element {
 
                     <Tooltip withArrow label="Close (Esc)" style={{ fontSize: 10 }}>
                         <ActionIcon
-                            variant="light"
+                            variant="subtle"
                             size="lg"
                             radius="xl"
                             onClick={(e) => {
@@ -334,7 +334,7 @@ export default function NarrowcastPage(): JSX.Element {
                 }}
             >
                 <ActionIcon
-                    variant="light"
+                    variant="subtle"
                     radius="xl"
                     size="xl"
                     onClick={(e) => {
@@ -354,7 +354,7 @@ export default function NarrowcastPage(): JSX.Element {
                 </ActionIcon>
 
                 <ActionIcon
-                    variant="light"
+                    variant="subtle"
                     radius="xl"
                     size="xl"
                     onClick={(e) => {
@@ -382,33 +382,48 @@ export default function NarrowcastPage(): JSX.Element {
             <Paper
                 withBorder
                 radius="lg"
-                p="sm"
                 style={{
                     position: "absolute",
                     left: 12,
                     bottom: 12,
                     zIndex: 10,
                     maxWidth: "min(720px, 70vw)",
-                    background: isDark ? "rgba(20, 20, 20, 0.45)" : "rgba(255, 255, 255, 0.65)",
+                    background: isDark ? "rgba(20, 20, 20, 0.45)" : "rgba(255, 255, 255, 0.55)",
                     backdropFilter: "blur(14px) saturate(1.2)",
                     WebkitBackdropFilter: "blur(14px) saturate(1.2)",
-                    borderColor: isDark ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.08)",
+                    borderColor: isDark ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.12)",
                     boxShadow: isDark ? "0 8px 30px rgba(0, 0, 0, 0.55)" : "0 8px 30px rgba(0, 0, 0, 0.15)",
                 }}
             >
-                <Group justify="space-between" gap="md" wrap="nowrap">
-                    <Box style={{ minWidth: 0 }}>
-                        <Text fw={700} size="sm" truncate title={current?.title ?? ""}>
+                <Group justify="space-between" gap={0} wrap="nowrap">
+                    <Box
+                        style={{
+                            minWidth: 0,
+                            padding: GRID.gap * 2,
+                            borderRight: isDark ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid rgba(0, 0, 0, 0.12)",
+                        }}
+                    >
+                        <Text fw={600} size="sm" truncate title={current?.title ?? ""}>
                             {current?.title ?? ""}
                         </Text>
-                        <Text size="xs" c="dimmed" truncate>
-                            {current?.source ? `Source: ${current.source}` : " "}
+                        <Text size="xs" c="var(--interlinked-color-primary)" truncate>
+                            {current?.source ? `${SOURCE_MAP[current.source].label}` : " "}
                         </Text>
                     </Box>
-
-                    <Text size="xs" c="dimmed" style={{ whiteSpace: "nowrap" }}>
-                        {clampIndex(idx, n) + 1}/{n}
-                    </Text>
+                    <Box
+                        style={{
+                            minWidth: 0,
+                            padding: GRID.gap * 2,
+                        }}
+                    >
+                        <Text
+                            size="xs"
+                            c="var(--interlinked-color-primary)"
+                            style={{ whiteSpace: "nowrap" }}
+                        >
+                            {clampIndex(idx, n) + 1}/{n}
+                        </Text>
+                    </Box>
                 </Group>
             </Paper>
 
@@ -419,7 +434,7 @@ export default function NarrowcastPage(): JSX.Element {
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    height: 3,
+                    height: 1,
                     background: "var(--interlinked-color-suppressed)",
                     zIndex: 20,
                     overflow: "hidden",
@@ -430,7 +445,7 @@ export default function NarrowcastPage(): JSX.Element {
                     style={{
                         height: "100%",
                         width: "100%",
-                        background: "var(--interlinked-color-primary-translucent)",
+                        background: "var(--interlinked-color-primary-soft)",
                         transformOrigin: "left center",
                         animation: `narrowcastProgressFill ${DISPLAY_MS}ms linear forwards`,
                     }}

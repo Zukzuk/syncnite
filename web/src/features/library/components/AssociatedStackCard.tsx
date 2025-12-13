@@ -64,7 +64,7 @@ export function AssociatedStackCard({ stack, isOpen, onStackClick }: Props): JSX
             >
                 <Text
                     size="xs"
-                    c="dimmed"
+                    c={ isOpen ? "var(--interlinked-color-primary-soft)" : "dimmed" }
                     style={{
                         overflow: "hidden",
                         textOverflow: "ellipsis",
@@ -112,8 +112,11 @@ export function AssociatedStackCard({ stack, isOpen, onStackClick }: Props): JSX
                     ))}
                 </Box>
 
-                <Text size="xs" c="dimmed">
-                    {cards.length} games
+                <Text 
+                    size="xs" 
+                    c={ isOpen ? "var(--interlinked-color-primary-soft)" : "dimmed" }
+                >
+                    {cards.length ? `${cards.length} game${cards.length !== 1 ? "s" : ""}` : "No games"}
                 </Text>
             </Box>
         </Stack>
