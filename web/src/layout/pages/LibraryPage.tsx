@@ -1,15 +1,13 @@
 import { Stack, Loader, Box, Center } from "@mantine/core";
-import { useMediaQuery } from "@mantine/hooks";
 import { GRID, INTERVAL_MS } from "../../lib/constants";
 import { useLibraryData } from "../../features/library/hooks/useLibraryData";
 import Library from "../../features/library/Library";
-import { getTheme } from "../../lib/utils";
+import { getTheme } from "../../theme";
 
 export default function LibraryPage(): JSX.Element {
     const { libraryData, installedUpdatedAt } = useLibraryData({ pollMs: INTERVAL_MS });
 
-    const { theme } = getTheme();
-    const isDesktop = useMediaQuery(`(min-width: ${theme.breakpoints.sm})`);
+    const { isDesktop } = getTheme();
 
     if (!libraryData) {
         return (

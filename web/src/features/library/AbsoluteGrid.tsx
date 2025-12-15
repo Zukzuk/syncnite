@@ -53,7 +53,7 @@ export function AbsoluteGrid({
     }, [hasOpenItemInView, readOpenItemInView]);
 
     return (
-        <>
+        <Box style={{ position: "relative", flex: 1, overflow: "auto" }}>
             <Box
                 ref={gridRef}
                 aria-label="absolute-grid"
@@ -108,6 +108,6 @@ export function AbsoluteGrid({
                     onScrollJump={onScrollJump}
                 />
             )}
-        </>
+        </Box>
     );
 }

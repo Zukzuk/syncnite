@@ -92,7 +92,7 @@ export function useLibraryState(items: UseParams): UseReturn {
   const [tags, setTags] = React.useState<string[]>(cookieState.tags);
   const [series, setSeries] = React.useState<string[]>(cookieState.series);
   const [showHidden, setShowHidden] = React.useState<boolean>(cookieState.showHidden);
-  const [installedOnly, setInstalledOnly] = React.useState<boolean>(cookieState.installedOnly);
+  const [installedOnly, setShowInstalledOnly] = React.useState<boolean>(cookieState.installedOnly);
   const [sortKey, setSortKey] = React.useState<SortKey>(cookieState.sortKey);
   const [sortDir, setSortDir] = React.useState<SortDir>(cookieState.sortDir);
 
@@ -152,7 +152,7 @@ export function useLibraryState(items: UseParams): UseReturn {
       series, setSeries,
       showHidden, setShowHidden,
       sortKey, sortDir, setSortKey, onToggleSort,
-      installedOnly, setInstalledOnly,
+      installedOnly, setShowInstalledOnly,
     },
     derivedData: {
       filteredCount,

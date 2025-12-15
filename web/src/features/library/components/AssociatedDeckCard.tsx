@@ -1,9 +1,9 @@
 import { Box, Image } from "@mantine/core";
 import { GRID } from "../../../lib/constants";
-import { getTheme } from "../../../lib/utils";
 import { AssociatedItemCard, GameItem } from "../../../types/types";
 import { IconIsInstalled } from "../../../components/IconIsInstalled";
 import { IconIsHidden } from "../../../components/IconIsHidden";
+import { getTheme } from "../../../theme";
 
 type Props = {
     meta: AssociatedItemCard;

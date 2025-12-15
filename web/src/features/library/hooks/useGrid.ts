@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef } from "react";
-import { useMediaQuery } from "@mantine/hooks";
 import { useGridLayout } from "./useGridLayout";
 import { useGridVirtualWindow } from "./useGridVirtualWindow";
 import { useGridAlphabetRail } from "./useGridAlphabetRail";
@@ -7,8 +6,8 @@ import { useGridOpenItemToggle } from "./useGridOpenItemToggle";
 import { useGridScrollJump } from "./useGridScrollJump";
 import { useGridScrollRestore } from "./useGridScrollRestore";
 import { GRID } from "../../../lib/constants";
-import { getTheme } from "../../../lib/utils";
 import { UIControls, UIDerivedData, Letter, GameItem, ItemPositions } from "../../../types/types";
+import { getTheme } from "../../../theme";
 
 type UseParams = {
     gridRef: React.RefObject<HTMLDivElement>;
@@ -42,8 +41,7 @@ export function useGrid({
 }: UseParams): UseReturn {
     const itemsLen = derived.itemsSorted.length;
     const isListView = ui.isListView;
-    const { theme } = getTheme();
-    const isDesktop = useMediaQuery(`(min-width: ${theme.breakpoints.sm})`);
+    const { isDesktop } = getTheme();
 
     // Base grid sizing (cols + viewport height)
     const { cols, viewportH } = useGridLayout({ gridRef, itemsLen });

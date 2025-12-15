@@ -63,7 +63,7 @@ export interface UIControls {
   setSortKey: React.Dispatch<React.SetStateAction<SortKey>>;
   onToggleSort: (key: SortKey) => void;
   installedOnly: boolean;
-  setInstalledOnly: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowInstalledOnly: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export interface UIDerivedData {

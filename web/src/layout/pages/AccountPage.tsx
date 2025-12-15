@@ -9,10 +9,13 @@ import { useAuth } from "../../hooks/useAuth";
 import { useSteamWishlist } from "../../hooks/useSteamWishlist";
 import { useExtensionStatus } from "../../hooks/useExtensionStatus";
 import { TextDataRow } from "../../components/TextDataRow";
+import { getTheme } from "../../theme";
 
 export default function AccountPage(): JSX.Element {
     const { state } = useAuth({ pollMs: 0 });
     const isAdmin = state.role === "admin";
+
+    const { isDesktop } = getTheme();
 
     const [steamStatus, setSteamStatus] = React.useState<SteamStatusResponse | null>(null);
     const [loadingStatus, setLoadingStatus] = React.useState(true);
@@ -104,7 +107,7 @@ export default function AccountPage(): JSX.Element {
     const lastSynced = wishlist?.lastSynced ?? null;
 
     return (
-        <Container size="sm" py="lg">
+        <Container size="sm" pt={isDesktop ? "lg" : GRID.rowHeight} pb="lg">
             <Stack gap="lg">
                 {/* Page header */}
                 <Stack gap={4}>

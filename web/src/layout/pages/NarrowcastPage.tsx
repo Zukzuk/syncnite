@@ -1,12 +1,12 @@
 import * as React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useFullscreen } from "@mantine/hooks";
-import { ActionIcon, Box, Center, Group, Loader, Paper, Text, Tooltip, useMantineColorScheme } from "@mantine/core";
+import { ActionIcon, Box, Center, Group, Loader, Paper, Text, Tooltip } from "@mantine/core";
 import { IconArrowsMaximize, IconArrowsMinimize, IconChevronLeft, IconChevronRight, IconMoon, IconSun, IconX } from "@tabler/icons-react";
 import { useLibraryData } from "../../features/library/hooks/useLibraryData";
 import { GRID, INTERVAL_MS, SOURCE_MAP } from "../../lib/constants";
 import type { GameItem } from "../../types/types";
-import { getTheme } from "../../lib/utils";
+import { getTheme } from "../../theme";
 
 const DISPLAY_MS = 10_000;
 const FADE_MS = 900;
@@ -45,10 +45,10 @@ export default function NarrowcastPage(): JSX.Element {
     const { libraryData } = useLibraryData({ pollMs: INTERVAL_MS });
     const { id } = useParams<{ id?: string }>();
     const navigate = useNavigate();
-    const { isDark } = getTheme();
-    const { colorScheme, setColorScheme } = useMantineColorScheme();
-    const toggleColorScheme = () =>
-        setColorScheme(colorScheme === "dark" ? "light" : "dark");
+
+    
+    const { isDark, setColorScheme } = getTheme();
+    const toggleColorScheme = () => setColorScheme(isDark ? "light" : "dark");
 
     const items = React.useMemo(() => {
         const src = libraryData?.items ?? [];
@@ -381,7 +381,7 @@ export default function NarrowcastPage(): JSX.Element {
             {/* Info panel */}
             <Paper
                 withBorder
-                radius="lg"
+                radius="md"
                 style={{
                     position: "absolute",
                     left: 12,
@@ -437,7 +437,7 @@ export default function NarrowcastPage(): JSX.Element {
                                 textShadow: "0px 1px 2px var(--interlinked-color-suppressed)",
                             }}
                         >
-                            {clampIndex(idx, n) + 1}/{n}
+                            {clampIndex(idx, n) + 1} / {n}
                         </Text>
                     </Box>
                 </Group>

@@ -2,8 +2,8 @@ import { Anchor, Badge, Box, Group, Image, Stack, Text } from "@mantine/core";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 import { GameItem } from "../../../types/types";
 import { GRID } from "../../../lib/constants";
-import { getTheme } from "../../../lib/utils";
 import { IconShowMaximized } from "../../../components/IconShowMaximized";
+import { getTheme } from "../../../theme";
 
 type Props = {
     item: GameItem;

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Flex } from "@mantine/core";
 import { useElementSize } from "@mantine/hooks";
-import { HeaderSort } from "./components/HeaderSort";
-import { HeaderControls } from "./components/HeaderControls";
+import { HeaderSort } from "../../components/HeaderSort";
+import { HeaderControls } from "../../components/HeaderControls";
 import { useLibraryState } from "./hooks/useLibraryState";
 import { AbsoluteGrid } from "./AbsoluteGrid";
 import { LoadedData } from "../../types/types";

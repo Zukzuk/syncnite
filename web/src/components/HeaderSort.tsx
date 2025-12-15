@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, UnstyledButton, Text } from "@mantine/core";
-import { SortKey, UIControls } from "../../../types/types";
-import { GRID } from "../../../lib/constants";
+import { SortKey, UIControls } from "../types/types";
+import { GRID } from "../lib/constants";
 
 type Props = {
   sortRef: (el: HTMLElement | null) => void;

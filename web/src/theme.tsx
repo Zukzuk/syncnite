@@ -1,7 +1,5 @@
-import {
-    createTheme,
-    CSSVariablesResolver,
-} from '@mantine/core';
+import { createTheme, CSSVariablesResolver, useMantineColorScheme, useMantineTheme } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 
 // https://www.w3schools.com/colors/colors_schemes.asp
 // https://mantine.dev/theming/colors/
@@ -32,6 +30,7 @@ export const themeResolver: CSSVariablesResolver = (theme) => ({
         '--interlinked-color-primary': `var(--mantine-color-${COLOR}-5)`,
         '--interlinked-color-primary-soft': `var(--mantine-color-${COLOR}-3)`,
         '--interlinked-color-primary-translucent': `var(--mantine-color-${COLOR}-light-hover)`,
+        '--interlinked-color-secondary': `var(--mantine-color-${WARNING_COLOR}-4)`,
         '--interlinked-color-success': `var(--mantine-color-${SUCCESS_COLOR}-5)`,
         '--interlinked-color-success-soft': `var(--mantine-color-${SUCCESS_COLOR}-1)`,
         '--interlinked-color-error': `var(--mantine-color-${ERROR_COLOR}-5)`,
@@ -43,6 +42,7 @@ export const themeResolver: CSSVariablesResolver = (theme) => ({
         '--interlinked-color-primary': `var(--mantine-color-${COLOR}-6)`,
         '--interlinked-color-primary-soft': `var(--mantine-color-${COLOR}-4)`,
         '--interlinked-color-primary-translucent': `var(--mantine-color-${COLOR}-light-hover)`,
+        '--interlinked-color-secondary': `var(--mantine-color-${WARNING_COLOR}-3)`,
         '--interlinked-color-success': `var(--mantine-color-${SUCCESS_COLOR}-8)`,
         '--interlinked-color-success-soft': `var(--mantine-color-${SUCCESS_COLOR}-4)`,
         '--interlinked-color-error': `var(--mantine-color-${ERROR_COLOR}-7)`,
@@ -61,3 +61,14 @@ export const boringTheme = createTheme({
             'Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial',
     },
 });
+
+// Returns the current theme and whether dark mode is active
+export function getTheme() {
+    const breakpoint = 'xs'
+    const theme = useMantineTheme();
+    const { colorScheme, setColorScheme } = useMantineColorScheme();
+    const isDark = colorScheme === "dark";
+    const isDesktop = useMediaQuery(`(min-width: ${theme.breakpoints[breakpoint]})`);
+
+    return { theme, isDark, setColorScheme, isDesktop, breakpoint };
+}

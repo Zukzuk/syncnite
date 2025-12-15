@@ -1,7 +1,7 @@
 import { Paper, Stack, Button, rem } from "@mantine/core";
 import { LETTERS_LIST, Z_INDEX } from "../../../lib/constants";
-import { getTheme } from "../../../lib/utils";
 import { Letter } from "../../../types/types";
+import { getTheme } from "../../../theme";
 
 type Props = {
     activeLetter: Letter;

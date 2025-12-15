@@ -1,4 +1,4 @@
-# Syncnite
+# InterLinked
 
 ## A self-hosted Playnite LibrarySynchronizer and WebViewer
 

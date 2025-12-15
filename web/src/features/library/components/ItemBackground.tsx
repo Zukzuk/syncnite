@@ -2,8 +2,8 @@
 import { Box } from "@mantine/core";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 import { Z_INDEX } from "../../../lib/constants";
-import { getTheme } from "../../../lib/utils";
 import { GameItem } from "../../../types/types";
+import { getTheme } from "../../../theme";
 
 type Props = {
     item: Pick<GameItem, "bgUrl">;

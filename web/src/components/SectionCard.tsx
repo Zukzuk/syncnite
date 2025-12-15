@@ -1,22 +1,49 @@
-import React from "react";
-import { Card, Group, Stack, Text } from "@mantine/core";
+import * as React from "react";
+import { Card, Group, ThemeIcon, Text, Divider, Box } from "@mantine/core";
+import type { ReactNode } from "react";
+import { GRID } from "../lib/constants";
 
-type Props = { 
-    title: string; 
-    right?: React.ReactNode; 
-    children: React.ReactNode 
-}
+type Props = {
+    title: string;
+    children: ReactNode;
+    icon?: ReactNode;
+    subtitle?: string;
+    action?: ReactNode;
+};
 
-export function SectionCard({
-    title, right, children,
-}: Props) {
+export function SectionCard({ icon, title, subtitle, action, children }: Props) {
     return (
-        <Card>
-            <Group justify="space-between" mb="xs">
-                <Text fw={600}>{title}</Text>
-                {right}
+        <Card withBorder shadow="sm" radius="md" style={{ position: "relative" }}>
+            <Group justify="space-between" align="flex-start" mb="sm">
+                <Group gap="sm">
+                    {icon ? (
+                        <ThemeIcon radius="xl" variant="light">
+                            {icon}
+                        </ThemeIcon>
+                    ) : null}
+                    <>
+                        <Text fw={600}>{title}</Text>
+                        {subtitle ? (
+                            <Text size="xs" c="dimmed">{subtitle}</Text>
+                        ) : null}
+                    </>
+                </Group>
+
+                {action ? (
+                    <Box
+                        style={{
+                            position: "absolute",
+                            top: GRID.gap,
+                            right: GRID.gap
+                        }}
+                    >
+                        {action}
+                    </Box>
+                ) : null}
             </Group>
-            <Stack gap="sm">{children}</Stack>
+
+            <Divider my="sm" />
+            {children}
         </Card>
     );
 }

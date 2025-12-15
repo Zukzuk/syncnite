@@ -86,6 +86,7 @@ export const SOURCE_MAP: Record<string, { platform: string; online: string; labe
   "humble": { platform: "humble://", online: "https://www.humblebundle.com", label: "Humble Bundle" },
   "nintendo": { platform: "nintendo://", online: "https://www.nintendo.com", label: "Nintendo" },
   "microsoft store": { platform: "ms-windows-store://", online: "https://apps.microsoft.com", label: "Microsoft Store" },
+  "abandonware": { platform: "", online: "https://www.myabandonware.com", label: "Abandonware" },
 };
 
 export const INTERVAL_MS = 5000;

@@ -1,38 +1,47 @@
 import { ActionIcon, TextInput } from "@mantine/core";
-import { IconSearch, IconX } from "@tabler/icons-react";
+import { IconEyeSearch, IconSearch, IconX } from "@tabler/icons-react";
 
 type Props = {
     value: string;
-    onChange: (v: string) => void;
     placeholder?: string;
-    width?: number | string;
+    width?: number;
+    onChange: (v: string) => void;
 }
 
-export function SearchInput({ value, onChange }: Props) {
+export function SearchInput({ value, width, onChange }: Props) {
+    const hasValue = !!value;
+
     return (
         <TextInput
             placeholder="Search…"
             value={value}
             onChange={(e) => onChange(e.currentTarget.value)}
-            w={219}
+            w={width}
             size="xs"
             radius="sm"
-            variant={!!value ? "filled" : "default"}
-            leftSection={<IconSearch size={16} stroke={2} aria-hidden />}
+            variant={hasValue ? "filled" : "default"}
             leftSectionPointerEvents="none"
+            leftSection={hasValue
+                ? <IconEyeSearch size={14} stroke={1.2} color="var(--interlinked-color-secondary)" aria-hidden />
+                : <IconSearch size={14} stroke={1.2} aria-hidden />
+            }
             rightSection={
-                value ? (
+                hasValue ? (
                     <ActionIcon
                         size="sm"
-                        variant="subtle"
+                        variant="transparent"
                         aria-label="Clear search"
                         onClick={() => onChange("")}
+                        color="var(--mantine-color-text)"
                         title="Clear"
                     >
-                        <IconX size={16} stroke={2} />
+                        <IconX size={14} stroke={1.2} aria-hidden />
                     </ActionIcon>
                 ) : null
             }
+            styles={{ 
+                input: { borderColor: hasValue ? "var(--interlinked-color-secondary)" : undefined }
+            }}
         />
     );
 }

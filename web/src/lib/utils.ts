@@ -1,14 +1,5 @@
 import { COOKIE_DEFAULTS } from "./constants";
 import type { AccountCreds, CookieState, Letter, Role } from "../types/types";
-import { useComputedColorScheme, useMantineTheme } from "@mantine/core";
-
-// Returns the current theme and whether dark mode is active
-export function getTheme() {
-  const theme = useMantineTheme();
-  const colorScheme = useComputedColorScheme("light", { getInitialValueInEffect: true });
-  const isDark = colorScheme === "dark";
-  return { theme, isDark };
-}
 
 // Returns the first letter for ordering purposes
 export function orderedLetters(title?: string | null, sortingName?: string | null): Letter {

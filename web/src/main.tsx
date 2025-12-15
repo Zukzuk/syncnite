@@ -10,7 +10,10 @@ import { interlinkedTheme, themeResolver } from "./theme";
 
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
-import "./scroller.scss";
+
+import "./styles/body.scss";
+import "./styles/fonts.scss";
+import "./styles/scroller.scss";
 
 function App() {
   useEffect(() => {

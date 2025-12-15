@@ -2,7 +2,7 @@ import React from "react";
 import { Box, Image, Stack, Text } from "@mantine/core";
 import { GRID } from "../../../lib/constants";
 import { AssociatedItems } from "../../../types/types";
-import { getTheme } from "../../../lib/utils";
+import { getTheme } from "../../../theme";
 
 type Props = { 
     stack: AssociatedItems; 
