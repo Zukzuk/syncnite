@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.35.0](https://github.com/Zukzuk/syncnite/compare/v1.34.2...v1.35.0) (2025-12-15)
+
+
+### Features
+
+* added controlpanel and better UX ([f42bf06](https://github.com/Zukzuk/syncnite/commit/f42bf06ef54e8556e663716a05aa44e1fae497ab))
+
 ### [1.34.2](https://github.com/Zukzuk/syncnite/compare/v1.34.1...v1.34.2) (2025-12-13)
 
 ### [1.34.1](https://github.com/Zukzuk/syncnite/compare/v1.34.0...v1.34.1) (2025-12-13)
