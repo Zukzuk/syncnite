@@ -32,6 +32,7 @@ export function ItemRow({ item, isOpen }: Props): JSX.Element {
                 gridTemplateColumns: GRID.colsList,
             }}
         >
+            { /* ICON SECTION */ }  
             <Flex align="center" gap={GRID.gap} style={{ width: GRID.iconSize }}>
                 <Box
                     component="a"
@@ -82,15 +83,16 @@ export function ItemRow({ item, isOpen }: Props): JSX.Element {
                     </Box>
                 </Box>
             </Flex>
-
+                        
+            { /* TITLE SECTION */ }
             <Flex gap={8} align="center" style={{ minWidth: 0 }}>
                 <Text
                     fw={600}
                     title={title}
                     className="item-title"
                     style={{
-                        flex: 1, // let title take remaining space
-                        minWidth: 0, // allow shrinking for ellipsis
+                        flex: "0 1 auto",
+                        minWidth: 0,
                         overflow: isOpen ? undefined : "hidden",
                         textOverflow: isOpen ? undefined : "ellipsis",
                         whiteSpace: isOpen ? undefined : "nowrap",
@@ -100,11 +102,10 @@ export function ItemRow({ item, isOpen }: Props): JSX.Element {
                     {title}
                 </Text>
 
-                {/* push utility icons to the far right */}
                 <Group
                     gap={4}
                     style={{
-                        marginLeft: "auto",
+                        marginLeft: isOpen ? undefined : "auto",
                         flexShrink: 0,
                         alignItems: "center",
                     }}
@@ -114,34 +115,38 @@ export function ItemRow({ item, isOpen }: Props): JSX.Element {
                     <IconCopyTitle title={title} year={year} />
                 </Group>
             </Flex>
+            
+            {!isOpen ? (
+                <>
+                    <Box ta="center">
+                        {year && (
+                            <Text style={{ fontSize: 14 }}>{year}</Text>
+                        )}
+                    </Box>
 
-            <Box ta="center">
-                {year && (
-                    <Text style={{ fontSize: 14 }}>{year}</Text>
-                )}
-            </Box>
+                    <Box>
+                        <Group gap={4} wrap="nowrap" style={{ justifyContent: "center" }}>
+                            <IconLinkExternal source={source} link={link} title={title} />
+                            <IconLinkSource source={source} gameId={gameId} link={link} />
+                        </Group>
+                    </Box>
 
-            <Box>
-                <Group gap={4} wrap="nowrap" style={{ justifyContent: "center" }}>
-                    <IconLinkExternal source={source} link={link} title={title} />
-                    <IconLinkSource source={source} gameId={gameId} link={link} />
-                </Group>
-            </Box>
-
-            <Flex gap={8} style={{ minWidth: 0 }}>
-                <Text
-                    fw={600}
-                    title={title}
-                    className="game-series"
-                    style={{
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                    }}
-                >
-                    {series && series.length > 0 ? series.join(", ") : ""}
-                </Text>
-            </Flex>
+                    <Flex gap={8} style={{ minWidth: 0 }}>
+                        <Text
+                            fw={600}
+                            title={title}
+                            className="game-series"
+                            style={{
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                            }}
+                        >
+                            {series && series.length > 0 ? series.join(", ") : ""}
+                        </Text>
+                    </Flex>
+                </>
+            ) : null}
         </Box>
     );
 }

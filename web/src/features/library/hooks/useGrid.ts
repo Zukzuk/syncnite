@@ -26,7 +26,6 @@ type UseReturn = {
     openWidth: string;
     openHeight: string;
     openIds: Set<string>;
-    hasOpenItemInView: boolean;
     onScrollJump: (letter: Letter) => void;
     onToggleItem: (id: string) => void;
 };
@@ -245,40 +244,40 @@ export function useGrid({
         scrollItemIntoView,
     });
 
-    // Open item must be "near" the top: from 100px above its top until its bottom
-    // passes the top of the viewport.
-    const hasOpenItemInView = useMemo(() => {
-        if (isListView) return false;
-        if (openIds.size === 0) return false;
+    // // Open item must be "near" the top: from 100px above its top until its bottom
+    // // passes the top of the viewport.
+    // const hasOpenItemInView = useMemo(() => {
+    //     if (isListView) return false;
+    //     if (openIds.size === 0) return false;
 
-        for (const openId of openIds) {
-            const idx = idToIndex.get(openId);
-            if (idx == null) continue;
+    //     for (const openId of openIds) {
+    //         const idx = idToIndex.get(openId);
+    //         if (idx == null) continue;
 
-            const rowIdx = itemRowIndex[idx];
-            if (rowIdx == null) continue;
+    //         const rowIdx = itemRowIndex[idx];
+    //         if (rowIdx == null) continue;
 
-            const top = rowTops[rowIdx] ?? GRID.gap;
-            const height = rowHeights[rowIdx] ?? 0;
-            const bottom = top + height;
+    //         const top = rowTops[rowIdx] ?? GRID.gap;
+    //         const height = rowHeights[rowIdx] ?? 0;
+    //         const bottom = top + height;
 
-            const activationStart = top - 100;
-            const activationEnd = bottom;
+    //         const activationStart = top - 100;
+    //         const activationEnd = bottom;
 
-            if (scrollTop >= activationStart && scrollTop <= activationEnd)
-                return true;
-        }
+    //         if (scrollTop >= activationStart && scrollTop <= activationEnd)
+    //             return true;
+    //     }
 
-        return false;
-    }, [
-        isListView,
-        openIds,
-        idToIndex,
-        itemRowIndex,
-        rowTops,
-        rowHeights,
-        scrollTop,
-    ]);
+    //     return false;
+    // }, [
+    //     isListView,
+    //     openIds,
+    //     idToIndex,
+    //     itemRowIndex,
+    //     rowTops,
+    //     rowHeights,
+    //     scrollTop,
+    // ]);
 
     // keep open item in view on layout changes
     const layoutRef = useRef({
@@ -331,7 +330,6 @@ export function useGrid({
         openWidth,
         openHeight,
         openIds,
-        hasOpenItemInView,
         onScrollJump,
         onToggleItem,
     } as const;

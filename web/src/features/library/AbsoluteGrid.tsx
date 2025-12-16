@@ -1,9 +1,10 @@
-import React, { useEffect, useRef } from "react";
+import React, { useRef } from "react";
 import { Box } from "@mantine/core";
 import { GridCard } from "./components/GridCard";
 import { AlphabeticalRail } from "./components/AlphabeticalRail";
 import { useGrid } from "./hooks/useGrid";
 import { GameItem, UIControls, UIDerivedData } from "../../types/types";
+import { getTheme } from "../../theme";
 
 type Props = {
     ui: UIControls;
@@ -11,7 +12,6 @@ type Props = {
     controlsH: number;
     sortH: number;
     installedUpdatedAt?: string;
-    readOpenItemInView: (value: boolean) => void;
 };
 
 // Main grid component for the library view, handling item layout and rendering.
@@ -21,9 +21,9 @@ export function AbsoluteGrid({
     controlsH,
     sortH,
     installedUpdatedAt,
-    readOpenItemInView,
 }: Props) {
     const gridRef = useRef<HTMLDivElement | null>(null);
+    const { isDark } = getTheme();
     const { isListView } = ui;
     const { itemsSorted, itemsAssociated } = derived;
     const [wallpaperBg, onWallpaperBg] = React.useState(false);
@@ -37,7 +37,6 @@ export function AbsoluteGrid({
         openWidth,
         openHeight,
         openIds,
-        hasOpenItemInView,
         onScrollJump,
         onToggleItem,
     } = useGrid({
@@ -47,10 +46,6 @@ export function AbsoluteGrid({
         ui,
         derived,
     });
-
-    useEffect(() => {
-        readOpenItemInView(hasOpenItemInView);
-    }, [hasOpenItemInView, readOpenItemInView]);
 
     return (
         <Box style={{ position: "relative", flex: 1, overflow: "auto" }}>
@@ -64,6 +59,9 @@ export function AbsoluteGrid({
                     width: "100%",
                     height: "100%",
                     overflowX: "hidden",
+                    boxShadow: isDark
+                        ? "inset 0 0 12px rgba(0, 0, 0, 0.7)"
+                        : "inset 0 0 12px rgba(0, 0, 0, 0.2)",
                 }}
             >
                 <Box

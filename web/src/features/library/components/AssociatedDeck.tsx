@@ -4,6 +4,7 @@ import { GRID } from "../../../lib/constants";
 import { GameItem } from "../../../types/types";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 import { AssociatedDeckCard } from "./AssociatedDeckCard";
+import { getTheme } from "../../../theme";
 
 type Props = {
     label: string;
@@ -25,6 +26,8 @@ export function AssociatedDeck({
 }: Props): JSX.Element | null {
     const [hoveredId, setHoveredId] = React.useState<string | null>(null);
     const isOpenDelayed = useDelayedFlag({ active: true, delayMs: 140 });
+    const { isDark } = getTheme();
+
     const cards = items.filter((g) => g.coverUrl);
     if (cards.length === 0 || deckColumns <= 0) return null;
 
@@ -91,7 +94,7 @@ export function AssociatedDeck({
         >
             <Text
                 size="xs"
-                c="var(--interlinked-color-secondary)"
+                c="var(--interlinked-color-primary)"
                 style={{
                     overflow: "hidden",
                     textOverflow: "ellipsis",
@@ -99,7 +102,7 @@ export function AssociatedDeck({
                     fontSize: 14,
                 }}
             >
-                {label}
+                {label} ({cards.length})
             </Text>
 
             <Box
@@ -112,7 +115,9 @@ export function AssociatedDeck({
                     overflowY: "auto",
                     overflowX: "hidden",
                     overscrollBehaviorY: "contain",
-                    boxShadow: "inset 0 0 20px rgba(0, 0, 0, 0.6)",
+                    boxShadow: isDark 
+                        ? "inset 0 0 20px rgba(0, 0, 0, 0.5)" 
+                        : "inset 0 0 20px rgba(0, 0, 0, 0.3)",
                 }}
             >
                 <Box

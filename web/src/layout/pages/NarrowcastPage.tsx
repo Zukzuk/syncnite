@@ -2,7 +2,15 @@ import * as React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useFullscreen } from "@mantine/hooks";
 import { ActionIcon, Box, Center, Group, Loader, Paper, Text, Tooltip } from "@mantine/core";
-import { IconArrowsMaximize, IconArrowsMinimize, IconChevronLeft, IconChevronRight, IconMoon, IconSun, IconX } from "@tabler/icons-react";
+import {
+    IconArrowsMaximize,
+    IconArrowsMinimize,
+    IconChevronLeft,
+    IconChevronRight,
+    IconMoon,
+    IconSun,
+    IconX,
+} from "@tabler/icons-react";
 import { useLibraryData } from "../../features/library/hooks/useLibraryData";
 import { GRID, INTERVAL_MS, SOURCE_MAP } from "../../lib/constants";
 import type { GameItem } from "../../types/types";
@@ -10,6 +18,9 @@ import { getTheme } from "../../theme";
 
 const DISPLAY_MS = 10_000;
 const FADE_MS = 900;
+
+// NEW: idle fade timing
+const UI_IDLE_MS = 2500;
 
 function shuffle<T>(arr: T[]): T[] {
     const a = arr.slice();
@@ -46,7 +57,6 @@ export default function NarrowcastPage(): JSX.Element {
     const { id } = useParams<{ id?: string }>();
     const navigate = useNavigate();
 
-    
     const { isDark, setColorScheme } = getTheme();
     const toggleColorScheme = () => setColorScheme(isDark ? "light" : "dark");
 
@@ -68,11 +78,35 @@ export default function NarrowcastPage(): JSX.Element {
     const [urls, setUrls] = React.useState<[string | null, string | null]>([null, null]); // [layer0, layer1]
     const [active, setActive] = React.useState<0 | 1>(0); // which layer is visible
 
-    // ui hover
-    const [hovered, setHovered] = React.useState(false);
-
     // fullscreen
     const { ref: fsRef, toggle: toggleFs, fullscreen } = useFullscreen();
+
+    // NEW: idle UI visibility
+    const [uiVisible, setUiVisible] = React.useState(true);
+    const idleTimer = React.useRef<number | null>(null);
+
+    const bumpUi = React.useCallback(() => {
+        setUiVisible(true);
+        if (idleTimer.current) window.clearTimeout(idleTimer.current);
+        idleTimer.current = window.setTimeout(() => setUiVisible(false), UI_IDLE_MS);
+    }, []);
+
+    React.useEffect(() => {
+        if (!n) return;
+        bumpUi();
+        return () => {
+            if (idleTimer.current) window.clearTimeout(idleTimer.current);
+        };
+    }, [n, bumpUi]);
+
+    const chromeStyle: React.CSSProperties = React.useMemo(
+        () => ({
+            opacity: uiVisible ? 1 : 0,
+            transition: "opacity 500ms ease",
+            pointerEvents: uiVisible ? "auto" : "none",
+        }),
+        [uiVisible]
+    );
 
     // derive current (the actually-visible item index)
     const current = n ? order[clampIndex(idx, n)] : null;
@@ -105,7 +139,6 @@ export default function NarrowcastPage(): JSX.Element {
 
             if (!u0) return;
 
-            // load first two before showing (matches your "start load first 2")
             await preload(u0);
             if (u1) await preload(u1);
 
@@ -120,8 +153,6 @@ export default function NarrowcastPage(): JSX.Element {
         };
     }, [n, order]);
 
-    // ADVANCE: fade to next (hidden layer must already have next image),
-    // then preload & install the upcoming image into the now-hidden layer.
     const goTo = React.useCallback(
         async (nextIdxRaw: number) => {
             if (!n) return;
@@ -134,10 +165,9 @@ export default function NarrowcastPage(): JSX.Element {
 
             if (!nextUrl) return;
 
-            // Ensure the *hidden* layer has nextUrl before fade starts.
+            // Ensure the hidden layer has nextUrl before fade starts.
             const hidden: 0 | 1 = active === 0 ? 1 : 0;
 
-            // If hidden layer doesn't already point at nextUrl, load+set it.
             if (urls[hidden] !== nextUrl) {
                 await preload(nextUrl);
                 setUrls((prev) => {
@@ -147,12 +177,10 @@ export default function NarrowcastPage(): JSX.Element {
                 });
             }
 
-            // start fade (toggle which layer is visible)
             setActive(hidden);
             setIdx(nextIdx);
             navigate(`/narrowcast/${String(order[nextIdx]?.id)}`, { replace: true });
 
-            // after fade completes: load upcoming and park it in the now-hidden layer (alpha 0)
             window.setTimeout(async () => {
                 const nowHidden: 0 | 1 = hidden === 0 ? 1 : 0;
                 if (!afterUrl) return;
@@ -168,27 +196,38 @@ export default function NarrowcastPage(): JSX.Element {
         [n, order, active, urls, navigate]
     );
 
-    const next = React.useCallback(() => goTo(idx + 1), [goTo, idx]);
-    const prev = React.useCallback(() => goTo(idx - 1), [goTo, idx]);
+    const next = React.useCallback(() => {
+        bumpUi();
+        void goTo(idx + 1);
+    }, [goTo, idx, bumpUi]);
 
-    // AUTO ADVANCE (single interval)
+    const prev = React.useCallback(() => {
+        bumpUi();
+        void goTo(idx - 1);
+    }, [goTo, idx, bumpUi]);
+
+    // AUTO ADVANCE
     React.useEffect(() => {
         if (!n) return;
-        const t = window.setInterval(next, DISPLAY_MS);
+        const t = window.setInterval(() => {
+            void goTo(idx + 1);
+        }, DISPLAY_MS);
         return () => window.clearInterval(t);
-    }, [n, next]);
+    }, [n, goTo, idx]);
 
     // KEYBOARD
     React.useEffect(() => {
         const onKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "ArrowRight") next();
-            if (e.key === "ArrowLeft") prev();
+            bumpUi();
+
+            if (e.key === "ArrowRight") void goTo(idx + 1);
+            if (e.key === "ArrowLeft") void goTo(idx - 1);
             if (e.key.toLowerCase() === "f") toggleFs();
             if (e.key === "Escape") navigate("/", { replace: true });
         };
         window.addEventListener("keydown", onKeyDown);
         return () => window.removeEventListener("keydown", onKeyDown);
-    }, [next, prev, toggleFs, navigate]);
+    }, [goTo, idx, toggleFs, navigate, bumpUi]);
 
     if (!libraryData) {
         return (
@@ -221,8 +260,10 @@ export default function NarrowcastPage(): JSX.Element {
     return (
         <Box
             ref={fsRef}
-            onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => setHovered(false)}
+            onMouseMove={bumpUi}
+            onMouseDown={bumpUi}
+            onTouchStart={bumpUi}
+            onMouseLeave={() => setUiVisible(false)}
             style={{
                 position: "relative",
                 width: "100vw",
@@ -233,22 +274,21 @@ export default function NarrowcastPage(): JSX.Element {
                 touchAction: "manipulation",
             }}
         >
-
             <style>
                 {`
-                @keyframes narrowcastProgressFill {
-                    from { transform: scaleX(0); }
-                    to   { transform: scaleX(1); }
-                }
-            `}
+          @keyframes narrowcastProgressFill {
+            from { transform: scaleX(0); }
+            to   { transform: scaleX(1); }
+          }
+        `}
             </style>
 
             {/* Crossfade layers */}
             <Box style={layerStyle(urls[0], active === 0)} />
             <Box style={layerStyle(urls[1], active === 1)} />
 
-            {/* Top-right controls */}
-            <Box style={{ position: "absolute", right: 12, top: 12, zIndex: 10 }}>
+            {/* Top-right controls (FADES OUT) */}
+            <Box style={{ position: "absolute", right: 12, top: 12, zIndex: 10, ...chromeStyle }}>
                 <Group gap={8} justify="flex-end">
                     <Tooltip withArrow label={isDark ? "Switch to light mode" : "Switch to dark mode"} style={{ fontSize: 10 }}>
                         <ActionIcon
@@ -258,20 +298,11 @@ export default function NarrowcastPage(): JSX.Element {
                             onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
+                                bumpUi();
                                 toggleColorScheme();
                             }}
-                            style={{
-                                pointerEvents: "auto",
-                                opacity: hovered ? 1 : 0,
-                                transform: hovered ? "translateX(0)" : "translateX(8px)",
-                                transition: "opacity 180ms ease, transform 180ms ease",
-                            }}
                         >
-                            {isDark ? (
-                                <IconSun size={18} />
-                            ) : (
-                                <IconMoon size={18} />
-                            )}
+                            {isDark ? <IconSun size={18} /> : <IconMoon size={18} />}
                         </ActionIcon>
                     </Tooltip>
 
@@ -283,13 +314,8 @@ export default function NarrowcastPage(): JSX.Element {
                             onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
+                                bumpUi();
                                 toggleFs();
-                            }}
-                            style={{
-                                pointerEvents: "auto",
-                                opacity: hovered ? 1 : 0,
-                                transform: hovered ? "translateX(0)" : "translateX(8px)",
-                                transition: "opacity 180ms ease, transform 180ms ease",
                             }}
                         >
                             {fullscreen ? <IconArrowsMinimize size={18} /> : <IconArrowsMaximize size={18} />}
@@ -304,13 +330,8 @@ export default function NarrowcastPage(): JSX.Element {
                             onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
+                                bumpUi();
                                 navigate("/", { replace: true });
-                            }}
-                            style={{
-                                pointerEvents: "auto",
-                                opacity: hovered ? 1 : 0,
-                                transform: hovered ? "translateX(0)" : "translateX(8px)",
-                                transition: "opacity 180ms ease, transform 180ms ease",
                             }}
                             aria-label="Close"
                         >
@@ -320,7 +341,7 @@ export default function NarrowcastPage(): JSX.Element {
                 </Group>
             </Box>
 
-            {/* Prev / Next rollover arrows */}
+            {/* Prev / Next arrows (FADES OUT) */}
             <Box
                 style={{
                     position: "absolute",
@@ -333,52 +354,52 @@ export default function NarrowcastPage(): JSX.Element {
                     zIndex: 9,
                 }}
             >
-                <ActionIcon
-                    variant="subtle"
-                    radius="xl"
-                    size="xl"
-                    onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        prev();
-                    }}
-                    style={{
-                        pointerEvents: "auto",
-                        opacity: hovered ? 1 : 0,
-                        transform: hovered ? "translateX(0)" : "translateX(-8px)",
-                        transition: "opacity 180ms ease, transform 180ms ease",
-                    }}
-                    aria-label="Previous"
-                >
-                    <IconChevronLeft size={24} />
-                </ActionIcon>
+                <Box style={chromeStyle}>
+                    <ActionIcon
+                        variant="subtle"
+                        radius="xl"
+                        size="xl"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            prev();
+                        }}
+                        style={{ pointerEvents: "auto" }}
+                        aria-label="Previous"
+                    >
+                        <IconChevronLeft size={24} />
+                    </ActionIcon>
+                </Box>
 
-                <ActionIcon
-                    variant="subtle"
-                    radius="xl"
-                    size="xl"
-                    onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        next();
-                    }}
-                    style={{
-                        pointerEvents: "auto",
-                        opacity: hovered ? 1 : 0,
-                        transform: hovered ? "translateX(0)" : "translateX(8px)",
-                        transition: "opacity 180ms ease, transform 180ms ease",
-                    }}
-                    aria-label="Next"
-                >
-                    <IconChevronRight size={24} />
-                </ActionIcon>
+                <Box style={chromeStyle}>
+                    <ActionIcon
+                        variant="subtle"
+                        radius="xl"
+                        size="xl"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            next();
+                        }}
+                        style={{ pointerEvents: "auto" }}
+                        aria-label="Next"
+                    >
+                        <IconChevronRight size={24} />
+                    </ActionIcon>
+                </Box>
             </Box>
 
-            {/* Click zones */}
-            <Box onClick={prev} style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "35%", cursor: "pointer", zIndex: 5 }} />
-            <Box onClick={next} style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: "35%", cursor: "pointer", zIndex: 5 }} />
+            {/* Click zones (STAY ACTIVE) */}
+            <Box
+                onClick={prev}
+                style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "35%", cursor: "pointer", zIndex: 5 }}
+            />
+            <Box
+                onClick={next}
+                style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: "35%", cursor: "pointer", zIndex: 5 }}
+            />
 
-            {/* Info panel */}
+            {/* Info panel (ALWAYS VISIBLE) */}
             <Paper
                 withBorder
                 radius="md"
@@ -403,21 +424,21 @@ export default function NarrowcastPage(): JSX.Element {
                             borderRight: isDark ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid rgba(0, 0, 0, 0.12)",
                         }}
                     >
-                        <Text 
-                            fw={600} 
-                            size="sm" 
-                            truncate 
+                        <Text
+                            fw={600}
+                            size="sm"
+                            truncate
                             title={current?.title ?? ""}
-                            style={{ 
+                            style={{
                                 textShadow: "0px 1px 2px var(--interlinked-color-suppressed)",
                             }}
                         >
                             {current?.title ?? ""}
                         </Text>
-                        <Text 
-                            size="xs" 
+                        <Text
+                            size="xs"
                             truncate
-                            style={{ 
+                            style={{
                                 textShadow: "0px 1px 2px var(--interlinked-color-suppressed)",
                             }}
                         >
@@ -432,7 +453,7 @@ export default function NarrowcastPage(): JSX.Element {
                     >
                         <Text
                             size="xs"
-                            style={{ 
+                            style={{
                                 whiteSpace: "nowrap",
                                 textShadow: "0px 1px 2px var(--interlinked-color-suppressed)",
                             }}
@@ -457,7 +478,7 @@ export default function NarrowcastPage(): JSX.Element {
                 }}
             >
                 <Box
-                    key={idx} // restart animation each slide
+                    key={idx}
                     style={{
                         height: "100%",
                         width: "100%",
@@ -467,7 +488,6 @@ export default function NarrowcastPage(): JSX.Element {
                     }}
                 />
             </Box>
-
         </Box>
     );
 }

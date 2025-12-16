@@ -35,7 +35,7 @@ export function createApp() {
     const swaggerSpec = swaggerJsdoc({
         definition: {
             openapi: "3.1.0",
-            urls: ["/api/v1"],
+            servers: [{ url: "/api/v1" }],
             info: {
                 title: "Syncnite Web API",
                 version: APP_VERSION,
@@ -43,15 +43,15 @@ export function createApp() {
             },
             components: {
                 securitySchemes: {
-                    XAuthEmail: { type: "apiKey", in: "header", name: "x-auth-email", description: "Admin email for header auth" },
-                    XAuthPassword: { type: "apiKey", in: "header", name: "x-auth-password", description: "Admin password for header auth" },
-                    XClientId: { type: "apiKey", in: "header", name: "x-client-id", description: "Client ID for identifying different clients" },
+                    XAuthEmail: { type: "apiKey", in: "header", name: "x-auth-email" },
+                    XAuthPassword: { type: "apiKey", in: "header", name: "x-auth-password" },
+                    XClientId: { type: "apiKey", in: "header", name: "x-client-id" },
                 },
             },
         },
-        // Load YAML + TS/JS (see below)
-        apis: [path.join(__dirname, "/openapi/**/*.{yaml,yml}")]
+        apis: [path.join(__dirname, "/openapi/**/*.{yaml,yml}")],
     });
+
     // Swagger UI setup with pre-filled auth headers for convenience
     app.use(
         "/api/v1/docs",

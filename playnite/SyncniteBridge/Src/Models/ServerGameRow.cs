@@ -17,10 +17,6 @@ namespace SyncniteBridge.Models
         public string SortingName { get; set; } = "";
 
         public bool Hidden { get; set; }
-        public bool IsInstalled { get; set; }
-
-        public string InstallDirectory { get; set; } = "";
-        public ulong? InstallSize { get; set; }
 
         public Guid PluginId { get; set; }
         public string GameId { get; set; } = "";

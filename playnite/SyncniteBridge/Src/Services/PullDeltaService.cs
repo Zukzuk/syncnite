@@ -29,6 +29,11 @@ namespace SyncniteBridge.Services
         private Func<bool> isHealthy = () => true;
 
         /// <summary>
+        /// Raised when a pull run starts/stops. (busy, message)
+        /// </summary>
+        public event Action<bool, string?>? BusyChanged;
+
+        /// <summary>
         /// Constructs a new instance of the PullDeltaService.
         /// </summary>
         public PullDeltaService(
@@ -69,6 +74,15 @@ namespace SyncniteBridge.Services
         /// </summary>
         public async Task pullOnceAsync()
         {
+            void SetBusy(bool busy, string? msg = null)
+            {
+                try
+                {
+                    BusyChanged?.Invoke(busy, msg);
+                }
+                catch { }
+            }
+
             if (!isHealthy())
             {
                 blog?.Debug("pull", "Skip pull: unhealthy");
@@ -76,6 +90,7 @@ namespace SyncniteBridge.Services
             }
 
             await AppConstants.SyncLocks.GlobalSyncLock.WaitAsync().ConfigureAwait(false);
+            SetBusy(true, "Syncing from server…");
             try
             {
                 blog.Info("pull", "Starting pull sync from server");
@@ -170,6 +185,7 @@ namespace SyncniteBridge.Services
             }
             finally
             {
+                SetBusy(false, null);
                 AppConstants.SyncLocks.GlobalSyncLock.Release();
             }
         }
@@ -206,8 +222,6 @@ namespace SyncniteBridge.Services
             sb.Append(g.Icon).Append("|");
             sb.Append(g.CoverImage).Append("|");
             sb.Append(g.BackgroundImage).Append("|");
-            sb.Append(g.InstallDirectory).Append("|");
-            sb.Append(g.InstallSize).Append("|");
             sb.Append(g.PluginId).Append("|");
             sb.Append(g.GameId).Append("|");
             sb.Append(g.SourceId).Append("|");
@@ -357,8 +371,6 @@ namespace SyncniteBridge.Services
                         Name = g.Name,
                         SortingName = g.SortingName,
                         Hidden = g.Hidden,
-                        InstallDirectory = g.InstallDirectory,
-                        InstallSize = g.InstallSize,
                         PluginId = g.PluginId,
                         GameId = g.GameId,
                         SourceId = g.SourceId,
@@ -398,8 +410,6 @@ namespace SyncniteBridge.Services
                     existing.Name = g.Name;
                     existing.SortingName = g.SortingName;
                     existing.Hidden = g.Hidden;
-                    existing.InstallDirectory = g.InstallDirectory;
-                    existing.InstallSize = g.InstallSize;
                     existing.PluginId = g.PluginId;
                     existing.GameId = g.GameId;
                     existing.SourceId = g.SourceId;

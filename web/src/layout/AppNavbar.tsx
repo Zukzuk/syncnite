@@ -6,6 +6,7 @@ import { GRID, WEB_APP_VERSION } from "../lib/constants";
 import { getTheme } from "../theme";
 import { Logo } from "../components/Logo";
 import { ControlPanel } from "../components/ControlPanel";
+import { LogoIntro } from "../components/LogoIntro";
 
 type Props = {
     toggleNavbar: () => void;
@@ -16,7 +17,7 @@ export function AppNavbar({ toggleNavbar }: Props): JSX.Element {
     const isAdmin = state.role === "admin";
     const isLoggedIn = state.loggedIn;
 
-    const { isDesktop } = getTheme();
+    const { isDesktop, isDark } = getTheme();
 
     const location = useLocation();
     const isHome = location.pathname === "/";
@@ -26,7 +27,15 @@ export function AppNavbar({ toggleNavbar }: Props): JSX.Element {
     const isBridge = location.pathname.startsWith("/bridge");
 
     return (
-        <Stack h="100%" gap={0}>
+        <Stack
+            h="100%"
+            gap={0}
+            style={{
+                boxShadow: isDark
+                    ? "3px 0 12px rgba(0, 0, 0, 0.2)"
+                    : "3px 0 12px rgba(0, 0, 0, 0.1)",
+            }}
+        >
             {/* LOGO SECTION */}
             <Box
                 px="xs"
@@ -34,7 +43,7 @@ export function AppNavbar({ toggleNavbar }: Props): JSX.Element {
                     height: GRID.rowHeight,
                 }}
             >
-                <Logo />
+                <LogoIntro />
             </Box >
 
             {/* NAVIGATION SECTION */}

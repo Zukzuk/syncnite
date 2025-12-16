@@ -110,6 +110,13 @@ export type PlayniteDeltaManifest = {
   toDelete: Record<string, string[]>;
 };
 
+export type InstalledStateRow = {
+  id: string;
+  isInstalled: boolean;
+  installDirectory?: string;
+  installSize?: number | null;
+};
+
 // Account
 
 export type SteamConnection = {

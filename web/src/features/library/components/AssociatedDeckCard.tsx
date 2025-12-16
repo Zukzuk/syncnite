@@ -78,7 +78,7 @@ export function AssociatedDeckCard({
                     isTopCard || isCurrentItem
                         ? "2px solid var(--interlinked-color-primary-soft)"
                         : isDark
-                            ? "2px solid var(--mantine-color-dark-9)"
+                            ? "2px solid var(--mantine-color-dark-8)"
                             : "2px solid var(--mantine-color-gray-3)",
                 transform: isTopCard ? "scale(1.07)" : "scale(1)",
                 transition:

@@ -60,7 +60,6 @@ export const HeaderControls = React.memo(function HeaderControls({
         minHeight: GRID.rowHeight,
         padding: GRID.gap,
         paddingLeft: isDesktop ? GRID.gap : GRID.gap * 5,
-        borderBottom: `1px solid var(--mantine-color-default-border)`,
       }}
     >
       <Flex

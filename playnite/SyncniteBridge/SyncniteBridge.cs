@@ -255,7 +255,10 @@ namespace SyncniteBridge
                                         config.ApiBaseUrl,
                                         AppConstants.Path_Sync_Installed
                                     );
-                                    var pingUrl = Combine(config.ApiBaseUrl, AppConstants.Path_Ping);
+                                    var pingUrl = Combine(
+                                        config.ApiBaseUrl,
+                                        AppConstants.Path_Ping
+                                    );
                                     var verifyAdminUrl = Combine(
                                         config.ApiBaseUrl,
                                         AppConstants.Path_Accounts_VerifyAdmin
@@ -267,7 +270,10 @@ namespace SyncniteBridge
                                     health.UpdateEndpoints(pingUrl, verifyAdminUrl);
                                     blog.UpdateApiBase(config.ApiBaseUrl);
 
-                                    blog.Info("config", "ApiBaseUrl updated to " + config.ApiBaseUrl);
+                                    blog.Info(
+                                        "config",
+                                        "ApiBaseUrl updated to " + config.ApiBaseUrl
+                                    );
                                     blog.Debug(
                                         "config",
                                         "New ApiBaseUrl",
@@ -290,6 +296,20 @@ namespace SyncniteBridge
                                     // This is the "Force sync full library" button
                                     pushSync.HardSync();
                                     blog.Info("sync", "Manual full sync requested");
+                                },
+                                subscribeBusy: cb =>
+                                {
+                                    if (cb == null)
+                                        return;
+                                    pushSync.BusyChanged += cb;
+                                    pullSync.BusyChanged += cb; // optional: also show loader for user pulls
+                                },
+                                unsubscribeBusy: cb =>
+                                {
+                                    if (cb == null)
+                                        return;
+                                    pushSync.BusyChanged -= cb;
+                                    pullSync.BusyChanged -= cb;
                                 },
                                 initialEmail: config.AuthEmail,
                                 initialPassword: config.GetAuthPassword(),
@@ -323,7 +343,10 @@ namespace SyncniteBridge
                                             blog,
                                             TimeSpan.FromSeconds(30)
                                         );
-                                        var url = Combine(config.ApiBaseUrl, "accounts/admin/release");
+                                        var url = Combine(
+                                            config.ApiBaseUrl,
+                                            "accounts/admin/release"
+                                        );
                                         var ok = http.ReleaseAdminAsync(url)
                                             .GetAwaiter()
                                             .GetResult();

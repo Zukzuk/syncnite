@@ -1,3 +1,6 @@
+openapi: "3.1.0"
+servers:
+  - url: /api/v1
 tags:
   - name: App
   - name: Extension
@@ -34,12 +37,30 @@ components:
         role:
           type: string
           enum: [admin, user, unknown]
+    InstalledStateRow:
+      type: object
+      properties:
+        id: { type: string }
+        isInstalled: { type: boolean }
+        installDirectory: { type: string }
+        installSize:
+          type: integer
+          nullable: true
+      required: [id, isInstalled]
     InstalledPush:
       type: object
       properties:
         installed:
           type: array
           items: { type: string }
+          description: >
+            Backward-compatible:
+            - string[] (old clients)
+            - InstalledStateRow[] (new clients)
+        items:
+          oneOf:
+            - type: string
+            - $ref: "#/components/schemas/InstalledStateRow"
       required: [installed]
     DeltaRequest:
       type: object
@@ -536,7 +557,7 @@ paths:
   /playnite/installed:
     post:
       tags: [Playnite]
-      summary: Push installed game IDs (minimal)
+      summary: Push installed state (installed + dir + size)
       security:
         - XAuthEmail: []
           XAuthPassword: []

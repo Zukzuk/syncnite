@@ -1,4 +1,3 @@
-// Services/LocalStateSnapshotStore.cs
 using System;
 using System.IO;
 using SyncniteBridge.Constants;
@@ -8,30 +7,65 @@ using SyncniteBridge.Models;
 namespace SyncniteBridge.Services
 {
     /// <summary>
-    /// Stores and retrieves local state snapshots to/from disk.
+    /// Manages local storage of the last known snapshot of the Playnite database state.
     /// </summary>
     internal sealed class LocalStateStore
     {
-        private readonly string path;
+        private readonly string dir;
+        private readonly Func<string> getEndpoint;
         private readonly BridgeLogger? blog;
 
         /// <summary>
-        /// Creates a new LocalStateStore instance.
+        /// Creates a new instance of the <see cref="LocalStateStore"/> class.
         /// </summary>
-        public LocalStateStore(string extensionsDataPath, BridgeLogger? blog = null)
+        public LocalStateStore(
+            string extensionsDataPath,
+            Func<string> getEndpoint,
+            BridgeLogger? blog = null
+        )
         {
-            Directory.CreateDirectory(extensionsDataPath ?? ".");
-            path = Path.Combine(extensionsDataPath ?? ".", AppConstants.SnapshotFileName);
+            dir = extensionsDataPath ?? ".";
+            Directory.CreateDirectory(dir);
+
+            this.getEndpoint = getEndpoint ?? (() => "");
             this.blog = blog;
 
-            blog?.Debug("snapshot", "Snapshot store initialized", new { path });
+            blog?.Debug("snapshot", "Snapshot store initialized", new { dir });
         }
 
         /// <summary>
-        /// Loads the local state snapshot from disk.
+        /// Gets the current snapshot file path based on the configured endpoint.
+        /// </summary>
+        private string CurrentPath
+        {
+            get
+            {
+                var endpoint = (getEndpoint() ?? "").Trim();
+                var host = "unknown";
+
+                try
+                {
+                    var uri = new Uri(endpoint, UriKind.Absolute);
+                    host = uri.Host;
+                }
+                catch
+                {
+                    // leave as "unknown"
+                }
+
+                // filesystem-safe
+                host = host.Replace("\\", "_").Replace("/", "_").Replace(":", "_");
+
+                return Path.Combine(dir, $"{host}.{AppConstants.SnapshotFileName}");
+            }
+        }
+
+        /// <summary>
+        /// Loads the last known local state snapshot from disk.
         /// </summary>
         public LocalStateSnapshot Load()
         {
+            var path = CurrentPath;
             try
             {
                 if (!File.Exists(path))
@@ -53,6 +87,7 @@ namespace SyncniteBridge.Services
                         updatedAt = s.UpdatedAt,
                         dbTicks = s.DbTicks,
                         mediaFolders = s.MediaVersions?.Count ?? 0,
+                        path,
                     }
                 );
 
@@ -66,10 +101,11 @@ namespace SyncniteBridge.Services
         }
 
         /// <summary>
-        /// Saves the local state snapshot to disk.
+        /// Saves the given local state snapshot to disk.
         /// </summary>
         public void Save(LocalStateSnapshot snapshot)
         {
+            var path = CurrentPath;
             try
             {
                 var json = Playnite.SDK.Data.Serialization.ToJson(snapshot);
@@ -94,10 +130,11 @@ namespace SyncniteBridge.Services
         }
 
         /// <summary>
-        /// Deletes the local state snapshot from disk.
+        /// Deletes the existing local state snapshot from disk.
         /// </summary>
         public void Delete()
         {
+            var path = CurrentPath;
             try
             {
                 if (File.Exists(path))

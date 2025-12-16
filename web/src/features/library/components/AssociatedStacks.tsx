@@ -29,6 +29,7 @@ export function AssociatedStacks({
             style={{
                 flex: 1,
                 minWidth: 0,
+                paddingTop: 22,
                 height: "100%",
                 overflowY: "auto",
                 overflowX: "hidden",

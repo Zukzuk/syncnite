@@ -29,7 +29,7 @@ export default function AppShellLayout({
       }
     >
       {!hideSite && (
-        <AppShell.Navbar p={0}>
+        <AppShell.Navbar p={0} withBorder={false}>
           <AppNavbar toggleNavbar={toggleNavbar} />
         </AppShell.Navbar>
       )}

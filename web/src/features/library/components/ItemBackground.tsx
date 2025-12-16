@@ -31,13 +31,25 @@ export function ItemBackground({ item, isOpen, wallpaperBg }: Props): JSX.Elemen
                 pointerEvents: "none",
                 zIndex: Z_INDEX.belowBase,
                 transform: isOpenDelayed ? "scale(1.02)" : "scale(1)",
-                opacity: wallpaperBg ? 1 : isOpenDelayed ? (isDark ? 0.1 : 0.3) : 0,
-                willChange: "opacity, transform",
-                transitionProperty: "opacity, transform",
-                transitionDuration: "220ms, 260ms",
-                transitionTimingFunction: "ease, ease",
+                opacity: wallpaperBg
+                    ? 1
+                    : isOpenDelayed
+                        ? (isDark ? 0.04 : 0.1)
+                        : 0,
+                filter: wallpaperBg
+                    ? "grayscale(0%)"
+                    : !isOpenDelayed
+                        ? "grayscale(100%)"
+                        : isDark
+                            ? "grayscale(100%) contrast(100%)"
+                            : "grayscale(100%) contrast(175%)",
+                willChange: "opacity, transform, filter",
+                transitionProperty: "opacity, transform, filter",
+                transitionDuration: "220ms, 260ms, 220ms",
+                transitionTimingFunction: "ease, ease, ease",
             }}
         />
+
     );
 }
 

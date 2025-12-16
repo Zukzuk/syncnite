@@ -37,10 +37,8 @@ export interface Game {
   SortingName?: string;
   GameId: string;
 
-  // visibility / install
+  // visibility
   Hidden?: boolean;
-  InstallDirectory?: string | null;
-  InstallSize?: number | null;
 
   // joins (IDs to other collections)
   SourceId?: string | null;

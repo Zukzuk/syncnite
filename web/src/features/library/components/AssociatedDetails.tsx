@@ -47,7 +47,7 @@ export function AssociatedDetails({ item, onWallpaperBg }: Props): JSX.Element {
                 loading="lazy"
                 style={{
                     border: isDark
-                        ? "2px solid var(--mantine-color-dark-9)"
+                        ? "2px solid var(--mantine-color-dark-8)"
                         : "2px solid var(--mantine-color-gray-3)",
                 }}
             />
@@ -128,7 +128,7 @@ export function AssociatedDetails({ item, onWallpaperBg }: Props): JSX.Element {
                     loading="lazy"
                     style={{
                         border: isDark
-                            ? "2px solid var(--mantine-color-dark-9)"
+                            ? "2px solid var(--mantine-color-dark-8)"
                             : "2px solid var(--mantine-color-gray-3)",
                     }}
                 />

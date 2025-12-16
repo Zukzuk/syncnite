@@ -21,9 +21,6 @@ export default function Library({
     const { ref: controlsRef, height: controlsH } = useElementSize();
     const { ref: sortRef, height: sortH } = useElementSize();
 
-    // Track if any open item is in view to adjust header styling
-    const [hasOpenItemInView, readOpenItemInView] = useState(false);
-
     return (
         <Flex direction="column" style={{ width: "100%", height: "100%" }}>
             <HeaderControls
@@ -36,7 +33,6 @@ export default function Library({
             <HeaderSort
                 sortRef={sortRef as unknown as (el: HTMLElement | null) => void}
                 ui={uiControls}
-                hasOpenItemInView={hasOpenItemInView}
             />
 
             <AbsoluteGrid
@@ -45,7 +41,6 @@ export default function Library({
                 controlsH={controlsH}
                 sortH={sortH}
                 installedUpdatedAt={installedUpdatedAt}
-                readOpenItemInView={readOpenItemInView}
             />
         </Flex>
     );

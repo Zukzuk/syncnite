@@ -36,6 +36,11 @@ namespace SyncniteBridge.Services
         private readonly LocalStateService localState;
 
         /// <summary>
+        /// Raised when a push run starts/stops. (busy, message)
+        /// </summary>
+        public event Action<bool, string?>? BusyChanged;
+
+        /// <summary>
         /// Constructs a new instance of the PushDeltaService.
         /// </summary>
         public PushDeltaService(
@@ -54,7 +59,7 @@ namespace SyncniteBridge.Services
 
             var extDataDir = Path.Combine(api.Paths.ExtensionsDataPath, AppConstants.GUID);
             Directory.CreateDirectory(extDataDir);
-            snapshotStore = new LocalStateStore(extDataDir, blog);
+            snapshotStore = new LocalStateStore(extDataDir, () => syncUrl ?? "", blog);
             localState = new LocalStateService(api, this.dataRoot, blog);
 
             debounceTimer = new Timer(
@@ -289,6 +294,15 @@ namespace SyncniteBridge.Services
         /// </summary>
         private async Task DebouncedAsync()
         {
+            void SetBusy(bool busy, string? msg = null)
+            {
+                try
+                {
+                    BusyChanged?.Invoke(busy, msg);
+                }
+                catch { }
+            }
+
             await AppConstants.SyncLocks.GlobalSyncLock.WaitAsync().ConfigureAwait(false);
             try
             {
@@ -305,11 +319,13 @@ namespace SyncniteBridge.Services
                 }
 
                 isRunning = true;
+                SetBusy(true, "Pushing data to server…");
                 await PushCrudAsync().ConfigureAwait(false);
             }
             finally
             {
                 isRunning = false;
+                SetBusy(false, null);
                 AppConstants.SyncLocks.GlobalSyncLock.Release();
             }
         }

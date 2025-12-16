@@ -10,6 +10,7 @@ using Playnite.SDK;
 using Playnite.SDK.Models;
 using SyncniteBridge.Constants;
 using SyncniteBridge.Helpers;
+using SyncniteBridge.Models;
 
 namespace SyncniteBridge.Services
 {
@@ -111,13 +112,18 @@ namespace SyncniteBridge.Services
         /// </summary>
         private string BuildPayload()
         {
-            var obj = new
-            {
-                installed = api
-                    .Database.Games.Where(g => g.IsInstalled)
-                    .Select(g => g.Id.ToString())
-                    .ToArray(),
-            };
+            var installed = api
+                .Database.Games.Where(g => g.IsInstalled)
+                .Select(g => new InstalledStateRow
+                {
+                    Id = g.Id,
+                    IsInstalled = g.IsInstalled,
+                    InstallDirectory = g.InstallDirectory ?? "",
+                    InstallSize = g.InstallSize,
+                })
+                .ToArray();
+
+            var obj = new { installed };
             return Playnite.SDK.Data.Serialization.ToJson(obj);
         }
 

@@ -2,21 +2,20 @@ import React from "react";
 import { Box, UnstyledButton, Text } from "@mantine/core";
 import { SortKey, UIControls } from "../types/types";
 import { GRID } from "../lib/constants";
+import { getTheme } from "../theme";
 
 type Props = {
   sortRef: (el: HTMLElement | null) => void;
   ui: UIControls;
-  hasOpenItemInView?: boolean;
 };
 
 // Header sort component for the library view.
 export const HeaderSort = React.memo(function HeaderSort({
   sortRef,
   ui,
-  hasOpenItemInView
 }: Props) {
-
   const { sortKey, sortDir, onToggleSort, isListView } = ui;
+  const { isDark } = getTheme();
 
   const label = (base: string, key: SortKey) =>
     sortKey === key ? `${base} ${sortDir === "asc" ? "▲" : "▼"}` : base;
@@ -28,7 +27,6 @@ export const HeaderSort = React.memo(function HeaderSort({
       style={{
         position: "relative",
         background: "var(--mantine-color-body)",
-        borderBottom: `1px solid var(--mantine-color-default-border)`,
         height: GRID.halfRowHeight,
         padding: `0 ${GRID.scrollbarWidth}px 0 ${GRID.listLeftPadding}px`,
       }}
@@ -38,7 +36,7 @@ export const HeaderSort = React.memo(function HeaderSort({
           display: "grid",
           alignItems: "center",
           height: "100%",
-          gridTemplateColumns: (isListView || hasOpenItemInView) ? GRID.colsList : GRID.colsGrid,
+          gridTemplateColumns: isListView ? GRID.colsList : GRID.colsGrid,
           gap: GRID.gap,
           fontWeight: 400,
         }}
@@ -61,7 +59,7 @@ export const HeaderSort = React.memo(function HeaderSort({
           role="columnheader"
           aria-label="Sort by Year"
           style={{ textAlign: "center", cursor: "pointer" }}
-          
+
         >
           <Text c={sortKey === "year" ? "var(--interlinked-color-primary)" : undefined} size="sm" fw={400}>{label("Year", "year")}</Text>
         </UnstyledButton>

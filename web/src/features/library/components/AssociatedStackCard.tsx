@@ -13,10 +13,10 @@ type Props = {
 // Card component for an associated stack of decks in the library view.
 export function AssociatedStackCard({ stack, isOpen, onStackClick }: Props): JSX.Element | null {
     const { label, items, key } = stack;
+    if (!items.length) return null;
+    
     const [isHovered, setIsHovered] = React.useState(false);
     const { isDark } = getTheme();
-
-    if (!items.length) return null;
 
     const numberOfItems = items.length;
     const cards = items.filter((g) => g.coverUrl);
@@ -49,18 +49,18 @@ export function AssociatedStackCard({ stack, isOpen, onStackClick }: Props): JSX
                     padding: GRID.gap,
                     borderRadius: 4,
                     border: isHoveredOrOpen
-                        ? "2px solid var(--interlinked-color-primary-soft)"
+                        ? "2px solid var(--interlinked-color-primary-translucent)"
                         : isDark
-                            ? "2px solid var(--mantine-color-dark-9)"
+                            ? "2px solid var(--mantine-color-dark-8)"
                             : "2px solid var(--mantine-color-gray-3)",
-                    backgroundColor: isOpen
+                    backgroundColor: isHoveredOrOpen
                         ? "var(--interlinked-color-primary-translucent)"
                         : "var(--mantine-color-body)",
                     cursor: "pointer",
                     display: "flex",
                     flexDirection: "column",
                     gap: GRID.gap,
-                    boxShadow: "0 2px 6px rgba(0, 0, 0, 0.15)",
+                    boxShadow: "0 0px 8px rgba(0, 0, 0, 0.15)",
                 }}
             >
                 <Text

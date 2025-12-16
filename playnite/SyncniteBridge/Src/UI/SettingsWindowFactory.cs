@@ -45,6 +45,8 @@ namespace SyncniteBridge.UI
             Action<string> onSaveApiBaseUrl,
             Action onPushInstalled,
             Action onForceSyncLibrary,
+            Action<Action<bool, string?>> subscribeBusy,
+            Action<Action<bool, string?>> unsubscribeBusy,
             string initialEmail,
             string initialPassword,
             string clientId,
@@ -163,6 +165,81 @@ namespace SyncniteBridge.UI
 
             // Bottom window buttons (row 10)
             SettingsWindowButtonsBuilder.BuildWindowButtons(ctx);
+
+            // ---- Busy overlay (add last so it sits on top) ----
+            var overlay = new Grid
+            {
+                Visibility = Visibility.Collapsed,
+                IsHitTestVisible = true, // blocks clicks behind it while shown
+                Background = new SolidColorBrush(Color.FromArgb(140, 0, 0, 0)), // dim backdrop
+            };
+
+            // Center card
+            var card = new Border
+            {
+                CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(16),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            // Try theme brush, else fallback
+            if (
+                !ThemeHelpers.TrySetDynamicBrush(
+                    card,
+                    Control.BackgroundProperty,
+                    "PanelBackgroundBrush"
+                )
+                && !ThemeHelpers.TrySetDynamicBrush(
+                    card,
+                    Control.BackgroundProperty,
+                    "ControlBackgroundBrush"
+                )
+            )
+            {
+                card.Background = new SolidColorBrush(Color.FromRgb(40, 40, 40));
+            }
+
+            var stack = new StackPanel { Orientation = Orientation.Vertical, Width = 320 };
+
+            var pb = new ProgressBar { IsIndeterminate = true, Height = 10 };
+
+            var busyText = new TextBlock
+            {
+                Text = "Working…",
+                Margin = new Thickness(0, 10, 0, 0),
+                TextWrapping = TextWrapping.Wrap,
+                HorizontalAlignment = HorizontalAlignment.Center,
+            };
+
+            ThemeHelpers.SetThemeTextBrush(busyText);
+
+            stack.Children.Add(pb);
+            stack.Children.Add(busyText);
+
+            card.Child = stack;
+            overlay.Children.Add(card);
+
+            // Cover everything
+            Grid.SetRowSpan(overlay, 999);
+            Grid.SetColumnSpan(overlay, 999);
+            root.Children.Add(overlay);
+
+            // Bind into ctx + create ctx.SetBusy delegate
+            ctx.BindBusyUi(overlay, busyText);
+
+            Action<bool, string?> busyHandler = (busy, msg) => ctx.SetBusy(busy, msg);
+
+            subscribeBusy?.Invoke(busyHandler);
+
+            win.Closed += (_, __) =>
+            {
+                try
+                {
+                    unsubscribeBusy?.Invoke(busyHandler);
+                }
+                catch { }
+            };
 
             // Local helpers
             void ApplyLoginLockState()

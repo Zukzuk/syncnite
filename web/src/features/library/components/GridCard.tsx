@@ -1,11 +1,12 @@
 import React from "react";
-import { Box } from "@mantine/core";
+import { ActionIcon, Box, CloseButton } from "@mantine/core";
 import { GameItem, ItemPositions } from "../../../types/types";
 import { GRID, Z_INDEX } from "../../../lib/constants";
 import { ItemContent } from "./ItemContent";
 import { ItemBackground } from "./ItemBackground";
 import { ItemRow } from "./ItemRow";
 import { ItemCard } from "./ItemCard";
+import { IconX } from "@tabler/icons-react";
 
 function calcCardPosition(
     index: number,
@@ -111,10 +112,10 @@ export const GridCard = React.memo(function GridCard({
                 width: cardWidth,
                 height: cardHeight,
                 zIndex: cardZIndex,
+                cursor: isOpen ? "default" : "pointer",
             }}
         >
             <Box
-                role="grid-card-button"
                 tabIndex={0}
                 aria-expanded={isOpen}
                 aria-label={title}
@@ -122,16 +123,15 @@ export const GridCard = React.memo(function GridCard({
                     position: "relative",
                     overflow: "hidden",
                     isolation: "isolate",
-                    cursor: "pointer",
                     userSelect: "none",
-                    border: isListView || isOpen
+                    backgroundColor: !isOpen && isHovered && isListView
+                        ? "var(--mantine-color-dark-8)"
+                        : "transparent",
+                    border: isOpen
                         ? undefined
-                        : isHovered
+                        : isHovered && !isListView
                             ? "2px solid var(--interlinked-color-primary-soft)"
                             : "2px solid transparent",
-                    borderBottom: isListView
-                        ? "1px solid var(--mantine-color-default-border)"
-                        : undefined,
                     borderRadius: isListView
                         ? 0
                         : isOpen
@@ -145,8 +145,29 @@ export const GridCard = React.memo(function GridCard({
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
                 onMouseDown={() => setIsHovered(false)}
-                onClick={() => onToggleClickBounded()}
+                onClick={!isOpen ? () => onToggleClickBounded() : undefined}
             >
+                {isOpen && (
+                    <ActionIcon
+                        variant="subtle"
+                        size="lg"
+                        radius="xl"
+                        color={"var(--interlinked-color-secondary)"}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleClickBounded();
+                        }}
+                        style={{
+                            position: "absolute",
+                            top: 10,
+                            right: 10,
+                            zIndex: Z_INDEX.aboveBase + 1,
+                        }}
+                    >
+                        <IconX color="var(--interlinked-color-secondary)" size={18} />
+                    </ActionIcon>
+                )}
+
                 <Box
                     style={{
                         position: "relative",

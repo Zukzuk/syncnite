@@ -2,8 +2,8 @@ import { promises as fs } from "node:fs";
 import { join, dirname, resolve, sep } from "node:path";
 import { createHash } from "node:crypto";
 import { rootLog } from "../logger";
-import { DB_ROOT, INSTALLED_ROOT, MEDIA_ROOT, SNAPSHOT_ROOT, COLLECTIONS } from "../constants";   
-import { PlayniteClientManifest, PlayniteDeltaManifest, PlayniteError } from "../types/types";
+import { DB_ROOT, INSTALLED_ROOT, MEDIA_ROOT, SNAPSHOT_ROOT, COLLECTIONS } from "../constants";
+import { InstalledStateRow, PlayniteClientManifest, PlayniteDeltaManifest, PlayniteError } from "../types/types";
 
 const log = rootLog.child("playniteService");
 
@@ -188,26 +188,37 @@ export class PlayniteService {
 
     /**
      * Pushes installed game IDs to the server.
-     * @param installed Installed game IDs
-     * @param email User email
+     * Expects InstalledStateRow[]:
+     *   { id, isInstalled, installDirectory?, installSize? }
+     *
+     * Writes JSON:
+     *   { installed: string[], updatedAt, source }
      */
-    async pushInstalled(installed: unknown, email: string): Promise<number> {
+    async pushInstalled(installed: InstalledStateRow[], email: string): Promise<number> {
         if (!Array.isArray(installed)) {
-            log.warn("Invalid payload, expected { installed: string[] }");
+            log.warn("Invalid payload, expected InstalledStateRow[]");
             throw new PlayniteError(
                 400,
                 "invalid_installed_payload",
-                "Body must be { installed: string[] }"
+                "Body must be { installed: InstalledStateRow[] }"
             );
         }
         if (!email) {
             throw new PlayniteError(400, "missing_email", "missing email");
         }
 
-        log.info(`Received ${installed.length} installed entries`);
+        log.info(`Received installed push with ${installed.length} rows`);
 
-        const uniq = Array.from(new Set(installed.map((s: any) => String(s))));
-        log.info(`Normalized and deduped → ${uniq.length} unique entries`);
+        // Strict normalization: only object rows, only isInstalled === true
+        const ids = installed
+            .map((x: any): string | null => {
+                const isInstalled = Boolean(x.IsInstalled);
+                log.info(`Found installed id=${x.Id}`);
+                return isInstalled ? x.Id : null;
+            })
+            .filter((x: string | null): x is string => !!x);
+
+        const uniq = Array.from(new Set(ids));
 
         const out = {
             installed: uniq,
@@ -219,6 +230,7 @@ export class PlayniteService {
             .trim()
             .toLowerCase()
             .replace(/[\\/:*?"<>|]/g, "_");
+
         await ensureDir(INSTALLED_ROOT);
         const outPath = join(INSTALLED_ROOT, `${safeEmail}.installed.json`);
 
