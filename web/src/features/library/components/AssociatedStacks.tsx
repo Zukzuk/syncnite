@@ -44,7 +44,7 @@ export function AssociatedStacks({
             <Box
                 style={{
                     display: "grid",
-                    gridTemplateColumns: `repeat(${stackColumns}, ${GRID.cardWidth}px)`,
+                    gridTemplateColumns: `repeat(${stackColumns}, ${GRID.cardWidth * 0.7}px)`,
                     gap: GRID.gap,
                     justifyContent: "flex-start",
                     alignContent: "flex-start",

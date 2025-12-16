@@ -186,14 +186,14 @@ function calcAssociatedLayout(
     if (width <= 0 || height <= 0 || totalCards === 0) {
         return {
             deckColumns: 0,
-            stackColumns: Math.max(1, Math.floor(width / GRID.cardWidth)),
+            stackColumns: Math.max(1, Math.floor(width / (GRID.cardWidth * 0.7))),
             maxCardsPerDeckColumn: null,
             minStackColumns: 1,
         };
     }
 
     const deckColWidth = GRID.cardWidth + GRID.gap * 2;
-    const stackColWidth = GRID.cardWidth + GRID.gap;
+    const stackColWidth = GRID.cardWidth * 0.7 + GRID.gap;
 
     const cardHeight = (GRID.cardWidth * 32) / 23;
     const stepY = GRID.card_step_y;
@@ -226,7 +226,7 @@ function calcAssociatedLayout(
 
     if (maxDeckColsByWidth === 0) {
         const deckColumns = 1;
-        const minStackColumns = deckColumns >= 6 ? 2 : 1; // = 1 here
+        const minStackColumns = deckColumns >= 6 ? 2 : 1;
         const remainingWidth = width - deckColumns * deckColWidth;
         const stackColumns =
             remainingWidth >= stackColWidth

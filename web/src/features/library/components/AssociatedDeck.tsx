@@ -86,15 +86,17 @@ export function AssociatedDeck({
                 transitionProperty: "opacity, transform",
                 transitionDuration: "220ms, 260ms",
                 transitionTimingFunction: "ease, ease",
-                maxWidth: colCount * (GRID.cardWidth + GRID.gap * 2) + GRID.gap,
+                maxWidth: colCount * (GRID.cardWidth + GRID.gap * 2) + GRID.gap * 2,
             }}
         >
             <Text
                 size="xs"
+                c="var(--interlinked-color-secondary)"
                 style={{
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
+                    fontSize: 14,
                 }}
             >
                 {label}
@@ -102,13 +104,15 @@ export function AssociatedDeck({
 
             <Box
                 className="subtle-scrollbar"
-                p={GRID.gap}
+                p={GRID.gap * 2}
+                pr={GRID.gap}
                 style={{
                     flex: "1 1 auto",
                     height: "100%",
                     overflowY: "auto",
                     overflowX: "hidden",
                     overscrollBehaviorY: "contain",
+                    boxShadow: "inset 0 0 20px rgba(0, 0, 0, 0.6)",
                 }}
             >
                 <Box

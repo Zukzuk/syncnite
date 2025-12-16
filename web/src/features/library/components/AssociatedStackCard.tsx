@@ -4,9 +4,9 @@ import { GRID } from "../../../lib/constants";
 import { AssociatedItems } from "../../../types/types";
 import { getTheme } from "../../../theme";
 
-type Props = { 
-    stack: AssociatedItems; 
-    isOpen: boolean; 
+type Props = {
+    stack: AssociatedItems;
+    isOpen: boolean;
     onStackClick: (key: string) => void;
 };
 
@@ -18,6 +18,7 @@ export function AssociatedStackCard({ stack, isOpen, onStackClick }: Props): JSX
 
     if (!items.length) return null;
 
+    const numberOfItems = items.length;
     const cards = items.filter((g) => g.coverUrl);
     const previewSlots = Array.from(
         { length: 4 },
@@ -33,7 +34,7 @@ export function AssociatedStackCard({ stack, isOpen, onStackClick }: Props): JSX
             bg="var(--mantine-color-body)"
             style={{
                 flex: "0 0 auto",
-                width: GRID.cardWidth,
+                width: GRID.cardWidth * 0.7,
                 borderRadius: 4,
             }}
         >
@@ -64,7 +65,8 @@ export function AssociatedStackCard({ stack, isOpen, onStackClick }: Props): JSX
             >
                 <Text
                     size="xs"
-                    c={ isOpen ? "var(--interlinked-color-primary-soft)" : "dimmed" }
+                    c={isOpen ? "var(--interlinked-color-primary-soft)" : "dimmed"}
+                    title={label}
                     style={{
                         overflow: "hidden",
                         textOverflow: "ellipsis",
@@ -112,11 +114,11 @@ export function AssociatedStackCard({ stack, isOpen, onStackClick }: Props): JSX
                     ))}
                 </Box>
 
-                <Text 
-                    size="xs" 
-                    c={ isOpen ? "var(--interlinked-color-primary-soft)" : "dimmed" }
+                <Text
+                    size="xs"
+                    c={isOpen ? "var(--interlinked-color-primary-soft)" : "dimmed"}
                 >
-                    {cards.length ? `${cards.length} game${cards.length !== 1 ? "s" : ""}` : "No games"}
+                    {numberOfItems ? `${numberOfItems} game${numberOfItems !== 1 ? "s" : ""}` : "No games"}
                 </Text>
             </Box>
         </Stack>
