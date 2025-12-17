@@ -49,6 +49,7 @@ export function AssociatedDetails({ item, onWallpaperBg }: Props): JSX.Element {
                     border: isDark
                         ? "2px solid var(--mantine-color-dark-8)"
                         : "2px solid var(--mantine-color-gray-3)",
+                    boxShadow: "0 0px 8px rgba(0, 0, 0, 0.35)",
                 }}
             />
 
@@ -57,14 +58,20 @@ export function AssociatedDetails({ item, onWallpaperBg }: Props): JSX.Element {
                 <Group gap={6} wrap="wrap">
                     <Badge
                         size="xs"
-                        color={isInstalled ? "var(--interlinked-color-success)" : "var(--interlinked-color-suppressed)"}
+                        color={isInstalled 
+                            ? "var(--interlinked-color-success)" 
+                            : "var(--interlinked-color-suppressed)"}
                         variant="filled"
                     >
                         {isInstalled ? "Installed" : "Not installed"}
                     </Badge>
 
                     {isHidden && (
-                        <Badge size="xs" color="var(--interlinked-color-warning)" variant="filled">
+                        <Badge 
+                            size="xs"
+                            variant="filled" 
+                            color="var(--interlinked-color-warning)" 
+                        >
                             Hidden
                         </Badge>
                     )}
@@ -130,6 +137,7 @@ export function AssociatedDetails({ item, onWallpaperBg }: Props): JSX.Element {
                         border: isDark
                             ? "2px solid var(--mantine-color-dark-8)"
                             : "2px solid var(--mantine-color-gray-3)",
+                        boxShadow: "0 0px 8px rgba(0, 0, 0, 0.35)",
                     }}
                 />
 

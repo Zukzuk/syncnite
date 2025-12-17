@@ -2,6 +2,7 @@ import { Paper, Stack, Button, rem } from "@mantine/core";
 import { LETTERS_LIST, Z_INDEX } from "../../../lib/constants";
 import { Letter } from "../../../types/types";
 import { getTheme } from "../../../theme";
+import React from "react";
 
 type Props = {
     activeLetter: Letter;
@@ -13,9 +14,7 @@ type Props = {
 export function AlphabeticalRail({ activeLetter, railCounts, onScrollJump }: Props): JSX.Element | null {
     const letters = LETTERS_LIST.filter((l) => (railCounts[l] ?? 0) > 0);
     if (letters.length < 10) return null;
-
-    const { theme, isDark } = getTheme();
-    const backgroundColor = isDark ? theme.colors.dark[6] : theme.white;
+    const [hoveredLetter, setHoveredLetter] = React.useState<Letter | null>(null);
 
     return (
         <Paper
@@ -34,34 +33,44 @@ export function AlphabeticalRail({ activeLetter, railCounts, onScrollJump }: Pro
                 width: rem(22),
                 padding: "8px 0",
                 zIndex: Z_INDEX.high,
-                background: backgroundColor,
                 transform: "translateY(-50%)",
                 transition: "background-color 140ms ease",
             }}
         >
-            <Stack gap={2} align="stretch" justify="center" style={{ width: "100%" }}>
+            <Stack
+                gap={2}
+                align="stretch"
+                justify="center"
+                style={{ width: "100%" }}
+            >
                 {letters.map((letter) => {
                     const isActive = activeLetter.toUpperCase() === letter;
+                    const isHovered = hoveredLetter === letter;
+
                     return (
                         <Button
                             type="button"
-                            variant={isActive ? "filled" : "subtle"}
-                            color="var(--interlinked-color-primary)"
                             size="compact-xs"
+                            variant="transparent"
                             fullWidth
                             radius={0}
-                            onClick={() => onScrollJump(letter)}
                             aria-pressed={isActive}
                             style={{
-                                height: rem(16),
                                 padding: 0,
+                                height: rem(16),
                                 fontSize: rem(11),
                                 lineHeight: 1,
-                                fontWeight: isActive ? 300 : 100,
-                                justifyContent: "center",
                                 userSelect: "none",
+                                justifyContent: "center",
+                                fontWeight: isActive || isHovered ? 700 : 100,
+                                color: isActive || isHovered
+                                    ? "var(--interlinked-color-secondary)"
+                                    : "var(--interlinked-color-primary)",
                                 transition: "background-color 140ms ease, color 140ms ease",
                             }}
+                            onMouseEnter={() => setHoveredLetter(letter)}
+                            onMouseLeave={() => setHoveredLetter(null)}
+                            onClick={() => onScrollJump(letter)}
                         >
                             {letter}
                         </Button>

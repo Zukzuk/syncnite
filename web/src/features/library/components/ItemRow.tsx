@@ -132,16 +132,7 @@ export function ItemRow({ item, isOpen }: Props): JSX.Element {
                     </Box>
 
                     <Flex gap={8} style={{ minWidth: 0 }}>
-                        <Text
-                            fw={600}
-                            title={title}
-                            className="game-series"
-                            style={{
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                            }}
-                        >
+                        <Text style={{ fontSize: 14 }}>
                             {series && series.length > 0 ? series.join(", ") : ""}
                         </Text>
                     </Flex>

@@ -29,7 +29,7 @@ export function AssociatedDeckCard({
 }: Props) {
     const { isDark } = getTheme();
     const { colIndex, indexInColumn, id, metaIndex } = meta;
-    const { title, year, coverUrl, isInstalled, isHidden, index } = item;
+    const { title, year, coverUrl, isInstalled, isHidden } = item;
 
     const left = colIndex * (GRID.cardWidth + GRID.gap * 2);
     const top = indexInColumn * GRID.card_step_y;

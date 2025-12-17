@@ -51,7 +51,12 @@ export const HeaderSort = React.memo(function HeaderSort({
           aria-label="Sort by Title"
           style={{ textAlign: "left", cursor: "pointer" }}
         >
-          <Text c={sortKey === "title" ? "var(--interlinked-color-primary)" : undefined} size="sm" fw={400}>{label("Title", "title")}</Text>
+          <Text 
+            c={sortKey === "title" ? "var(--interlinked-color-primary)" : undefined} 
+            style={{ fontSize: 14 }}
+          >
+            {label("Title", "title")}
+          </Text>
         </UnstyledButton>
 
         <UnstyledButton
@@ -61,7 +66,12 @@ export const HeaderSort = React.memo(function HeaderSort({
           style={{ textAlign: "center", cursor: "pointer" }}
 
         >
-          <Text c={sortKey === "year" ? "var(--interlinked-color-primary)" : undefined} size="sm" fw={400}>{label("Year", "year")}</Text>
+          <Text 
+            c={sortKey === "year" ? "var(--interlinked-color-primary)" : undefined} 
+            style={{ fontSize: 14 }}
+          >
+            {label("Year", "year")}
+          </Text>
         </UnstyledButton>
 
         <UnstyledButton
@@ -70,7 +80,12 @@ export const HeaderSort = React.memo(function HeaderSort({
           aria-label="Sort by Platform"
           style={{ textAlign: "center", cursor: "pointer" }}
         >
-          <Text c={sortKey === "source" ? "var(--interlinked-color-primary)" : undefined} size="sm" fw={400}>{label("Platform", "source")}</Text>
+          <Text 
+            c={sortKey === "source" ? "var(--interlinked-color-primary)" : undefined} 
+            style={{ fontSize: 14 }}
+          >
+            {label("Platform", "source")}
+          </Text>
         </UnstyledButton>
 
         <UnstyledButton
@@ -79,7 +94,12 @@ export const HeaderSort = React.memo(function HeaderSort({
           aria-label="Sort by Series"
           style={{ textAlign: "left", cursor: "pointer" }}
         >
-          <Text c={sortKey === "series" ? "var(--interlinked-color-primary)" : undefined} size="sm" fw={400}>{label("Series", "series")}</Text>
+          <Text 
+            c={sortKey === "series" ? "var(--interlinked-color-primary)" : undefined} 
+            style={{ fontSize: 14 }}
+          >
+            {label("Series", "series")}
+          </Text>
         </UnstyledButton>
       </Box>
     </Box>

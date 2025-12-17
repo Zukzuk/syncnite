@@ -46,6 +46,7 @@ type Props = {
     item: GameItem;
     index: number;
     isOpen: boolean;
+    isDark: boolean;
     openWidth: string;
     openHeight: string;
     isListView: boolean;
@@ -60,6 +61,7 @@ type Props = {
 export const GridCard = React.memo(function GridCard({
     item,
     isOpen,
+    isDark,
     index,
     openWidth,
     openHeight,
@@ -124,19 +126,17 @@ export const GridCard = React.memo(function GridCard({
                     overflow: "hidden",
                     isolation: "isolate",
                     userSelect: "none",
-                    backgroundColor: !isOpen && isHovered && isListView
-                        ? "var(--mantine-color-dark-8)"
-                        : "transparent",
+                    backgroundColor: !isListView || isOpen || !isHovered
+                        ? undefined
+                        : isDark 
+                            ? "var(--mantine-color-dark-8)" 
+                            : "var(--mantine-color-gray-1)",
                     border: isOpen
                         ? undefined
                         : isHovered && !isListView
                             ? "2px solid var(--interlinked-color-primary-soft)"
                             : "2px solid transparent",
-                    borderRadius: isListView
-                        ? 0
-                        : isOpen
-                            ? 0
-                            : 4,
+                    borderRadius: isListView ? 0 : isOpen ? 0 : 4,
                     padding:
                         isListView || isOpen
                             ? "0px 0px 0px 12px"
@@ -160,7 +160,7 @@ export const GridCard = React.memo(function GridCard({
                         style={{
                             position: "absolute",
                             top: 10,
-                            right: 10,
+                            right: 30,
                             zIndex: Z_INDEX.aboveBase + 1,
                         }}
                     >

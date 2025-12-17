@@ -86,6 +86,7 @@ export function AbsoluteGrid({
                                 item={item}
                                 index={index}
                                 isOpen={isOpen}
+                                isDark={isDark}
                                 positions={positions}
                                 openWidth={openWidth}
                                 openHeight={openHeight}
