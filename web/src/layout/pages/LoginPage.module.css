@@ -1,0 +1,440 @@
+/* Reduced motion: kill animations/transitions for the FX surface */
+@media (prefers-reduced-motion: reduce) {
+    .cardFx {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+    }
+
+    .cardFx[data-reveal="true"],
+    .cardFx[data-reveal="true"] *,
+    .cardFx[data-reveal="true"]::before,
+    .cardFx[data-reveal="true"]::after {
+        animation: none !important;
+        transition: none !important;
+        filter: none !important;
+    }
+}
+
+/* FX surface wrapper: hosts glitch overlays + base reveal (alpha + small slide) */
+.cardFx {
+    position: relative;
+    display: inline-block;
+    overflow: hidden;
+    border-radius: var(--mantine-radius-sm, 8px);
+    will-change: transform, opacity, filter;
+
+    /* base reveal */
+    opacity: 0;
+    transform: translateY(12px);
+    /* small slide up */
+    transition:
+        opacity 240ms ease,
+        transform 260ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.cardFx[data-reveal="true"] {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Real card container: hosts flicker/jitter/tear */
+.cardFxInner {
+    position: relative;
+    will-change: transform, opacity, filter, clip-path;
+}
+
+/* Run the “logo-style” chaos once when the card becomes visible */
+.cardFx[data-reveal="true"] .cardFxInner {
+    animation:
+        flicker 780ms steps(2, end) 0ms 1,
+        microJitter 240ms steps(2, end) 120ms 1,
+        tearBands 560ms steps(1, end) 180ms 1;
+}
+
+/* Glitch slices: pseudo overlays */
+.cardFx::before,
+.cardFx::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    will-change: transform, opacity, clip-path, filter;
+
+    /* “sample” underlying pixels (works well on modern Chromium/Safari) */
+    background: transparent;
+    backdrop-filter: contrast(1.06) saturate(1.06);
+    mix-blend-mode: screen;
+}
+
+/* Top slice (cyan tint) */
+.cardFx[data-reveal="true"]::before {
+    clip-path: inset(0 0 58% 0);
+    filter: drop-shadow(2px 0 rgba(0, 255, 255, 0.55));
+    animation: glitchSlice 520ms steps(2, end) 260ms 1;
+}
+
+/* Bottom slice (magenta tint) + scanline/noise texture */
+.cardFx[data-reveal="true"]::after {
+    clip-path: inset(54% 0 0 0);
+    filter: drop-shadow(-2px 0 rgba(255, 0, 128, 0.5));
+    animation:
+        glitchSlice 520ms steps(2, end) 260ms 1,
+        scanNoise 420ms steps(2, end) 220ms 1;
+
+    background:
+        repeating-linear-gradient(to bottom,
+            rgba(255, 255, 255, 0.06),
+            rgba(255, 255, 255, 0.06) 1px,
+            rgba(0, 0, 0, 0) 3px,
+            rgba(0, 0, 0, 0) 6px);
+    backdrop-filter: contrast(1.08) saturate(1.08);
+}
+
+/* ---------- Animations ---------- */
+
+@keyframes flicker {
+    0% {
+        opacity: 0;
+        filter: blur(3px);
+    }
+
+    10% {
+        opacity: 1;
+        filter: blur(0);
+    }
+
+    20% {
+        opacity: 0.2;
+    }
+
+    30% {
+        opacity: 1;
+    }
+
+    40% {
+        opacity: 0.5;
+    }
+
+    55% {
+        opacity: 1;
+    }
+
+    70% {
+        opacity: 0.7;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes microJitter {
+    0% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-1px);
+    }
+
+    50% {
+        transform: translateX(1px);
+    }
+
+    75% {
+        transform: translateX(-1px);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
+}
+
+@keyframes glitchSlice {
+    0% {
+        opacity: 0;
+        transform: translateX(0);
+    }
+
+    12% {
+        opacity: 1;
+        transform: translateX(-3px);
+    }
+
+    24% {
+        opacity: 1;
+        transform: translateX(4px);
+    }
+
+    36% {
+        opacity: 1;
+        transform: translateX(-5px);
+    }
+
+    48% {
+        opacity: 1;
+        transform: translateX(2px);
+    }
+
+    60% {
+        opacity: 1;
+        transform: translateX(-2px);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateX(0);
+    }
+}
+
+@keyframes scanNoise {
+    0% {
+        opacity: 0;
+        transform: translateY(0);
+    }
+
+    15% {
+        opacity: .35;
+        transform: translateY(-2px);
+    }
+
+    35% {
+        opacity: .25;
+        transform: translateY(3px);
+    }
+
+    55% {
+        opacity: .30;
+        transform: translateY(-1px);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(0);
+    }
+}
+
+/* Convincing tearing: multi-band clip + brief x shear */
+@keyframes tearBands {
+    0% {
+        clip-path: inset(0 0 0 0);
+        transform: translateX(0);
+        filter: none;
+    }
+
+    14% {
+        clip-path: polygon(0% 0%, 100% 0%, 100% 14%, 0% 14%,
+                0% 18%, 100% 18%, 100% 26%, 0% 26%,
+                0% 30%, 100% 30%, 100% 44%, 0% 44%,
+                0% 50%, 100% 50%, 100% 58%, 0% 58%,
+                0% 64%, 100% 64%, 100% 78%, 0% 78%,
+                0% 84%, 100% 84%, 100% 100%, 0% 100%);
+        transform: translateX(-6px) skewX(-0.6deg);
+        filter: contrast(1.08) saturate(1.08);
+    }
+
+    24% {
+        clip-path: polygon(0% 0%, 100% 0%, 100% 10%, 0% 10%,
+                0% 16%, 100% 16%, 100% 24%, 0% 24%,
+                0% 32%, 100% 32%, 100% 40%, 0% 40%,
+                0% 48%, 100% 48%, 100% 62%, 0% 62%,
+                0% 68%, 100% 68%, 100% 74%, 0% 74%,
+                0% 82%, 100% 82%, 100% 100%, 0% 100%);
+        transform: translateX(7px) skewX(0.7deg);
+    }
+
+    36% {
+        clip-path: polygon(0% 0%, 100% 0%, 100% 20%, 0% 20%,
+                0% 24%, 100% 24%, 100% 34%, 0% 34%,
+                0% 40%, 100% 40%, 100% 52%, 0% 52%,
+                0% 60%, 100% 60%, 100% 70%, 0% 70%,
+                0% 76%, 100% 76%, 100% 100%, 0% 100%);
+        transform: translateX(-3px);
+    }
+
+    58% {
+        clip-path: inset(0 0 0 0);
+        transform: translateX(0);
+        filter: none;
+    }
+
+    100% {
+        clip-path: inset(0 0 0 0);
+        transform: translateX(0);
+        filter: none;
+    }
+}
+
+
+/* Reduced motion: no glitch on loading text */
+@media (prefers-reduced-motion: reduce) {
+
+    .loadingFx,
+    .loadingFx::before,
+    .loadingFx::after {
+        animation: none !important;
+        transform: none !important;
+        opacity: 1 !important;
+        text-shadow: none !important;
+        filter: none !important;
+    }
+}
+
+/* Small looping glitch for the loading label */
+.loadingFx {
+    position: relative;
+    display: inline-block;
+    letter-spacing: 0.28em;
+    /* optional: cyber vibe */
+    will-change: transform, opacity, filter;
+    animation:
+        loadFlicker 1400ms steps(2, end) infinite,
+        loadJitter 220ms steps(2, end) infinite;
+}
+
+/* “Chromatic” ghost layers */
+.loadingFx::before,
+.loadingFx::after {
+    content: attr(data-text);
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    will-change: transform, opacity, clip-path, filter;
+}
+
+/* If you don’t want to set data-text in JSX, this fallback keeps it working */
+.loadingFx::before,
+.loadingFx::after {
+    content: "LOADING";
+}
+
+/* Cyan slice */
+.loadingFx::before {
+    filter: drop-shadow(1px 0 rgba(0, 255, 255, 0.55));
+    animation: loadSliceA 1600ms steps(2, end) infinite;
+}
+
+/* Magenta slice */
+.loadingFx::after {
+    filter: drop-shadow(-1px 0 rgba(255, 0, 128, 0.5));
+    animation: loadSliceB 1600ms steps(2, end) infinite;
+}
+
+/* ----- Animations ----- */
+
+@keyframes loadJitter {
+    0% {
+        transform: translate(0, 0);
+    }
+
+    25% {
+        transform: translate(-0.5px, 0);
+    }
+
+    50% {
+        transform: translate(0.6px, 0.2px);
+    }
+
+    75% {
+        transform: translate(-0.4px, -0.2px);
+    }
+
+    100% {
+        transform: translate(0, 0);
+    }
+}
+
+@keyframes loadFlicker {
+    0% {
+        opacity: 0.55;
+        filter: blur(0.4px);
+    }
+
+    10% {
+        opacity: 1;
+        filter: blur(0);
+    }
+
+    22% {
+        opacity: 0.65;
+    }
+
+    32% {
+        opacity: 1;
+    }
+
+    48% {
+        opacity: 0.8;
+    }
+
+    60% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.9;
+    }
+}
+
+/* Tiny “tear” slices (clip + small x shift) */
+@keyframes loadSliceA {
+
+    0%,
+    70%,
+    100% {
+        opacity: 0;
+        transform: translateX(0);
+        clip-path: inset(0 0 0 0);
+    }
+
+    12% {
+        opacity: 0.55;
+        clip-path: inset(0 0 62% 0);
+        transform: translateX(-1.5px);
+    }
+
+    18% {
+        opacity: 0.55;
+        clip-path: inset(10% 0 45% 0);
+        transform: translateX(1.2px);
+    }
+
+    26% {
+        opacity: 0.35;
+        clip-path: inset(0 0 72% 0);
+        transform: translateX(-0.8px);
+    }
+}
+
+@keyframes loadSliceB {
+
+    0%,
+    68%,
+    100% {
+        opacity: 0;
+        transform: translateX(0);
+        clip-path: inset(0 0 0 0);
+    }
+
+    14% {
+        opacity: 0.5;
+        clip-path: inset(54% 0 0 0);
+        transform: translateX(1.4px);
+    }
+
+    20% {
+        opacity: 0.5;
+        clip-path: inset(62% 0 0 0);
+        transform: translateX(-1.1px);
+    }
+
+    28% {
+        opacity: 0.3;
+        clip-path: inset(48% 0 0 0);
+        transform: translateX(0.9px);
+    }
+}

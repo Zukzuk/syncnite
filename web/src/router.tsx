@@ -65,24 +65,26 @@ export const router = createBrowserRouter([
   {
     element: <AdminGate />,
     children: [
+      // Narrowcast: no shell
+      {
+        element: <LoggedInOnly />,
+        children: [{ path: "/narrowcast/:id?", element: <NarrowcastPage /> }],
+      },
+
+      // Auth pages: shell hidden (or no shell)
       {
         element: <WithShell hideSite />,
         children: [
           {
             path: "/login",
             element: <LoggedOutOnly />,
-            children: [{ index: true, element: <LoginPage /> }]
+            children: [{ index: true, element: <LoginPage /> }],
           },
-          {
-            path: "/logout",
-            element: <LogoutAction />
-          },
-          {
-            element: <LoggedInOnly />,
-            children: [{ path: "/narrowcast/:id?", element: <NarrowcastPage /> }],
-          },
+          { path: "/logout", element: <LogoutAction /> },
         ],
       },
+
+      // Normal site: shell visible
       {
         element: <WithShell />,
         children: [
@@ -97,9 +99,7 @@ export const router = createBrowserRouter([
           },
           {
             element: <AdminOnly />,
-            children: [
-              { path: "/admin", element: <AdminPage /> }
-            ],
+            children: [{ path: "/admin", element: <AdminPage /> }],
           },
           { path: "*", element: <Navigate to="/" replace /> },
         ],

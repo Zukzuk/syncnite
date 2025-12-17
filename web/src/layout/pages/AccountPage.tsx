@@ -276,7 +276,7 @@ export default function AccountPage(): JSX.Element {
 
                     {loadingStatus ? (
                         <Group gap="xs">
-                            <Loader size="xs" />
+                            <Loader size="xs" type="bars" />
                             <Text size="sm" c="dimmed">
                                 Loading Steam status…
                             </Text>

@@ -232,7 +232,7 @@ export default function NarrowcastPage(): JSX.Element {
     if (!libraryData) {
         return (
             <Center h="100vh" w="100vw">
-                <Loader size="lg" />
+                <Loader size="md" type="bars" />
             </Center>
         );
     }
@@ -389,7 +389,7 @@ export default function NarrowcastPage(): JSX.Element {
                 </Box>
             </Box>
 
-            {/* Click zones (STAY ACTIVE) */}
+            {/* Click zones */}
             <Box
                 onClick={prev}
                 style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "35%", cursor: "pointer", zIndex: 5 }}
@@ -399,7 +399,7 @@ export default function NarrowcastPage(): JSX.Element {
                 style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: "35%", cursor: "pointer", zIndex: 5 }}
             />
 
-            {/* Info panel (ALWAYS VISIBLE) */}
+            {/* Info panel */}
             <Paper
                 withBorder
                 radius="md"

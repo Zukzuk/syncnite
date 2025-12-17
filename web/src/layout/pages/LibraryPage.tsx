@@ -13,7 +13,7 @@ export default function LibraryPage(): JSX.Element {
         return (
             <Stack style={{ height: "100%", minHeight: 0 }}>
                 <Center w={`calc(100vw - ${isDesktop ? GRID.navBarWidth : 0}px)`} h={`calc(100vh)`}>
-                    <Loader size="lg" />
+                    <Loader size="md" type="bars" />
                 </Center>
             </Stack>
         );

@@ -4,6 +4,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { AppNavbar } from "./AppNavbar";
 import { GRID, Z_INDEX } from "../lib/constants";
 import { getTheme } from "../theme";
+import { useIntroFlow } from "../hooks/useIntroFlow";
 
 export default function AppShellLayout({
   children,
@@ -14,6 +15,11 @@ export default function AppShellLayout({
 }) {
   const { breakpoint } = getTheme();
   const [opened, { toggle: toggleNavbar }] = useDisclosure();
+
+  const flow = useIntroFlow({
+    gateEnabled: !hideSite,
+    gateStartsHidden: true,
+  });
 
   return (
     <AppShell
@@ -30,12 +36,15 @@ export default function AppShellLayout({
     >
       {!hideSite && (
         <AppShell.Navbar p={0} withBorder={false}>
-          <AppNavbar toggleNavbar={toggleNavbar} />
+          <AppNavbar
+            toggleNavbar={toggleNavbar}
+            onIntroDone={flow.gate.onIntroDone}
+            gateStyle={flow.gate.gateStyle}
+          />
         </AppShell.Navbar>
       )}
 
-      {/* Floating burger for mobile toggle */}
-      {!hideSite && (
+      {!hideSite && flow.gate.showBurger && (
         <Box
           style={{
             position: "absolute",
@@ -56,10 +65,11 @@ export default function AppShellLayout({
             color="var(--interlinked-color-primary)"
           />
         </Box>
-
       )}
 
-      <AppShell.Main>{children}</AppShell.Main>
+      <AppShell.Main>
+        <Box style={flow.gate.gateStyle}>{children}</Box>
+      </AppShell.Main>
     </AppShell>
   );
 }
