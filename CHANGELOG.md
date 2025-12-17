@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.35.1](https://github.com/Zukzuk/syncnite/compare/v1.35.0...v1.35.1) (2025-12-17)
+
+
+### Bug Fixes
+
+* fixed alphabetical sorting error ([c277e53](https://github.com/Zukzuk/syncnite/commit/c277e53f76aa5c477d9b8bd3a96bd5f639d12709))
+* fixed api deeplinks, added alot of ux improvements ([42f2a77](https://github.com/Zukzuk/syncnite/commit/42f2a778a2a2f4657e0f0bb646a13389bd4321b5))
+
 ## [1.35.0](https://github.com/Zukzuk/syncnite/compare/v1.34.2...v1.35.0) (2025-12-15)
 
 
