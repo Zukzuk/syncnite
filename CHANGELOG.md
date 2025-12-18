@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.36.0](https://github.com/Zukzuk/syncnite/compare/v1.35.3...v1.36.0) (2025-12-18)
+
+
+### Features
+
+* **a:** added media edition / version tag and kept working on UX ([724cf1a](https://github.com/Zukzuk/syncnite/commit/724cf1a82a91d7723bbf7c14098d93156baf0a09))
+
 ### [1.35.3](https://github.com/Zukzuk/syncnite/compare/v1.35.2...v1.35.3) (2025-12-18)
 
 ### [1.35.2](https://github.com/Zukzuk/syncnite/compare/v1.35.1...v1.35.2) (2025-12-17)
