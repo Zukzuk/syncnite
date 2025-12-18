@@ -1,6 +1,7 @@
 import React from "react";
 import ICO from "icojs";
 import { GRID } from "../lib/constants";
+import { CustomIconSVG, FallbackIcon } from "../styles/CustomIcons";
 
 function isIcoPath(url: string): boolean {
   try {
@@ -32,17 +33,23 @@ async function icoToPngDataUrl(icoUrl: string): Promise<string | null> {
 }
 
 type Props = {
-  src: string;
+  src: string | null | undefined;
   alt?: string
 };
 
 export function IconGame({ src, alt }: Props) {
+
+  if (!src) {
+    return <CustomIconSVG inner={FallbackIcon} viewBox="0 0 50 50" size={50} />;
+  }
+
   const [url, setUrl] = React.useState(src);
   const retriedRef = React.useRef(false);
 
   React.useEffect(() => {
     let cancelled = false;
     async function maybeConvert() {
+      if (!src) return;
       if (isIcoPath(src)) {
         const data = await icoToPngDataUrl(src);
         if (!cancelled && data) setUrl(data);
@@ -66,7 +73,7 @@ export function IconGame({ src, alt }: Props) {
         height: GRID.iconSize,
         objectFit: "contain",
         borderRadius: 6,
-        background: "var(--mantine-color-default)"
+        background: "var(--interlinked-color-body)"
       }}
       onError={async (e) => {
         const img = e.target as HTMLImageElement;

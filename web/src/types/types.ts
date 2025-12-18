@@ -77,18 +77,20 @@ export interface UIDerivedData {
 export interface GameItem {
   id: string;
   index?: number;
+  gameId: string;
   title: string;
   sortingName: string | null;
-  gameId: string;
+  year: number | null;
   source: string;
-  tags: string[];
-  series: string[];
+  sourceLink: string | null;
+  playniteLink: string;
+  htmlLink: string | null;
+  links: GameLink[] | null;
   isHidden: boolean;
   isInstalled: boolean;
-  link: string | null;
-  links: GameLink[] | null;
-  year: number | null;
-  iconUrl: string;
+  tags: string[];
+  series: string[];
+  iconUrl: string | null;
   coverUrl: string | null;
   bgUrl: string | null;
 };

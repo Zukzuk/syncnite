@@ -4,6 +4,8 @@ import { GameItem } from "../../../types/types";
 import { GRID } from "../../../lib/constants";
 import { IconShowMaximized } from "../../../components/IconShowMaximized";
 import { getTheme } from "../../../theme";
+import { IconLinkExternal } from "../../../components/IconExternalLink";
+import { IconLinkSource } from "../../../components/IconSourceLink";
 
 type Props = {
     item: GameItem;
@@ -12,7 +14,7 @@ type Props = {
 
 // Component to display associated details of a library item.   
 export function AssociatedDetails({ item, onWallpaperBg }: Props): JSX.Element {
-    const { sortingName, tags = [], series = [], isInstalled, isHidden, links, coverUrl, bgUrl } = item;
+    const { sortingName, tags = [], series = [], isInstalled, isHidden, links, coverUrl, bgUrl, source, htmlLink, sourceLink, title } = item;
     const isOpenDelayed = useDelayedFlag({ active: true, delayMs: 70 });
     const { isDark } = getTheme();
 
@@ -60,7 +62,7 @@ export function AssociatedDetails({ item, onWallpaperBg }: Props): JSX.Element {
                         size="xs"
                         color={isInstalled 
                             ? "var(--interlinked-color-success)" 
-                            : "var(--interlinked-color-suppressed)"}
+                            : "var(--interlinked-color-dark)"}
                         variant="filled"
                     >
                         {isInstalled ? "Installed" : "Not installed"}
@@ -75,6 +77,8 @@ export function AssociatedDetails({ item, onWallpaperBg }: Props): JSX.Element {
                             Hidden
                         </Badge>
                     )}
+                    <IconLinkExternal source={source} htmlLink={htmlLink} title={title} />
+                    <IconLinkSource source={source} sourceLink={sourceLink} />
                 </Group>
 
                 {/* Series */}

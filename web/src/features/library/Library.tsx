@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Flex } from "@mantine/core";
 import { useElementSize } from "@mantine/hooks";
 import { HeaderSort } from "../../components/HeaderSort";

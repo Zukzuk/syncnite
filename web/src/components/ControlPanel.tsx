@@ -5,7 +5,7 @@ import { useAuth } from "../hooks/useAuth";
 import { useExtensionStatus } from "../hooks/useExtensionStatus";
 import { useSteamWishlist } from "../hooks/useSteamWishlist";
 import { fetchSteamStatus } from "../lib/api";
-import { INTERVAL_MS, WEB_APP_VERSION } from "../lib/constants";
+import { INTERVAL_MS, SOURCE_MAP, WEB_APP_VERSION } from "../lib/constants";
 import type { SteamStatusResponse } from "../types/types";
 import { IconThemeSwitch } from "./IconThemeSwitch";
 import { ControlPanelTile } from "./ControlPanelTile";
@@ -50,23 +50,24 @@ export function ControlPanel({ toggleNavbar }: Props): JSX.Element {
         };
     }, [isLoggedIn]);
 
-    const steamConnected = !!steamStatus?.connected;
+    // Determine indicator colors
 
     const accountDot = !isLoggedIn
-        ? "var(--interlinked-color-suppressed)"
-        : isAdmin
-            ? "var(--interlinked-color-success)"
-            : "var(--interlinked-color-suppressed)";
+        ? "var(--interlinked-color-error)"
+        : "var(--interlinked-color-success)";
 
     const bridgeDot = !isLoggedIn || loading || !connected
-        ? "var(--interlinked-color-suppressed)"
+        ? "var(--interlinked-color-error)"
         : versionMismatch
             ? "var(--interlinked-color-warning)"
             : "var(--interlinked-color-success)";
-
+    
+    const steamConnected = !!steamStatus?.connected;
     const steamDot = !isLoggedIn || loadingSteam || !steamConnected
-        ? "var(--interlinked-color-suppressed)"
+        ? "var(--interlinked-color-error)"
         : "var(--interlinked-color-success)";
+
+    // Tooltips
 
     const accountTip = !isLoggedIn
         ? "Account: not signed in"
@@ -75,7 +76,7 @@ export function ControlPanel({ toggleNavbar }: Props): JSX.Element {
     const bridgeTip = !isLoggedIn
         ? "SyncniteBridge: sign in to see status"
         : loading
-            ? "SyncniteBridge: checking status…"
+            ? "SyncniteBridge: checking status..."
             : !connected
                 ? "SyncniteBridge: offline (no recent ping)"
                 : versionMismatch
@@ -87,7 +88,7 @@ export function ControlPanel({ toggleNavbar }: Props): JSX.Element {
     const steamTip = !isLoggedIn
         ? "Steam: sign in to link your account"
         : loadingSteam
-            ? "Steam: loading status…"
+            ? "Steam: loading status..."
             : steamConnected
                 ? `Steam: linked (wishlist ${wishlistCount}${lastSynced ? `, last synced ${lastSynced}` : ""})`
                 : "Steam: not linked";
@@ -107,7 +108,7 @@ export function ControlPanel({ toggleNavbar }: Props): JSX.Element {
         <Group gap={8} wrap="wrap">
             <ControlPanelTile tooltip={accountTip} dotColor={accountDot} icon={<IconUser size={18} />} toggleNavbar={toggleNavbar} />
             <ControlPanelTile tooltip={bridgeTip} dotColor={bridgeDot} icon={bridgeIcon} toggleNavbar={toggleNavbar} />
-            <ControlPanelTile tooltip={steamTip} dotColor={steamDot} icon={<IconBrandSteam size={18}/>} toggleNavbar={toggleNavbar}  />
+            <ControlPanelTile tooltip={steamTip} dotColor={steamDot} icon={SOURCE_MAP.steam.icon} toggleNavbar={toggleNavbar}  />
             <ControlPanelTile tooltip={themeTip} compIcon={<IconThemeSwitch />} />
         </Group>
     );

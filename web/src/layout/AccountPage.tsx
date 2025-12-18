@@ -1,15 +1,15 @@
 import * as React from "react";
 import { Container, Stack, Text, Card, Group, ThemeIcon, Badge, Divider, Button, Loader, Tooltip } from "@mantine/core";
 import { IconUser, IconClock, IconListDetails, IconPlugConnected, IconPlugConnectedX, IconDownload } from "@tabler/icons-react";
-import { getCreds } from "../../lib/utils";
-import { API_ENDPOINTS, GRID, INTERVAL_MS, WEB_APP_VERSION } from "../../lib/constants";
-import { fetchSteamStatus, syncSteamWishlist } from "../../lib/api";
-import type { SteamStatusResponse } from "../../types/types";
-import { useAuth } from "../../hooks/useAuth";
-import { useSteamWishlist } from "../../hooks/useSteamWishlist";
-import { useExtensionStatus } from "../../hooks/useExtensionStatus";
-import { TextDataRow } from "../../components/TextDataRow";
-import { getTheme } from "../../theme";
+import { getCreds } from "../lib/utils";
+import { API_ENDPOINTS, GRID, INTERVAL_MS, WEB_APP_VERSION } from "../lib/constants";
+import { fetchSteamStatus, syncSteamWishlist } from "../lib/api";
+import type { SteamStatusResponse } from "../types/types";
+import { useAuth } from "../hooks/useAuth";
+import { useSteamWishlist } from "../hooks/useSteamWishlist";
+import { useExtensionStatus } from "../hooks/useExtensionStatus";
+import { TextDataRow } from "../components/TextDataRow";
+import { getTheme } from "../theme";
 
 export default function AccountPage(): JSX.Element {
     const { state } = useAuth({ pollMs: 0 });
@@ -134,7 +134,7 @@ export default function AccountPage(): JSX.Element {
                             </div>
                         </Group>
                         <Badge
-                            color={isAdmin ? "var(--interlinked-color-success)" : "var(--interlinked-color-suppressed)"}
+                            color={isAdmin ? "var(--interlinked-color-success)" : "var(--interlinked-color-error)"}
                             variant="filled"
                             size="sm"
                             style={{ position: "absolute", top: GRID.gap, right: GRID.gap }}
@@ -183,7 +183,7 @@ export default function AccountPage(): JSX.Element {
                                 <Badge
                                     color={
                                         !connected
-                                            ? "var(--interlinked-color-suppressed)"
+                                            ? "var(--interlinked-color-error)"
                                             : versionMismatch
                                                 ? "var(--interlinked-color-warning)"
                                                 : "var(--interlinked-color-success)"
@@ -239,6 +239,7 @@ export default function AccountPage(): JSX.Element {
                 {/* Steam linking + wishlist */}
                 <Card withBorder shadow="sm" radius="md">
                     <Group justify="space-between" align="flex-start" mb="sm">
+                        
                         <Group gap="sm">
                             <ThemeIcon radius="xl" variant="light">
                                 {steamConnected ? <IconPlugConnected size={18} /> : <IconPlugConnectedX size={18} />}
@@ -251,25 +252,14 @@ export default function AccountPage(): JSX.Element {
                             </div>
                         </Group>
 
-                        {steamConnected ? (
-                            <Badge
-                                color="var(--interlinked-color-success)"
-                                variant="filled"
-                                size="sm"
-                                style={{ position: "absolute", top: GRID.gap, right: GRID.gap }}
-                            >
-                                Linked
-                            </Badge>
-                        ) : (
-                            <Badge
-                                color="var(--interlinked-color-suppressed)"
-                                variant="filled"
-                                size="sm"
-                                style={{ position: "absolute", top: GRID.gap, right: GRID.gap }}
-                            >
-                                Not linked
-                            </Badge>
-                        )}
+                        <Badge
+                            color={ steamConnected ? "var(--interlinked-color-success)" : "var(--interlinked-color-error)" }
+                            variant="filled"
+                            size="sm"
+                            style={{ position: "absolute", top: GRID.gap, right: GRID.gap }}
+                        >
+                            { steamConnected ? "Linked" : "Not linked" }
+                        </Badge>
                     </Group>
 
                     <Divider my="sm" />

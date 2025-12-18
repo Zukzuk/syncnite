@@ -89,6 +89,7 @@ export const LogoIntro = React.memo(function LogoIntro({
         style={{
           fontSize: 13,
           left: 34,
+          top: -2,
           width: "fit-content",
           color: "var(--interlinked-color-secondary)",
         }}

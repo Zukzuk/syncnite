@@ -13,13 +13,15 @@ import { IconLinkSource } from "../../../components/IconSourceLink";
 type Props = {
     item: GameItem;
     isOpen: boolean;
+    isListView: boolean;
 };
 
 // Row component for a library item in list view.
-export function ItemRow({ item, isOpen }: Props): JSX.Element {
-    const { id, isInstalled, isHidden, iconUrl, title, gameId, year, source, series, link } = item;
+export function ItemRow({ item, isOpen, isListView }: Props): JSX.Element | null {
+    if (!isOpen && !isListView) return null;
+
+    const { playniteLink, isInstalled, isHidden, iconUrl, title, year, source, series, htmlLink, sourceLink } = item;
     const [isHovered, setIsHovered] = React.useState(false);
-    const playniteUrl = `playnite://playnite/${isInstalled ? "start" : "showgame"}/${id}`;
 
     return (
         <Box
@@ -29,14 +31,14 @@ export function ItemRow({ item, isOpen }: Props): JSX.Element {
                 alignItems: "center",
                 height: GRID.rowHeight,
                 gap: GRID.gap,
-                gridTemplateColumns: GRID.colsList,
+                gridTemplateColumns: isOpen ? GRID.colsOpen : GRID.colsList,
             }}
         >
-            { /* ICON SECTION */ }  
+            { /* GAME ICON SECTION */}
             <Flex align="center" gap={GRID.gap} style={{ width: GRID.iconSize }}>
                 <Box
                     component="a"
-                    href={playniteUrl}
+                    href={playniteLink}
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
                     onClick={(e) => e.stopPropagation()}
@@ -83,8 +85,8 @@ export function ItemRow({ item, isOpen }: Props): JSX.Element {
                     </Box>
                 </Box>
             </Flex>
-                        
-            { /* TITLE SECTION */ }
+
+            { /* TITLE SECTION */}
             <Flex gap={8} align="center" style={{ minWidth: 0 }}>
                 <Text
                     fw={600}
@@ -93,9 +95,9 @@ export function ItemRow({ item, isOpen }: Props): JSX.Element {
                     style={{
                         flex: "0 1 auto",
                         minWidth: 0,
-                        overflow: isOpen ? undefined : "hidden",
-                        textOverflow: isOpen ? undefined : "ellipsis",
-                        whiteSpace: isOpen ? undefined : "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
                         transition: "font-size 140ms ease",
                     }}
                 >
@@ -105,34 +107,35 @@ export function ItemRow({ item, isOpen }: Props): JSX.Element {
                 <Group
                     gap={4}
                     style={{
-                        marginLeft: isOpen ? undefined : "auto",
+                        marginLeft: "auto",
                         flexShrink: 0,
                         alignItems: "center",
                     }}
                 >
+                    {isOpen && year ? (
+                        <Box ta="center"><Text style={{ fontSize: 14, display: "inline" }}>{year}</Text></Box>
+                    ) : null}
                     <IconIsInstalled isListView={true} isInstalled={isInstalled} />
                     <IconIsHidden isListView={true} isHidden={isHidden} />
                     <IconCopyTitle title={title} year={year} />
                 </Group>
             </Flex>
-            
+
             {!isOpen ? (
                 <>
-                    <Box ta="center">
-                        {year && (
-                            <Text style={{ fontSize: 14 }}>{year}</Text>
-                        )}
-                    </Box>
+                    {year && (
+                        <Box ta="center"><Text style={{ fontSize: 14, display: "inline" }}>{year}</Text></Box>
+                    )}
 
                     <Box>
                         <Group gap={4} wrap="nowrap" style={{ justifyContent: "center" }}>
-                            <IconLinkExternal source={source} link={link} title={title} />
-                            <IconLinkSource source={source} gameId={gameId} link={link} />
+                            <IconLinkExternal source={source} htmlLink={htmlLink} title={title} />
+                            <IconLinkSource source={source} sourceLink={sourceLink} />
                         </Group>
                     </Box>
 
                     <Flex gap={8} style={{ minWidth: 0 }}>
-                        <Text style={{ fontSize: 14 }}>
+                        <Text style={{ fontSize: 14, display: "inline" }}>
                             {series && series.length > 0 ? series.join(", ") : ""}
                         </Text>
                     </Flex>

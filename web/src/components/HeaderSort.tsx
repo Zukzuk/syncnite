@@ -26,7 +26,7 @@ export const HeaderSort = React.memo(function HeaderSort({
       aria-label="header-sort"
       style={{
         position: "relative",
-        background: "var(--mantine-color-body)",
+        background: "var(--interlinked-color-body)",
         height: GRID.halfRowHeight,
         padding: `0 ${GRID.scrollbarWidth}px 0 ${GRID.listLeftPadding}px`,
       }}
@@ -77,14 +77,14 @@ export const HeaderSort = React.memo(function HeaderSort({
         <UnstyledButton
           onClick={() => onToggleSort("source")}
           role="columnheader"
-          aria-label="Sort by Platform"
+          aria-label="Sort by Source"
           style={{ textAlign: "center", cursor: "pointer" }}
         >
           <Text 
             c={sortKey === "source" ? "var(--interlinked-color-primary)" : undefined} 
             style={{ fontSize: 14 }}
           >
-            {label("Platform", "source")}
+            {label("Source", "source")}
           </Text>
         </UnstyledButton>
 

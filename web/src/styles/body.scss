@@ -1,6 +1,7 @@
-body {
-  margin: 0;
-  padding: 0;
-  min-width: 360px;
-  // overflow: hidden;
+html, body {
+  min-width: 550px;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
 }

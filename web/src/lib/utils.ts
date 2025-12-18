@@ -63,12 +63,15 @@ function jsonGet<T>(key: string, fallback: T): T {
   }
 }
 
-function jsonSet<T>(key: string, value: T) {
-  try {
-    writeCookie(key, JSON.stringify(value));
-  } catch {
-    /* no-op */
-  }
+export async function fetchJson(url: string): Promise<any | null> {
+    try {
+        const r = await fetch(url, { cache: "no-cache" });
+        if (!r.ok) return null;
+        const text = await r.text();
+        return JSON.parse(text);
+    } catch {
+        return null;
+    }
 }
 
 // Fetches the stored user email from localStorage
@@ -87,5 +90,9 @@ export function loadStateFromCookie(): CookieState {
 
 // Saves the library state to a cookie
 export function saveStateToCookie(cookieState: CookieState) {
-  jsonSet("pn_library_state", cookieState);
+  try {
+    writeCookie("pn_library_state", JSON.stringify(cookieState));
+  } catch {
+    /* no-op */
+  }
 }

@@ -1,10 +1,10 @@
 import * as React from "react";
 import { Stack, Text, Badge, Container } from "@mantine/core";
-import { useAuth } from "../../hooks/useAuth";
-import { GRID } from "../../lib/constants";
-import { TextDataRow } from "../../components/TextDataRow";
-import { SectionCard } from "../../components/SectionCard";
-import { getTheme } from "../../theme";
+import { useAuth } from "../hooks/useAuth";
+import { GRID } from "../lib/constants";
+import { TextDataRow } from "../components/TextDataRow";
+import { SectionCard } from "../components/SectionCard";
+import { getTheme } from "../theme";
 
 export default function AdminPage(): JSX.Element {
     const { state } = useAuth({ pollMs: 0 });

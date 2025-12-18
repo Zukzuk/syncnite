@@ -1,3 +1,4 @@
+import { BattleNetIcon, CustomIconSVG, ElectronicArtsIcon, EpicGamesIcon, GoGGalaxyIcon, SteampoweredIcon, UbisoftConnectIcon } from "../styles/CustomIcons";
 import { SortDir, SortKey } from "../types/types";
 
 export const WEB_APP_VERSION = `v${window.__APP_VERSION__}`;
@@ -33,8 +34,9 @@ export const API_ENDPOINTS = {
 }
 
 export const GRID = {
-  colsList: "40px minmax(0, 45%) 60px 95px minmax(0, 1fr)",
+  colsList: "40px minmax(0, 1fr) 60px 95px 200px",
   colsGrid: "0px 60px 60px 95px minmax(0, 1fr)",
+  colsOpen: "40px minmax(0, 1fr) 56px",
   navBarWidth: 155,
   coverWidth: 220,
   cardWidth: 160,
@@ -47,7 +49,6 @@ export const GRID = {
   gap: 8,
   card_step_y: 90,
   overscan: { top: 600, bottom: 800 } as const,
-
 } as const;
 
 export const Z_INDEX = {
@@ -65,28 +66,84 @@ export const FILES = {
   snapshot: `${FILE_BASE}/snapshot/snapshot.json`,
 };
 
-export const FALLBACK_ICON =
-  "data:image/svg+xml;utf8," +
-  encodeURIComponent(
-    `<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'>
-      <rect width='100%' height='100%' fill='#ddd'/>
-      <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle'
-            font-family='sans-serif' font-size='10' fill='#777'>no icon</text>
-    </svg>`
-  );
-
-export const SOURCE_MAP: Record<string, { platform: string; online: string; label: string }> = {
-  "steam": { platform: "steam://", online: "https://store.steampowered.com", label: "Steampowered" },
-  "gog": { platform: "goggalaxy://", online: "https://www.gog.com", label: "Good Old Games" },
-  "ubisoft connect": { platform: "uplay://", online: "https://www.ubisoft.com", label: "Ubisoft Connect" },
-  "ea app": { platform: "ealaunch://", online: "https://www.ea.com/origin", label: "EA App" },
-  "battle.net": { platform: "battlenet://", online: "https://www.battle.net", label: "Battle.net" },
-  "epic": { platform: "com.epicgames.launcher://", online: "https://www.epicgames.com", label: "Epic Games" },
-  "xbox": { platform: "xbox://", online: "https://www.xbox.com", label: "XBox" },
-  "humble": { platform: "humble://", online: "https://www.humblebundle.com", label: "Humble Bundle" },
-  "nintendo": { platform: "nintendo://", online: "https://www.nintendo.com", label: "Nintendo" },
-  "microsoft store": { platform: "ms-windows-store://", online: "https://apps.microsoft.com", label: "Microsoft Store" },
-  "abandonware": { platform: "", online: "https://www.myabandonware.com", label: "Abandonware" },
+export const SOURCE_MAP: Record<string, { 
+  platform?: string; 
+  online: string; 
+  domains: string[], 
+  label: string, 
+  icon?: React.ReactNode 
+}> = {
+  "steam": { 
+    platform: "steam://", 
+    online: "store.steampowered.com",
+    domains: ["steampowered.com"],
+    label: "Steampowered", 
+    icon: <CustomIconSVG inner={SteampoweredIcon} viewBox="0 0 32 32" />
+  },
+  "gog": { 
+    platform: "goggalaxy://", 
+    online: "www.gog.com",
+    domains: ["gog.com"],
+    label: "Good Old Games", 
+    icon: <CustomIconSVG inner={GoGGalaxyIcon} viewBox="0 0 50 50" />,
+  },
+  "ubisoft connect": { 
+    platform: "uplay://", 
+    online: "www.ubisoft.com", 
+    domains: ["ubisoft.com", "uplay"],
+    label: "Ubisoft Connect", 
+    icon: <CustomIconSVG inner={UbisoftConnectIcon} viewBox="0 0 24 24" />,
+  },
+  "ea app": { 
+    platform: "link2ea://", 
+    online: "www.ea.com/origin", 
+    domains: ["ea.com", "origin.com"],
+    label: "EA App", 
+    icon: <CustomIconSVG inner={ElectronicArtsIcon} viewBox="0 0 1000 1000" />,
+  },
+  "battle.net": { 
+    platform: "battlenet://", 
+    online: "www.battle.net", 
+    domains: ["battle.net", "blizzard.com"],
+    label: "Battle.net", 
+    icon: <CustomIconSVG inner={BattleNetIcon} viewBox="0 0 24 24" />,
+  },
+  "epic": { 
+    platform: "com.epicgames.launcher://", 
+    online: "www.epicgames.com", 
+    domains: ["epicgames.com"],
+    label: "Epic Games", 
+    icon: <CustomIconSVG inner={EpicGamesIcon} viewBox="0 0 32 32" />,
+  },
+  "xbox": { 
+    platform: "xbox://", 
+    online: "www.xbox.com", 
+    domains: ["xbox.com", "microsoft.com"],
+    label: "XBox" 
+  },
+  "microsoft store": { 
+    platform: "ms-windows-store://", 
+    domains: ["microsoft.com"],
+    online: "apps.microsoft.com", 
+    label: "Microsoft Store" 
+  },
+  "humble": { 
+    platform: "humble://", 
+    domains: ["humblebundle.com"],
+    online: "www.humblebundle.com", 
+    label: "Humble Bundle" 
+  },
+  "nintendo": { 
+    platform: "nintendo://", 
+    domains: ["nintendo.com"],
+    online: "www.nintendo.com", 
+    label: "Nintendo" 
+  },
+  "abandonware": { 
+    domains: ["myabandonware.com"],
+    online: "www.myabandonware.com", 
+    label: "Abandonware" 
+  },
 };
 
 export const INTERVAL_MS = 5000;

@@ -1,8 +1,8 @@
 import React from "react";
 import { Center, Container, Loader, Stack } from "@mantine/core";
-import Markdown from "../../components/Markdown";
-import { getTheme } from "../../theme";
-import { GRID } from "../../lib/constants";
+import Markdown from "../components/Markdown";
+import { getTheme } from "../theme";
+import { GRID } from "../lib/constants";
 
 export default function HomePage(): JSX.Element {
     const [readmeData, setReadmeData] = React.useState<string | null>(null);

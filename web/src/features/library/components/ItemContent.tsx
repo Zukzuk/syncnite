@@ -293,15 +293,10 @@ export function ItemContent({
     itemsAssociated,
     onWallpaperBg,
     onToggleClickBounded,
-}: Props): JSX.Element {
-    const {
-        associatedDecks
-    } = buildAssociatedDecks(
-        isOpen,
-        item,
-        itemsAssociated
-    );
+}: Props): JSX.Element | null {
+    if (!isOpen) return null;
 
+    const { associatedDecks } = buildAssociatedDecks(isOpen, item, itemsAssociated);
     const [openDeckKey, onStackClick] = React.useState<string | null>(null);
     React.useEffect(() => onStackClick(null), [item.id]);
 

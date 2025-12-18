@@ -2,19 +2,11 @@ import * as React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useFullscreen } from "@mantine/hooks";
 import { ActionIcon, Box, Center, Group, Loader, Paper, Text, Tooltip } from "@mantine/core";
-import {
-    IconArrowsMaximize,
-    IconArrowsMinimize,
-    IconChevronLeft,
-    IconChevronRight,
-    IconMoon,
-    IconSun,
-    IconX,
-} from "@tabler/icons-react";
-import { useLibraryData } from "../../features/library/hooks/useLibraryData";
-import { GRID, INTERVAL_MS, SOURCE_MAP } from "../../lib/constants";
-import type { GameItem } from "../../types/types";
-import { getTheme } from "../../theme";
+import { IconArrowsMaximize, IconArrowsMinimize, IconChevronLeft, IconChevronRight, IconMoon, IconSun, IconX } from "@tabler/icons-react";
+import { useLibraryData } from "../features/library/hooks/useLibraryData";
+import { GRID, INTERVAL_MS, SOURCE_MAP } from "../lib/constants";
+import type { GameItem } from "../types/types";
+import { getTheme } from "../theme";
 
 const DISPLAY_MS = 10_000;
 const FADE_MS = 900;

@@ -72,7 +72,7 @@ export const GridCard = React.memo(function GridCard({
     onWallpaperBg,
     onToggleItem,
 }: Props): JSX.Element {
-    const { title } = item;
+    const { title, isInstalled } = item;
 
     const [isHovered, setIsHovered] = React.useState(false);
 
@@ -133,9 +133,13 @@ export const GridCard = React.memo(function GridCard({
                             : "var(--mantine-color-gray-1)",
                     border: isOpen
                         ? undefined
-                        : isHovered && !isListView
-                            ? "2px solid var(--interlinked-color-primary-soft)"
-                            : "2px solid transparent",
+                        : isInstalled && isListView 
+                            ? "2px solid var(--interlinked-color-secondary-soft)" 
+                            : isInstalled && !isListView
+                                ?  "2px solid var(--interlinked-color-secondary)"
+                                : isHovered && !isListView
+                                    ? "2px solid var(--interlinked-color-primary-soft)"
+                                    : "2px solid transparent",
                     borderRadius: isListView ? 0 : isOpen ? 0 : 4,
                     padding:
                         isListView || isOpen
@@ -159,7 +163,7 @@ export const GridCard = React.memo(function GridCard({
                         }}
                         style={{
                             position: "absolute",
-                            top: 10,
+                            top: 13,
                             right: 30,
                             zIndex: Z_INDEX.aboveBase + 1,
                         }}
@@ -181,35 +185,25 @@ export const GridCard = React.memo(function GridCard({
                     w={"100%"}
                     h={isOpen ? openHeight : "100%"}
                 >
-                    {!isOpen && isListView && (
-                        <ItemRow
-                            item={item}
-                            isOpen={isOpen}
-                        />
-                    )}
-                    {!isOpen && !isListView && (
-                        <ItemCard
-                            item={item}
-                            isOpen={isOpen}
-                        />
-                    )}
-                    {isOpen && (
-                        <ItemRow
-                            item={item}
-                            isOpen={isOpen}
-                        />
-                    )}
-                    {isOpen && (
-                        <ItemContent
-                            item={item}
-                            isOpen={isOpen}
-                            openWidth={openWidth}
-                            openHeight={openHeight}
-                            itemsAssociated={itemsAssociated}
-                            onWallpaperBg={onWallpaperBg}
-                            onToggleClickBounded={onToggleClickBounded}
-                        />
-                    )}
+                    <ItemRow
+                        item={item}
+                        isOpen={isOpen}
+                        isListView={isListView}
+                    />
+                    <ItemCard
+                        item={item}
+                        isOpen={isOpen}
+                        isListView={isListView}
+                    />
+                    <ItemContent
+                        item={item}
+                        isOpen={isOpen}
+                        openWidth={openWidth}
+                        openHeight={openHeight}
+                        itemsAssociated={itemsAssociated}
+                        onWallpaperBg={onWallpaperBg}
+                        onToggleClickBounded={onToggleClickBounded}
+                    />
                 </Box>
 
                 <ItemBackground

@@ -36,7 +36,7 @@ export const IconIsInstalled = React.memo(function IconIsInstalled({
         right: -18,
         width: 50,
         height: 30,
-        background: "var(--interlinked-color-primary)",
+        background: "var(--interlinked-color-secondary)",
         transform: "rotate(45deg)",
         zIndex: Z_INDEX.base,
     }
@@ -53,11 +53,11 @@ export const IconIsInstalled = React.memo(function IconIsInstalled({
                 <ActionIcon
                     style={isListView ? normalIcon : ribbonIcon}
                     aria-label="Marked as 'installed'"
-                    color={isListView ? "var(--interlinked-color-success)" : "var(--interlinked-color-suppressed-soft)"}
+                    color={isListView ? "var(--interlinked-color-secondary)" : "var(--interlinked-color-dark)"}
                     variant="transparent"
                     size="sm"
                 >
-                    <IconCheck size={isListView ? 16 : 14} stroke={4} />
+                    <IconCheck size={isListView ? 17 : 14} stroke={2} />
                 </ActionIcon>
             </Tooltip>
         </>

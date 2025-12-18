@@ -1,28 +1,37 @@
 import * as React from "react";
-import { Box, Center, Card, Text, Tabs, TextInput, PasswordInput, Button, Stack, Alert, Space } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
+import { IconLogin2, IconUserHexagon, IconUserScreen } from "@tabler/icons-react";
+import { Box, Center, Card, Text, Tabs, TextInput, PasswordInput, Button, Stack, Alert, Space } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { login, registerAdmin, registerUser, fetchAdminStatus } from "../../lib/api";
-import { setCreds } from "../../lib/utils";
-import { LogoIntro } from "../../components/LogoIntro";
-import { Role } from "../../types/types";
-import styles from "./LoginPage.module.css";
-import { useIntroFlow, LOGO_EXIT_MS } from "../../hooks/useIntroFlow";
+import { login, registerAdmin, registerUser, fetchAdminStatus } from "../lib/api";
+import { setCreds } from "../lib/utils";
+import { Z_INDEX } from "../lib/constants";
+import { Role } from "../types/types";
+import { useIntroFlow, LOGO_EXIT_MS } from "../hooks/useIntroFlow";
+import { LogoIntro } from "../components/LogoIntro";
+import styles from "./AppLoginPage.module.css";
 
 type PendingCreds = { email: string; password: string; role: Role };
 
-export default function LoginPage(): JSX.Element {
-  const nav = useNavigate();
+export default function AppLoginPage(): JSX.Element {
   const [tab, setTab] = React.useState<"login" | "user" | "admin">("login");
   const [error, setError] = React.useState<string | null>(null);
   const [hasAdmin, setHasAdmin] = React.useState<boolean | null>(null);
 
+  const nav = useNavigate();
+
+  const loginForm = useForm({ initialValues: { email: "", password: "" } });
+  const registerAdminForm = useForm({ initialValues: { email: "", password: "" } });
+  const registerUserForm = useForm({ initialValues: { email: "", password: "" } });
+
+  // Intro flow for the login page
   const flow = useIntroFlow<PendingCreds>({
-    gateEnabled: true, // login page always uses the intro gate
-    gateStartsHidden: true, // card starts hidden until LogoIntro calls onDone
+    gateEnabled: true, // enable the gate to block access until intro is done
+    gateStartsHidden: true, // start with the card hidden
     exitMs: LOGO_EXIT_MS,
   });
 
+  // On mount, check if an admin exists
   React.useEffect(() => {
     (async () => {
       const status = await fetchAdminStatus();
@@ -31,13 +40,9 @@ export default function LoginPage(): JSX.Element {
     })();
   }, []);
 
-  const loginForm = useForm({ initialValues: { email: "", password: "" } });
-  const registerAdminForm = useForm({ initialValues: { email: "", password: "" } });
-  const registerUserForm = useForm({ initialValues: { email: "", password: "" } });
-
-  const triggerExitThenCommitAndGoHome = React.useCallback(
+  // Fade card out + animate logo out, then commit creds and navigate.
+  const saveAndAnimate = React.useCallback(
     (creds: PendingCreds) => {
-      // Fade card out + animate logo out, then commit creds and navigate.
       flow.exit.startExit(creds, (c) => {
         setCreds(c.email, c.password, c.role);
         nav("/", { replace: true });
@@ -46,20 +51,12 @@ export default function LoginPage(): JSX.Element {
     [flow.exit, nav]
   );
 
-  const actionBtnProps = {
-    size: "xs" as const,
-    radius: "sm" as const,
-    variant: "light" as const,
-    justify: "space-between" as const,
-    rightSection: <span />,
-  };
-
   const handleLogin = loginForm.onSubmit(async ({ email, password }) => {
     setError(null);
     email = email.trim().toLowerCase();
 
     const resp = await login({ email, password });
-    if (resp?.ok) return triggerExitThenCommitAndGoHome({ email, password, role: resp.role });
+    if (resp?.ok) return saveAndAnimate({ email, password, role: resp.role });
 
     setError(resp?.error || "Invalid credentials");
   });
@@ -74,7 +71,7 @@ export default function LoginPage(): JSX.Element {
     const loginResp = await login({ email, password });
     const role = loginResp?.ok ? loginResp.role : "admin";
 
-    triggerExitThenCommitAndGoHome({ email, password, role });
+    saveAndAnimate({ email, password, role });
   });
 
   const handleUserRegister = registerUserForm.onSubmit(async ({ email, password }) => {
@@ -95,7 +92,7 @@ export default function LoginPage(): JSX.Element {
     const loginResp = await login({ email, password });
     const role = loginResp?.ok ? loginResp.role : "user";
 
-    triggerExitThenCommitAndGoHome({ email, password, role });
+    saveAndAnimate({ email, password, role });
   });
 
   return (
@@ -112,18 +109,25 @@ export default function LoginPage(): JSX.Element {
         style={{
           position: "absolute",
           inset: 0,
-          zIndex: 1,
+          zIndex: Z_INDEX.base,
           pointerEvents: "none",
         }}
       >
-        <Text className={styles.loadingFx} data-text="LOADING" size="xs" c="var(--interlinked-color-secondary)" ff="Cyber City">
+        <Text
+          className={styles.loadingFx}
+          data-text="LOADING"
+          c="var(--interlinked-color-secondary)"
+          ff="Cyber City"
+          fz={10}
+        >
           LOADING
         </Text>
       </Center>
 
-      <Center h="100vh" style={{ position: "relative", zIndex: 2 }}>
+      <Center h="100vh" style={{ position: "relative", zIndex: Z_INDEX.aboveBase }}>
         <Box className={styles.cardFx} data-reveal={flow.gate.introDone ? "true" : "false"}>
           <Box className={styles.cardFxInner}>
+
             <Card withBorder shadow="sm" radius="sm" p="xl" w={480}>
               <Tabs
                 value={tab}
@@ -156,8 +160,17 @@ export default function LoginPage(): JSX.Element {
                     <Stack>
                       <TextInput label="Email" {...loginForm.getInputProps("email")} />
                       <PasswordInput label="Password" {...loginForm.getInputProps("password")} />
-                      <Button type="submit" {...actionBtnProps}>
-                        Log in
+                      <Button
+                        type="submit"
+                        size="xs"
+                        radius="sm"
+                        variant="light"
+                        justify="space-between"
+                        rightSection={<span />}
+                        leftSection={<IconLogin2 color="var(--interlinked-color-secondary)" size={14} />}
+                        style={{ maxWidth: "130px" }}
+                      >
+                        Login
                       </Button>
                     </Stack>
                   </form>
@@ -173,7 +186,16 @@ export default function LoginPage(): JSX.Element {
                       )}
                       <TextInput label="Email" {...registerUserForm.getInputProps("email")} />
                       <PasswordInput label="Password" {...registerUserForm.getInputProps("password")} />
-                      <Button type="submit" disabled={!hasAdmin} {...actionBtnProps}>
+                      <Button
+                        type="submit"
+                        size="xs"
+                        radius="sm"
+                        variant="light"
+                        justify="space-between"
+                        rightSection={<span />}
+                        leftSection={<IconUserHexagon color="var(--interlinked-color-secondary)" size={14} />}
+                        style={{ maxWidth: "130px" }}
+                      >
                         Register
                       </Button>
                     </Stack>
@@ -190,7 +212,16 @@ export default function LoginPage(): JSX.Element {
                       )}
                       <TextInput label="Admin Email" {...registerAdminForm.getInputProps("email")} />
                       <PasswordInput label="Admin Password" {...registerAdminForm.getInputProps("password")} />
-                      <Button type="submit" disabled={!!hasAdmin} {...actionBtnProps}>
+                      <Button
+                        type="submit"
+                        size="xs"
+                        radius="sm"
+                        variant="light"
+                        justify="space-between"
+                        rightSection={<span />}
+                        leftSection={<IconUserScreen color="var(--interlinked-color-secondary)" size={14} />}
+                        style={{ maxWidth: "130px" }}
+                      >
                         Create Admin
                       </Button>
                     </Stack>
@@ -207,6 +238,7 @@ export default function LoginPage(): JSX.Element {
                 </>
               )}
             </Card>
+
           </Box>
         </Box>
       </Center>

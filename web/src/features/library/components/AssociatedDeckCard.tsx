@@ -75,11 +75,13 @@ export function AssociatedDeckCard({
                     ? "0 0px 30px rgba(0, 0, 0, 1)"
                     : "0 0px 8px rgba(0, 0, 0, 0.15)",
                 border:
-                    isTopCard || isCurrentItem
+                    isTopCard && !isCurrentItem
                         ? "2px solid var(--interlinked-color-primary-soft)"
-                        : isDark
-                            ? "2px solid var(--mantine-color-dark-8)"
-                            : "2px solid var(--mantine-color-gray-3)",
+                        : isTopCard || isCurrentItem
+                            ? "2px solid var(--interlinked-color-secondary)"
+                            : isDark
+                                ? "2px solid var(--mantine-color-dark-8)"
+                                : "2px solid var(--mantine-color-gray-3)",
                 transform: isTopCard ? "scale(1.07)" : "scale(1)",
                 transition:
                     "transform 140ms ease, box-shadow 140ms ease",

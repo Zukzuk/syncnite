@@ -5,13 +5,13 @@ import { useAdminGate } from "./hooks/useAdminGate";
 import { INTERVAL_MS } from "./lib/constants";
 import { clearCreds } from "./lib/utils";
 import AppShellLayout from "./layout/AppShellLayout";
-import HomePage from "./layout/pages/HomePage";
-import LibraryPage from "./layout/pages/LibraryPage";
-import BridgePage from "./layout/pages/BridgePage";
-import LoginPage from "./layout/pages/LoginPage";
-import AdminPage from "./layout/pages/AdminPage";
-import AccountPage from "./layout/pages/AccountPage";
-import NarrowcastPage from "./layout/pages/NarrowcastPage";
+import HomePage from "./layout/HomePage";
+import LibraryPage from "./layout/LibraryPage";
+import BridgePage from "./layout/BridgePage";
+import AppLoginPage from "./layout/AppLoginPage";
+import AdminPage from "./layout/AdminPage";
+import AccountPage from "./layout/AccountPage";
+import NarrowcastPage from "./layout/NarrowcastPage";
 
 function WithShell({ hideSite = false }: { hideSite?: boolean }) {
   return (
@@ -45,7 +45,7 @@ function AdminGate() {
   if (!hasAdmin) {
     return (
       <AppShellLayout hideSite={hideSite}>
-        <LoginPage />
+        <AppLoginPage />
       </AppShellLayout>
     );
   }
@@ -78,7 +78,7 @@ export const router = createBrowserRouter([
           {
             path: "/login",
             element: <LoggedOutOnly />,
-            children: [{ index: true, element: <LoginPage /> }],
+            children: [{ index: true, element: <AppLoginPage /> }],
           },
           { path: "/logout", element: <LogoutAction /> },
         ],

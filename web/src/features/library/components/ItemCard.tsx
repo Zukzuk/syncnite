@@ -9,11 +9,14 @@ import { IconLinkSource } from "../../../components/IconSourceLink";
 type Props = {
     item: GameItem;
     isOpen: boolean;
+    isListView: boolean;
 };
 
 // Card component for a library item in grid view.
-export function ItemCard({ item, isOpen }: Props): JSX.Element {
-    const { title, coverUrl, year, source, link, gameId, isHidden, isInstalled } = item;
+export function ItemCard({ item, isOpen, isListView }: Props): JSX.Element | null {
+    if (isOpen || isListView) return null;
+
+    const { title, coverUrl, year, source, htmlLink, sourceLink, isHidden, isInstalled } = item;
 
     return (
         <Box
@@ -87,20 +90,9 @@ export function ItemCard({ item, isOpen }: Props): JSX.Element {
                         wrap="nowrap"
                         style={{ justifyContent: "center" }}
                     >
-                        <IconCopyTitle
-                            title={title}
-                            year={year}
-                        />
-                        <IconLinkExternal
-                            source={source}
-                            link={link}
-                            title={title}
-                        />
-                        <IconLinkSource
-                            source={source}
-                            gameId={gameId}
-                            link={link}
-                        />
+                        <IconCopyTitle title={title}  year={year} />
+                        <IconLinkExternal source={source} htmlLink={htmlLink} title={title} />
+                        <IconLinkSource source={source} sourceLink={sourceLink} />
                     </Group>
                 </Box>
             </Box>

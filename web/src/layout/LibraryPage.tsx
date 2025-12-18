@@ -1,13 +1,21 @@
+import React from "react";
 import { Stack, Loader, Box, Center } from "@mantine/core";
-import { GRID, INTERVAL_MS } from "../../lib/constants";
-import { useLibraryData } from "../../features/library/hooks/useLibraryData";
-import Library from "../../features/library/Library";
-import { getTheme } from "../../theme";
+import { GRID, INTERVAL_MS } from "../lib/constants";
+import { useLibraryData } from "../features/library/hooks/useLibraryData";
+import Library from "../features/library/Library";
+import { getTheme } from "../theme";
 
 export default function LibraryPage(): JSX.Element {
     const { libraryData, installedUpdatedAt } = useLibraryData({ pollMs: INTERVAL_MS });
-
     const { isDesktop } = getTheme();
+
+    React.useLayoutEffect(() => {
+        const prevOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        return () => {
+            document.body.style.overflow = prevOverflow;
+        };
+    }, []);
 
     if (!libraryData) {
         return (
