@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Card, Group, ThemeIcon, Text, Divider, Box } from "@mantine/core";
 import type { ReactNode } from "react";
-import { GRID } from "../lib/constants";
+import { getTheme } from "../theme";
 
 type Props = {
     title: string;
@@ -12,6 +12,8 @@ type Props = {
 };
 
 export function SectionCard({ icon, title, subtitle, action, children }: Props) {
+    const { GRID } = getTheme();
+    
     return (
         <Card withBorder shadow="sm" radius="md" style={{ position: "relative" }}>
             <Group justify="space-between" align="flex-start" mb="sm">

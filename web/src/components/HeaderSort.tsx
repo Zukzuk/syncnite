@@ -1,7 +1,6 @@
 import React from "react";
 import { Box, UnstyledButton, Text } from "@mantine/core";
 import { SortKey, UIControls } from "../types/types";
-import { GRID } from "../lib/constants";
 import { getTheme } from "../theme";
 
 type Props = {
@@ -15,7 +14,7 @@ export const HeaderSort = React.memo(function HeaderSort({
   ui,
 }: Props) {
   const { sortKey, sortDir, onToggleSort, isListView } = ui;
-  const { isDark } = getTheme();
+  const { hasMenu, GRID } = getTheme();
 
   const label = (base: string, key: SortKey) =>
     sortKey === key ? `${base} ${sortDir === "asc" ? "▲" : "▼"}` : base;
@@ -51,8 +50,8 @@ export const HeaderSort = React.memo(function HeaderSort({
           aria-label="Sort by Title"
           style={{ textAlign: "left", cursor: "pointer" }}
         >
-          <Text 
-            c={sortKey === "title" ? "var(--interlinked-color-primary)" : undefined} 
+          <Text
+            c={sortKey === "title" ? "var(--interlinked-color-primary)" : undefined}
             style={{ fontSize: 14 }}
           >
             {label("Title", "title")}
@@ -63,11 +62,11 @@ export const HeaderSort = React.memo(function HeaderSort({
           onClick={() => onToggleSort("year")}
           role="columnheader"
           aria-label="Sort by Year"
-          style={{ textAlign: "center", cursor: "pointer" }}
+          style={{ textAlign: isListView ? "center" : "left", cursor: "pointer" }}
 
         >
-          <Text 
-            c={sortKey === "year" ? "var(--interlinked-color-primary)" : undefined} 
+          <Text
+            c={sortKey === "year" ? "var(--interlinked-color-primary)" : undefined}
             style={{ fontSize: 14 }}
           >
             {label("Year", "year")}
@@ -78,29 +77,31 @@ export const HeaderSort = React.memo(function HeaderSort({
           onClick={() => onToggleSort("source")}
           role="columnheader"
           aria-label="Sort by Source"
-          style={{ textAlign: "center", cursor: "pointer" }}
+          style={{ textAlign: isListView ? "center" : "left", cursor: "pointer" }}
         >
-          <Text 
-            c={sortKey === "source" ? "var(--interlinked-color-primary)" : undefined} 
+          <Text
+            c={sortKey === "source" ? "var(--interlinked-color-primary)" : undefined}
             style={{ fontSize: 14 }}
           >
             {label("Source", "source")}
           </Text>
         </UnstyledButton>
 
-        <UnstyledButton
-          onClick={() => onToggleSort("series")}
-          role="columnheader"
-          aria-label="Sort by Series"
-          style={{ textAlign: "left", cursor: "pointer" }}
-        >
-          <Text 
-            c={sortKey === "series" ? "var(--interlinked-color-primary)" : undefined} 
-            style={{ fontSize: 14 }}
+        {hasMenu && (
+          <UnstyledButton
+            onClick={() => onToggleSort("series")}
+            role="columnheader"
+            aria-label="Sort by Series"
+            style={{ textAlign: "left", cursor: "pointer" }}
           >
-            {label("Series", "series")}
-          </Text>
-        </UnstyledButton>
+            <Text
+              c={sortKey === "series" ? "var(--interlinked-color-primary)" : undefined}
+              style={{ fontSize: 14 }}
+            >
+              {label("Series", "series")}
+            </Text>
+          </UnstyledButton>
+        )}
       </Box>
     </Box>
   );

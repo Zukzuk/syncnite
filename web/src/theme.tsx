@@ -66,11 +66,60 @@ lg	75em	1200px
 xl	88em	1408px
  */
 export function getTheme() {
-    const breakpoint = 'xs';
     const theme = useMantineTheme();
     const { colorScheme, setColorScheme } = useMantineColorScheme();
     const isDark = colorScheme === "dark";
-    const isDesktop = useMediaQuery(`(min-width: ${theme.breakpoints[breakpoint]})`);
+    const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.xs})`);
+    const isTablet = useMediaQuery(
+        `(min-width: ${theme.breakpoints.xs}) and (max-width: ${theme.breakpoints.sm})`
+    );    
+    const hasMenu = useMediaQuery(`(min-width: ${theme.breakpoints.sm})`);
+    const isDesktop = useMediaQuery(
+        `(min-width: ${theme.breakpoints.sm}) and (max-width: ${theme.breakpoints.xl})`
+    );
+    const isWidescreen = useMediaQuery(`(min-width: ${theme.breakpoints.xl})`);
 
-    return { theme, isDark, setColorScheme, isDesktop, breakpoint };
+    const RATIO = 23 / 32;
+
+    const GRID = {
+        colsList: `40px minmax(0, 1fr) 60px 80px ${isWidescreen ? "300px" : isDesktop ? "150px" : "0px"}`,
+        colsGrid: "0px 60px 60px 80px 60px",
+        colsOpen: "40px minmax(0, 1fr) 56px",
+        navBarWidth: 155,
+        coverWidth: 220,
+        coverHeight: 220 * (1 / RATIO),
+        cardWidth: 156 + 4, // + border
+        cardHeight: 156 * (1 / RATIO) + 4 + 52 + 28, // + border + title + icons
+        rowHeight: 60,
+        halfRowHeight: 30,
+        iconSize: 38,
+        scrollbarWidth: 15,
+        listLeftPadding: 12,
+        gap: 8,
+        cardStepY: 90,
+        ratio: RATIO,
+        overscan: { top: 600, bottom: 800 } as const,
+    } as const;
+
+    const Z_INDEX = {
+        belowBase: 0,
+        base: 1,
+        aboveBase: 2,
+        medium: 50,
+        high: 100,
+        top: 1000,
+    } as const;
+
+    return {
+        theme,
+        isDark,
+        isMobile,
+        isTablet,
+        isDesktop,
+        isWidescreen,
+        hasMenu,
+        GRID,
+        Z_INDEX,
+        setColorScheme
+    };
 }

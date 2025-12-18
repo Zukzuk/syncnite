@@ -16,7 +16,7 @@ export const LogoIntro = React.memo(function LogoIntro({
   exiting,
   variant = "default",
 }: Props) {
-  const { isDesktop, isDark } = getTheme();
+  const { hasMenu, isDark } = getTheme();
 
   const [animated, setAnimated] = React.useState(true);
 
@@ -31,7 +31,7 @@ export const LogoIntro = React.memo(function LogoIntro({
   const isHero = variant === "loginHero";
 
   // Position/scale knobs (fed into CSS via variables)
-  const left = isHero ? "50%" : `${isDesktop ? 14 : 40}px`;
+  const left = isHero ? "50%" : `${hasMenu ? 14 : 40}px`;
   const top = isHero ? "42px" : "20px";
   const translateX = isHero ? "-50%" : "0px";
   const scale = isHero ? 1.65 : 1.0;

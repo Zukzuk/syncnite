@@ -215,6 +215,7 @@ namespace SyncniteBridge.Services
             var sb = new StringBuilder();
             sb.Append(g.Name).Append("|");
             sb.Append(g.SortingName).Append("|");
+            sb.Append(g.Version).Append("|");
             sb.Append(g.Hidden).Append("|");
             sb.Append(g.Modified?.Ticks ?? 0).Append("|");
             sb.Append(g.Playtime).Append("|");
@@ -370,6 +371,7 @@ namespace SyncniteBridge.Services
                         Id = g.Id,
                         Name = g.Name,
                         SortingName = g.SortingName,
+                        Version = g.Version,
                         Hidden = g.Hidden,
                         PluginId = g.PluginId,
                         GameId = g.GameId,
@@ -409,6 +411,7 @@ namespace SyncniteBridge.Services
                 {
                     existing.Name = g.Name;
                     existing.SortingName = g.SortingName;
+                    existing.Version = g.Version;
                     existing.Hidden = g.Hidden;
                     existing.PluginId = g.PluginId;
                     existing.GameId = g.GameId;

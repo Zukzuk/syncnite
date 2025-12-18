@@ -155,6 +155,8 @@ namespace SyncniteBridge.Services
                 return true;
             if (!string.Equals(oldG.SortingName, newG.SortingName, StringComparison.Ordinal))
                 return true;
+            if (!string.Equals(oldG.Version, newG.Version, StringComparison.Ordinal))
+                return true;
             if (oldG.Hidden != newG.Hidden)
                 return true;
 

@@ -2,7 +2,7 @@ import * as React from "react";
 import { Container, Stack, Text, Card, Group, ThemeIcon, Badge, Divider, Button, Loader, Tooltip } from "@mantine/core";
 import { IconUser, IconClock, IconListDetails, IconPlugConnected, IconPlugConnectedX, IconDownload } from "@tabler/icons-react";
 import { getCreds } from "../lib/utils";
-import { API_ENDPOINTS, GRID, INTERVAL_MS, WEB_APP_VERSION } from "../lib/constants";
+import { API_ENDPOINTS, INTERVAL_MS, WEB_APP_VERSION } from "../lib/constants";
 import { fetchSteamStatus, syncSteamWishlist } from "../lib/api";
 import type { SteamStatusResponse } from "../types/types";
 import { useAuth } from "../hooks/useAuth";
@@ -15,7 +15,7 @@ export default function AccountPage(): JSX.Element {
     const { state } = useAuth({ pollMs: 0 });
     const isAdmin = state.role === "admin";
 
-    const { isDesktop } = getTheme();
+    const { hasMenu, GRID } = getTheme();
 
     const [steamStatus, setSteamStatus] = React.useState<SteamStatusResponse | null>(null);
     const [loadingStatus, setLoadingStatus] = React.useState(true);
@@ -107,7 +107,7 @@ export default function AccountPage(): JSX.Element {
     const lastSynced = wishlist?.lastSynced ?? null;
 
     return (
-        <Container size="sm" pt={isDesktop ? "lg" : GRID.rowHeight} pb="lg">
+        <Container size="sm" pt={hasMenu ? "lg" : GRID.rowHeight} pb="lg">
             <Stack gap="lg">
                 {/* Page header */}
                 <Stack gap={4}>

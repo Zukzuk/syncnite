@@ -1,5 +1,5 @@
 import { Paper, Stack, Button, rem } from "@mantine/core";
-import { LETTERS_LIST, Z_INDEX } from "../../../lib/constants";
+import { LETTERS_LIST } from "../../../lib/constants";
 import { Letter } from "../../../types/types";
 import { getTheme } from "../../../theme";
 import React from "react";
@@ -14,7 +14,9 @@ type Props = {
 export function AlphabeticalRail({ activeLetter, railCounts, onScrollJump }: Props): JSX.Element | null {
     const letters = LETTERS_LIST.filter((l) => (railCounts[l] ?? 0) > 0);
     if (letters.length < 10) return null;
+
     const [hoveredLetter, setHoveredLetter] = React.useState<Letter | null>(null);
+    const { Z_INDEX } = getTheme();
 
     return (
         <Paper

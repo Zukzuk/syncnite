@@ -3,14 +3,13 @@ import { Stack, Button, Textarea, Text, Container } from "@mantine/core";
 import { SectionCard } from "../components/SectionCard";
 import { useLogBus } from "../hooks/useLogBus";
 import { getTheme } from "../theme";
-import { GRID } from "../lib/constants";
 
 export default function BridgePage(): JSX.Element {
     const logBus = useLogBus();
-    const { isDesktop } = getTheme();
+    const { hasMenu, GRID } = getTheme();
 
     return (
-        <Container size="sm" pt={isDesktop ? "lg" : GRID.rowHeight} pb="lg">
+        <Container size="sm" pt={hasMenu ? "lg" : GRID.rowHeight} pb="lg">
             <Stack gap="lg">
 
                 <SectionCard

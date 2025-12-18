@@ -1,5 +1,5 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
-import { GRID } from "../../../lib/constants";
+import { getTheme } from "../../../theme";
 
 type UseParams = {
     gridRef: React.RefObject<HTMLDivElement>;
@@ -26,6 +26,8 @@ type UseReturn = {
 
 // Hook to manage virtual windowing for a grid layout
 export function useGridVirtualWindow({ gridRef, opts }: UseParams): UseReturn {
+    const { GRID } = getTheme();
+
     const {
         rows,
         cols,

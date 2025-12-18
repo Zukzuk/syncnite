@@ -1,7 +1,6 @@
 
 import { Box } from "@mantine/core";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
-import { Z_INDEX } from "../../../lib/constants";
 import { GameItem } from "../../../types/types";
 import { getTheme } from "../../../theme";
 
@@ -15,7 +14,7 @@ type Props = {
 export function ItemBackground({ item, isOpen, wallpaperBg }: Props): JSX.Element | null {
     const { bgUrl } = item;
     const isOpenDelayed = useDelayedFlag({ active: isOpen, delayMs: 70 });
-    const { isDark } = getTheme();
+    const { isDark, Z_INDEX } = getTheme();
 
     if (!isOpen || !bgUrl) return null;
 

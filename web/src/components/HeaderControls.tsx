@@ -1,9 +1,8 @@
 import React from "react";
 import { Flex, Box, SegmentedControl, Group } from "@mantine/core";
-import { useMediaQuery } from "@mantine/hooks";
 import { LoadedData, SwitchesMode, UIControls, UIDerivedData, ViewMode } from "../types/types";
 import { getTheme } from "../theme";
-import { GRID, SOURCE_MAP } from "../lib/constants";
+import { SOURCE_MAP } from "../lib/constants";
 import { SearchInput } from "./SearchInput";
 import { MultiSelectInput } from "./MultiSelectInput";
 import { IconToggleWithLabel } from "./IconToggleWithLabel";
@@ -21,7 +20,7 @@ export const HeaderControls = React.memo(function HeaderControls({
   ui,
   derived,
 }: Props) {
-  const { isDesktop } = getTheme();
+  const { hasMenu, GRID } = getTheme();
   const { allSources, allTags, allSeries } = libraryData;
 
   const {
@@ -59,7 +58,7 @@ export const HeaderControls = React.memo(function HeaderControls({
       style={{
         minHeight: GRID.rowHeight,
         padding: GRID.gap,
-        paddingLeft: isDesktop ? GRID.gap : GRID.gap * 5,
+        paddingLeft: hasMenu ? GRID.gap : GRID.gap * 5,
       }}
     >
       <Flex

@@ -1,5 +1,5 @@
 import { useLayoutEffect, useMemo, useState } from "react";
-import { GRID } from "../../../lib/constants";
+import { getTheme } from "../../../theme";
 
 type UseParams = {
     gridRef: React.RefObject<HTMLDivElement>;
@@ -18,6 +18,7 @@ type UseReturn = {
 
 // A hook to calculate an absolute grid layout for a container.
 export function useGridLayout({ gridRef, itemsLen }: UseParams): UseReturn {
+    const { GRID } = getTheme();
     const [width, setWidth] = useState(0);
     const [viewportH, setViewportH] = useState(0);
 

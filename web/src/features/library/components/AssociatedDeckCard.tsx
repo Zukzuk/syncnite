@@ -1,5 +1,4 @@
 import { Box, Image } from "@mantine/core";
-import { GRID } from "../../../lib/constants";
 import { AssociatedItemCard, GameItem } from "../../../types/types";
 import { IconIsInstalled } from "../../../components/IconIsInstalled";
 import { IconIsHidden } from "../../../components/IconIsHidden";
@@ -27,12 +26,12 @@ export function AssociatedDeckCard({
     onToggleClickBounded,
     setHoveredId,
 }: Props) {
-    const { isDark } = getTheme();
+    const { isDark, GRID } = getTheme();
     const { colIndex, indexInColumn, id, metaIndex } = meta;
     const { title, year, coverUrl, isInstalled, isHidden } = item;
 
     const left = colIndex * (GRID.cardWidth + GRID.gap * 2);
-    const top = indexInColumn * GRID.card_step_y;
+    const top = indexInColumn * GRID.cardStepY;
 
     let zIndex = indexInColumn + 1;
     const isTopCard = hasHoveredCard && hoveredMeta!.metaIndex === metaIndex;
@@ -91,7 +90,7 @@ export function AssociatedDeckCard({
                 style={{
                     position: "relative",
                     width: "100%",
-                    aspectRatio: "23 / 32",
+                    aspectRatio: GRID.ratio,
                 }}
             >
                 <IconIsInstalled

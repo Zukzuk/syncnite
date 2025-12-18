@@ -4,14 +4,12 @@ import { useFullscreen } from "@mantine/hooks";
 import { ActionIcon, Box, Center, Group, Loader, Paper, Text, Tooltip } from "@mantine/core";
 import { IconArrowsMaximize, IconArrowsMinimize, IconChevronLeft, IconChevronRight, IconMoon, IconSun, IconX } from "@tabler/icons-react";
 import { useLibraryData } from "../features/library/hooks/useLibraryData";
-import { GRID, INTERVAL_MS, SOURCE_MAP } from "../lib/constants";
+import { INTERVAL_MS, SOURCE_MAP } from "../lib/constants";
 import type { GameItem } from "../types/types";
 import { getTheme } from "../theme";
 
 const DISPLAY_MS = 10_000;
 const FADE_MS = 900;
-
-// NEW: idle fade timing
 const UI_IDLE_MS = 2500;
 
 function shuffle<T>(arr: T[]): T[] {
@@ -48,6 +46,7 @@ export default function NarrowcastPage(): JSX.Element {
     const { libraryData } = useLibraryData({ pollMs: INTERVAL_MS });
     const { id } = useParams<{ id?: string }>();
     const navigate = useNavigate();
+    const { GRID } = getTheme();
 
     const { isDark, setColorScheme } = getTheme();
     const toggleColorScheme = () => setColorScheme(isDark ? "light" : "dark");

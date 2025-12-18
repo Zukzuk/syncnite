@@ -5,10 +5,11 @@ import { Box, Center, Card, Text, Tabs, TextInput, PasswordInput, Button, Stack,
 import { useForm } from "@mantine/form";
 import { login, registerAdmin, registerUser, fetchAdminStatus } from "../lib/api";
 import { setCreds } from "../lib/utils";
-import { Z_INDEX } from "../lib/constants";
 import { Role } from "../types/types";
 import { useIntroFlow, LOGO_EXIT_MS } from "../hooks/useIntroFlow";
 import { LogoIntro } from "../components/LogoIntro";
+import { getTheme } from "../theme";
+
 import styles from "./AppLoginPage.module.css";
 
 type PendingCreds = { email: string; password: string; role: Role };
@@ -19,6 +20,7 @@ export default function AppLoginPage(): JSX.Element {
   const [hasAdmin, setHasAdmin] = React.useState<boolean | null>(null);
 
   const nav = useNavigate();
+  const { Z_INDEX } = getTheme();
 
   const loginForm = useForm({ initialValues: { email: "", password: "" } });
   const registerAdminForm = useForm({ initialValues: { email: "", password: "" } });

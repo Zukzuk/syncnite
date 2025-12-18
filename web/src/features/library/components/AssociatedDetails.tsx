@@ -1,11 +1,11 @@
 import { Anchor, Badge, Box, Group, Image, Stack, Text } from "@mantine/core";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 import { GameItem } from "../../../types/types";
-import { GRID } from "../../../lib/constants";
 import { IconShowMaximized } from "../../../components/IconShowMaximized";
 import { getTheme } from "../../../theme";
 import { IconLinkExternal } from "../../../components/IconExternalLink";
 import { IconLinkSource } from "../../../components/IconSourceLink";
+import { IconIsInstalled } from "../../../components/IconIsInstalled";
 
 type Props = {
     item: GameItem;
@@ -16,7 +16,7 @@ type Props = {
 export function AssociatedDetails({ item, onWallpaperBg }: Props): JSX.Element {
     const { sortingName, tags = [], series = [], isInstalled, isHidden, links, coverUrl, bgUrl, source, htmlLink, sourceLink, title } = item;
     const isOpenDelayed = useDelayedFlag({ active: true, delayMs: 70 });
-    const { isDark } = getTheme();
+    const { isDark, GRID } = getTheme();
 
     return (
         <Stack
@@ -26,7 +26,7 @@ export function AssociatedDetails({ item, onWallpaperBg }: Props): JSX.Element {
             pr={GRID.gap}
             pb={GRID.gap}
             style={{
-                width: GRID.coverWidth + GRID.gap + 4,
+                width: GRID.coverWidth + GRID.gap * 2,
                 height: "100%",
                 overflowY: "auto",
                 overflowX: "hidden",
@@ -39,29 +39,49 @@ export function AssociatedDetails({ item, onWallpaperBg }: Props): JSX.Element {
                 transitionTimingFunction: "ease, ease",
             }}
         >
-            <Image
-                src={coverUrl}
-                alt={sortingName || "cover"}
-                w={GRID.coverWidth}
+            <Box
                 mb={4}
-                radius="sm"
-                fit="cover"
-                loading="lazy"
                 style={{
+                    position: "relative",
                     border: isDark
                         ? "2px solid var(--mantine-color-dark-8)"
                         : "2px solid var(--mantine-color-gray-3)",
                     boxShadow: "0 0px 8px rgba(0, 0, 0, 0.35)",
                 }}
-            />
+            >
+                <Box
+                    w={GRID.coverWidth}
+                    h={GRID.coverHeight}
+                    style={{
+                        position: "relative",
+                        overflow: "hidden",
+                    }}
+                >
+                    <Image
+                        src={coverUrl}
+                        alt={sortingName || "cover"}
+                        radius="sm"
+                        fit="cover"
+                        loading="lazy"
+                        style={{
+                            aspectRatio: GRID.ratio,
+                        }}
+                    />
+
+                    <IconIsInstalled
+                        isListView={false}
+                        isInstalled={isInstalled}
+                    />
+                </Box>
+            </Box>
 
             <Stack gap={6} align="stretch" style={{ width: "100%" }}>
                 {/* Badges */}
                 <Group gap={6} wrap="wrap">
                     <Badge
                         size="xs"
-                        color={isInstalled 
-                            ? "var(--interlinked-color-success)" 
+                        color={isInstalled
+                            ? "var(--interlinked-color-success)"
                             : "var(--interlinked-color-dark)"}
                         variant="filled"
                     >
@@ -69,10 +89,10 @@ export function AssociatedDetails({ item, onWallpaperBg }: Props): JSX.Element {
                     </Badge>
 
                     {isHidden && (
-                        <Badge 
+                        <Badge
                             size="xs"
-                            variant="filled" 
-                            color="var(--interlinked-color-warning)" 
+                            variant="filled"
+                            color="var(--interlinked-color-warning)"
                         >
                             Hidden
                         </Badge>

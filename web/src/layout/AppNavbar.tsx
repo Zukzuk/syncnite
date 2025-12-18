@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Box, Stack, Text, Button, Tooltip, ScrollArea, NavLink } from "@mantine/core";
 import { IconUser, IconShield, IconLogout2, IconDeviceTv, IconLibraryPhoto, IconAlignBoxLeftBottom, IconAffiliate } from "@tabler/icons-react";
 import { useAuth } from "../hooks/useAuth";
-import { GRID, WEB_APP_VERSION } from "../lib/constants";
+import { WEB_APP_VERSION } from "../lib/constants";
 import { getTheme } from "../theme";
 import { ControlPanel } from "../components/ControlPanel";
 import { LogoIntro } from "../components/LogoIntro";
@@ -17,7 +17,7 @@ type Props = {
 export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle }: Props): JSX.Element {
     const { state, logout } = useAuth({ pollMs: 0 });
     const isAdmin = state.role === "admin";
-    const { isDesktop, isDark } = getTheme();
+    const { hasMenu, isDark, GRID } = getTheme();
     const location = useLocation();
 
     const isHome = location.pathname === "/";
@@ -44,7 +44,7 @@ export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle }: Props): JSX.
                     <Stack gap={2}>
                         <NavLink
                             component={Link}
-                            onClick={isDesktop ? undefined : toggleNavbar}
+                            onClick={hasMenu ? undefined : toggleNavbar}
                             to="/"
                             label="Home"
                             leftSection={<IconAlignBoxLeftBottom color="var(--interlinked-color-secondary)" size={18} />}
@@ -53,7 +53,7 @@ export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle }: Props): JSX.
                         />
                         <NavLink
                             component={Link}
-                            onClick={isDesktop ? undefined : toggleNavbar}
+                            onClick={hasMenu ? undefined : toggleNavbar}
                             to="/library"
                             label="Library"
                             leftSection={<IconLibraryPhoto color="var(--interlinked-color-secondary)" size={18} />}
@@ -62,7 +62,7 @@ export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle }: Props): JSX.
                         />
                         <NavLink
                             component={Link}
-                            onClick={isDesktop ? undefined : toggleNavbar}
+                            onClick={hasMenu ? undefined : toggleNavbar}
                             to="/narrowcast"
                             label="Cast"
                             leftSection={<IconDeviceTv color="var(--interlinked-color-secondary)" size={18} />}
@@ -71,7 +71,7 @@ export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle }: Props): JSX.
                         />
                         <NavLink
                             component={Link}
-                            onClick={isDesktop ? undefined : toggleNavbar}
+                            onClick={hasMenu ? undefined : toggleNavbar}
                             to="/account"
                             label="Account"
                             leftSection={<IconUser color="var(--interlinked-color-secondary)" size={18} />}
@@ -82,7 +82,7 @@ export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle }: Props): JSX.
                             <>
                                 <NavLink
                                     component={Link}
-                                    onClick={isDesktop ? undefined : toggleNavbar}
+                                    onClick={hasMenu ? undefined : toggleNavbar}
                                     to="/admin"
                                     label="Admin"
                                     leftSection={<IconShield color="var(--interlinked-color-secondary)" size={18} />}
@@ -91,7 +91,7 @@ export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle }: Props): JSX.
                                 />
                                 <NavLink
                                     component={Link}
-                                    onClick={isDesktop ? undefined : toggleNavbar}
+                                    onClick={hasMenu ? undefined : toggleNavbar}
                                     to="/bridge"
                                     label="Bridge"
                                     leftSection={<IconAffiliate color="var(--interlinked-color-secondary)" size={18} />}

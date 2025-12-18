@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { GameItem } from "../../../types/types";
-import { GRID } from "../../../lib/constants";
+import { getTheme } from "../../../theme";
 
 type UseParams = {
   gridRef: React.RefObject<HTMLDivElement | null>;
@@ -38,11 +38,13 @@ export function useGridScrollRestore({
   toggleOpen,
   replaceOpen,
 }: UseParams): UseReturn {
+  const { GRID } = getTheme();
+
   const preOpenScrollTopRef = useRef<number | null>(null);
   const openItemIdRef = useRef<string | null>(null);
-  const [pendingScrollIndex, setPendingScrollIndex] = useState<number | null>(null);
-
   const lockAfterOpenRef = useRef(false);
+
+  const [pendingScrollIndex, setPendingScrollIndex] = useState<number | null>(null);
 
   const onToggleItem = useCallback(
     (id: string) => {

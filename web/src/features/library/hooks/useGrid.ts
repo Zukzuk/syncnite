@@ -5,7 +5,6 @@ import { useGridAlphabetRail } from "./useGridAlphabetRail";
 import { useGridOpenItemToggle } from "./useGridOpenItemToggle";
 import { useGridScrollJump } from "./useGridScrollJump";
 import { useGridScrollRestore } from "./useGridScrollRestore";
-import { GRID } from "../../../lib/constants";
 import { UIControls, UIDerivedData, Letter, GameItem, ItemPositions } from "../../../types/types";
 import { getTheme } from "../../../theme";
 
@@ -40,7 +39,7 @@ export function useGrid({
 }: UseParams): UseReturn {
     const itemsLen = derived.itemsSorted.length;
     const isListView = ui.isListView;
-    const { isDesktop } = getTheme();
+    const { hasMenu, GRID } = getTheme();
 
     // Base grid sizing (cols + viewport height)
     const { cols, viewportH } = useGridLayout({ gridRef, itemsLen });
@@ -49,8 +48,7 @@ export function useGrid({
     // Combined header/controls offset
     const topOffset = controlsH + sortH;
     // Open card CSS + numeric height
-    const openWidth = `calc(100vw - ${isDesktop ? GRID.navBarWidth : 0
-        }px - ${GRID.scrollbarWidth}px)`;
+    const openWidth = `calc(100vw - ${ hasMenu ? GRID.navBarWidth : 0 }px - ${ GRID.scrollbarWidth }px)`;
     const openHeight = `calc(100vh - ${topOffset}px)`;
 
     // Open/close state

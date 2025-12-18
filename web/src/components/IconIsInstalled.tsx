@@ -2,7 +2,7 @@ import React from "react";
 import { ActionIcon, Box, Tooltip } from "@mantine/core";
 import { IconCheck } from "@tabler/icons-react";
 import { GameItem } from "../types/types";
-import { Z_INDEX } from "../lib/constants";
+import { getTheme } from "../theme";
 
 type Props = {
     isInstalled: GameItem["isInstalled"];
@@ -14,6 +14,8 @@ export const IconIsInstalled = React.memo(function IconIsInstalled({
     isListView,
 }: Props) {
     if (!isInstalled) return null;
+
+    const { Z_INDEX } = getTheme();
 
     const ribbonIcon: React.CSSProperties = {
         position: "absolute",

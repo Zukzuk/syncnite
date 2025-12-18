@@ -36,6 +36,7 @@ export interface Game {
   Name: string;
   SortingName?: string;
   GameId: string;
+  Version?: string;
 
   // visibility
   Hidden?: boolean;

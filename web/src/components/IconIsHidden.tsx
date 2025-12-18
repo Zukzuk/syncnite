@@ -2,7 +2,7 @@ import React from "react";
 import { ActionIcon, Tooltip } from "@mantine/core";
 import { IconEyeOff } from "@tabler/icons-react";
 import { GameItem } from "../types/types";
-import { Z_INDEX } from "../lib/constants";
+import { getTheme } from "../theme";
 
 type Props = {
     isHidden: GameItem["isHidden"];
@@ -14,6 +14,8 @@ export const IconIsHidden = React.memo(function IconIsHidden({
     isListView,
 }: Props) {
     if (!isHidden) return null;
+
+    const { Z_INDEX } = getTheme();
 
     const cardStyle: React.CSSProperties = {
         position: "absolute",
@@ -39,6 +41,7 @@ export const IconIsHidden = React.memo(function IconIsHidden({
         >
             <ActionIcon
                 style={isListView ? rowStyle : cardStyle}
+                color="var(--interlinked-color-warning)"
                 aria-label="Marked as 'hidden'"
                 variant="subtle"
                 size="sm"

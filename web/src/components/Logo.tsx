@@ -3,7 +3,7 @@ import { Stack, Text } from "@mantine/core"
 import { getTheme } from "../theme";
 
 export const Logo = React.memo(function IconLinkSource() {
-  const { isDesktop, isDark } = getTheme();
+  const { hasMenu, isDark } = getTheme();
 
   return (
     <Stack
@@ -18,7 +18,7 @@ export const Logo = React.memo(function IconLinkSource() {
         transform: "skewY(-6deg)",
         transformOrigin: "middle middle",
         WebkitFontSmoothing: "antialiased",
-        left: isDesktop ? 14 : 40,
+        left: hasMenu ? 14 : 40,
       }}>
       <Text
         truncate

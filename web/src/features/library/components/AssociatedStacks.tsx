@@ -1,8 +1,8 @@
 import { Box } from "@mantine/core";
-import { GRID } from "../../../lib/constants";
 import { AssociatedItems } from "../../../types/types";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 import { AssociatedStackCard } from "./AssociatedStackCard";
+import { getTheme } from "../../../theme";
 
 type Props = {
     associatedDecks: AssociatedItems[];
@@ -18,10 +18,11 @@ export function AssociatedStacks({
     stackColumns,
     onStackClick,
 }: Props): JSX.Element | null {
-    const isOpenDelayed = useDelayedFlag({ active: true, delayMs: 210 });
-
     if (!associatedDecks.length || stackColumns <= 0) return null;
 
+    const isOpenDelayed = useDelayedFlag({ active: true, delayMs: 210 });
+    const { GRID } = getTheme();
+    
     return (
         <Box
             className="subtle-scrollbar"

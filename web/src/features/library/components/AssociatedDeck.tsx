@@ -1,6 +1,5 @@
 import React from "react";
 import { Box, Stack, Text } from "@mantine/core";
-import { GRID } from "../../../lib/constants";
 import { GameItem } from "../../../types/types";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 import { AssociatedDeckCard } from "./AssociatedDeckCard";
@@ -26,7 +25,7 @@ export function AssociatedDeck({
 }: Props): JSX.Element | null {
     const [hoveredId, setHoveredId] = React.useState<string | null>(null);
     const isOpenDelayed = useDelayedFlag({ active: true, delayMs: 140 });
-    const { isDark } = getTheme();
+    const { isDark, GRID } = getTheme();
 
     const cards = items.filter((g) => g.coverUrl);
     if (cards.length === 0 || deckColumns <= 0) return null;
@@ -52,7 +51,7 @@ export function AssociatedDeck({
     const cardHeight = (GRID.cardWidth * 32) / 23;
     const columnHeight =
         cardsPerColumn > 0
-            ? cardHeight + GRID.card_step_y * (cardsPerColumn - 1)
+            ? cardHeight + GRID.cardStepY * (cardsPerColumn - 1)
             : 0;
 
     const cardMeta = cards.map((c, index) => {

@@ -1,6 +1,5 @@
 import React from "react";
 import { Box, Image, Stack, Text } from "@mantine/core";
-import { GRID } from "../../../lib/constants";
 import { AssociatedItems } from "../../../types/types";
 import { getTheme } from "../../../theme";
 
@@ -16,7 +15,7 @@ export function AssociatedStackCard({ stack, isOpen, onStackClick }: Props): JSX
     if (!items.length) return null;
     
     const [isHovered, setIsHovered] = React.useState(false);
-    const { isDark } = getTheme();
+    const { isDark, GRID } = getTheme();
 
     const numberOfItems = items.length;
     const cards = items.filter((g) => g.coverUrl);
@@ -88,7 +87,7 @@ export function AssociatedStackCard({ stack, isOpen, onStackClick }: Props): JSX
                             key={g ? g.id : `placeholder-${idx}`}
                             style={{
                                 width: "100%",
-                                aspectRatio: "23 / 32",
+                                aspectRatio: GRID.ratio,
                                 borderRadius: 4,
                                 overflow: "hidden",
                                 boxShadow: g

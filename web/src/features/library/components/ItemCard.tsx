@@ -5,6 +5,7 @@ import { IconIsHidden } from "../../../components/IconIsHidden";
 import { IconCopyTitle } from "../../../components/IconCopyTitle";
 import { IconLinkExternal } from "../../../components/IconExternalLink";
 import { IconLinkSource } from "../../../components/IconSourceLink";
+import { getTheme } from "../../../theme";
 
 type Props = {
     item: GameItem;
@@ -17,15 +18,16 @@ export function ItemCard({ item, isOpen, isListView }: Props): JSX.Element | nul
     if (isOpen || isListView) return null;
 
     const { title, coverUrl, year, source, htmlLink, sourceLink, isHidden, isInstalled } = item;
+    const { GRID } = getTheme();
 
     return (
         <Box
             aria-label="item-card"
         >
-            <Box 
+            <Box
                 style={{
                     position: "relative",
-                    aspectRatio: "23 / 32",
+                    aspectRatio: GRID.ratio,
                 }}
             >
                 <Image
@@ -44,13 +46,13 @@ export function ItemCard({ item, isOpen, isListView }: Props): JSX.Element | nul
                 />
             </Box>
 
-            <IconIsInstalled 
-                isListView={false} 
+            <IconIsInstalled
+                isListView={false}
                 isInstalled={isInstalled}
             />
 
-            <IconIsHidden 
-                isListView={false} 
+            <IconIsHidden
+                isListView={false}
                 isHidden={isHidden}
             />
 
@@ -72,6 +74,7 @@ export function ItemCard({ item, isOpen, isListView }: Props): JSX.Element | nul
             <Box
                 m={6}
                 mt={0}
+                h={22}
                 style={{
                     display: "flex",
                     justifyContent: "space-between",
@@ -90,7 +93,7 @@ export function ItemCard({ item, isOpen, isListView }: Props): JSX.Element | nul
                         wrap="nowrap"
                         style={{ justifyContent: "center" }}
                     >
-                        <IconCopyTitle title={title}  year={year} />
+                        <IconCopyTitle title={title} year={year} />
                         <IconLinkExternal source={source} htmlLink={htmlLink} title={title} />
                         <IconLinkSource source={source} sourceLink={sourceLink} />
                     </Group>

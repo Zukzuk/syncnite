@@ -1,10 +1,10 @@
 import React from "react";
 import { Group, Collapse, Box } from "@mantine/core";
 import { AssociatedLayout, AssociatedItems, GameItem, ScoredHit } from "../../../types/types";
-import { GRID } from "../../../lib/constants";
 import { AssociatedDeck } from "./AssociatedDeck";
 import { AssociatedStacks } from "./AssociatedStacks";
 import { AssociatedDetails } from "./AssociatedDetails";
+import { getTheme } from "../../../theme";
 
 /**
  * Very simple fuzzy search:
@@ -181,7 +181,8 @@ function buildAssociatedDecks(
 function calcAssociatedLayout(
     width: number,
     height: number,
-    totalCards: number
+    totalCards: number,
+    GRID: ReturnType<typeof getTheme>["GRID"]
 ): AssociatedLayout {
     if (width <= 0 || height <= 0 || totalCards === 0) {
         return {
@@ -196,7 +197,7 @@ function calcAssociatedLayout(
     const stackColWidth = GRID.cardWidth * 0.7 + GRID.gap;
 
     const cardHeight = (GRID.cardWidth * 32) / 23;
-    const stepY = GRID.card_step_y;
+    const stepY = GRID.cardStepY;
 
     const maxCardsPerColumnByHeight = Math.max(
         1,
@@ -297,6 +298,7 @@ export function ItemContent({
     if (!isOpen) return null;
 
     const { associatedDecks } = buildAssociatedDecks(isOpen, item, itemsAssociated);
+    const { GRID } = getTheme();
     const [openDeckKey, onStackClick] = React.useState<string | null>(null);
     React.useEffect(() => onStackClick(null), [item.id]);
 
@@ -343,7 +345,8 @@ export function ItemContent({
                 calcAssociatedLayout(
                     width,
                     height,
-                    totalCards
+                    totalCards,
+                    GRID
                 )
             );
         };

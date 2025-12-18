@@ -32,34 +32,6 @@ export const API_ENDPOINTS = {
   STEAM_WISHLIST_SYNC: "/api/v1/steam/wishlist/sync",
   STEAM_AUTH_START: "/api/v1/steam/auth/start",
 }
-
-export const GRID = {
-  colsList: "40px minmax(0, 1fr) 60px 95px 200px",
-  colsGrid: "0px 60px 60px 95px minmax(0, 1fr)",
-  colsOpen: "40px minmax(0, 1fr) 56px",
-  navBarWidth: 155,
-  coverWidth: 220,
-  cardWidth: 160,
-  cardHeight: 300,
-  rowHeight: 60,
-  halfRowHeight: 30,
-  iconSize: 38,
-  scrollbarWidth: 15,
-  listLeftPadding: 12,
-  gap: 8,
-  card_step_y: 90,
-  overscan: { top: 600, bottom: 800 } as const,
-} as const;
-
-export const Z_INDEX = {
-  belowBase: 0,
-  base: 1,
-  aboveBase: 2,
-  medium: 50,
-  high: 100,
-  top: 1000,
-} as const;
-
 export const FILE_BASE = "/data";
 
 export const FILES = {

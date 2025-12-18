@@ -81,6 +81,7 @@ export interface GameItem {
   title: string;
   sortingName: string | null;
   year: number | null;
+  version: string | null;
   source: string;
   sourceLink: string | null;
   playniteLink: string;

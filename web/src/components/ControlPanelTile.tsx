@@ -18,9 +18,9 @@ export function ControlPanelTile({
     compIcon,
     toggleNavbar,
 }: Props) {
-    const { isDesktop } = getTheme();
+    const { hasMenu } = getTheme();
     const hasToggle = !!toggleNavbar;
-    
+
     return (
         <Tooltip
             withArrow
@@ -47,19 +47,19 @@ export function ControlPanelTile({
                     }}
                 >
                     <Center>
-                        {icon
-                            ? (
-                                <ActionIcon
-                                    component={Link}
-                                    onClick={!isDesktop && hasToggle ? toggleNavbar : undefined}
-                                    to="/account"
-                                    variant="subtle"
-                                    size="md"
-                                >
-                                    {icon}
-                                </ActionIcon>
-                            ) : (compIcon)
-                        }
+                        {icon ? (
+                            <ActionIcon
+                                component={Link}
+                                onClick={!hasMenu && hasToggle ? toggleNavbar : undefined}
+                                to="/account"
+                                variant="subtle"
+                                size="md"
+                                w={38}
+                                h={38}
+                            >
+                                {icon}
+                            </ActionIcon>
+                        ) : (compIcon)}
                     </Center>
                 </Card>
             </Indicator>

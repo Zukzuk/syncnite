@@ -1,17 +1,16 @@
 import * as React from "react";
 import { Stack, Text, Badge, Container } from "@mantine/core";
 import { useAuth } from "../hooks/useAuth";
-import { GRID } from "../lib/constants";
 import { TextDataRow } from "../components/TextDataRow";
 import { SectionCard } from "../components/SectionCard";
 import { getTheme } from "../theme";
 
 export default function AdminPage(): JSX.Element {
     const { state } = useAuth({ pollMs: 0 });
-    const { isDesktop } = getTheme();
+    const { hasMenu, GRID } = getTheme();
 
     return (
-        <Container size="sm" pt={isDesktop ? "lg" : GRID.rowHeight } pb="lg">
+        <Container size="sm" pt={hasMenu ? "lg" : GRID.rowHeight } pb="lg">
             <Stack gap="lg">
 
                 <Text fz={28} fw={700}>

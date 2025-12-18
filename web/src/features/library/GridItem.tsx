@@ -1,12 +1,12 @@
 import React from "react";
-import { ActionIcon, Box, CloseButton } from "@mantine/core";
-import { GameItem, ItemPositions } from "../../../types/types";
-import { GRID, Z_INDEX } from "../../../lib/constants";
-import { ItemContent } from "./ItemContent";
-import { ItemBackground } from "./ItemBackground";
-import { ItemRow } from "./ItemRow";
-import { ItemCard } from "./ItemCard";
+import { ActionIcon, Box } from "@mantine/core";
 import { IconX } from "@tabler/icons-react";
+import { GameItem, ItemPositions } from "../../types/types";
+import { ItemContent } from "./components/ItemContent";
+import { ItemBackground } from "./components/ItemBackground";
+import { ItemRow } from "./components/ItemRow";
+import { ItemCard } from "./components/ItemCard";
+import { getTheme } from "../../theme";
 
 function calcCardPosition(
     index: number,
@@ -14,7 +14,9 @@ function calcCardPosition(
     positions: ItemPositions,
     isListView: boolean,
     openWidth: string,
-    openHeight: string
+    openHeight: string,
+    GRID: ReturnType<typeof getTheme>["GRID"],
+    Z_INDEX: ReturnType<typeof getTheme>["Z_INDEX"],
 ): {
     cardLeft: number;
     cardTop: number;
@@ -58,7 +60,7 @@ type Props = {
 };
 
 // Card component for a library item in grid view.
-export const GridCard = React.memo(function GridCard({
+export const GridItem = React.memo(function GridItem({
     item,
     isOpen,
     isDark,
@@ -73,13 +75,12 @@ export const GridCard = React.memo(function GridCard({
     onToggleItem,
 }: Props): JSX.Element {
     const { title, isInstalled } = item;
-
     const [isHovered, setIsHovered] = React.useState(false);
+    const { Z_INDEX, GRID } = getTheme();
 
+    // Bounded onToggleItem to this item's ID if no ID is provided.
     const onToggleClickBounded = React.useCallback(
-        (id?: string) => {
-            id ? onToggleItem(id) : onToggleItem(item.id);
-        },
+        (id?: string) => { id ? onToggleItem(id) : onToggleItem(item.id) },
         [onToggleItem, item.id]
     );
 
@@ -95,7 +96,9 @@ export const GridCard = React.memo(function GridCard({
         positions,
         isListView,
         openWidth,
-        openHeight
+        openHeight,
+        GRID,
+        Z_INDEX,
     );
 
     return (
@@ -108,7 +111,6 @@ export const GridCard = React.memo(function GridCard({
                 boxSizing: "border-box",
                 flexDirection: "column",
                 overflow: "hidden",
-                backgroundColor: "var(--mantine-color-default-background)",
                 left: cardLeft,
                 top: cardTop,
                 width: cardWidth,
@@ -126,20 +128,21 @@ export const GridCard = React.memo(function GridCard({
                     overflow: "hidden",
                     isolation: "isolate",
                     userSelect: "none",
-                    backgroundColor: !isListView || isOpen || !isHovered
-                        ? undefined
-                        : isDark 
-                            ? "var(--mantine-color-dark-8)" 
-                            : "var(--mantine-color-gray-1)",
+                    backgroundColor: 
+                        (isListView || isHovered) && isInstalled && !isOpen
+                            ? "var(--interlinked-color-secondary-soft)"    
+                            : isOpen || !isHovered
+                                ? undefined
+                                : isDark
+                                    ? "var(--mantine-color-dark-8)"
+                                    : "var(--mantine-color-gray-1)",
                     border: isOpen
                         ? undefined
-                        : isInstalled && isListView 
-                            ? "2px solid var(--interlinked-color-secondary-soft)" 
-                            : isInstalled && !isListView
-                                ?  "2px solid var(--interlinked-color-secondary)"
-                                : isHovered && !isListView
-                                    ? "2px solid var(--interlinked-color-primary-soft)"
-                                    : "2px solid transparent",
+                        : (isInstalled && !isListView) || (isListView && isHovered && isInstalled)
+                            ? "2px solid var(--interlinked-color-secondary)"
+                            : isHovered && !isListView
+                                ? "2px solid var(--interlinked-color-primary-soft)"
+                                : "2px solid transparent",
                     borderRadius: isListView ? 0 : isOpen ? 0 : 4,
                     padding:
                         isListView || isOpen

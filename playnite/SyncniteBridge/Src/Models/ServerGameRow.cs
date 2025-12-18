@@ -15,6 +15,7 @@ namespace SyncniteBridge.Models
 
         public string Name { get; set; } = "";
         public string SortingName { get; set; } = "";
+        public string Version { get; set; } = "";
 
         public bool Hidden { get; set; }
 

@@ -1,14 +1,16 @@
 import React from "react";
-import { ActionIcon, Tooltip } from "@mantine/core";
+import { ActionIcon } from "@mantine/core";
 import { IconMaximize } from "@tabler/icons-react";
-import { GameItem } from "../types/types";
-import { Z_INDEX } from "../lib/constants";
+import { getTheme } from "../theme";
 
 type Props = {
     onHoverChange: (isHovered: boolean) => void;
 };
 
 export const IconShowMaximized = React.memo(function IconShowMaximized({ onHoverChange }: Props) {
+
+    const { Z_INDEX } = getTheme();
+
     const cardStyle: React.CSSProperties = {
         position: "absolute",
         top: 8,

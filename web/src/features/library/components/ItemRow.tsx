@@ -1,7 +1,6 @@
 import React from "react";
-import { Box, Flex, Text, Group } from "@mantine/core";
+import { Box, Flex, Text, Group, Badge } from "@mantine/core";
 import { IconPlayerPlay, IconDownload } from "@tabler/icons-react";
-import { GRID } from "../../../lib/constants";
 import { GameItem } from "../../../types/types";
 import { IconGame } from "../../../components/IconGame";
 import { IconIsInstalled } from "../../../components/IconIsInstalled";
@@ -9,6 +8,8 @@ import { IconIsHidden } from "../../../components/IconIsHidden";
 import { IconCopyTitle } from "../../../components/IconCopyTitle";
 import { IconLinkExternal } from "../../../components/IconExternalLink";
 import { IconLinkSource } from "../../../components/IconSourceLink";
+import { getTheme } from "../../../theme";
+import { version } from "os";
 
 type Props = {
     item: GameItem;
@@ -20,7 +21,8 @@ type Props = {
 export function ItemRow({ item, isOpen, isListView }: Props): JSX.Element | null {
     if (!isOpen && !isListView) return null;
 
-    const { playniteLink, isInstalled, isHidden, iconUrl, title, year, source, series, htmlLink, sourceLink } = item;
+    const { playniteLink, isInstalled, isHidden, iconUrl, title, year, source, series, htmlLink, sourceLink, version } = item;
+    const { hasMenu, GRID } = getTheme();
     const [isHovered, setIsHovered] = React.useState(false);
 
     return (
@@ -104,6 +106,16 @@ export function ItemRow({ item, isOpen, isListView }: Props): JSX.Element | null
                     {title}
                 </Text>
 
+                {version ? (
+                    <Badge
+                        size="sm"
+                        variant="filled"
+                        color="var(--interlinked-color-primary)"
+                    >
+                        {version}
+                    </Badge>
+                ) : null}
+
                 <Group
                     gap={4}
                     style={{
@@ -134,11 +146,22 @@ export function ItemRow({ item, isOpen, isListView }: Props): JSX.Element | null
                         </Group>
                     </Box>
 
-                    <Flex gap={8} style={{ minWidth: 0 }}>
-                        <Text style={{ fontSize: 14, display: "inline" }}>
-                            {series && series.length > 0 ? series.join(", ") : ""}
-                        </Text>
-                    </Flex>
+                    {hasMenu ? (
+                        <Flex gap={8} style={{ minWidth: 0 }}>
+                            <Text
+                                style={{
+                                    fontSize: 14,
+                                    overflow: "hidden",
+                                    display: "-webkit-box",
+                                    WebkitLineClamp: 2,
+                                    WebkitBoxOrient: "vertical",
+                                }}
+                                title={series?.join(", ")}
+                            >
+                                {series && series.length > 0 ? series.join(", ") : ""}
+                            </Text>
+                        </Flex>
+                    ) : null}
                 </>
             ) : null}
         </Box>

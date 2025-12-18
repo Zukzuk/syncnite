@@ -2,7 +2,6 @@ import React from "react";
 import { AppShell, Burger, Box } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { AppNavbar } from "./AppNavbar";
-import { GRID, Z_INDEX } from "../lib/constants";
 import { getTheme } from "../theme";
 import { useIntroFlow } from "../hooks/useIntroFlow";
 
@@ -13,9 +12,10 @@ export default function AppShellLayout({
   children: React.ReactNode;
   hideSite?: boolean;
 }) {
-  const { breakpoint } = getTheme();
-  const [opened, { toggle: toggleNavbar }] = useDisclosure();
+  const [navbarOpened, { toggle: toggleNavbar }] = useDisclosure();
+  const { GRID, Z_INDEX } = getTheme();
 
+  // Intro flow for the navbar burger
   const flow = useIntroFlow({
     gateEnabled: !hideSite,
     gateStartsHidden: true,
@@ -28,9 +28,9 @@ export default function AppShellLayout({
         hideSite
           ? undefined
           : {
-            width: GRID.navBarWidth,
-            breakpoint,
-            collapsed: { mobile: !opened },
+            width: { base: GRID.navBarWidth },
+            breakpoint: "sm",
+            collapsed: { mobile: !navbarOpened },
           }
       }
     >
@@ -57,10 +57,10 @@ export default function AppShellLayout({
           }}
         >
           <Burger
-            opened={opened}
+            opened={navbarOpened}
             onClick={toggleNavbar}
             size="sm"
-            hiddenFrom={breakpoint}
+            hiddenFrom="sm"
             aria-label="Toggle navigation"
             color="var(--interlinked-color-primary)"
           />

@@ -18,7 +18,12 @@ function getGameId(id: string): string {
 }
 
 // Get the Game Title (default "Untitled")
-function getTitle(name: string | null | undefined): string {
+function getTitle(name: string | null | undefined, version: string | null | undefined): string {
+    if (name && version) {
+        const escaped = version.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        name = name.replace(new RegExp(`\\s*${escaped}\\s*$`), "");
+    }
+    name = name?.replace(/\s*[:\-]\s*$/, "");
     return name ?? "Untitled";
 }
 
@@ -85,6 +90,10 @@ function getYear(releaseYear: number | null | undefined, releaseDate: GameReleas
         return typeof y === "number" ? y : null;
     }
     return null;
+}
+// Get the Version (default "")
+function getVersion(version: string | null | undefined): string | null {
+    return !!version ? version : null;
 }
 
 // Prefer Links matching source, then any Links, then sourcish fallback
@@ -168,7 +177,7 @@ function getSourceProtocolLink(source: string, gameId: string | null, href: stri
         case "ea app":
             const slug = href?.match(/\/product\/([^/?]+)/)?.[1] || href?.match(/\/p\/([^/?]+)/)?.[1];
             return slug ? `${SOURCE_MAP["ea app"].platform}store/product/${encodeURIComponent(slug)}?action=show` : `${SOURCE_MAP["ea app"].platform}launchgame/${encodeURIComponent(gameId)}`;
-            // return `${SOURCE_MAP["ea app"].platform}launchgame/${encodeURIComponent(gameId)}`;
+        // return `${SOURCE_MAP["ea app"].platform}launchgame/${encodeURIComponent(gameId)}`;
         case "battle.net":
             return `${SOURCE_MAP["battle.net"].platform}${encodeURIComponent(gameId)}`;
         case "xbox":
@@ -284,9 +293,10 @@ async function loadLibrary(): Promise<LoadedData> {
     const items: GameItem[] = games.map((g) => {
         const id = getPlayniteId(g);
         const gameId = getGameId(g.GameId);
-        const title = getTitle(g.Name);
+        const title = getTitle(g.Name, g.Version);
         const sortingName = getSortingName(g.SortingName, g.Name);
         const year = getYear(g.ReleaseYear, g.ReleaseDate);
+        const version = getVersion(g.Version);
         const source = getSource(g, sourceById);
         const htmlLink = getEffectiveLink(g.Links, title, source);
         const sourceLink = getSourceProtocolLink(source, gameId, htmlLink);
@@ -302,13 +312,14 @@ async function loadLibrary(): Promise<LoadedData> {
 
         // return the GameItem
         return {
-            id, gameId, 
-            title, sortingName, year, 
-            source, sourceLink, 
-            htmlLink, links, 
+            id, gameId,
+            title, sortingName,
+            year, version,
+            source, sourceLink,
+            htmlLink, links,
             playniteLink,
             isHidden, isInstalled,
-            tags, series, 
+            tags, series,
             iconUrl, coverUrl, bgUrl,
         };
     });

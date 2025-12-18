@@ -1,7 +1,7 @@
 import React from "react";
 import ICO from "icojs";
-import { GRID } from "../lib/constants";
 import { CustomIconSVG, FallbackIcon } from "../styles/CustomIcons";
+import { getTheme } from "../theme";
 
 function isIcoPath(url: string): boolean {
   try {
@@ -43,6 +43,7 @@ export function IconGame({ src, alt }: Props) {
     return <CustomIconSVG inner={FallbackIcon} viewBox="0 0 50 50" size={50} />;
   }
 
+  const { GRID } = getTheme();
   const [url, setUrl] = React.useState(src);
   const retriedRef = React.useRef(false);
 

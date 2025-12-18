@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import { Box } from "@mantine/core";
-import { GridCard } from "./components/GridCard";
+import { GridItem } from "./GridItem";
 import { AlphabeticalRail } from "./components/AlphabeticalRail";
 import { useGrid } from "./hooks/useGrid";
 import { GameItem, UIControls, UIDerivedData } from "../../types/types";
@@ -81,7 +81,7 @@ export function AbsoluteGrid({
                         const isOpen = openIds.has(item.id);
 
                         return (
-                            <GridCard
+                            <GridItem
                                 key={key}
                                 item={item}
                                 index={index}
