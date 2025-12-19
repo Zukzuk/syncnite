@@ -1,12 +1,13 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useGridLayout } from "./useGridLayout";
 import { useGridVirtualWindow } from "./useGridVirtualWindow";
 import { useGridAlphabetRail } from "./useGridAlphabetRail";
 import { useGridOpenItemToggle } from "./useGridOpenItemToggle";
 import { useGridScrollJump } from "./useGridScrollJump";
 import { useGridScrollRestore } from "./useGridScrollRestore";
-import { UIControls, UIDerivedData, Letter, GameItem, ItemPositions } from "../../../types/types";
+import { UIControls, UIDerivedData, Letter, GameItem, ItemPositions, NavMode } from "../../../types/types";
 import { getTheme } from "../../../theme";
+import { useNavigate, useParams } from "react-router-dom";
 
 type UseParams = {
     gridRef: React.RefObject<HTMLDivElement>;
@@ -26,7 +27,7 @@ type UseReturn = {
     openHeight: string;
     openIds: Set<string>;
     onScrollJump: (letter: Letter) => void;
-    onToggleItem: (id: string) => void;
+    onToggleItemWithNav: (id: string, mode: NavMode) => void;
 };
 
 // Main grid hook
@@ -40,6 +41,8 @@ export function useGrid({
     const itemsLen = derived.itemsSorted.length;
     const isListView = ui.isListView;
     const { hasMenu, GRID } = getTheme();
+    const { id: routeId } = useParams<{ id?: string }>();
+    const navigate = useNavigate();
 
     // Base grid sizing (cols + viewport height)
     const { cols, viewportH } = useGridLayout({ gridRef, itemsLen });
@@ -48,7 +51,7 @@ export function useGrid({
     // Combined header/controls offset
     const topOffset = controlsH + sortH;
     // Open card CSS + numeric height
-    const openWidth = `calc(100vw - ${ hasMenu ? GRID.navBarWidth : 0 }px - ${ GRID.scrollbarWidth }px)`;
+    const openWidth = `calc(100vw - ${hasMenu ? GRID.navBarWidth : 0}px - ${GRID.scrollbarWidth}px)`;
     const openHeight = `calc(100vh - ${topOffset}px)`;
 
     // Open/close state
@@ -209,7 +212,7 @@ export function useGrid({
     const openRowHeight = Math.max(closedHeight, viewportH);
 
     // Open/close behavior with scroll restore according to the new rules
-    const { onToggleItem } = useGridScrollRestore({
+    const { syncOpenFromRoute } = useGridScrollRestore({
         gridRef,
         openIds,
         items: derived.itemsSorted as GameItem[],
@@ -224,6 +227,25 @@ export function useGrid({
         toggleOpen,
         replaceOpen,
     });
+
+    // Handler to toggle open state via URL navigation
+    const onToggleItemWithNav = useCallback(
+        (id: string, navMode: NavMode) => {
+            const willOpen = !openIds.has(id);
+
+            if (willOpen) {
+                // When URL is source of truth, switching/opening is done by route sync
+                navigate(`/library/${id}`, { replace: navMode === "replace" });
+            } else {
+                navigate(`/library`, { replace: true });
+            }
+        },
+        [openIds, navigate]
+    );
+
+    useEffect(() => {
+        syncOpenFromRoute(routeId);
+    }, [routeId, syncOpenFromRoute]);
 
     // Visible index for alphabet rail
     const railVisibleIndex =
@@ -329,6 +351,6 @@ export function useGrid({
         openHeight,
         openIds,
         onScrollJump,
-        onToggleItem,
+        onToggleItemWithNav,
     } as const;
 }

@@ -119,17 +119,21 @@ export function useLibraryState(items: UseParams): UseReturn {
     const qv = q.toLowerCase().trim();
 
     const pass = items.filter((r) =>
+      // text search across title, source, tags
+      (!qv || (
+        r.title?.toLowerCase().includes(qv) ||
+        r.sortingName?.toLowerCase().includes(qv) || 
+        r.version?.toLowerCase().includes(qv)
+      )) &&
       // sources: match any of selected
       (!sources.length || sources.includes(r.source)) &&
-      // tags/series: match any of selected
+      // tags: match any of selected
       (!tags.length || tags.some((t) => r.tags?.includes(t))) &&
       // series: match any of selected
       (!series.length || series.some((t) => r.series?.includes(t))) &&
-      // text search across title, source, tags
-      (!qv || (r.title?.toLowerCase().includes(qv) || r.source?.toLowerCase().includes(qv) || r.tags?.some((t) => t.toLowerCase().includes(qv)))) &&
-      // installed/hidden flags
+      // installed flags
       (!installedOnly || !!r.isInstalled) &&
-      // hidden
+      // hidden flags
       (showHidden || !r.isHidden)
     );
 

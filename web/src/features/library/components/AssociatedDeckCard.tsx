@@ -1,5 +1,5 @@
 import { Box, Image } from "@mantine/core";
-import { AssociatedItemCard, GameItem } from "../../../types/types";
+import { AssociatedItemCard, GameItem, NavMode } from "../../../types/types";
 import { IconIsInstalled } from "../../../components/IconIsInstalled";
 import { IconIsHidden } from "../../../components/IconIsHidden";
 import { getTheme } from "../../../theme";
@@ -11,7 +11,7 @@ type Props = {
     hoveredMeta: AssociatedItemCard | null;
     hasHoveredCard: boolean;
     currentItemId: string;
-    onToggleClickBounded: (id?: string) => void;
+    onToggleClickBounded: (id?: string, navMode?: NavMode) => void;
     setHoveredId: (id: string | null) => void;
 };
 
@@ -54,7 +54,7 @@ export function AssociatedDeckCard({
             onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                if (!isCurrentItem) onToggleClickBounded(id);
+                if (!isCurrentItem) onToggleClickBounded(id, "push");
             }}
             onMouseEnter={(e) => {
                 e.stopPropagation();
@@ -102,7 +102,7 @@ export function AssociatedDeckCard({
                     isListView={false}
                     isHidden={isHidden}
                 />
-                
+
                 <Image
                     src={coverUrl || ""}
                     alt={title}

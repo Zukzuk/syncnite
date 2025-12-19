@@ -38,7 +38,7 @@ export function AbsoluteGrid({
         openHeight,
         openIds,
         onScrollJump,
-        onToggleItem,
+        onToggleItemWithNav,
     } = useGrid({
         gridRef,
         controlsH,
@@ -94,7 +94,7 @@ export function AbsoluteGrid({
                                 itemsAssociated={itemsAssociated}
                                 wallpaperBg={wallpaperBg}
                                 onWallpaperBg={onWallpaperBg}
-                                onToggleItem={onToggleItem}
+                                onToggleItem={(id) => onToggleItemWithNav(id, "push")}
                             />
                         );
                     })}

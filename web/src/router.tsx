@@ -92,7 +92,7 @@ export const router = createBrowserRouter([
             element: <LoggedInOnly />,
             children: [
               { path: "/", element: <HomePage /> },
-              { path: "/library", element: <LibraryPage /> },
+              { path: "/library/:id?", element: <LibraryPage /> },
               { path: "/bridge", element: <BridgePage /> },
               { path: "/account", element: <AccountPage /> },
             ],

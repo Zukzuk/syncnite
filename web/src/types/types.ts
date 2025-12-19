@@ -13,6 +13,8 @@ export type SwitchesMode = "enabled" | "disabled";
 
 export type Role = "admin" | "user" | "unknown";
 
+export type NavMode = "replace" | "push";
+
 export interface AuthState {
   ready: boolean;
   loggedIn: boolean;

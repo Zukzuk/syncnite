@@ -1,7 +1,7 @@
 import React from "react";
 import { ActionIcon, Box } from "@mantine/core";
 import { IconX } from "@tabler/icons-react";
-import { GameItem, ItemPositions } from "../../types/types";
+import { GameItem, ItemPositions, NavMode } from "../../types/types";
 import { ItemContent } from "./components/ItemContent";
 import { ItemBackground } from "./components/ItemBackground";
 import { ItemRow } from "./components/ItemRow";
@@ -56,7 +56,7 @@ type Props = {
     positions: ItemPositions,
     wallpaperBg: boolean;
     onWallpaperBg: (value: boolean) => void;
-    onToggleItem: (id: string) => void;
+    onToggleItem: (id: string, navMode?: NavMode) => void;
 };
 
 // Card component for a library item in grid view.
@@ -80,7 +80,10 @@ export const GridItem = React.memo(function GridItem({
 
     // Bounded onToggleItem to this item's ID if no ID is provided.
     const onToggleClickBounded = React.useCallback(
-        (id?: string) => { id ? onToggleItem(id) : onToggleItem(item.id) },
+        (id?: string, navMode?: NavMode) => {
+            const target = id ?? item.id;
+            onToggleItem(target, navMode);
+        },
         [onToggleItem, item.id]
     );
 
@@ -128,11 +131,11 @@ export const GridItem = React.memo(function GridItem({
                     overflow: "hidden",
                     isolation: "isolate",
                     userSelect: "none",
-                    backgroundColor: 
+                    backgroundColor:
                         isInstalled && !isOpen && ((isListView && !isHovered) || (!isListView && isHovered))
-                            ? "var(--interlinked-color-secondary-softer)" 
+                            ? "var(--interlinked-color-secondary-softer)"
                             : isInstalled && !isOpen && (isListView && isHovered)
-                                ? "var(--interlinked-color-secondary-soft)" 
+                                ? "var(--interlinked-color-secondary-soft)"
                                 : isOpen || !isHovered
                                     ? undefined
                                     : isDark

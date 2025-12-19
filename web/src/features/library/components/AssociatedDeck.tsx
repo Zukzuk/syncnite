@@ -1,6 +1,6 @@
 import React from "react";
-import { Box, Stack, Text } from "@mantine/core";
-import { GameItem } from "../../../types/types";
+import { Badge, Box, Stack, Text } from "@mantine/core";
+import { GameItem, NavMode } from "../../../types/types";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 import { AssociatedDeckCard } from "./AssociatedDeckCard";
 import { getTheme } from "../../../theme";
@@ -11,7 +11,7 @@ type Props = {
     items: GameItem[];
     deckColumns: number;
     maxCardsPerColumn: number | null;
-    onToggleClickBounded: (id?: string) => void;
+    onToggleClickBounded: (id?: string, navMode?: NavMode) => void;
 };
 
 // Component to display an associated deck of items in the library view.
@@ -94,14 +94,25 @@ export function AssociatedDeck({
             <Text
                 size="xs"
                 c="var(--interlinked-color-primary)"
+                title={`${label} (${cards.length})`}
                 style={{
+                    display: "inline-flex",
+                    alignItems: "center",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
                     fontSize: 14,
                 }}
             >
-                {label} ({cards.length})
+                {label}
+                <Badge
+                    ml={4}
+                    size="xs"
+                    variant="filled"
+                    color="var(--interlinked-color-primary)"
+                >
+                    {cards.length}
+                </Badge>
             </Text>
 
             <Box
@@ -114,8 +125,8 @@ export function AssociatedDeck({
                     overflowY: "auto",
                     overflowX: "hidden",
                     overscrollBehaviorY: "contain",
-                    boxShadow: isDark 
-                        ? "inset 0 0 20px rgba(0, 0, 0, 0.5)" 
+                    boxShadow: isDark
+                        ? "inset 0 0 20px rgba(0, 0, 0, 0.5)"
                         : "inset 0 0 20px rgba(0, 0, 0, 0.3)",
                 }}
             >

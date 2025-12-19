@@ -1,6 +1,6 @@
 import React from "react";
 import { Group, Collapse, Box } from "@mantine/core";
-import { AssociatedLayout, AssociatedItems, GameItem, ScoredHit } from "../../../types/types";
+import { AssociatedLayout, AssociatedItems, GameItem, ScoredHit, NavMode } from "../../../types/types";
 import { AssociatedDeck } from "./AssociatedDeck";
 import { AssociatedStacks } from "./AssociatedStacks";
 import { AssociatedDetails } from "./AssociatedDetails";
@@ -282,7 +282,7 @@ type Props = {
     openHeight: string;
     itemsAssociated: GameItem[];
     onWallpaperBg: (on: boolean) => void;
-    onToggleClickBounded: (id?: string) => void;
+    onToggleClickBounded: (id?: string, navMode?: NavMode) => void;
 };
 
 // Content component for an expanded library item, showing associated decks and stacks.
