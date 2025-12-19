@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.37.1](https://github.com/Zukzuk/syncnite/compare/v1.37.0...v1.37.1) (2025-12-19)
+
+
+### Bug Fixes
+
+* fixes routing / render glitches around library page ([2d4130e](https://github.com/Zukzuk/syncnite/commit/2d4130eab31b2f81c57f7f9bd279a3d406b22a31))
+
 ## [1.37.0](https://github.com/Zukzuk/syncnite/compare/v1.36.1...v1.37.0) (2025-12-19)
 
 
