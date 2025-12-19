@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.36.1](https://github.com/Zukzuk/syncnite/compare/v1.36.0...v1.36.1) (2025-12-19)
+
+
+### Bug Fixes
+
+* fixed rollover ([1dd94e7](https://github.com/Zukzuk/syncnite/commit/1dd94e765c2be7b1ad59d89ea5054b33c575b32f))
+
 ## [1.36.0](https://github.com/Zukzuk/syncnite/compare/v1.35.3...v1.36.0) (2025-12-18)
 
 
