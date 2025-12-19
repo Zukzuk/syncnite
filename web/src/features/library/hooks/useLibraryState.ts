@@ -125,14 +125,16 @@ export function useLibraryState(items: UseParams): UseReturn {
       (!qv || (
         r.title?.toLowerCase().includes(qv) ||
         r.sortingName?.toLowerCase().includes(qv) ||
-        r.version?.toLowerCase().includes(qv)
+        r.version?.toLowerCase().includes(qv) ||
+        r.tags?.some((ta) => ta.toLowerCase().includes(qv)) ||
+        r.series?.some((se) => se.toLowerCase().includes(qv))
       )) &&
       // sources: match any of selected
-      (!sources.length || sources.includes(r.source)) &&
+      (!sources.length || sources.some((so) => r.source === so)) &&
       // tags: match any of selected
-      (!tags.length || tags.some((t) => r.tags?.includes(t))) &&
+      (!tags.length || tags.some((ta) => r.tags?.includes(ta))) &&
       // series: match any of selected
-      (!series.length || series.some((t) => r.series?.includes(t))) &&
+      (!series.length || series.some((se) => r.series?.includes(se))) &&
       // installed flags
       (!installedOnly || !!r.isInstalled) &&
       // hidden flags
