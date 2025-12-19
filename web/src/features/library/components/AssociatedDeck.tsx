@@ -4,8 +4,11 @@ import { GameItem, NavMode } from "../../../types/types";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 import { AssociatedDeckCard } from "./AssociatedDeckCard";
 import { getTheme } from "../../../theme";
+import { useLibraryContext } from "../../../layout/LibraryContext";
 
 type Props = {
+    deckKey: string;
+    animateIn?: boolean;
     label: string;
     currentItemId: string;
     items: GameItem[];
@@ -16,6 +19,8 @@ type Props = {
 
 // Component to display an associated deck of items in the library view.
 export function AssociatedDeck({
+    deckKey,
+    animateIn = true,
     label,
     currentItemId,
     items,
@@ -23,12 +28,46 @@ export function AssociatedDeck({
     maxCardsPerColumn,
     onToggleClickBounded,
 }: Props): JSX.Element | null {
+    const lib = useLibraryContext();
+    const scrollRef = React.useRef<HTMLDivElement | null>(null);
+    const rafRef = React.useRef<number | null>(null);
+
     const [hoveredId, setHoveredId] = React.useState<string | null>(null);
-    const isOpenDelayed = useDelayedFlag({ active: true, delayMs: 140 });
+    const isOpenDelayed = useDelayedFlag({ active: animateIn, delayMs: 140 });
+    const show = animateIn ? isOpenDelayed : true;
+
     const { isDark, GRID } = getTheme();
 
     const cards = items.filter((g) => g.coverUrl);
     if (cards.length === 0 || deckColumns <= 0) return null;
+
+    // Restore scroll position when (itemId, deckKey) changes.
+    // IMPORTANT: don't depend on lib/version here (scroll updates bump version).
+    React.useLayoutEffect(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+
+        const saved = lib.getDeckScrollTop(currentItemId, deckKey);
+        el.scrollTop = typeof saved === "number" ? saved : 0;
+    }, [currentItemId, deckKey]);
+
+    // Persist scroll position (rAF throttled).
+    const onScroll = React.useCallback(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+
+        if (rafRef.current != null) return;
+        rafRef.current = requestAnimationFrame(() => {
+            rafRef.current = null;
+            lib.setDeckScrollTop(currentItemId, deckKey, el.scrollTop);
+        });
+    }, [lib, currentItemId, deckKey]);
+
+    React.useEffect(() => {
+        return () => {
+            if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+        };
+    }, []);
 
     const colCount = Math.max(1, deckColumns);
     const total = cards.length;
@@ -37,10 +76,7 @@ export function AssociatedDeck({
     if (maxCardsPerColumn && maxCardsPerColumn > 0) {
         const maxTotalCapacity = colCount * maxCardsPerColumn;
         if (total <= maxTotalCapacity) {
-            cardsPerColumn = Math.min(
-                maxCardsPerColumn,
-                Math.ceil(total / colCount)
-            );
+            cardsPerColumn = Math.min(maxCardsPerColumn, Math.ceil(total / colCount));
         } else {
             cardsPerColumn = Math.ceil(total / colCount);
         }
@@ -50,9 +86,7 @@ export function AssociatedDeck({
 
     const cardHeight = (GRID.cardWidth * 32) / 23;
     const columnHeight =
-        cardsPerColumn > 0
-            ? cardHeight + GRID.cardStepY * (cardsPerColumn - 1)
-            : 0;
+        cardsPerColumn > 0 ? cardHeight + GRID.cardStepY * (cardsPerColumn - 1) : 0;
 
     const cardMeta = cards.map((c, index) => {
         const colIndex = Math.floor(index / cardsPerColumn);
@@ -62,15 +96,10 @@ export function AssociatedDeck({
 
     const colLengths: number[] = Array.from({ length: colCount }, () => 0);
     cardMeta.forEach((m) => {
-        colLengths[m.colIndex] = Math.max(
-            colLengths[m.colIndex] || 0,
-            m.indexInColumn + 1
-        );
+        colLengths[m.colIndex] = Math.max(colLengths[m.colIndex] || 0, m.indexInColumn + 1);
     });
 
-    const hoveredIndex = hoveredId
-        ? cardMeta.findIndex((m) => m.id === hoveredId)
-        : -1;
+    const hoveredIndex = hoveredId ? cardMeta.findIndex((m) => m.id === hoveredId) : -1;
     const hasHoveredCard = hoveredIndex >= 0;
     const hoveredMeta = hasHoveredCard ? cardMeta[hoveredIndex] : null;
 
@@ -83,8 +112,8 @@ export function AssociatedDeck({
                 display: "flex",
                 alignItems: "stretch",
                 overflow: "hidden",
-                opacity: isOpenDelayed ? 1 : 0,
-                transform: isOpenDelayed ? "translateY(0)" : "translateY(12px)",
+                opacity: show ? 1 : 0,
+                transform: show ? "translateY(0)" : "translateY(12px)",
                 transitionProperty: "opacity, transform",
                 transitionDuration: "220ms, 260ms",
                 transitionTimingFunction: "ease, ease",
@@ -105,17 +134,14 @@ export function AssociatedDeck({
                 }}
             >
                 {label}
-                <Badge
-                    ml={4}
-                    size="xs"
-                    variant="filled"
-                    color="var(--interlinked-color-primary)"
-                >
+                <Badge ml={4} size="xs" variant="filled" color="var(--interlinked-color-primary)">
                     {cards.length}
                 </Badge>
             </Text>
 
             <Box
+                ref={scrollRef}
+                onScroll={onScroll}
                 className="subtle-scrollbar"
                 p={GRID.gap * 2}
                 pr={GRID.gap}
@@ -125,9 +151,7 @@ export function AssociatedDeck({
                     overflowY: "auto",
                     overflowX: "hidden",
                     overscrollBehaviorY: "contain",
-                    boxShadow: isDark
-                        ? "inset 0 0 20px rgba(0, 0, 0, 0.5)"
-                        : "inset 0 0 20px rgba(0, 0, 0, 0.3)",
+                    boxShadow: isDark ? "inset 0 0 20px rgba(0, 0, 0, 0.5)" : "inset 0 0 20px rgba(0, 0, 0, 0.3)",
                 }}
             >
                 <Box
@@ -139,12 +163,12 @@ export function AssociatedDeck({
                         overflow: "visible",
                     }}
                 >
-                    {cardMeta.map((cardMeta => {
-                        const item = cards[cardMeta.metaIndex];
+                    {cardMeta.map((meta) => {
+                        const item = cards[meta.metaIndex];
                         return (
                             <AssociatedDeckCard
-                                key={cardMeta.id}
-                                meta={cardMeta}
+                                key={meta.id}
+                                meta={meta}
                                 item={item}
                                 colLengths={colLengths}
                                 hoveredMeta={hoveredMeta}
@@ -154,7 +178,7 @@ export function AssociatedDeck({
                                 setHoveredId={setHoveredId}
                             />
                         );
-                    }))}
+                    })}
                 </Box>
             </Box>
         </Stack>

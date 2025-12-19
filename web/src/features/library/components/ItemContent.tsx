@@ -5,17 +5,12 @@ import { AssociatedDeck } from "./AssociatedDeck";
 import { AssociatedStacks } from "./AssociatedStacks";
 import { AssociatedDetails } from "./AssociatedDetails";
 import { getTheme } from "../../../theme";
+import { useLibraryContext } from "../../../layout/LibraryContext";
 
-/**
- * Very simple fuzzy search:
- *  1. A hit happens if query and item share at least one full word (case-insensitive).
- *  2. Score = length (in characters) of the *longest* overlapping word.
- *  3. Returns *all* items reordered by score (desc).
- */
 export function fuzzyWordOverlap<T>(
     query: string,
     items: T[],
-    toString: (item: T) => string = (x => String(x))
+    toString: (item: T) => string = (x) => String(x)
 ): ScoredHit<T>[] {
     const queryWords = tokenize(query);
 
@@ -76,39 +71,27 @@ function buildAssociatedDecks(
     for (let i = 0; i < all.length; i++) {
         const other = all[i];
 
-        if (seriesSet &&
-            other.series &&
-            other.series.some((s) => seriesSet.has(s))
-        ) {
+        if (seriesSet && other.series && other.series.some((s) => seriesSet.has(s))) {
             other.index = i;
             associatedSeries.push(other);
         }
 
-        if (tagsSet &&
-            other.tags &&
-            other.tags.some((t) => tagsSet.has(t))
-        ) {
+        if (tagsSet && other.tags && other.tags.some((t) => tagsSet.has(t))) {
             other.index = i;
             associatedTags.push(other);
         }
 
-        if (item.year &&
-            other.year === item.year
-        ) {
+        if (item.year && other.year === item.year) {
             other.index = i;
             associatedYear.push(other);
         }
 
-        if (item.isInstalled &&
-            other.isInstalled
-        ) {
+        if (item.isInstalled && other.isInstalled) {
             other.index = i;
             associatedInstalled.push(other);
         }
 
-        if (item.isHidden &&
-            other.isHidden
-        ) {
+        if (item.isHidden && other.isHidden) {
             other.index = i;
             associatedHidden.push(other);
         }
@@ -119,7 +102,6 @@ function buildAssociatedDecks(
     const tagNames = item.tags ?? [];
 
     // One deck per series
-
     const seriesDecks = seriesNames
         .map((name) => ({
             key: `series-${name}`,
@@ -199,15 +181,9 @@ function calcAssociatedLayout(
     const cardHeight = (GRID.cardWidth * 32) / 23;
     const stepY = GRID.cardStepY;
 
-    const maxCardsPerColumnByHeight = Math.max(
-        1,
-        Math.floor((height - cardHeight) / stepY) + 1
-    );
+    const maxCardsPerColumnByHeight = Math.max(1, Math.floor((height - cardHeight) / stepY) + 1);
 
-    const neededColsByHeight = Math.max(
-        1,
-        Math.ceil(totalCards / maxCardsPerColumnByHeight)
-    );
+    const neededColsByHeight = Math.max(1, Math.ceil(totalCards / maxCardsPerColumnByHeight));
 
     let maxDeckColsByWidth = 0;
 
@@ -230,12 +206,7 @@ function calcAssociatedLayout(
         const minStackColumns = deckColumns >= 6 ? 2 : 1;
         const remainingWidth = width - deckColumns * deckColWidth;
         const stackColumns =
-            remainingWidth >= stackColWidth
-                ? Math.max(
-                    minStackColumns,
-                    Math.floor(remainingWidth / stackColWidth)
-                )
-                : 0;
+            remainingWidth >= stackColWidth ? Math.max(minStackColumns, Math.floor(remainingWidth / stackColWidth)) : 0;
 
         return {
             deckColumns,
@@ -251,18 +222,14 @@ function calcAssociatedLayout(
 
     const usedWidthForDeck = deckColumns * deckColWidth;
     const remainingWidth = width - usedWidthForDeck;
-    const maxStackColsByWidth =
-        remainingWidth > 0 ? Math.floor(remainingWidth / stackColWidth) : 0;
+    const maxStackColsByWidth = remainingWidth > 0 ? Math.floor(remainingWidth / stackColWidth) : 0;
 
     let stackColumns: number;
 
     if (maxStackColsByWidth <= 0) {
         stackColumns = 0;
     } else if (hitWidthLimit) {
-        stackColumns = Math.max(
-            minStackColumns,
-            Math.min(deckColumns, maxStackColsByWidth)
-        );
+        stackColumns = Math.max(minStackColumns, Math.min(deckColumns, maxStackColsByWidth));
     } else {
         stackColumns = Math.max(minStackColumns, maxStackColsByWidth);
     }
@@ -299,8 +266,19 @@ export function ItemContent({
 
     const { associatedDecks } = buildAssociatedDecks(isOpen, item, itemsAssociated);
     const { GRID } = getTheme();
-    const [openDeckKey, onStackClick] = React.useState<string | null>(null);
-    React.useEffect(() => onStackClick(null), [item.id]);
+    const lib = useLibraryContext();
+
+    // prepare available deck keys
+    const availableKeys = React.useMemo(() => associatedDecks.map((d) => d.key), [associatedDecks]);
+
+    // pick the open deck key
+    const openDeckKey = React.useMemo(
+        () => lib.pickDeckKey(item.id, availableKeys),
+        [lib.version, item.id, availableKeys, lib]
+    );
+
+    // handle stack click
+    const onStackClick = React.useCallback((key: string) => lib.setSelectedDeckKey(item.id, key), [lib, item.id]);
 
     // select the open deck
     const openDeck = React.useMemo<AssociatedItems | null>(() => {
@@ -311,6 +289,16 @@ export function ItemContent({
         }
         return associatedDecks[0];
     }, [associatedDecks, openDeckKey]);
+
+    // If this item has no explicit selection yet, and we're reusing the same deckKey as last time, don't animate
+    const perItemSelected = lib.getSelectedDeckKey(item.id);
+    const lastSelected = lib.getLastSelectedDeckKey();
+    const animateDeckIn = !(
+        perItemSelected == null &&
+        lastSelected != null &&
+        openDeckKey != null &&
+        openDeckKey === lastSelected
+    );
 
     // smart layout
     const layoutRef = React.useRef<HTMLDivElement | null>(null);
@@ -338,17 +326,9 @@ export function ItemContent({
             const width = rect.width - GRID.gap * 5;
             const height = rect.height;
 
-            const totalCards = openDeck.items
-                .filter((g) => g.coverUrl).length;
+            const totalCards = openDeck.items.filter((g) => g.coverUrl).length;
 
-            setLayout(
-                calcAssociatedLayout(
-                    width,
-                    height,
-                    totalCards,
-                    GRID
-                )
-            );
+            setLayout(calcAssociatedLayout(width, height, totalCards, GRID));
         };
 
         const ro = new ResizeObserver(update);
@@ -374,10 +354,7 @@ export function ItemContent({
             }}
         >
             <Group align="flex-start" gap={GRID.gap * 3} wrap="nowrap" h="100%">
-                <AssociatedDetails
-                    item={item}
-                    onWallpaperBg={onWallpaperBg}
-                />
+                <AssociatedDetails item={item} onWallpaperBg={onWallpaperBg} />
                 <Box
                     ref={layoutRef}
                     style={{
@@ -391,6 +368,8 @@ export function ItemContent({
                 >
                     {openDeck && layout.deckColumns > 0 && (
                         <AssociatedDeck
+                            deckKey={openDeck.key}
+                            animateIn={animateDeckIn}
                             label={openDeck.label}
                             items={openDeck.items}
                             currentItemId={item.id}
@@ -401,6 +380,7 @@ export function ItemContent({
                     )}
                     {associatedDecks.length > 0 && (
                         <AssociatedStacks
+                            currentItemId={item.id}
                             associatedDecks={associatedDecks}
                             openDeckKey={openDeck ? openDeck.key : null}
                             stackColumns={Math.max(layout.stackColumns, layout.minStackColumns)}

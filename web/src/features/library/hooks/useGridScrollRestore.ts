@@ -14,6 +14,7 @@ type UseParams = {
   rowTops: number[];
   isListView: boolean;
   scrollItemIntoView: (index: number) => void;
+  syncScrollTopNow: () => void;
   toggleOpen: (id: string) => void;
   replaceOpen: (nextId: string) => string | null;
 };
@@ -35,6 +36,7 @@ export function useGridScrollRestore({
   rowTops,
   isListView,
   scrollItemIntoView,
+  syncScrollTopNow,
   toggleOpen,
   replaceOpen,
 }: UseParams): UseReturn {
@@ -177,7 +179,8 @@ export function useGridScrollRestore({
     }
 
     scrollItemIntoView(idx);
-
+    syncScrollTopNow();
+    
     // capture lock AFTER the jump (used for close restore)
     if (lockAfterOpenRef.current) {
       if (isListView) {

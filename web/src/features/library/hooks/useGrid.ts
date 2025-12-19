@@ -186,7 +186,7 @@ export function useGrid({
     }, [itemsLen, itemRowIndex, itemColIndex, rowTops]);
 
     // Virtual window (variable-height rows) + scroll position
-    const { visibleRange, scrollTop } = useGridVirtualWindow({
+    const { visibleRange, syncScrollTopNow } = useGridVirtualWindow({
         gridRef,
         opts: {
             rows: rowTops.length,
@@ -224,6 +224,7 @@ export function useGrid({
         rowTops,
         isListView,
         scrollItemIntoView,
+        syncScrollTopNow,
         toggleOpen,
         replaceOpen,
     });

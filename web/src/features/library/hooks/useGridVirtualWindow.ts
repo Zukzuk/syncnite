@@ -22,6 +22,7 @@ type UseReturn = {
         startIndex: number;
         endIndex: number;
     };
+    syncScrollTopNow: () => void;
 };
 
 // Hook to manage virtual windowing for a grid layout
@@ -142,5 +143,19 @@ export function useGridVirtualWindow({ gridRef, opts }: UseParams): UseReturn {
         rowLastItemIndex,
     ]);
 
-    return { scrollTop, visibleRange } as const;
+    // function to sync scrollTop immediately
+    const syncScrollTopNow = useMemo(() => {
+        return () => {
+            const el = gridRef.current;
+            if (!el) return;
+            // cancel any queued rAF update so we don't immediately overwrite
+            if (rafRef.current != null) {
+                cancelAnimationFrame(rafRef.current);
+                rafRef.current = null;
+            }
+            setScrollTop(el.scrollTop);
+        };
+    }, [gridRef]);
+
+    return { scrollTop, visibleRange, syncScrollTopNow }
 }

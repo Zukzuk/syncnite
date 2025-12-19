@@ -1,10 +1,13 @@
+import React from "react";
 import { Box } from "@mantine/core";
 import { AssociatedItems } from "../../../types/types";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 import { AssociatedStackCard } from "./AssociatedStackCard";
 import { getTheme } from "../../../theme";
+import { useLibraryContext } from "../../../layout/LibraryContext";
 
 type Props = {
+    currentItemId: string;
     associatedDecks: AssociatedItems[];
     openDeckKey: string | null;
     stackColumns: number;
@@ -13,6 +16,7 @@ type Props = {
 
 // Component to display associated stacks of decks in the library view.
 export function AssociatedStacks({
+    currentItemId,
     associatedDecks,
     openDeckKey,
     stackColumns,
@@ -20,11 +24,45 @@ export function AssociatedStacks({
 }: Props): JSX.Element | null {
     if (!associatedDecks.length || stackColumns <= 0) return null;
 
+    const lib = useLibraryContext();
+    const scrollRef = React.useRef<HTMLDivElement | null>(null);
+    const rafRef = React.useRef<number | null>(null);
+
+    // Restore stacks scroll position per item
+    React.useLayoutEffect(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+
+        const saved = lib.getStacksScrollTop(currentItemId);
+        el.scrollTop = typeof saved === "number" ? saved : 0;
+    }, [currentItemId]);
+
+    // Persist stacks scroll position (rAF throttled)
+    const onScroll = React.useCallback(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+
+        if (rafRef.current != null) return;
+        rafRef.current = requestAnimationFrame(() => {
+            rafRef.current = null;
+            lib.setStacksScrollTop(currentItemId, el.scrollTop);
+        });
+    }, [lib, currentItemId]);
+
+    // Cleanup rAF on unmount
+    React.useEffect(() => {
+        return () => {
+            if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+        };
+    }, []);
+
     const isOpenDelayed = useDelayedFlag({ active: true, delayMs: 210 });
     const { GRID } = getTheme();
-    
+
     return (
         <Box
+            ref={scrollRef}
+            onScroll={onScroll}
             className="subtle-scrollbar"
             pl={4}
             style={{
