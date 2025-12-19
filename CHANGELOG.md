@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.37.0](https://github.com/Zukzuk/syncnite/compare/v1.36.1...v1.37.0) (2025-12-19)
+
+
+### Features
+
+* added item deeplinks and navigation history ([a3c7f8c](https://github.com/Zukzuk/syncnite/commit/a3c7f8c1cd612b0609c4615b3a9e2a9ff8a88654))
+
 ### [1.36.1](https://github.com/Zukzuk/syncnite/compare/v1.36.0...v1.36.1) (2025-12-19)
 
 
