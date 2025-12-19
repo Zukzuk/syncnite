@@ -48,12 +48,12 @@ export function AssociatedStackCard({ stack, isOpen, onStackClick }: Props): JSX
                     padding: GRID.gap,
                     borderRadius: 4,
                     border: isHoveredOrOpen
-                        ? "2px solid var(--interlinked-color-primary-translucent)"
+                        ? "2px solid var(--interlinked-color-primary-softer)"
                         : isDark
                             ? "2px solid var(--mantine-color-dark-8)"
                             : "2px solid var(--mantine-color-gray-3)",
                     backgroundColor: isHoveredOrOpen
-                        ? "var(--interlinked-color-primary-translucent)"
+                        ? "var(--interlinked-color-primary-softer)"
                         : "var(--mantine-color-body)",
                     cursor: "pointer",
                     display: "flex",

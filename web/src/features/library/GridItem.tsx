@@ -129,16 +129,18 @@ export const GridItem = React.memo(function GridItem({
                     isolation: "isolate",
                     userSelect: "none",
                     backgroundColor: 
-                        (isListView || isHovered) && isInstalled && !isOpen
-                            ? "var(--interlinked-color-secondary-soft)"    
-                            : isOpen || !isHovered
-                                ? undefined
-                                : isDark
-                                    ? "var(--mantine-color-dark-8)"
-                                    : "var(--mantine-color-gray-1)",
+                        isInstalled && !isOpen && ((isListView && !isHovered) || (!isListView && isHovered))
+                            ? "var(--interlinked-color-secondary-softer)" 
+                            : isInstalled && !isOpen && (isListView && isHovered)
+                                ? "var(--interlinked-color-secondary-soft)" 
+                                : isOpen || !isHovered
+                                    ? undefined
+                                    : isDark
+                                        ? "var(--mantine-color-dark-8)"
+                                        : "var(--mantine-color-gray-1)",
                     border: isOpen
                         ? undefined
-                        : (isInstalled && !isListView) || (isListView && isHovered && isInstalled)
+                        : isInstalled && !isListView
                             ? "2px solid var(--interlinked-color-secondary)"
                             : isHovered && !isListView
                                 ? "2px solid var(--interlinked-color-primary-soft)"

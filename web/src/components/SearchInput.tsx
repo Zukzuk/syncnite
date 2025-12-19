@@ -21,10 +21,12 @@ export function SearchInput({ value, width, onChange }: Props) {
             radius="sm"
             variant={hasValue ? "filled" : "default"}
             leftSectionPointerEvents="none"
-            leftSection={hasValue
-                ? <IconEyeSearch size={14} stroke={1.2} color="var(--interlinked-color-secondary)" aria-hidden />
-                : <IconSearch size={14} stroke={1.2} aria-hidden />
-            }
+            leftSection={<IconSearch 
+                size={14} 
+                stroke={1.2} 
+                color={ hasValue ? "var(--interlinked-color-secondary)" : undefined }
+                aria-hidden 
+            />}
             rightSection={
                 hasValue ? (
                     <ActionIcon

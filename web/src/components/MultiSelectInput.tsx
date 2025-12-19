@@ -22,17 +22,19 @@ export function MultiSelectInput({ placeholder, group, data, value, width, setDa
             value={value}
             onChange={setData}
             data={[{ group, items: data }]}
-            placeholder={hasValue ? "selected!" : placeholder }
+            placeholder={hasValue ? "selected!" : placeholder}
             leftSectionPointerEvents="none"
-            leftSection={hasValue
-                ? <IconEyeSearch size={14} stroke={1.2} color="var(--interlinked-color-secondary)" aria-hidden />
-                : <IconSearch size={14} stroke={1.2} aria-hidden />
-            }
+            leftSection={<IconSearch
+                size={14}
+                stroke={1.2}
+                color={hasValue ? "var(--interlinked-color-secondary)" : undefined}
+                aria-hidden
+            />}
             variant={hasValue ? "filled" : "default"}
             nothingFoundMessage={`No ${placeholder.toLowerCase()} found`}
-            styles={{ 
-                input: { borderColor: hasValue ? "var(--interlinked-color-secondary)" : undefined }, 
-                pill: { display: "none" } 
+            styles={{
+                input: { borderColor: hasValue ? "var(--interlinked-color-secondary)" : undefined },
+                pill: { display: "none" }
             }}
         />
     );
