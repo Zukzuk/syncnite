@@ -71,15 +71,31 @@ export function getTheme() {
     const theme = useMantineTheme();
     const { colorScheme, setColorScheme } = useMantineColorScheme();
     const isDark = colorScheme === "dark";
-    const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.xs})`);
-    const isTablet = useMediaQuery(
-        `(min-width: ${theme.breakpoints.xs}) and (max-width: ${theme.breakpoints.sm})`
-    );    
-    const hasMenu = useMediaQuery(`(min-width: ${theme.breakpoints.sm})`);
-    const isDesktop = useMediaQuery(
-        `(min-width: ${theme.breakpoints.sm}) and (max-width: ${theme.breakpoints.xl})`
+    const isMobile = useMediaQuery(
+        `(max-width: ${theme.breakpoints.xs})`,
+        false,
+        { getInitialValueInEffect: false }
     );
-    const isWidescreen = useMediaQuery(`(min-width: ${theme.breakpoints.xl})`);
+    const isTablet = useMediaQuery(
+        `(min-width: ${theme.breakpoints.xs}) and (max-width: ${theme.breakpoints.sm})`,
+        false,
+        { getInitialValueInEffect: false }
+    );
+    const hasMenu = useMediaQuery(
+        `(min-width: ${theme.breakpoints.sm})`,
+        false,
+        { getInitialValueInEffect: false }
+    );
+    const isDesktop = useMediaQuery(
+        `(min-width: ${theme.breakpoints.sm}) and (max-width: ${theme.breakpoints.xl})`,
+        false,
+        { getInitialValueInEffect: false }
+    );
+    const isWidescreen = useMediaQuery(
+        `(min-width: ${theme.breakpoints.xl})`,
+        false,
+        { getInitialValueInEffect: false }
+    );
 
     const RATIO = 23 / 32;
 

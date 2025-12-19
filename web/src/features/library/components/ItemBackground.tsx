@@ -13,10 +13,10 @@ type Props = {
 // Background component for a library item.
 export function ItemBackground({ item, isOpen, wallpaperBg }: Props): JSX.Element | null {
     const { bgUrl } = item;
+    if (!isOpen || !bgUrl) return null;
+
     const isOpenDelayed = useDelayedFlag({ active: isOpen, delayMs: 70 });
     const { isDark, Z_INDEX } = getTheme();
-
-    if (!isOpen || !bgUrl) return null;
 
     return (
         <Box

@@ -193,32 +193,43 @@ export const GridItem = React.memo(function GridItem({
                     w={"100%"}
                     h={isOpen ? openHeight : "100%"}
                 >
-                    <ItemRow
-                        item={item}
-                        isOpen={isOpen}
-                        isListView={isListView}
-                    />
-                    <ItemCard
-                        item={item}
-                        isOpen={isOpen}
-                        isListView={isListView}
-                    />
-                    <ItemContent
-                        item={item}
-                        isOpen={isOpen}
-                        openWidth={openWidth}
-                        openHeight={openHeight}
-                        itemsAssociated={itemsAssociated}
-                        onWallpaperBg={onWallpaperBg}
-                        onToggleClickBounded={onToggleClickBounded}
-                    />
+                    {(isOpen || isListView) ? (
+                        <ItemRow
+                            item={item}
+                            isOpen={isOpen}
+                            isListView={isListView}
+                        />
+                    ) : null}
+
+                    {(!isOpen && !isListView) ? (
+                        <ItemCard
+                            item={item}
+                            isOpen={isOpen}
+                            isListView={isListView}
+                        />
+                    ) : null}
+
+                    {(isOpen) ? (
+                        <ItemContent
+                            item={item}
+                            isOpen={isOpen}
+                            openWidth={openWidth}
+                            openHeight={openHeight}
+                            itemsAssociated={itemsAssociated}
+                            onWallpaperBg={onWallpaperBg}
+                            onToggleClickBounded={onToggleClickBounded}
+                        />
+                    ) : null}
                 </Box>
 
-                <ItemBackground
-                    item={item}
-                    isOpen={isOpen}
-                    wallpaperBg={wallpaperBg}
-                />
+                {(isOpen) ? (
+                    <ItemBackground
+                        item={item}
+                        isOpen={isOpen}
+                        wallpaperBg={wallpaperBg}
+                    />
+                ) : null}
+                
             </Box>
         </Box>
     );

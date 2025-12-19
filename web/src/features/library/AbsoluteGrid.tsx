@@ -22,11 +22,12 @@ export function AbsoluteGrid({
     sortH,
     installedUpdatedAt,
 }: Props) {
-    const gridRef = useRef<HTMLDivElement | null>(null);
-    const { isDark } = getTheme();
     const { isListView } = ui;
     const { itemsSorted, itemsAssociated } = derived;
+
+    const { isDark } = getTheme();
     const [wallpaperBg, onWallpaperBg] = React.useState(false);
+    const gridRef = useRef<HTMLDivElement | null>(null);
 
     const {
         containerHeight,

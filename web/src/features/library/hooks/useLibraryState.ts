@@ -76,13 +76,15 @@ export function useLibraryState(items: UseParams): UseReturn {
 
   const [view, setView] = useLocalStorage<ViewMode>({
     key: "library.view",
-    defaultValue: "grid",
+    defaultValue: "grid", // optional: your preferred default
+    getInitialValueInEffect: false, // no first-render mismatch
   });
   const isListView = view === "list";
 
   const [switches, setSwitches] = useLocalStorage<SwitchesMode>({
     key: "library.switches",
     defaultValue: "enabled",
+    getInitialValueInEffect: false,
   });
 
   const cookieState = React.useMemo(loadStateFromCookie, []);
@@ -122,7 +124,7 @@ export function useLibraryState(items: UseParams): UseReturn {
       // text search across title, source, tags
       (!qv || (
         r.title?.toLowerCase().includes(qv) ||
-        r.sortingName?.toLowerCase().includes(qv) || 
+        r.sortingName?.toLowerCase().includes(qv) ||
         r.version?.toLowerCase().includes(qv)
       )) &&
       // sources: match any of selected

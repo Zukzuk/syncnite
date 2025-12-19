@@ -32,7 +32,10 @@ export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle }: Props): JSX.
             h="100%"
             gap={0}
             style={{
-                boxShadow: isDark ? "3px 0 12px rgba(0, 0, 0, 0.2)" : "3px 0 12px rgba(0, 0, 0, 0.1)",
+                boxShadow: 
+                    isDark 
+                        ? "3px 0 12px rgba(0, 0, 0, 0.2)" 
+                        : "3px 0 12px rgba(0, 0, 0, 0.1)",
             }}
         >
             <Box px="xs" style={{ height: GRID.rowHeight, position: "relative" }}>
