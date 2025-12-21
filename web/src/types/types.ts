@@ -27,6 +27,8 @@ export type ButtonTypes = "button" | "submit" | "link";
 
 export type TCustomIcon = "fallback" | "steam" | "epic" | "gog" | "ea app" | "ubisoft connect" | "battle.net" | "microsoft" | "xbox" | "rockstar" | "windows-store" | "playnite";
 
+export type ItemIconOverlayType = "default" | "circle";
+
 export interface AuthState {
   ready: boolean;
   loggedIn: boolean;
