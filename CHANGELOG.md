@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.37.6](https://github.com/Zukzuk/syncnite/compare/v1.37.5...v1.37.6) (2025-12-21)
+
+
+### Bug Fixes
+
+* fixed a bunch of icon shiccle ([1ee260d](https://github.com/Zukzuk/syncnite/commit/1ee260ddc1d0fc3cf5d635be8a9ca54f3e652b16))
+
 ### [1.37.5](https://github.com/Zukzuk/syncnite/compare/v1.37.4...v1.37.5) (2025-12-21)
 
 ### [1.37.4](https://github.com/Zukzuk/syncnite/compare/v1.37.3...v1.37.4) (2025-12-21)
