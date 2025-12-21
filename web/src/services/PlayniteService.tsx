@@ -1,12 +1,12 @@
 import { ReactNode } from "react";
-import { BattleNetPath, CustomIconSVG, ElectronicArtsPath, EpicGamesPath, GoGGalaxyPath, PlaynitePath, SteampoweredPath, UbisoftConnectPath, } from "./CustomIconService";
 import { fetchJson, fetchUser, getCreds } from "./AccountService";
 import { API_ENDPOINTS, FILES } from "../constants";
-import { Game, GameLink, GameReleaseDate, Series, Source, Tag } from "../types/playnite";
+import { PlayniteGame, PlayniteGameLink, PlayniteGameReleaseDate, PlayniteSeries, PlayniteSource, PlayniteTag } from "../types/playnite";
 import { GameItem, LoadedData } from "../types/types";
+import { CustomIconSVG } from "./CustomIconService";
 
 // Get the Playnite Game.Id
-function getPlayniteId(g: Game): string {
+function getPlayniteId(g: PlayniteGame): string {
     return g.Id;
 }
 
@@ -80,7 +80,7 @@ function extractYear(val: unknown): number | null {
 }
 
 // Prefer explicit ReleaseYear, otherwise derive from ReleaseDate.ReleaseDate ("yyyy-mm-dd")
-function getYear(releaseYear: number | null | undefined, releaseDate: GameReleaseDate | null | undefined): number | null {
+function getYear(releaseYear: number | null | undefined, releaseDate: PlayniteGameReleaseDate | null | undefined): number | null {
     if (typeof releaseYear === "number") return releaseYear;
     const iso = releaseDate?.ReleaseDate;
     if (typeof iso === "string") {
@@ -95,7 +95,7 @@ function getVersion(version: string | null | undefined): string | null {
 }
 
 // Prefer Links matching source, then any Links, then sourcish fallback
-function getEffectiveLink(links: GameLink[] | undefined, title: string, source: string): string | null {
+function getEffectiveLink(links: PlayniteGameLink[] | undefined, title: string, source: string): string | null {
     if (!links || links.length === 0) return null;
 
     const s = source.toLowerCase();
@@ -155,7 +155,7 @@ function getEffectiveLink(links: GameLink[] | undefined, title: string, source: 
 }
 
 // Get the source name (alphabetically first, lowercased)
-function getSource(g: Game, sourceById: Map<string, string>): string {
+function getSource(g: PlayniteGame, sourceById: Map<string, string>): string {
     const id = g.SourceId ?? null;
     const name = id ? sourceById.get(id) ?? "" : "";
     return name.toLowerCase().trim();
@@ -204,7 +204,7 @@ function getSourceProtocolLink(source: string, gameId: string | null, href: stri
 }
 
 // Get all links
-function getLinks(links: GameLink[] | undefined): GameLink[] | null {
+function getLinks(links: PlayniteGameLink[] | undefined): PlayniteGameLink[] | null {
     if (!links || links.length === 0) return null;
     return links;
 }
@@ -285,10 +285,10 @@ export async function loadPlayniteLibrary(): Promise<LoadedData> {
     const email = fetchUser();
 
     // load raw data
-    const games = await loadDbCollection<Game>(PLAYNITE_COLLECTIONS.games);
-    const tags = await loadDbCollection<Tag>(PLAYNITE_COLLECTIONS.tags);
-    const sources = await loadDbCollection<Source>(PLAYNITE_COLLECTIONS.sources);
-    const series = await loadDbCollection<Series>(PLAYNITE_COLLECTIONS.series);
+    const games = await loadDbCollection<PlayniteGame>(PLAYNITE_COLLECTIONS.games);
+    const tags = await loadDbCollection<PlayniteTag>(PLAYNITE_COLLECTIONS.tags);
+    const sources = await loadDbCollection<PlayniteSource>(PLAYNITE_COLLECTIONS.sources);
+    const series = await loadDbCollection<PlayniteSeries>(PLAYNITE_COLLECTIONS.series);
 
     // index maps (Id -> Name)
     const tagById = new Map<string, string>(tags.map((t) => [t.Id, t.Name]));
@@ -354,42 +354,42 @@ export const PLAYNITE_SOURCE_MAP: Record<string, {
     online: "store.steampowered.com",
     domains: ["steampowered.com"],
     label: "Steampowered",
-    icon: <CustomIconSVG inner={SteampoweredPath} viewBox="0 0 32 32" />
+    icon: <CustomIconSVG type="steampowered" viewBox="0 0 32 32" />
   },
   "gog": {
     platform: "goggalaxy://",
     online: "www.gog.com",
     domains: ["gog.com"],
     label: "Good Old Games",
-    icon: <CustomIconSVG inner={GoGGalaxyPath} viewBox="0 0 50 50" />,
+    icon: <CustomIconSVG type="gog" viewBox="0 0 50 50" />,
   },
   "ubisoft connect": {
     platform: "uplay://",
     online: "www.ubisoft.com",
     domains: ["ubisoft.com", "uplay"],
     label: "Ubisoft Connect",
-    icon: <CustomIconSVG inner={UbisoftConnectPath} viewBox="0 0 24 24" />,
+    icon: <CustomIconSVG type="ubisoft connect" viewBox="0 0 24 24" />,
   },
   "ea app": {
     platform: "link2ea://",
     online: "www.ea.com/origin",
     domains: ["ea.com", "origin.com"],
     label: "EA App",
-    icon: <CustomIconSVG inner={ElectronicArtsPath} viewBox="0 0 1000 1000" />,
+    icon: <CustomIconSVG type="ea app" viewBox="0 0 1000 1000" />,
   },
   "battle.net": {
     platform: "battlenet://",
     online: "www.battle.net",
     domains: ["battle.net", "blizzard.com"],
     label: "Battle.net",
-    icon: <CustomIconSVG inner={BattleNetPath} viewBox="0 0 24 24" />,
+    icon: <CustomIconSVG type="battle.net" viewBox="0 0 24 24" />,
   },
   "epic": {
     platform: "com.epicgames.launcher://",
     online: "www.epicgames.com",
     domains: ["epicgames.com"],
     label: "Epic Games",
-    icon: <CustomIconSVG inner={EpicGamesPath} viewBox="0 0 32 32" />,
+    icon: <CustomIconSVG type="epic" viewBox="0 0 32 32" />,
   },
   "xbox": {
     platform: "xbox://",
@@ -424,7 +424,7 @@ export const PLAYNITE_SOURCE_MAP: Record<string, {
     domains: ["playnite.com"],
     online: "www.playnite.com",
     label: "Playnite",
-    icon: <CustomIconSVG inner={PlaynitePath} viewBox="0 0 256 256" />,
+    icon: <CustomIconSVG type="playnite" viewBox="0 0 256 256" />,
   },
 };
 

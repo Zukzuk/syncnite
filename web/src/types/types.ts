@@ -1,9 +1,11 @@
 import { Dispatch, SetStateAction } from "react";
 import { LETTERS } from "../constants";
-import { GameLink } from "./playnite";
 import { useMantineTheme } from "@mantine/core";
+import { PlayniteGameLink } from "./playnite";
 
-declare global { interface Window { __APP_VERSION__?: string } }
+declare global { 
+    interface Window { __APP_VERSION__?: string } 
+}
 
 export type SortKey = "title" | "series" | "year" | "source" | "tags";
 
@@ -22,6 +24,8 @@ export type NavMode = "replace" | "push";
 export type DesktopNavMode = "closed" | "mini" | "normal";
 
 export type ButtonTypes = "button" | "submit" | "link";
+
+export type SourceIcon = "fallback" | "steampowered" | "epic" | "gog" | "ea app" | "ubisoft connect" | "battle.net" | "microsoft" | "xbox" | "rockstar" | "windows-store" | "playnite";
 
 export interface AuthState {
   ready: boolean;
@@ -96,7 +100,7 @@ export interface GameItem {
   sourceLink: string | null;
   playniteLink: string;
   htmlLink: string | null;
-  links: GameLink[] | null;
+  links: PlayniteGameLink[] | null;
   isHidden: boolean;
   isInstalled: boolean;
   tags: string[];

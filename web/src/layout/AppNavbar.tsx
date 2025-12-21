@@ -1,6 +1,6 @@
 import { CSSProperties, ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Box, Stack, Text, Button, Tooltip, ScrollArea, NavLink, Group } from "@mantine/core";
+import { Box, Stack, Text, Tooltip, ScrollArea, NavLink, Group } from "@mantine/core";
 import { IconAlignBoxLeftBottom, IconLibraryPhoto, IconDeviceTv, IconUser, IconAffiliate, IconLogout2 } from "@tabler/icons-react";
 import { useAuth } from "../hooks/useAuth";
 import { WEB_APP_VERSION } from "../constants";
@@ -11,9 +11,9 @@ import { IconButton } from "../components/IconButton";
 
 type Props = {
     gateStyle: CSSProperties;
+    mini?: boolean;
     onIntroDone: () => void;
     toggleNavbar: () => void;
-    mini?: boolean;
 };
 
 export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle, mini = false }: Props): JSX.Element {

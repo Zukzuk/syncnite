@@ -1,5 +1,8 @@
 
 export const WEB_APP_VERSION = `v${window.__APP_VERSION__}`;
+export const INTERVAL_MS = 5000;
+export const LETTERS_LIST = ["#", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
+export const LETTERS = [...LETTERS_LIST] as const;
 
 const API_BASE = "/api/v1";
 
@@ -39,9 +42,3 @@ export const FILES = {
   libraryfiles: { dir: `${FILE_BASE}/libraryfiles` },
   accounts: { dir: `${FILE_BASE}/accounts` },
 };
-
-export const INTERVAL_MS = 5000;
-
-export const LETTERS_LIST = ["#", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
-
-export const LETTERS = [...LETTERS_LIST] as const;

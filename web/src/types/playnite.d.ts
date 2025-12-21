@@ -1,36 +1,36 @@
-export interface Series {
+export interface PlayniteSeries {
+  Id: string;
+  Name: string;
+}
+  
+export interface PlayniteSource {
   Id: string;
   Name: string;
 }
 
-export interface Source {
+export interface PlayniteTag {
   Id: string;
   Name: string;
 }
 
-export interface Tag {
-  Id: string;
-  Name: string;
-}
-
-export interface Platform {
+interface PlaynitePlatform {
   Id: string;
   Name: string;
   /** Some exports may include an icon path. */
   Icon?: string | null;
 }
 
-export interface GameLink {
+export interface PlayniteGameLink {
   Name: string;
   Url: string;
 }
 
-export interface GameReleaseDate {
+export interface PlayniteGameReleaseDate {
   /** ISO-8601 date string (yyyy-mm-dd) */
   ReleaseDate: string;
 }
 
-export interface Game {
+export interface PlayniteGame {
   // identity
   Id: string;
   Name: string;
@@ -57,7 +57,7 @@ export interface Game {
   PluginId?: string | null;
 
   // dates + art
-  ReleaseDate?: GameReleaseDate | null;
+  ReleaseDate?: PlayniteGameReleaseDate | null;
   ReleaseYear?: number | null;
   Icon?: string | null;
   CoverImage?: string | null;
@@ -80,7 +80,7 @@ export interface Game {
   Notes?: string | null;
 
   // links/actions/roms
-  Links?: GameLink[];
+  Links?: PlayniteGameLink[];
   GameActions?: unknown[]; 
   Roms?: unknown[];   
 }
