@@ -6,12 +6,12 @@ import { useAdminGate } from "./hooks/useAdminGate";
 import RouteError from "./components/BounderyRouteError";
 import { clearCreds } from "./services/AccountService";
 import AppShellLayout from "./layout/AppShellLayout";
-import HomePage from "./layout/HomePage";
-import LibraryPage from "./layout/LibraryPage";
-import BridgePage from "./layout/BridgePage";
+import HomePage from "./features/HomePage";
+import LibraryPage from "./features/LibraryPage";
+import BridgePage from "./features/BridgePage";
 import AppLoginPage from "./layout/AppLoginPage";
-import AccountPage from "./layout/AccountPage";
-import NarrowcastPage from "./layout/NarrowcastPage";
+import AccountPage from "./features/AccountPage";
+import NarrowcastPage from "./features/NarrowcastPage";
 
 function WithShell({ hideSite = false }: { hideSite?: boolean }) {
   return (

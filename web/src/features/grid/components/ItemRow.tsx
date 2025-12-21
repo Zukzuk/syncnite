@@ -39,8 +39,6 @@ export function ItemRow({ item, isOpen, isListView }: Props): JSX.Element | null
             { /* GAME ICON SECTION */}
             <Flex align="center" gap={grid.gap} style={{ width: grid.iconSize }}>
                 <Box
-                    component="a"
-                    href={playniteLink}
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
                     onClick={(e) => e.stopPropagation()}
@@ -51,8 +49,6 @@ export function ItemRow({ item, isOpen, isListView }: Props): JSX.Element | null
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        textDecoration: "none",
-                        cursor: "pointer",
                     }}
                 >
                     <IconGame src={iconUrl} />
@@ -61,7 +57,8 @@ export function ItemRow({ item, isOpen, isListView }: Props): JSX.Element | null
                         w={grid.iconSize}
                         h={grid.iconSize}
                         isInstalled={isInstalled}
-                        isHovered={isHovered}
+                        isParentHovered={isHovered}
+                        link={playniteLink}
                     />
                 </Box>
             </Flex>

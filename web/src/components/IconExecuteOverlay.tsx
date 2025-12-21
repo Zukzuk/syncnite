@@ -1,6 +1,6 @@
 import { Box } from "@mantine/core";
 import { IconDownload, IconPlayerPlayFilled } from "@tabler/icons-react";
-import { memo } from "react";
+import { memo, useState } from "react";
 
 type Props = {
     type?: "default" | "circle";
@@ -9,7 +9,8 @@ type Props = {
     w: number;
     h: number;
     isInstalled: boolean;
-    isHovered: boolean;
+    isParentHovered: boolean;
+    link: string;
 };
 
 export const IconExecuteOverlay = memo(function IconExecuteOverlay({
@@ -19,9 +20,11 @@ export const IconExecuteOverlay = memo(function IconExecuteOverlay({
     w,
     h,
     isInstalled,
-    isHovered,
+    isParentHovered,
+    link,
 }: Props) {
     const isCircle = type === "circle";
+    const [isHovered, setIsHovered] = useState(false);
 
     return (
         <Box
@@ -34,26 +37,36 @@ export const IconExecuteOverlay = memo(function IconExecuteOverlay({
                 borderRadius: isCircle ? "50%" : 4,
                 position: "absolute",
                 backgroundColor: "var(--interlinked-color-body)",
-                border: isCircle ? "2px solid var(--interlinked-color-primary-soft)" : undefined,
-                opacity: isHovered ? 0.9 : 0,
-                transition: "opacity 140ms ease",
+                border: isHovered && isCircle
+                    ? "2px solid var(--interlinked-color-secondary)" 
+                    : isCircle 
+                        ? "2px solid var(--interlinked-color-primary-soft)" 
+                        : undefined,
+                opacity: isParentHovered ? 0.9 : 0,
+                transform: isParentHovered ? "scale(1)" : "scale(0.96)",
+                transition: "opacity 220ms ease, transform 220ms ease",
             }}
         >
             <Box
                 w={isCircle ? iconsSize * 2 : w}
                 h={isCircle ? iconsSize * 2 : h}
+                component="a"
+                href={link}
                 style={{
                     top: isCircle ? -2 : 0,
                     left: isCircle ? -2 : 0,
                     position: "relative",
                     display: "flex",
-                    color: "var(--interlinked-color-primary-soft)",
+                    color: isHovered 
+                        ? "var(--interlinked-color-secondary)" 
+                        : "var(--interlinked-color-primary-soft)",
                     alignItems: "center",
                     justifyContent: "center",
-                    opacity: isHovered ? 1 : 0,
-                    transform: isHovered ? "scale(1)" : "scale(0.96)",
-                    transition: "opacity 140ms ease, transform 140ms ease",
+                    opacity: isParentHovered ? 1 : 0,
                 }}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+                onClick={(e) => e.stopPropagation()}
             >
                 {isInstalled ? (
                     <IconPlayerPlayFilled size={iconsSize} stroke={2} />

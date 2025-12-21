@@ -1,7 +1,7 @@
 import { useMantineColorScheme, useMantineTheme } from "@mantine/core";
-import { useDisclosure, useMediaQuery } from "@mantine/hooks";
+import { useLocalStorage, useMediaQuery } from "@mantine/hooks";
+import { useCallback, useMemo } from "react";
 import { DesktopNavMode, InterLinkedTheme } from "../types/types";
-import { useState } from "react";
 
 /**
   xs	36em	576px
@@ -16,69 +16,89 @@ export function useInterLinkedTheme(): InterLinkedTheme {
     const theme = useMantineTheme();
     const { colorScheme, setColorScheme } = useMantineColorScheme();
     const isDark = colorScheme === "dark";
-    const isMobile = useMediaQuery(
-        `(max-width: ${theme.breakpoints.xs})`,
-        false,
-        { getInitialValueInEffect: false }
-    );
+
+    const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.xs})`, false, {
+        getInitialValueInEffect: false,
+    });
+
     const isTablet = useMediaQuery(
-        `(min-width: ${theme.breakpoints.xs}) and (max-width: ${theme.breakpoints.sm})`,
-        false,
-        { getInitialValueInEffect: false }
-    );
-    const hasMenu = useMediaQuery(
-        `(min-width: ${theme.breakpoints.sm})`,
-        false,
-        { getInitialValueInEffect: false }
-    );
-    const isDesktop = useMediaQuery(
-        `(min-width: ${theme.breakpoints.sm}) and (max-width: ${theme.breakpoints.xl})`,
-        false,
-        { getInitialValueInEffect: false }
-    );
-    const isWidescreen = useMediaQuery(
-        `(min-width: ${theme.breakpoints.xl})`,
-        false,
+        `(min-width: ${theme.breakpoints.xs}) and (max-width: ${theme.breakpoints.sm})`, false,
         { getInitialValueInEffect: false }
     );
 
-    const [desktopMode, setDesktopMode] = useState<DesktopNavMode>("normal");
-    const [navbarOpened, { toggle: toggleNavbar, close: closeNavbar }] = useDisclosure(false);
+    const hasMenu = useMediaQuery(`(min-width: ${theme.breakpoints.sm})`, false, {
+        getInitialValueInEffect: false,
+    });
+
+    const isDesktop = useMediaQuery(
+        `(min-width: ${theme.breakpoints.sm}) and (max-width: ${theme.breakpoints.xl})`, false,
+        { getInitialValueInEffect: false }
+    );
+
+    const isWidescreen = useMediaQuery(`(min-width: ${theme.breakpoints.xl})`, false, {
+        getInitialValueInEffect: false,
+    });
+
+    const [desktopMode, setDesktopMode] = useLocalStorage<DesktopNavMode>({
+        key: "interlinked-desktopMode",
+        defaultValue: "normal",
+    });
+
+    const [navbarOpened, setNavbarOpened] = useLocalStorage<boolean>({
+        key: "interlinked-navbarOpened",
+        defaultValue: false,
+    });
+
+    const toggleNavbar = useCallback(() => {
+        setNavbarOpened((v) => !v);
+    }, [setNavbarOpened]);
+
+    const closeNavbar = useCallback(() => {
+        setNavbarOpened(false);
+    }, [setNavbarOpened]);
 
     const RATIO = 23 / 32;
 
-    const Z_INDEX = {
-        belowBase: 0,
-        base: 1,
-        aboveBase: 2,
-        float: 10,
-        medium: 50,
-        high: 100,
-        heigher: 500,
-        top: 1000,
-    } as const;
+    const Z_INDEX = useMemo(
+        () =>
+            ({
+                belowBase: 0,
+                base: 1,
+                aboveBase: 2,
+                float: 10,
+                medium: 50,
+                high: 100,
+                heigher: 500,
+                top: 1000,
+            }) as const,
+        []
+    );
 
-    const grid = {
-        colsList: `40px minmax(0, 1fr) 60px 80px ${isWidescreen ? "300px" : isDesktop ? "150px" : "0px"}`,
-        colsGrid: "0px 60px 60px 80px 60px",
-        colsOpen: "40px minmax(0, 1fr) 56px",
-        navBarWidth: 155,
-        navBarMiniWidth: 72,
-        coverWidth: 220,
-        coverHeight: 220 * (1 / RATIO),
-        cardWidth: 156 + 4, // + border
-        cardHeight: 156 * (1 / RATIO) + 4 + 52 + 28, // + border + title + icons
-        rowHeight: 60,
-        halfRowHeight: 30,
-        iconSize: 38,
-        scrollbarWidth: 15,
-        listLeftPadding: 12,
-        gap: 8,
-        cardStepY: 90,
-        ratio: RATIO,
-        overscan: { top: 600, bottom: 800 } as const,
-        z: Z_INDEX,
-    } as const;
+    const grid = useMemo(
+        () =>
+            ({
+                colsList: `40px minmax(0, 1fr) 60px 80px ${isWidescreen ? "300px" : isDesktop ? "150px" : "0px"}`,
+                colsGrid: "0px 60px 60px 80px 60px",
+                colsOpen: "40px minmax(0, 1fr) 56px",
+                navBarWidth: 155,
+                navBarMiniWidth: 72,
+                coverWidth: 220,
+                coverHeight: 220 * (1 / RATIO),
+                cardWidth: 156 + 4, // + border
+                cardHeight: 156 * (1 / RATIO) + 4 + 52 + 28, // + border + title + icons
+                rowHeight: 60,
+                halfRowHeight: 30,
+                iconSize: 38,
+                scrollbarWidth: 15,
+                listLeftPadding: 12,
+                gap: 8,
+                cardStepY: 90,
+                ratio: RATIO,
+                overscan: { top: 600, bottom: 800 } as const,
+                z: Z_INDEX,
+            }) as const,
+        [isWidescreen, isDesktop, Z_INDEX]
+    );
 
     return {
         theme,
@@ -94,6 +114,6 @@ export function useInterLinkedTheme(): InterLinkedTheme {
         toggleNavbar,
         closeNavbar,
         setDesktopMode,
-        setColorScheme
+        setColorScheme,
     };
 }

@@ -5,7 +5,7 @@ import { AssociatedDeck } from "./components/AssociatedDeck";
 import { AssociatedStacks } from "./components/AssociatedStacks";
 import { AssociatedDetails } from "./components/AssociatedDetails";
 import { useInterLinkedTheme } from "../../hooks/useInterLinkedTheme";
-import { useLibraryContext } from "../../layout/LibraryContext";
+import { useLibraryContext } from "../LibraryContext";
 
 export function fuzzyWordOverlap<T>(
     query: string,

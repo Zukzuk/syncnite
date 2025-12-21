@@ -53,8 +53,6 @@ export function AssociatedDetails({ item, onWallpaperBg }: Props): JSX.Element {
                 }}
             >
                 <Box
-                    component="a"
-                    href={playniteLink}
                     style={{
                         display: "block",
                         position: "relative",
@@ -64,7 +62,6 @@ export function AssociatedDetails({ item, onWallpaperBg }: Props): JSX.Element {
                     }}
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
-                    onClick={(e) => e.stopPropagation()}
                 >
                     <Image
                         src={coverUrl}
@@ -89,7 +86,8 @@ export function AssociatedDetails({ item, onWallpaperBg }: Props): JSX.Element {
                         w={grid.coverWidth}
                         h={grid.coverHeight}
                         isInstalled={isInstalled}
-                        isHovered={isHovered}
+                        isParentHovered={isHovered}
+                        link={playniteLink}
                     />
                 </Box>
 

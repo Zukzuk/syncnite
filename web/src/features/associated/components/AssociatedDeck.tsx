@@ -4,7 +4,7 @@ import { GameItem, NavMode } from "../../../types/types";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 import { AssociatedDeckCard } from "./AssociatedDeckCard";
 import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";
-import { useLibraryContext } from "../../../layout/LibraryContext";
+import { useLibraryContext } from "../../LibraryContext";
 
 type Props = {
     deckKey: string;

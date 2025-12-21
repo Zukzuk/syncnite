@@ -4,7 +4,7 @@ import { AssociatedItems } from "../../../types/types";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 import { AssociatedStackCard } from "./AssociatedStackCard";
 import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";
-import { useLibraryContext } from "../../../layout/LibraryContext";
+import { useLibraryContext } from "../../LibraryContext";
 
 type Props = {
     currentItemId: string;

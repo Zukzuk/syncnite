@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
-import { AppShell, Burger, Box, ActionIcon, Group } from "@mantine/core";
-import { IconChevronLeft, IconChevronRight, IconMenu2 } from "@tabler/icons-react";
+import { AppShell, Burger, Box } from "@mantine/core";
+import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 import { AppNavbar } from "./AppNavbar";
 import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
 import { useIntroFlow } from "../hooks/useIntroFlow";
@@ -14,6 +14,7 @@ export default function AppShellLayout({ children, hideSite = false }: Props) {
   const { grid, hasMenu, desktopMode, navbarOpened, isDark, toggleNavbar, closeNavbar, setDesktopMode } = useInterLinkedTheme();
   const desktopClosed = desktopMode === "closed";
   const desktopMini = desktopMode === "mini";
+  console.log("AppShellLayout render:", { hideSite, hasMenu, desktopMode, navbarOpened });
 
   // Intro flow for the navbar burger
   const flow = useIntroFlow({
