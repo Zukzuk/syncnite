@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import ICO from "icojs";
 import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
-import { CustomIconSVG } from "../services/CustomIconService";
+import { CustomIconSVG } from "./CustomIcon";
 
 function isIcoPath(url: string): boolean {
   try {
@@ -40,7 +40,7 @@ type Props = {
 export function IconGame({ src, alt }: Props) {
 
   if (!src) {
-    return <CustomIconSVG type="fallback" viewBox="0 0 50 50" size={50} />;
+    return <CustomIconSVG type="fallback" />;
   }
 
   const { grid } = useInterLinkedTheme();

@@ -3,7 +3,6 @@ import { fetchJson, fetchUser, getCreds } from "./AccountService";
 import { API_ENDPOINTS, FILES } from "../constants";
 import { PlayniteGame, PlayniteGameLink, PlayniteGameReleaseDate, PlayniteSeries, PlayniteSource, PlayniteTag } from "../types/playnite";
 import { GameItem, LoadedData } from "../types/types";
-import { CustomIconSVG } from "./CustomIconService";
 
 // Get the Playnite Game.Id
 function getPlayniteId(g: PlayniteGame): string {
@@ -347,49 +346,42 @@ export const PLAYNITE_SOURCE_MAP: Record<string, {
   online: string;
   domains: string[],
   label: string,
-  icon?: ReactNode
 }> = {
   "steam": {
     platform: "steam://",
     online: "store.steampowered.com",
     domains: ["steampowered.com"],
     label: "Steampowered",
-    icon: <CustomIconSVG type="steampowered" viewBox="0 0 32 32" />
   },
   "gog": {
     platform: "goggalaxy://",
     online: "www.gog.com",
     domains: ["gog.com"],
     label: "Good Old Games",
-    icon: <CustomIconSVG type="gog" viewBox="0 0 50 50" />,
   },
   "ubisoft connect": {
     platform: "uplay://",
     online: "www.ubisoft.com",
     domains: ["ubisoft.com", "uplay"],
     label: "Ubisoft Connect",
-    icon: <CustomIconSVG type="ubisoft connect" viewBox="0 0 24 24" />,
   },
   "ea app": {
     platform: "link2ea://",
     online: "www.ea.com/origin",
     domains: ["ea.com", "origin.com"],
     label: "EA App",
-    icon: <CustomIconSVG type="ea app" viewBox="0 0 1000 1000" />,
   },
   "battle.net": {
     platform: "battlenet://",
     online: "www.battle.net",
     domains: ["battle.net", "blizzard.com"],
     label: "Battle.net",
-    icon: <CustomIconSVG type="battle.net" viewBox="0 0 24 24" />,
   },
   "epic": {
     platform: "com.epicgames.launcher://",
     online: "www.epicgames.com",
     domains: ["epicgames.com"],
     label: "Epic Games",
-    icon: <CustomIconSVG type="epic" viewBox="0 0 32 32" />,
   },
   "xbox": {
     platform: "xbox://",
@@ -424,7 +416,6 @@ export const PLAYNITE_SOURCE_MAP: Record<string, {
     domains: ["playnite.com"],
     online: "www.playnite.com",
     label: "Playnite",
-    icon: <CustomIconSVG type="playnite" viewBox="0 0 256 256" />,
   },
 };
 

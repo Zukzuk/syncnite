@@ -25,7 +25,7 @@ export type DesktopNavMode = "closed" | "mini" | "normal";
 
 export type ButtonTypes = "button" | "submit" | "link";
 
-export type SourceIcon = "fallback" | "steampowered" | "epic" | "gog" | "ea app" | "ubisoft connect" | "battle.net" | "microsoft" | "xbox" | "rockstar" | "windows-store" | "playnite";
+export type TCustomIcon = "fallback" | "steampowered" | "epic" | "gog" | "ea app" | "ubisoft connect" | "battle.net" | "microsoft" | "xbox" | "rockstar" | "windows-store" | "playnite";
 
 export interface AuthState {
   ready: boolean;

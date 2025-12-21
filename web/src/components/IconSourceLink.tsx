@@ -1,7 +1,8 @@
 import { memo } from "react";
 import { ActionIcon, Tooltip } from "@mantine/core";
-import { GameItem } from "../types/types";
+import { GameItem, TCustomIcon } from "../types/types";
 import { PLAYNITE_SOURCE_MAP } from "../services/PlayniteService";
+import { CustomIconSVG } from "./CustomIcon";
 
 type Props = Pick<GameItem, "source" | "sourceLink">;
 
@@ -28,7 +29,7 @@ export const IconLinkSource = memo(function IconLinkSource({
                 size="sm"
                 style={{ lineHeight: 0, height: "100%", display: "flex", alignItems: "center" }}
             >
-                { PLAYNITE_SOURCE_MAP[source]?.icon }
+                <CustomIconSVG type={source as TCustomIcon} />
             </ActionIcon>
         </Tooltip>
     );

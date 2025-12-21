@@ -4,9 +4,9 @@ import { IconClock, IconDownload } from "@tabler/icons-react";
 import { useInterLinkedTheme } from "../../hooks/useInterLinkedTheme";
 import { useExtensionStatus } from "../../hooks/useExtensionStatus";
 import { API_ENDPOINTS, INTERVAL_MS, WEB_APP_VERSION } from "../../constants";
-import { PLAYNITE_SOURCE_MAP } from "../../services/PlayniteService";
 import { TextDataRow } from "../../components/TextDataRow";
 import { IconButton } from "../../components/IconButton";
+import { CustomIconSVG } from "../../components/CustomIcon";
 
 export default function PlayniteCard(): JSX.Element {
     const { state } = useAuth({ pollMs: 0 });
@@ -22,7 +22,7 @@ export default function PlayniteCard(): JSX.Element {
 
                 <Group gap={grid.gap * 2}>
                     <ThemeIcon radius="xl" variant="light">
-                        {PLAYNITE_SOURCE_MAP.playnite.icon}
+                        <CustomIconSVG type="playnite" />
                     </ThemeIcon>
 
                     <Stack gap={0}>

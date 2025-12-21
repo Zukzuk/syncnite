@@ -10,6 +10,7 @@ import type { SteamStatusResponse } from "../../types/types";
 import { IconThemeSwitch } from "../../components/IconThemeSwitch";
 import { ControlPanelTile } from "./components/ControlPanelTile";
 import { PLAYNITE_SOURCE_MAP } from "../../services/PlayniteService";
+import { CustomIconSVG } from "../../components/CustomIcon";
 
 type Props = {
     toggleNavbar?: () => void;
@@ -99,8 +100,8 @@ export function ControlPanel({ toggleNavbar }: Props): JSX.Element {
     return (
         <Group gap={8} wrap="wrap">
             <ControlPanelTile tooltip={accountTip} dotColor={accountDot} icon={<IconUser size={18} />} toggleNavbar={toggleNavbar} />
-            <ControlPanelTile tooltip={bridgeTip} dotColor={bridgeDot} icon={PLAYNITE_SOURCE_MAP.playnite.icon} toggleNavbar={toggleNavbar} />
-            <ControlPanelTile tooltip={steamTip} dotColor={steamDot} icon={PLAYNITE_SOURCE_MAP.steam.icon} toggleNavbar={toggleNavbar}  />
+            <ControlPanelTile tooltip={bridgeTip} dotColor={bridgeDot} icon={<CustomIconSVG type="playnite" />} toggleNavbar={toggleNavbar} />
+            <ControlPanelTile tooltip={steamTip} dotColor={steamDot} icon={<CustomIconSVG type="steampowered" />} toggleNavbar={toggleNavbar}  />
             <ControlPanelTile tooltip={themeTip} compIcon={<IconThemeSwitch />} />
         </Group>
     );

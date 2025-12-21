@@ -3,7 +3,6 @@ import { Stack, Text, Card, Group, ThemeIcon, Badge, Divider, Button, Tooltip, L
 import { IconClock, IconLink, IconListDetails } from "@tabler/icons-react";
 import { useInterLinkedTheme } from "../../hooks/useInterLinkedTheme";
 import { API_ENDPOINTS } from "../../constants";
-import { PLAYNITE_SOURCE_MAP } from "../../services/PlayniteService";
 import { TextDataRow } from "../../components/TextDataRow";
 import { getCreds } from "../../services/AccountService";
 import { useCallback, useEffect, useState } from "react";
@@ -11,6 +10,7 @@ import { fetchSteamStatus, syncSteamWishlist } from "../../services/SteamService
 import { useSteamWishlist } from "../../hooks/useSteamWishlist";
 import { SteamStatusResponse } from "../../types/types";
 import { IconButton } from "../../components/IconButton";
+import { CustomIconSVG } from "../../components/CustomIcon";
 
 export default function SteamCard(): JSX.Element {
     const { grid } = useInterLinkedTheme();
@@ -106,7 +106,7 @@ export default function SteamCard(): JSX.Element {
 
                 <Group gap={grid.gap * 2}>
                     <ThemeIcon radius="xl" variant="light">
-                        {PLAYNITE_SOURCE_MAP.steam.icon}
+                        <CustomIconSVG type="steampowered" />
                     </ThemeIcon>
 
                     <Stack gap={0}>
