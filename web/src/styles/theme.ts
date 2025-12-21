@@ -47,7 +47,7 @@ export const themeResolver: CSSVariablesResolver = (theme) => ({
     dark: {
         '--interlinked-color-light': `var(--mantine-color-grey-1)`,
         '--interlinked-color-dark': `var(--mantine-color-dark-9)`,
-        '--interlinked-color-suppressed': `var(--mantine-color-dark-8)`,
+        '--interlinked-color-suppressed': `var(--mantine-color-gray-6)`,
         '--interlinked-color-body': `var(--mantine-color-body)`,
 
         '--interlinked-color-primary': `var(--mantine-color-${PRIMARY_COLOR}-6)`,
@@ -62,6 +62,6 @@ export const themeResolver: CSSVariablesResolver = (theme) => ({
         '--interlinked-color-success-soft': `var(--mantine-color-${SUCCESS_COLOR}-4)`,
 
         '--interlinked-color-error': `var(--mantine-color-${ERROR_COLOR}-7)`,
-        '--interlinked-color-warning': `var(--mantine-color-${WARNING_COLOR}-9)`,
+        '--interlinked-color-warning': `var(--mantine-color-${WARNING_COLOR}-7)`,
     },
 });

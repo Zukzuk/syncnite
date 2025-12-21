@@ -91,30 +91,42 @@ export default function AppShellLayout({ children, hideSite = false }: Props) {
         </Box>
       )}
 
-      {/* DESKTOP controls (sm+): closed + mini/normal */}
-      {!hideSite && hasMenu && (
+      {/* DESKTOP controls (sm+): full-height right-edge column */}
+      {!hideSite && hasMenu && !desktopClosed && (
         <Box
+          visibleFrom="sm"
+          role="button"
+          aria-label="Toggle navbar mini/normal"
+          onClick={() => setDesktopMode((m) => (m === "normal" ? "mini" : "normal"))}
           style={{
-            position: "absolute",
-            top: -12,
-            left: 10,
-            height: grid.rowHeight,
+            position: "fixed",
+            left: desktopMini
+              ? grid.navBarMiniWidth - grid.gap
+              : grid.navBarWidth - grid.gap,
+            top: 0,
+            height: "100dvh",
+            width: grid.gap * 2,
             display: "flex",
             alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            userSelect: "none",
             zIndex: grid.z.top,
           }}
         >
-          <ActionIcon
-            variant="transparent"
-            aria-label="Toggle navbar mini/normal"
-            onClick={() => setDesktopMode((m) => (m === "normal" ? "mini" : "normal"))}
-          >
-            {desktopMode === "normal" ? (
-              <IconChevronLeft size={24} stroke={2} />
-            ) : (
-              <IconChevronRight size={24} stroke={2} />
-            )}
-          </ActionIcon>
+          {desktopMode === "normal" ? (
+            <IconChevronLeft
+              size={18}
+              stroke={2}
+              color="var(--interlinked-color-suppressed)"
+            />
+          ) : (
+            <IconChevronRight
+              size={18}
+              stroke={2}
+              color="var(--interlinked-color-suppressed)"
+            />
+          )}
         </Box>
       )}
 

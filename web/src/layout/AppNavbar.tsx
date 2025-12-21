@@ -72,7 +72,7 @@ export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle, desktopMini = 
             {/* Top row */}
             <Box px="xs" style={{ height: grid.rowHeight, position: "relative" }}>
                 <Group h="100%" justify={desktopMini ? "center" : "flex-start"}>
-                    <LogoIntro onDone={onIntroDone} />
+                    <LogoIntro onDone={onIntroDone} desktopMini={desktopMini} />
                 </Group>
             </Box>
 

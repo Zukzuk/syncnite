@@ -7,7 +7,7 @@ import styles from "./LogoIntro.module.css";
 type Props = {
   onDone?: () => void;
   exiting?: boolean;
-
+  desktopMini?: boolean;
   /** default = top-left; loginHero = big centered logo above card */
   variant?: "default" | "loginHero";
 };
@@ -15,6 +15,7 @@ type Props = {
 export const LogoIntro = memo(function LogoIntro({
   onDone,
   exiting,
+  desktopMini = false,
   variant = "default",
 }: Props) {
   const { hasMenu, isDark } = useInterLinkedTheme();
@@ -79,7 +80,7 @@ export const LogoIntro = memo(function LogoIntro({
         }}
       >
         <span className={styles.logoGlitch} data-text="Inter">
-          Inter
+          { desktopMini ? "Int" : "Inter" }
         </span>
       </Text>
 
@@ -89,14 +90,14 @@ export const LogoIntro = memo(function LogoIntro({
         className={styles.logoLinked}
         style={{
           fontSize: 13,
-          left: 34,
+          left: desktopMini ? 25 : 34,
           top: -2,
           width: "fit-content",
           color: "var(--interlinked-color-secondary)",
         }}
       >
         <span className={styles.logoGlitch} data-text="LINKED">
-          LINKED
+          { desktopMini ? "LNKD" : "LINKED" }
         </span>
       </Text>
     </Stack >
