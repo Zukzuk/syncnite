@@ -1,7 +1,7 @@
 {
   "name": "interlinked",
   "private": true,
-  "version": "1.37.8",
+  "version": "1.37.9",
   "workspaces": [
     "web",
     "api",
