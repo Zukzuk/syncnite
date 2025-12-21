@@ -80,7 +80,7 @@ export const LogoIntro = memo(function LogoIntro({
         }}
       >
         <span className={styles.logoGlitch} data-text="Inter">
-          { desktopMini ? "Int" : "Inter" }
+          { desktopMini ? "In" : "Inter" }
         </span>
       </Text>
 
@@ -97,7 +97,7 @@ export const LogoIntro = memo(function LogoIntro({
         }}
       >
         <span className={styles.logoGlitch} data-text="LINKED">
-          { desktopMini ? "LNKD" : "LINKED" }
+          { desktopMini ? "LI" : "LINKED" }
         </span>
       </Text>
     </Stack >
