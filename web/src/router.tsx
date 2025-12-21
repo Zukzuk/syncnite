@@ -1,15 +1,15 @@
-import * as React from "react";
+import { useEffect } from "react";
 import { createBrowserRouter, Navigate, Outlet, useNavigate } from "react-router-dom";
+import { INTERVAL_MS } from "./constants";
 import { useAuth } from "./hooks/useAuth";
 import { useAdminGate } from "./hooks/useAdminGate";
-import { INTERVAL_MS } from "./lib/constants";
-import { clearCreds } from "./lib/utils";
+import RouteError from "./components/BounderyRouteError";
+import { clearCreds } from "./services/AccountService";
 import AppShellLayout from "./layout/AppShellLayout";
 import HomePage from "./layout/HomePage";
 import LibraryPage from "./layout/LibraryPage";
 import BridgePage from "./layout/BridgePage";
 import AppLoginPage from "./layout/AppLoginPage";
-import AdminPage from "./layout/AdminPage";
 import AccountPage from "./layout/AccountPage";
 import NarrowcastPage from "./layout/NarrowcastPage";
 
@@ -33,12 +33,6 @@ function LoggedInOnly() {
   return state.loggedIn ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
-function AdminOnly() {
-  const { state } = useAuth({ pollMs: 0 });
-  if (!state.ready) return null;
-  return state.loggedIn && state.role === "admin" ? <Outlet /> : <Navigate to="/login" replace />;
-}
-
 function AdminGate() {
   const { hideSite, loaded, hasAdmin } = useAdminGate({ pollMs: INTERVAL_MS });
   if (!loaded) return null;
@@ -54,7 +48,7 @@ function AdminGate() {
 
 function LogoutAction() {
   const nav = useNavigate();
-  React.useEffect(() => {
+  useEffect(() => {
     clearCreds();
     nav("/login", { replace: true });
   }, [nav]);
@@ -64,6 +58,7 @@ function LogoutAction() {
 export const router = createBrowserRouter([
   {
     element: <AdminGate />,
+    errorElement: <RouteError />,
     children: [
       // Narrowcast: no shell
       {
@@ -97,13 +92,10 @@ export const router = createBrowserRouter([
               { path: "/account", element: <AccountPage /> },
             ],
           },
-          {
-            element: <AdminOnly />,
-            children: [{ path: "/admin", element: <AdminPage /> }],
-          },
           { path: "*", element: <Navigate to="/" replace /> },
         ],
       },
     ],
   },
 ]);
+

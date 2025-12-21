@@ -1,12 +1,13 @@
-import * as React from "react";
+import { CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useFullscreen } from "@mantine/hooks";
 import { ActionIcon, Box, Center, Group, Loader, Paper, Text, Tooltip } from "@mantine/core";
 import { IconArrowsMaximize, IconArrowsMinimize, IconChevronLeft, IconChevronRight, IconMoon, IconSun, IconX } from "@tabler/icons-react";
-import { useLibraryData } from "../features/library/hooks/useLibraryData";
-import { INTERVAL_MS, SOURCE_MAP } from "../lib/constants";
+import { INTERVAL_MS } from "../constants";
 import type { GameItem } from "../types/types";
-import { getTheme } from "../theme";
+import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
+import { PLAYNITE_SOURCE_MAP } from "../services/PlayniteService";
+import { usePlayniteData } from "../features/library/hooks/usePlayniteData";
 
 const DISPLAY_MS = 10_000;
 const FADE_MS = 900;
@@ -40,24 +41,20 @@ function preload(url: string): Promise<boolean> {
     });
 }
 
-type CoverItem = GameItem & { coverUrl: string };
-
 export default function NarrowcastPage(): JSX.Element {
-    const { libraryData } = useLibraryData({ pollMs: INTERVAL_MS });
+    const { libraryData } = usePlayniteData({ pollMs: INTERVAL_MS });
     const { id } = useParams<{ id?: string }>();
     const navigate = useNavigate();
-    const { GRID } = getTheme();
-
-    const { isDark, setColorScheme } = getTheme();
+    const { grid, isDark, setColorScheme } = useInterLinkedTheme();
     const toggleColorScheme = () => setColorScheme(isDark ? "light" : "dark");
 
-    const items = React.useMemo(() => {
+    const items = useMemo(() => {
         const src = libraryData?.items ?? [];
-        return src.filter((g) => !!g.coverUrl && !g.isHidden) as CoverItem[];
+        return src.filter((g) => !!g.coverUrl && !g.isHidden) as GameItem[];
     }, [libraryData]);
 
-    const [order, setOrder] = React.useState<CoverItem[]>([]);
-    React.useEffect(() => {
+    const [order, setOrder] = useState<GameItem[]>([]);
+    useEffect(() => {
         if (!items.length) return;
         setOrder(shuffle(items));
     }, [items.length]);
@@ -65,24 +62,24 @@ export default function NarrowcastPage(): JSX.Element {
     const n = order.length;
 
     // slideshow core state
-    const [idx, setIdx] = React.useState(0);
-    const [urls, setUrls] = React.useState<[string | null, string | null]>([null, null]); // [layer0, layer1]
-    const [active, setActive] = React.useState<0 | 1>(0); // which layer is visible
+    const [idx, setIdx] = useState(0);
+    const [urls, setUrls] = useState<[string | null, string | null]>([null, null]); // [layer0, layer1]
+    const [active, setActive] = useState<0 | 1>(0); // which layer is visible
 
     // fullscreen
     const { ref: fsRef, toggle: toggleFs, fullscreen } = useFullscreen();
 
     // NEW: idle UI visibility
-    const [uiVisible, setUiVisible] = React.useState(true);
-    const idleTimer = React.useRef<number | null>(null);
+    const [uiVisible, setUiVisible] = useState(true);
+    const idleTimer = useRef<number | null>(null);
 
-    const bumpUi = React.useCallback(() => {
+    const bumpUi = useCallback(() => {
         setUiVisible(true);
         if (idleTimer.current) window.clearTimeout(idleTimer.current);
         idleTimer.current = window.setTimeout(() => setUiVisible(false), UI_IDLE_MS);
     }, []);
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (!n) return;
         bumpUi();
         return () => {
@@ -90,7 +87,7 @@ export default function NarrowcastPage(): JSX.Element {
         };
     }, [n, bumpUi]);
 
-    const chromeStyle: React.CSSProperties = React.useMemo(
+    const chromeStyle: CSSProperties = useMemo(
         () => ({
             opacity: uiVisible ? 1 : 0,
             transition: "opacity 500ms ease",
@@ -103,7 +100,7 @@ export default function NarrowcastPage(): JSX.Element {
     const current = n ? order[clampIndex(idx, n)] : null;
 
     // choose start index from route once we have order
-    React.useEffect(() => {
+    useEffect(() => {
         if (!n) return;
 
         let startIdx = 0;
@@ -117,7 +114,7 @@ export default function NarrowcastPage(): JSX.Element {
     }, [n, order, id, navigate]);
 
     // BOOTSTRAP: load first 2 and set up layers: layer0 visible, layer1 hidden
-    React.useEffect(() => {
+    useEffect(() => {
         if (!n) return;
 
         let cancelled = false;
@@ -144,7 +141,7 @@ export default function NarrowcastPage(): JSX.Element {
         };
     }, [n, order]);
 
-    const goTo = React.useCallback(
+    const goTo = useCallback(
         async (nextIdxRaw: number) => {
             if (!n) return;
 
@@ -187,18 +184,18 @@ export default function NarrowcastPage(): JSX.Element {
         [n, order, active, urls, navigate]
     );
 
-    const next = React.useCallback(() => {
+    const next = useCallback(() => {
         bumpUi();
         void goTo(idx + 1);
     }, [goTo, idx, bumpUi]);
 
-    const prev = React.useCallback(() => {
+    const prev = useCallback(() => {
         bumpUi();
         void goTo(idx - 1);
     }, [goTo, idx, bumpUi]);
 
     // AUTO ADVANCE
-    React.useEffect(() => {
+    useEffect(() => {
         if (!n) return;
         const t = window.setInterval(() => {
             void goTo(idx + 1);
@@ -207,7 +204,7 @@ export default function NarrowcastPage(): JSX.Element {
     }, [n, goTo, idx]);
 
     // KEYBOARD
-    React.useEffect(() => {
+    useEffect(() => {
         const onKeyDown = (e: KeyboardEvent) => {
             bumpUi();
 
@@ -236,7 +233,7 @@ export default function NarrowcastPage(): JSX.Element {
         );
     }
 
-    const layerStyle = (url: string | null, visible: boolean): React.CSSProperties => ({
+    const layerStyle = (url: string | null, visible: boolean): CSSProperties => ({
         position: "absolute",
         inset: 0,
         backgroundImage: url ? `url(${url})` : undefined,
@@ -279,7 +276,7 @@ export default function NarrowcastPage(): JSX.Element {
             <Box style={layerStyle(urls[1], active === 1)} />
 
             {/* Top-right controls (FADES OUT) */}
-            <Box style={{ position: "absolute", right: 12, top: 12, zIndex: 10, ...chromeStyle }}>
+            <Box style={{ position: "absolute", right: 12, top: 12, zIndex: grid.z.float, ...chromeStyle }}>
                 <Group gap={8} justify="flex-end">
                     <Tooltip withArrow label={isDark ? "Switch to light mode" : "Switch to dark mode"} style={{ fontSize: 10 }}>
                         <ActionIcon
@@ -342,7 +339,7 @@ export default function NarrowcastPage(): JSX.Element {
                     justifyContent: "space-between",
                     padding: 16,
                     pointerEvents: "none",
-                    zIndex: 9,
+                    zIndex: grid.z.float,
                 }}
             >
                 <Box style={chromeStyle}>
@@ -383,11 +380,11 @@ export default function NarrowcastPage(): JSX.Element {
             {/* Click zones */}
             <Box
                 onClick={prev}
-                style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "35%", cursor: "pointer", zIndex: 5 }}
+                style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "35%", cursor: "pointer", zIndex: grid.z.aboveBase }}
             />
             <Box
                 onClick={next}
-                style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: "35%", cursor: "pointer", zIndex: 5 }}
+                style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: "35%", cursor: "pointer", zIndex: grid.z.aboveBase }}
             />
 
             {/* Info panel */}
@@ -398,7 +395,7 @@ export default function NarrowcastPage(): JSX.Element {
                     position: "absolute",
                     left: 12,
                     bottom: 12,
-                    zIndex: 10,
+                    zIndex: grid.z.float,
                     maxWidth: "min(720px, 70vw)",
                     background: isDark ? "rgba(20, 20, 20, 0.45)" : "rgba(255, 255, 255, 0.55)",
                     backdropFilter: "blur(14px) saturate(1.2)",
@@ -411,7 +408,7 @@ export default function NarrowcastPage(): JSX.Element {
                     <Box
                         style={{
                             minWidth: 0,
-                            padding: GRID.gap * 2,
+                            padding: grid.gap * 2,
                             borderRight: isDark ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid rgba(0, 0, 0, 0.12)",
                         }}
                     >
@@ -433,13 +430,13 @@ export default function NarrowcastPage(): JSX.Element {
                                 textShadow: "0px 1px 2px var(--interlinked-color-suppressed)",
                             }}
                         >
-                            {current?.source ? `${SOURCE_MAP[current.source].label}` : " "}
+                            {current?.source ? `${PLAYNITE_SOURCE_MAP[current.source].label}` : " "}
                         </Text>
                     </Box>
                     <Box
                         style={{
                             minWidth: 0,
-                            padding: GRID.gap * 2,
+                            padding: grid.gap * 2,
                         }}
                     >
                         <Text
@@ -464,7 +461,7 @@ export default function NarrowcastPage(): JSX.Element {
                     bottom: 0,
                     height: 1,
                     background: "var(--interlinked-color-suppressed)",
-                    zIndex: 20,
+                    zIndex: grid.z.medium,
                     overflow: "hidden",
                 }}
             >

@@ -1,20 +1,20 @@
 
-import React from "react";
+import { memo, useState, MouseEvent } from "react";
 import { ActionIcon, Tooltip } from "@mantine/core";
 import { IconCopy } from "@tabler/icons-react";
 import { GameItem } from "../types/types";
 
 type Props = Pick<GameItem, "title" | "year">;
 
-export const IconCopyTitle = React.memo(function IconCopyTitle({
+export const IconCopyTitle = memo(function IconCopyTitle({
     title,
     year,
 }: Props) {
     if (!title) return null;
 
-    const [copied, setCopied] = React.useState(false);
+    const [copied, setCopied] = useState(false);
 
-    const handleCopy = async (e: React.MouseEvent) => {
+    const handleCopy = async (e: MouseEvent) => {
         e.stopPropagation();
         try {
             await navigator.clipboard.writeText(`${title} ${year ? year : ""}`.trim());

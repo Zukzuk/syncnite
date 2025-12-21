@@ -1,6 +1,6 @@
-import React from "react";
+import { forwardRef, HTMLProps } from "react";
 
-export const Scroller = React.forwardRef<HTMLDivElement, React.HTMLProps<HTMLDivElement>>(
+export const Scroller = forwardRef<HTMLDivElement, HTMLProps<HTMLDivElement>>(
   (props, ref) => (
     <div
       {...props}

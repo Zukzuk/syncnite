@@ -1,11 +1,6 @@
-import * as React from "react";
+import { CSSProperties, useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 
-export const INTRO_DONE_MS = 1400;
-export const LOGO_EXIT_MS = 280;
-
-type GateStyle = React.CSSProperties;
-
-function buildGateStyle(enabled: boolean, done: boolean): GateStyle {
+function buildGateStyle(enabled: boolean, done: boolean): CSSProperties {
     if (!enabled) {
         return { opacity: 1, transform: "none", pointerEvents: "auto", visibility: "visible" };
     }
@@ -36,10 +31,10 @@ type ExitResult<T> = {
 };
 
 function useExit<T>(ms: number): ExitResult<T> {
-    const [exiting, setExiting] = React.useState(false);
-    const pendingRef = React.useRef<T | null>(null);
+    const [exiting, setExiting] = useState(false);
+    const pendingRef = useRef<T | null>(null);
 
-    const startExit = React.useCallback(
+    const startExit = useCallback(
         (payload: T, commit: (payload: T) => void) => {
             pendingRef.current = payload;
             setExiting(true);
@@ -62,18 +57,18 @@ export function useIntroFlow<TExitPayload = unknown>(opts: {
     gateStartsHidden?: boolean;
     exitMs?: number;
 }) {
-    const { gateEnabled, gateStartsHidden = true, exitMs = LOGO_EXIT_MS } = opts;
+    const { gateEnabled, gateStartsHidden = true, exitMs = 280 } = opts;
 
     // --- Gate ---
-    const [introDone, setIntroDone] = React.useState<boolean>(() => {
+    const [introDone, setIntroDone] = useState<boolean>(() => {
         if (!gateEnabled) return true;
         return !gateStartsHidden;
     });
 
-    const doneOnceRef = React.useRef(false);
+    const doneOnceRef = useRef(false);
 
     // apply “hidden” gating before paint (prevents content peek)
-    React.useLayoutEffect(() => {
+    useLayoutEffect(() => {
         if (!gateEnabled || !gateStartsHidden) {
             doneOnceRef.current = true;
             setIntroDone(true);
@@ -83,14 +78,14 @@ export function useIntroFlow<TExitPayload = unknown>(opts: {
         setIntroDone(false);
     }, [gateEnabled, gateStartsHidden]);
 
-    const onIntroDone = React.useCallback(() => {
+    const onIntroDone = useCallback(() => {
         if (!gateEnabled || !gateStartsHidden) return;
         if (doneOnceRef.current) return;
         doneOnceRef.current = true;
         setIntroDone(true);
     }, [gateEnabled, gateStartsHidden]);
 
-    const gateStyle = React.useMemo(
+    const gateStyle = useMemo(
         () => buildGateStyle(gateEnabled && gateStartsHidden, introDone),
         [gateEnabled, gateStartsHidden, introDone]
     );

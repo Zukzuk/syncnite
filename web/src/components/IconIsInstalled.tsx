@@ -1,38 +1,38 @@
-import React from "react";
+import { CSSProperties, memo } from "react";
 import { ActionIcon, Box, Tooltip } from "@mantine/core";
 import { IconCheck } from "@tabler/icons-react";
 import { GameItem } from "../types/types";
-import { getTheme } from "../theme";
+import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
 
 type Props = {
     isInstalled: GameItem["isInstalled"];
     isListView: boolean;
 };
 
-export const IconIsInstalled = React.memo(function IconIsInstalled({
+export const IconIsInstalled = memo(function IconIsInstalled({
     isInstalled,
     isListView,
 }: Props) {
     if (!isInstalled) return null;
 
-    const { Z_INDEX } = getTheme();
+    const { grid } = useInterLinkedTheme();
 
-    const ribbonIcon: React.CSSProperties = {
+    const ribbonIcon: CSSProperties = {
         position: "absolute",
         top: 1,
         right: 0,
-        zIndex: Z_INDEX.aboveBase,
+        zIndex: grid.z.aboveBase,
         filter: "drop-shadow(0 0 6px rgba(0, 0, 0, 0.6))",
     };
 
-    const normalIcon: React.CSSProperties = {
+    const normalIcon: CSSProperties = {
         position: "static",
         filter: "none",
         display: "flex",
         alignItems: "center",
     };
 
-    const ribbonBackground: React.CSSProperties = {
+    const ribbonBackground: CSSProperties = {
         position: "absolute",
         top: -8,
         right: -18,
@@ -40,7 +40,7 @@ export const IconIsInstalled = React.memo(function IconIsInstalled({
         height: 30,
         background: "var(--interlinked-color-secondary)",
         transform: "rotate(45deg)",
-        zIndex: Z_INDEX.base,
+        zIndex: grid.z.base,
     }
 
     return (

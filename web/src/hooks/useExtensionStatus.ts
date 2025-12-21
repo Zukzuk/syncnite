@@ -1,7 +1,7 @@
-import React from "react";
-import { fetchExtensionStatus } from "../lib/api";
+import { useEffect, useState } from "react";
 import { useAuth } from "./useAuth";
-import { INTERVAL_MS } from "../lib/constants";
+import { INTERVAL_MS } from "../constants";
+import { fetchExtensionStatus } from "../services/PlayniteService";
 
 type UseParams = {
     pollMs?: number;
@@ -26,11 +26,11 @@ export function useExtensionStatus({ pollMs = INTERVAL_MS }: UseParams): UseRetu
         extVersion: null as string | null,
     };
 
-    const [status, setStatus] = React.useState<UseReturn>(EXT_STATE_DEFAULTS);
+    const [status, setStatus] = useState<UseReturn>(EXT_STATE_DEFAULTS);
 
     const isAdmin = state.loggedIn && state.role === "admin";
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (!isAdmin) {
             setStatus(EXT_STATE_DEFAULTS);
             return;

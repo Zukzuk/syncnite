@@ -1,6 +1,7 @@
-import React from "react";
+import { CSSProperties, memo, useEffect, useState } from "react";
 import { Stack, Text } from "@mantine/core";
-import { getTheme } from "../theme";
+import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
+
 import styles from "./LogoIntro.module.css";
 
 type Props = {
@@ -11,16 +12,16 @@ type Props = {
   variant?: "default" | "loginHero";
 };
 
-export const LogoIntro = React.memo(function LogoIntro({
+export const LogoIntro = memo(function LogoIntro({
   onDone,
   exiting,
   variant = "default",
 }: Props) {
-  const { hasMenu, isDark } = getTheme();
+  const { hasMenu, isDark } = useInterLinkedTheme();
 
-  const [animated, setAnimated] = React.useState(true);
+  const [animated, setAnimated] = useState(true);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const t = window.setTimeout(() => {
       setAnimated(false);
       onDone?.();
@@ -62,7 +63,7 @@ export const LogoIntro = React.memo(function LogoIntro({
           ["--logo-scale-out-25" as any]: String(scaleOut25),
           ["--logo-scale-out-55" as any]: String(scaleOut55),
           ["--logo-scale-out-100" as any]: String(scaleOut100),
-        } as React.CSSProperties
+        } as CSSProperties
       }
     >
       <Text

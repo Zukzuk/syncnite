@@ -1,11 +1,11 @@
-import React from "react";
+import { memo } from "react";
 import { ActionIcon, Tooltip } from "@mantine/core";
-import { SOURCE_MAP } from "../lib/constants";
 import { GameItem } from "../types/types";
+import { PLAYNITE_SOURCE_MAP } from "../services/PlayniteService";
 
 type Props = Pick<GameItem, "source" | "sourceLink">;
 
-export const IconLinkSource = React.memo(function IconLinkSource({
+export const IconLinkSource = memo(function IconLinkSource({
     source,
     sourceLink,
 }: Props) {
@@ -14,7 +14,7 @@ export const IconLinkSource = React.memo(function IconLinkSource({
     return (
         <Tooltip
             style={{ fontSize: 10 }}
-            label={SOURCE_MAP[source].platform}
+            label={PLAYNITE_SOURCE_MAP[source].platform}
             withArrow
             position="top"
         >
@@ -28,7 +28,7 @@ export const IconLinkSource = React.memo(function IconLinkSource({
                 size="sm"
                 style={{ lineHeight: 0, height: "100%", display: "flex", alignItems: "center" }}
             >
-                { SOURCE_MAP[source]?.icon }
+                { PLAYNITE_SOURCE_MAP[source]?.icon }
             </ActionIcon>
         </Tooltip>
     );

@@ -1,7 +1,6 @@
-import * as React from "react";
-import { Card, Group, ThemeIcon, Text, Divider, Box } from "@mantine/core";
 import type { ReactNode } from "react";
-import { getTheme } from "../theme";
+import { Card, Group, ThemeIcon, Text, Divider, Box } from "@mantine/core";
+import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
 
 type Props = {
     title: string;
@@ -12,7 +11,7 @@ type Props = {
 };
 
 export function SectionCard({ icon, title, subtitle, action, children }: Props) {
-    const { GRID } = getTheme();
+    const { grid } = useInterLinkedTheme();
     
     return (
         <Card withBorder shadow="sm" radius="md" style={{ position: "relative" }}>
@@ -35,8 +34,8 @@ export function SectionCard({ icon, title, subtitle, action, children }: Props) 
                     <Box
                         style={{
                             position: "absolute",
-                            top: GRID.gap,
-                            right: GRID.gap
+                            top: grid.gap,
+                            right: grid.gap
                         }}
                     >
                         {action}

@@ -1,7 +1,7 @@
-import React from "react";
+import { useEffect, useRef, useState } from "react";
 import ICO from "icojs";
-import { CustomIconSVG, FallbackIcon } from "../styles/CustomIcons";
-import { getTheme } from "../theme";
+import { CustomIconSVG, FallbackIcon } from "../services/CustomIconService";
+import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
 
 function isIcoPath(url: string): boolean {
   try {
@@ -43,11 +43,11 @@ export function IconGame({ src, alt }: Props) {
     return <CustomIconSVG inner={FallbackIcon} viewBox="0 0 50 50" size={50} />;
   }
 
-  const { GRID } = getTheme();
-  const [url, setUrl] = React.useState(src);
-  const retriedRef = React.useRef(false);
+  const { grid } = useInterLinkedTheme();
+  const [url, setUrl] = useState(src);
+  const retriedRef = useRef(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     let cancelled = false;
     async function maybeConvert() {
       if (!src) return;
@@ -67,11 +67,11 @@ export function IconGame({ src, alt }: Props) {
       className="icon"
       src={url}
       alt={alt ?? ""}
-      width={GRID.iconSize}
-      height={GRID.iconSize}
+      width={grid.iconSize}
+      height={grid.iconSize}
       style={{
-        width: GRID.iconSize,
-        height: GRID.iconSize,
+        width: grid.iconSize,
+        height: grid.iconSize,
         objectFit: "contain",
         borderRadius: 6,
         background: "var(--interlinked-color-body)"

@@ -128,7 +128,7 @@ components:
           nullable: true
     SteamConnection:
       type: object
-      description: Steam link info stored on the Syncnite account
+      description: Steam link info stored on the InterLinked account
       properties:
         steamId:
           type: string
@@ -1006,9 +1006,9 @@ paths:
   /steam/link:
     post:
       tags: [Steam]
-      summary: Link a Steam account to the current Syncnite account
+      summary: Link a Steam account to the current InterLinked account
       description: >
-        Links the given SteamID64 to the currently authenticated Syncnite
+        Links the given SteamID64 to the currently authenticated InterLinked
         account. Typically called after a successful /steam/auth/callback.
       security:
         - XAuthEmail: []
@@ -1061,7 +1061,7 @@ paths:
       summary: Start Steam login (OpenID)
       description: >
         Redirects the browser to Steam's OpenID login page. This endpoint does
-        not require Syncnite authentication and is typically called by the web
+        not require InterLinked authentication and is typically called by the web
         app to start the "Sign in through Steam" flow.
       responses:
         "302":
@@ -1145,7 +1145,7 @@ paths:
   /steam/wishlist/sync:
     post:
       tags: [Steam]
-      summary: Sync Steam wishlist from Steam into Syncnite storage
+      summary: Sync Steam wishlist from Steam into InterLinked storage
       description: >
         Fetches the wishlist for the linked Steam account via the Steam Web API
         and stores a snapshot on the server under a per-account steam file.

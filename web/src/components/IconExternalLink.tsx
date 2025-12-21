@@ -1,12 +1,11 @@
-import React from "react";
+import { memo } from "react";
 import { ActionIcon, Tooltip } from "@mantine/core";
 import { IconExternalLink } from "@tabler/icons-react";
-import { SOURCE_MAP } from "../lib/constants";
 import { GameItem } from "../types/types";
 
 type Props = Pick<GameItem, "htmlLink" | "title" | "source">;
 
-export const IconLinkExternal = React.memo(function IconLinkExternal({
+export const IconLinkExternal = memo(function IconLinkExternal({
     htmlLink, title, source,
 }: Props) {
     if (!htmlLink) return null;
@@ -14,7 +13,7 @@ export const IconLinkExternal = React.memo(function IconLinkExternal({
     return (
         <Tooltip 
             style={{ fontSize: 10 }} 
-            label={SOURCE_MAP[source]?.online} 
+            label={new URL(htmlLink).hostname ?? null}
             withArrow 
             position="top"
         >

@@ -1,5 +1,5 @@
 {
-    "name": "syncnite-api",
+    "name": "interlinked-api",
     "private": true,
     "scripts": {
         "build": "tsc -p tsconfig.json",

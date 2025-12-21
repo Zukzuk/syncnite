@@ -1,5 +1,7 @@
-import { LETTERS } from "../lib/constants";
+import { Dispatch, SetStateAction } from "react";
+import { LETTERS } from "../constants";
 import { GameLink } from "./playnite";
+import { useMantineTheme } from "@mantine/core";
 
 declare global { interface Window { __APP_VERSION__?: string } }
 
@@ -9,11 +11,17 @@ export type SortDir = "asc" | "desc";
 
 export type ViewMode = "list" | "grid";
 
+export type ColorScheme = "light" | "dark";
+
 export type SwitchesMode = "enabled" | "disabled";
 
 export type Role = "admin" | "user" | "unknown";
 
 export type NavMode = "replace" | "push";
+
+export type DesktopNavMode = "closed" | "mini" | "normal";
+
+export type ButtonTypes = "button" | "submit" | "link";
 
 export interface AuthState {
   ready: boolean;
@@ -51,21 +59,21 @@ export interface UIControls {
   switches: SwitchesMode,
   setSwitches: (mode: SwitchesMode) => void;
   q: string;
-  setQ: React.Dispatch<React.SetStateAction<string>>;
+  setQ: Dispatch<SetStateAction<string>>;
   sources: string[];
-  setSources: React.Dispatch<React.SetStateAction<string[]>>;
+  setSources: Dispatch<SetStateAction<string[]>>;
   tags: string[];
-  setTags: React.Dispatch<React.SetStateAction<string[]>>;
+  setTags: Dispatch<SetStateAction<string[]>>;
   series: string[];
-  setSeries: React.Dispatch<React.SetStateAction<string[]>>;
+  setSeries: Dispatch<SetStateAction<string[]>>;
   showHidden: boolean;
-  setShowHidden: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowHidden: Dispatch<SetStateAction<boolean>>;
   sortKey: SortKey;
   sortDir: SortDir;
-  setSortKey: React.Dispatch<React.SetStateAction<SortKey>>;
+  setSortKey: Dispatch<SetStateAction<SortKey>>;
   onToggleSort: (key: SortKey) => void;
   installedOnly: boolean;
-  setShowInstalledOnly: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowInstalledOnly: Dispatch<SetStateAction<boolean>>;
 }
 
 export interface UIDerivedData {
@@ -104,6 +112,57 @@ export interface LoadedData {
   allTags: string[];
   allSeries: string[];
 };
+
+type TZIndex = {
+    belowBase: number;
+    base: number;
+    aboveBase: number;
+    float: number;
+    medium: number;
+    high: number;
+    top: number;
+};
+
+type TOverscan = { top: number; bottom: number }
+
+export type TGrid = {
+    colsList: string;
+    colsGrid: string;
+    colsOpen: string;
+    navBarWidth: number;
+    navBarMiniWidth: number;
+    coverWidth: number;
+    coverHeight: number;
+    cardWidth: number;
+    cardHeight: number;
+    rowHeight: number;
+    halfRowHeight: number;
+    iconSize: number;
+    scrollbarWidth: number;
+    listLeftPadding: number;
+    cardStepY: number;
+    ratio: number;
+    overscan: TOverscan;
+    gap: number;
+    z: TZIndex;
+};
+
+export interface InterLinkedTheme {
+    theme: ReturnType<typeof useMantineTheme>;
+    isDark: boolean;
+    isMobile: boolean;
+    isTablet: boolean;
+    isDesktop: boolean;
+    isWidescreen: boolean;
+    hasMenu: boolean;
+    grid: TGrid;
+    desktopMode: DesktopNavMode;
+    navbarOpened: boolean;
+    toggleNavbar: () => void;
+    closeNavbar: () => void;
+    setDesktopMode: Dispatch<SetStateAction<DesktopNavMode>>;
+    setColorScheme: (value: ColorScheme) => void;
+}
 
 export type Letter = typeof LETTERS[number];
 
@@ -184,3 +243,4 @@ export type SteamWishlistResponse = {
   lastSynced: string | null;
   items: any[]; // raw items for now; can type later if you want
 };
+

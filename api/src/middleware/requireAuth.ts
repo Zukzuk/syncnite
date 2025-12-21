@@ -95,3 +95,35 @@ export async function requireAdminSession(
 
     next();
 }
+
+export async function requireBareAdminSession(
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction,
+) {
+    const email = String(req.header("x-auth-email") || "").toLowerCase();
+    const password = String(req.header("x-auth-password") || "");
+
+    // auth check
+    const ok = await AccountsService.login(email, password);
+    if (!ok) {
+        return res.status(401).json({ ok: false, error: "unauthorized" });
+    }
+
+    // role check
+    const role = await AccountsService.getRole(email);
+    if (role !== "admin") {
+        return res.status(403).json({
+            ok: false,
+            error: "forbidden",
+            message: "Admin privileges required",
+        });
+    }
+
+    req.auth = {
+        email,
+        role,
+    };
+
+    next();
+}

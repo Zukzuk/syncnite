@@ -1,21 +1,21 @@
-import React from "react";
+import { CSSProperties, memo } from "react";
 import { ActionIcon } from "@mantine/core";
 import { IconMaximize } from "@tabler/icons-react";
-import { getTheme } from "../theme";
+import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
 
 type Props = {
     onHoverChange: (isHovered: boolean) => void;
 };
 
-export const IconShowMaximized = React.memo(function IconShowMaximized({ onHoverChange }: Props) {
+export const IconShowMaximized = memo(function IconShowMaximized({ onHoverChange }: Props) {
 
-    const { Z_INDEX } = getTheme();
+    const { grid } = useInterLinkedTheme();
 
-    const cardStyle: React.CSSProperties = {
+    const cardStyle: CSSProperties = {
         position: "absolute",
         top: 8,
         left: 8,
-        zIndex: Z_INDEX.aboveBase,
+        zIndex: grid.z.aboveBase,
         filter: "drop-shadow(0 0 6px rgba(0, 0, 0, 0.6))",
     };
 

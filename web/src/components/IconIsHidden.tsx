@@ -1,31 +1,31 @@
-import React from "react";
+import { CSSProperties, memo } from "react";
 import { ActionIcon, Tooltip } from "@mantine/core";
 import { IconEyeOff } from "@tabler/icons-react";
 import { GameItem } from "../types/types";
-import { getTheme } from "../theme";
+import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
 
 type Props = {
     isHidden: GameItem["isHidden"];
     isListView: boolean;
 };
 
-export const IconIsHidden = React.memo(function IconIsHidden({
+export const IconIsHidden = memo(function IconIsHidden({
     isHidden,
     isListView,
 }: Props) {
     if (!isHidden) return null;
 
-    const { Z_INDEX } = getTheme();
+    const { grid } = useInterLinkedTheme();
 
-    const cardStyle: React.CSSProperties = {
+    const cardStyle: CSSProperties = {
         position: "absolute",
         top: 8,
         left: 8,
-        zIndex: Z_INDEX.base,
+        zIndex: grid.z.base,
         filter: "drop-shadow(0 0 6px rgba(0, 0, 0, 0.6))",
     };
 
-    const rowStyle: React.CSSProperties = {
+    const rowStyle: CSSProperties = {
         position: "static",
         filter: "none",
         display: "flex",

@@ -1,10 +1,10 @@
-import React from "react";
+import { memo } from "react";
 import { ActionIcon } from "@mantine/core"
-import { getTheme } from "../theme";
 import { IconMoon, IconSun } from "@tabler/icons-react";
+import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
 
-export const IconThemeSwitch = React.memo(function IconThemeSwitch() {
-    const { isDark, setColorScheme } = getTheme();
+export const IconThemeSwitch = memo(function IconThemeSwitch() {
+    const { isDark, setColorScheme } = useInterLinkedTheme();
     const toggleColorScheme = () => setColorScheme(isDark ? "light" : "dark");
 
 

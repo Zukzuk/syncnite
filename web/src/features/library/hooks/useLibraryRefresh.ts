@@ -1,5 +1,5 @@
-import * as React from "react";
-import { FILES } from "../../../lib/constants";
+import { useEffect, useRef, useState } from "react";
+import { FILES } from "../../../constants";
 
 type UseParams = {
     pollMs: number;
@@ -12,15 +12,15 @@ type UseReturn = {
 
 // A hook to manage refreshing the library data with periodic checks.
 export function useLibraryRefresh({ pollMs }: UseParams): UseReturn {
-    const [version, setVersion] = React.useState(0);
-    const [updatedAt, setUpdatedAt] = React.useState<string | null>(null);
-    const lastRef = React.useRef<string>("");
+    const [version, setVersion] = useState(0);
+    const [updatedAt, setUpdatedAt] = useState<string | null>(null);
+    const lastRef = useRef<string>("");
 
-    React.useEffect(() => {
+    useEffect(() => {
         let stop = false;
         async function tick() {
             try {
-                const r = await fetch(`${FILES.snapshot}?v=${Date.now()}`, { cache: "no-store" });
+                const r = await fetch(`${FILES.snapshot.dir}/${FILES.snapshot.file}?v=${Date.now()}`, { cache: "no-store" });
                 if (r.ok) {
                     const txt = await r.text();
                     if (txt.trim().startsWith("{") && txt !== lastRef.current) {

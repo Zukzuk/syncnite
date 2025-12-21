@@ -1,6 +1,6 @@
-import * as React from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { fetchAdminStatus } from "../lib/api";
+import { fetchAdminStatus } from "../services/AccountService";
 
 type UseParams = {
   pollMs: number;
@@ -14,12 +14,12 @@ type UseReturn = {
 
 // A hook to manage and provide admin gate status.
 export function useAdminGate({ pollMs }: UseParams): UseReturn {
-  const [hasAdmin, setHasAdmin] = React.useState<boolean>(true);
-  const [loaded, setLoaded] = React.useState(false);
+  const [hasAdmin, setHasAdmin] = useState<boolean>(true);
+  const [loaded, setLoaded] = useState(false);
   const nav = useNavigate();
   const loc = useLocation();
 
-  React.useEffect(() => {
+  useEffect(() => {
     let stop = false;
     async function tick() {
       const s = await fetchAdminStatus();

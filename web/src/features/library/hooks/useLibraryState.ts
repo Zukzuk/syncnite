@@ -1,7 +1,8 @@
-import * as React from "react";
-import type { SortKey, SortDir, GameItem, UIControls, UIDerivedData, ViewMode, SwitchesMode } from "../../../types/types";
-import { loadStateFromCookie, orderedLetters, saveStateToCookie } from "../../../lib/utils";
+import { useEffect, useMemo, useState } from "react";
 import { useLocalStorage } from "@mantine/hooks";
+import type { SortKey, SortDir, GameItem, UIControls, UIDerivedData, ViewMode, SwitchesMode } from "../../../types/types";
+import { loadStateFromCookie, saveStateToCookie } from "../../../services/AccountService";
+import { orderedLetters } from "../../../utils";
 
 // helpers to rank empties last regardless of direction
 const strKey = (s: string | null | undefined) => {
@@ -87,18 +88,18 @@ export function useLibraryState(items: UseParams): UseReturn {
     getInitialValueInEffect: false,
   });
 
-  const cookieState = React.useMemo(loadStateFromCookie, []);
+  const cookieState = useMemo(loadStateFromCookie, []);
 
-  const [q, setQ] = React.useState<string>(cookieState.q);
-  const [sources, setSources] = React.useState<string[]>(cookieState.sources);
-  const [tags, setTags] = React.useState<string[]>(cookieState.tags);
-  const [series, setSeries] = React.useState<string[]>(cookieState.series);
-  const [showHidden, setShowHidden] = React.useState<boolean>(cookieState.showHidden);
-  const [installedOnly, setShowInstalledOnly] = React.useState<boolean>(cookieState.installedOnly);
-  const [sortKey, setSortKey] = React.useState<SortKey>(cookieState.sortKey);
-  const [sortDir, setSortDir] = React.useState<SortDir>(cookieState.sortDir);
+  const [q, setQ] = useState<string>(cookieState.q);
+  const [sources, setSources] = useState<string[]>(cookieState.sources);
+  const [tags, setTags] = useState<string[]>(cookieState.tags);
+  const [series, setSeries] = useState<string[]>(cookieState.series);
+  const [showHidden, setShowHidden] = useState<boolean>(cookieState.showHidden);
+  const [installedOnly, setShowInstalledOnly] = useState<boolean>(cookieState.installedOnly);
+  const [sortKey, setSortKey] = useState<SortKey>(cookieState.sortKey);
+  const [sortDir, setSortDir] = useState<SortDir>(cookieState.sortDir);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const toSave = { q, sources, tags, series, showHidden, installedOnly, sortKey, sortDir };
     saveStateToCookie(toSave);
   }, [q, sources, tags, series, showHidden, installedOnly, sortKey, sortDir]);
@@ -108,7 +109,7 @@ export function useLibraryState(items: UseParams): UseReturn {
     else { setSortKey(key); setSortDir("asc"); }
   };
 
-  const itemsAssociated = React.useMemo(() => {
+  const itemsAssociated = useMemo(() => {
     const pass = items.filter((r) =>
       // hidden
       (showHidden || !r.isHidden)
@@ -117,7 +118,7 @@ export function useLibraryState(items: UseParams): UseReturn {
     return sort(pass, sortKey, sortDir);
   }, [q, sources, tags, series, showHidden, installedOnly, sortKey, sortDir, items]);
 
-  const itemsSorted = React.useMemo(() => {
+  const itemsSorted = useMemo(() => {
     const qv = q.toLowerCase().trim();
 
     const pass = items.filter((r) =>

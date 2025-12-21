@@ -1,40 +1,38 @@
-import * as React from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { IconLogin2, IconUserHexagon, IconUserScreen } from "@tabler/icons-react";
-import { Box, Center, Card, Text, Tabs, TextInput, PasswordInput, Button, Stack, Alert, Space } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { login, registerAdmin, registerUser, fetchAdminStatus } from "../lib/api";
-import { setCreds } from "../lib/utils";
-import { Role } from "../types/types";
-import { useIntroFlow, LOGO_EXIT_MS } from "../hooks/useIntroFlow";
+import { Box, Center, Card, Text, Tabs, TextInput, PasswordInput, Button, Stack, Alert, Space } from "@mantine/core";
+import { fetchAdminStatus, login, registerAdmin, registerUser, setCreds } from "../services/AccountService";
+import { AccountCreds } from "../types/types";
+import { useIntroFlow } from "../hooks/useIntroFlow";
 import { LogoIntro } from "../components/LogoIntro";
-import { getTheme } from "../theme";
+import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
+import { IconButton } from "../components/IconButton";
 
 import styles from "./AppLoginPage.module.css";
 
-type PendingCreds = { email: string; password: string; role: Role };
-
 export default function AppLoginPage(): JSX.Element {
-  const [tab, setTab] = React.useState<"login" | "user" | "admin">("login");
-  const [error, setError] = React.useState<string | null>(null);
-  const [hasAdmin, setHasAdmin] = React.useState<boolean | null>(null);
+  const [tab, setTab] = useState<"login" | "user" | "admin">("login");
+  const [error, setError] = useState<string | null>(null);
+  const [hasAdmin, setHasAdmin] = useState<boolean | null>(null);
 
   const nav = useNavigate();
-  const { Z_INDEX } = getTheme();
+  const { grid } = useInterLinkedTheme();
 
   const loginForm = useForm({ initialValues: { email: "", password: "" } });
   const registerAdminForm = useForm({ initialValues: { email: "", password: "" } });
   const registerUserForm = useForm({ initialValues: { email: "", password: "" } });
 
   // Intro flow for the login page
-  const flow = useIntroFlow<PendingCreds>({
+  const flow = useIntroFlow<AccountCreds>({
     gateEnabled: true, // enable the gate to block access until intro is done
     gateStartsHidden: true, // start with the card hidden
-    exitMs: LOGO_EXIT_MS,
+    exitMs: 280,
   });
 
   // On mount, check if an admin exists
-  React.useEffect(() => {
+  useEffect(() => {
     (async () => {
       const status = await fetchAdminStatus();
       setHasAdmin(status.hasAdmin);
@@ -43,8 +41,8 @@ export default function AppLoginPage(): JSX.Element {
   }, []);
 
   // Fade card out + animate logo out, then commit creds and navigate.
-  const saveAndAnimate = React.useCallback(
-    (creds: PendingCreds) => {
+  const saveAndAnimate = useCallback(
+    (creds: AccountCreds) => {
       flow.exit.startExit(creds, (c) => {
         setCreds(c.email, c.password, c.role);
         nav("/", { replace: true });
@@ -111,7 +109,7 @@ export default function AppLoginPage(): JSX.Element {
         style={{
           position: "absolute",
           inset: 0,
-          zIndex: Z_INDEX.base,
+          zIndex: grid.z.base,
           pointerEvents: "none",
         }}
       >
@@ -126,7 +124,7 @@ export default function AppLoginPage(): JSX.Element {
         </Text>
       </Center>
 
-      <Center h="100vh" style={{ position: "relative", zIndex: Z_INDEX.aboveBase }}>
+      <Center h="100vh" style={{ position: "relative", zIndex: grid.z.aboveBase }}>
         <Box className={styles.cardFx} data-reveal={flow.gate.introDone ? "true" : "false"}>
           <Box className={styles.cardFxInner}>
 
@@ -162,18 +160,12 @@ export default function AppLoginPage(): JSX.Element {
                     <Stack>
                       <TextInput label="Email" {...loginForm.getInputProps("email")} />
                       <PasswordInput label="Password" {...loginForm.getInputProps("password")} />
-                      <Button
+                      <IconButton
+                        text="Login"
+                        icon={<IconLogin2 color="var(--interlinked-color-secondary)" size={14} />}
                         type="submit"
-                        size="xs"
-                        radius="sm"
-                        variant="light"
-                        justify="space-between"
-                        rightSection={<span />}
-                        leftSection={<IconLogin2 color="var(--interlinked-color-secondary)" size={14} />}
                         style={{ maxWidth: "130px" }}
-                      >
-                        Login
-                      </Button>
+                      />
                     </Stack>
                   </form>
                 </Tabs.Panel>
@@ -188,18 +180,12 @@ export default function AppLoginPage(): JSX.Element {
                       )}
                       <TextInput label="Email" {...registerUserForm.getInputProps("email")} />
                       <PasswordInput label="Password" {...registerUserForm.getInputProps("password")} />
-                      <Button
+                      <IconButton
+                        text="Register"
+                        icon={<IconUserHexagon color="var(--interlinked-color-secondary)" size={14} />}
                         type="submit"
-                        size="xs"
-                        radius="sm"
-                        variant="light"
-                        justify="space-between"
-                        rightSection={<span />}
-                        leftSection={<IconUserHexagon color="var(--interlinked-color-secondary)" size={14} />}
                         style={{ maxWidth: "130px" }}
-                      >
-                        Register
-                      </Button>
+                      />
                     </Stack>
                   </form>
                 </Tabs.Panel>
@@ -214,18 +200,12 @@ export default function AppLoginPage(): JSX.Element {
                       )}
                       <TextInput label="Admin Email" {...registerAdminForm.getInputProps("email")} />
                       <PasswordInput label="Admin Password" {...registerAdminForm.getInputProps("password")} />
-                      <Button
+                      <IconButton
+                        text="Create Admin"
+                        icon={<IconUserScreen color="var(--interlinked-color-secondary)" size={14} />}
                         type="submit"
-                        size="xs"
-                        radius="sm"
-                        variant="light"
-                        justify="space-between"
-                        rightSection={<span />}
-                        leftSection={<IconUserScreen color="var(--interlinked-color-secondary)" size={14} />}
                         style={{ maxWidth: "130px" }}
-                      >
-                        Create Admin
-                      </Button>
+                      />
                     </Stack>
                   </form>
                 </Tabs.Panel>

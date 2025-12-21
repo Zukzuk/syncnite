@@ -37,9 +37,9 @@ export function createApp() {
             openapi: "3.1.0",
             servers: [{ url: "/api/v1" }],
             info: {
-                title: "Syncnite Web API",
+                title: "InterLinked Web API",
                 version: APP_VERSION,
-                description: "API for Syncnite and extension integration",
+                description: "API for InterLinked and extension integration",
             },
             components: {
                 securitySchemes: {

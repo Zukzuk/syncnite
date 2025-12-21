@@ -1,15 +1,14 @@
-import React from "react";
 import { Stack, Button, Textarea, Text, Container } from "@mantine/core";
 import { SectionCard } from "../components/SectionCard";
 import { useLogBus } from "../hooks/useLogBus";
-import { getTheme } from "../theme";
+import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
 
 export default function BridgePage(): JSX.Element {
     const logBus = useLogBus();
-    const { hasMenu, GRID } = getTheme();
+    const { hasMenu, grid } = useInterLinkedTheme();
 
     return (
-        <Container size="sm" pt={hasMenu ? "lg" : GRID.rowHeight} pb="lg">
+        <Container size="sm" pt={hasMenu ? "lg" : grid.rowHeight} pb="lg">
             <Stack gap="lg">
 
                 <SectionCard

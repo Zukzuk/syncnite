@@ -1,5 +1,5 @@
 {
-  "name": "syncnite-web",
+  "name": "interlinked-web",
   "private": true,
   "scripts": {
     "dev": "vite",

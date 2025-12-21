@@ -1,7 +1,6 @@
-import * as React from "react";
-import { verifySession } from "../lib/api";
-import { clearCreds } from "../lib/utils";
+import { useCallback, useEffect, useState } from "react";
 import { AuthState } from "../types/types";
+import { clearCreds, verifySession } from "../services/AccountService";
 
 type UseParams = {
   pollMs: number;
@@ -14,14 +13,14 @@ type UseReturn = {
 
 // A hook to manage and provide authentication state and actions.
 export function useAuth({ pollMs }: UseParams): UseReturn {
-  const [state, setState] = React.useState<AuthState>({
+  const [state, setState] = useState<AuthState>({
     ready: false,
     loggedIn: false,
     email: null,
     role: null,
   });
 
-  const refresh = React.useCallback(async () => {
+  const refresh = useCallback(async () => {
     const v = await verifySession();
     setState({
       ready: true,
@@ -31,7 +30,7 @@ export function useAuth({ pollMs }: UseParams): UseReturn {
     });
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     refresh();
     const on = () => refresh();
     window.addEventListener("sb:auth-changed", on);
@@ -45,7 +44,7 @@ export function useAuth({ pollMs }: UseParams): UseReturn {
     };
   }, [refresh, pollMs]);
 
-  const logout = React.useCallback(() => {
+  const logout = useCallback(() => {
     clearCreds();
     setState({ ready: true, loggedIn: false, email: null, role: null });
   }, []);

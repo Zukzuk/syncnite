@@ -1,5 +1,5 @@
 import { LogBus } from "./LogBus";
-import { API_ENDPOINTS } from "../lib/constants";
+import { API_ENDPOINTS } from "../constants";
 
 /**
  * Starts a global SSE connection to receive log and progress events from the server.

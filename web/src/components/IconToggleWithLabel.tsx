@@ -1,5 +1,5 @@
-import React from "react";
 import { Text, Flex, Switch } from "@mantine/core"
+import { memo } from "react";
 
 type Props = {
     label: string;
@@ -8,7 +8,7 @@ type Props = {
     toggle: (v: boolean) => void;
 }
 
-export const IconToggleWithLabel = React.memo(function IconToggleWithLabel({
+export const IconToggleWithLabel = memo(function IconToggleWithLabel({
     label,
     ariaLabel,
     checked,

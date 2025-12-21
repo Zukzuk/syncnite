@@ -1,4 +1,4 @@
-import * as React from "react";
+import { useEffect, useState } from "react";
 
 type UseParams = {
     active: boolean;
@@ -9,9 +9,9 @@ type UseReturn = boolean;
 
 // A hook to manage a delayed boolean flag based on an active state.
 export function useDelayedFlag({ active, delayMs }: UseParams): UseReturn {
-    const [flag, setFlag] = React.useState(false);
+    const [flag, setFlag] = useState(false);
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (active) {
             const t = window.setTimeout(() => setFlag(true), delayMs);
             return () => window.clearTimeout(t);

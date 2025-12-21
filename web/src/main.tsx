@@ -1,12 +1,12 @@
-import React, { useEffect } from "react";
+import { StrictMode, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
 import { MantineProvider } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
 import { router } from "./router";
-import { AppErrorBoundary } from "./bounderies/AppErrorBoundary";
+import { AppError } from "./components/BoundaryAppError";
 import { startGlobalSse } from "./services/SseClient";
-import { interlinkedTheme, themeResolver } from "./theme";
+import { interlinkedTheme, themeResolver } from "./styles/theme";
 
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
@@ -22,14 +22,14 @@ function App() {
   }, []);
 
   return (
-    <AppErrorBoundary>
+    <AppError>
       <RouterProvider router={router} />
-    </AppErrorBoundary>
+    </AppError>
   );
 }
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
+  <StrictMode>
     <MantineProvider
       theme={interlinkedTheme}
       cssVariablesResolver={themeResolver}
@@ -38,5 +38,5 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <Notifications position="bottom-right" />
       <App />
     </MantineProvider>
-  </React.StrictMode>
+  </StrictMode>
 );

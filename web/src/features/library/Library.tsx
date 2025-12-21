@@ -1,10 +1,10 @@
 import { Flex } from "@mantine/core";
 import { useElementSize } from "@mantine/hooks";
-import { HeaderSort } from "../../components/HeaderSort";
-import { HeaderControls } from "../../components/HeaderControls";
-import { useLibraryState } from "./hooks/useLibraryState";
-import { AbsoluteGrid } from "./AbsoluteGrid";
+import { HeaderSort } from "./components/HeaderSort";
+import { HeaderControls } from "./components/HeaderControls";
+import { Grid } from "../grid/Grid";
 import { LoadedData } from "../../types/types";
+import { useLibraryState } from "./hooks/useLibraryState";
 
 type Props = {
     libraryData: LoadedData;
@@ -34,7 +34,7 @@ export default function Library({
                 ui={uiControls}
             />
 
-            <AbsoluteGrid
+            <Grid
                 ui={uiControls}
                 derived={derivedData}
                 controlsH={controlsH}

@@ -124,7 +124,7 @@ async function getWishlistDetails(
         try {
             const res = await fetch(url, {
                 headers: {
-                    "User-Agent": "Syncnite/1.0 (+https://syncnite.local)",
+                    "User-Agent": "interlinked/1.0 (+https://interlinked.local)",
                 },
             });
 

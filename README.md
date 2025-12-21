@@ -2,10 +2,10 @@
 
 ## A self-hosted Playnite LibrarySynchronizer and WebViewer
 
-Syncnite makes it possible to **share your Playnite library** — games, metadata, media, settings — with family members or across your own devices.  
+InterLinked makes it possible to **share your Playnite library** — games, metadata, media, settings — with family members or across your own devices.  
 It provides a self‑hosted API, a web viewer, and a companion Playnite extension (**SyncniteBridge**) that performs fast, incremental syncing based on the new *PullDelta* mechanism.
 
-## ⭐ What Syncnite does
+## ⭐ What InterLinked does
 
 ### ✔️ Serve your Playnite library on the web
 - Clean JSON-based viewer
@@ -79,7 +79,7 @@ npm run clean
 - Displays real-time progress and logs from the server
 
 ### Workflow
-1. Start your Syncnite server  
+1. Start your InterLinked server  
 2. Create an Admin account through the web UI  
 3. Download `latest.pext` from the web UI  
 4. Install the extension in Playnite  

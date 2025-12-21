@@ -1,8 +1,7 @@
-// src/hooks/useSteamWishlist.ts
-import * as React from "react";
-import { getCreds } from "../lib/utils";
-import { fetchSteamWishlist } from "../lib/api";
+import { useEffect, useState } from "react";
+import { fetchSteamWishlist } from "../services/SteamService";
 import type { SteamWishlistResponse } from "../types/types";
+import { getCreds } from "../services/AccountService";
 
 type UseParams = {
     pollMs: number;
@@ -12,9 +11,9 @@ type UseReturn = SteamWishlistResponse | null;
 
 // Hook to manage fetching and updating the Steam wishlist periodically
 export function useSteamWishlist({ pollMs }: UseParams): UseReturn {
-    const [state, setState] = React.useState<UseReturn>(null);
+    const [state, setState] = useState<UseReturn>(null);
 
-    React.useEffect(() => {
+    useEffect(() => {
         let stop = false;
 
         async function tick() {

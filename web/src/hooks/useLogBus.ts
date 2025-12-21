@@ -1,4 +1,4 @@
-import * as React from "react";
+import { useEffect, useMemo, useState } from "react";
 import { LogBus } from "../services/LogBus";
 
 type UseReturn = {
@@ -10,13 +10,13 @@ type UseReturn = {
 
 // A hook to manage and provide log bus information.
 export function useLogBus(): UseReturn {
-    const [lines, setLines] = React.useState<string[]>(() => LogBus.get());
+    const [lines, setLines] = useState<string[]>(() => LogBus.get());
 
-    React.useEffect(() => {
+    useEffect(() => {
         return LogBus.subscribe((l) => setLines(l));
     }, []);
 
-    const text = React.useMemo(() => lines.join("\n"), [lines]);
+    const text = useMemo(() => lines.join("\n"), [lines]);
 
     return {
         lines,

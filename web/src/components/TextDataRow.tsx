@@ -1,10 +1,11 @@
-import { Group, Text, Code } from "@mantine/core";
+import { ReactNode } from "react";
+import { Group, Text, Code, MantineSize } from "@mantine/core";
 
 type Props = {
-    label?: React.ReactNode;
-    value?: React.ReactNode;
-    icon?: React.ReactNode;
-    size?: "xs" | "sm";
+    label?: ReactNode;
+    value?: ReactNode;
+    icon?: ReactNode;
+    size?: MantineSize;
 };
 
 export function TextDataRow({ label, value, icon, size = "sm" }: Props): JSX.Element {

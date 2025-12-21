@@ -1,4 +1,4 @@
-import React from "react";
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 type DeckKey = string;
 
@@ -27,7 +27,7 @@ export type LibraryCtx = {
     setStacksScrollTop: (itemId: string, scrollTop: number) => void;
 };
 
-const LibraryContext = React.createContext<LibraryCtx | null>(null);
+const LibraryContext = createContext<LibraryCtx | null>(null);
 
 function ensureItem(prev: Record<string, ItemState>, itemId: string): ItemState {
     return (
@@ -38,34 +38,34 @@ function ensureItem(prev: Record<string, ItemState>, itemId: string): ItemState 
     );
 }
 
-export function LibraryProvider({ children }: { children: React.ReactNode }) {
-    const [byItemId, setByItemId] = React.useState<Record<string, ItemState>>({});
-    const byItemIdRef = React.useRef(byItemId);
-    React.useEffect(() => {
+export function LibraryProvider({ children }: { children: ReactNode }) {
+    const [byItemId, setByItemId] = useState<Record<string, ItemState>>({});
+    const byItemIdRef = useRef(byItemId);
+    useEffect(() => {
         byItemIdRef.current = byItemId;
     }, [byItemId]);
 
     // version tick to force re-renders on updates (selection must update UI)
-    const [version, setVersion] = React.useState(0);
-    const bump = React.useCallback(() => setVersion((v) => v + 1), []);
+    const [version, setVersion] = useState(0);
+    const bump = useCallback(() => setVersion((v) => v + 1), []);
 
     // global "last selected deck" for cross-item selection UX
-    const lastSelectedDeckKeyRef = React.useRef<DeckKey | null>(null);
+    const lastSelectedDeckKeyRef = useRef<DeckKey | null>(null);
 
     // global "last scroll per deck key" for cross-item scroll UX
-    const lastDeckScrollTopByDeckKeyRef = React.useRef<Record<DeckKey, number>>({});
+    const lastDeckScrollTopByDeckKeyRef = useRef<Record<DeckKey, number>>({});
 
     // ----- READ APIs (stable identity; read from refs) -----
 
-    const getSelectedDeckKey = React.useCallback((itemId: string) => {
+    const getSelectedDeckKey = useCallback((itemId: string) => {
         return byItemIdRef.current[itemId]?.selectedDeckKey ?? null;
     }, []);
 
-    const getLastSelectedDeckKey = React.useCallback(() => {
+    const getLastSelectedDeckKey = useCallback(() => {
         return lastSelectedDeckKeyRef.current ?? null;
     }, []);
 
-    const pickDeckKey = React.useCallback((itemId: string, available: DeckKey[]) => {
+    const pickDeckKey = useCallback((itemId: string, available: DeckKey[]) => {
         if (!available.length) return null;
 
         // 1) per-item remembered selection
@@ -80,7 +80,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
         return available[0];
     }, []);
 
-    const getDeckScrollTop = React.useCallback((itemId: string, deckKey: DeckKey) => {
+    const getDeckScrollTop = useCallback((itemId: string, deckKey: DeckKey) => {
         // 1) per-item scroll
         const perItem = byItemIdRef.current[itemId]?.deckScrollTopByDeckKey?.[deckKey];
         if (typeof perItem === "number") return perItem;
@@ -90,14 +90,14 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
         return typeof global === "number" ? global : null;
     }, []);
 
-    const getStacksScrollTop = React.useCallback((itemId: string) => {
+    const getStacksScrollTop = useCallback((itemId: string) => {
         const v = byItemIdRef.current[itemId]?.stacksScrollTop;
         return typeof v === "number" ? v : null;
     }, []);
 
     // ----- WRITE APIs (stable identity; update state + bump) -----
 
-    const setSelectedDeckKey = React.useCallback(
+    const setSelectedDeckKey = useCallback(
         (itemId: string, deckKey: DeckKey | null) => {
             lastSelectedDeckKeyRef.current = deckKey;
 
@@ -113,7 +113,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
         [bump]
     );
 
-    const setDeckScrollTop = React.useCallback(
+    const setDeckScrollTop = useCallback(
         (itemId: string, deckKey: DeckKey, scrollTop: number) => {
             lastDeckScrollTopByDeckKeyRef.current = {
                 ...lastDeckScrollTopByDeckKeyRef.current,
@@ -141,7 +141,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
         [bump]
     );
 
-    const setStacksScrollTop = React.useCallback(
+    const setStacksScrollTop = useCallback(
         (itemId: string, scrollTop: number) => {
             setByItemId((prev) => {
                 const cur = ensureItem(prev, itemId);
@@ -155,7 +155,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
         [bump]
     );
 
-    const value = React.useMemo<LibraryCtx>(
+    const value = useMemo<LibraryCtx>(
         () => ({
             version,
             pickDeckKey,
@@ -184,7 +184,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useLibraryContext(): LibraryCtx {
-    const ctx = React.useContext(LibraryContext);
+    const ctx = useContext(LibraryContext);
     if (!ctx) throw new Error("useLibraryContext must be used within <LibraryProvider>");
     return ctx;
 }

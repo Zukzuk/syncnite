@@ -1,9 +1,9 @@
-import React from "react";
+import { memo } from "react";
 import { Stack, Text } from "@mantine/core"
-import { getTheme } from "../theme";
+import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
 
-export const Logo = React.memo(function IconLinkSource() {
-  const { hasMenu, isDark } = getTheme();
+export const Logo = memo(function IconLinkSource() {
+  const { hasMenu, isDark } = useInterLinkedTheme();
 
   return (
     <Stack

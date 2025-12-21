@@ -18,7 +18,7 @@ function handleSteamError(res: express.Response, err: unknown) {
 
 /**
  * GET /api/v1/steam
- * Returns Steam connection status for the current Syncnite account.
+ * Returns Steam connection status for the current InterLinked account.
  */
 router.get("/", requireSession, async (req, res) => {
     const email = req.auth?.email;
@@ -36,7 +36,7 @@ router.get("/", requireSession, async (req, res) => {
 
 /**
  * POST /api/v1/steam/auth/start
- * Starts the Steam OpenID flow for the currently authenticated Syncnite account.
+ * Starts the Steam OpenID flow for the currently authenticated InterLinked account.
  */
 router.post("/auth/start", requireSession, async (req, res) => {
     const email = req.auth?.email;

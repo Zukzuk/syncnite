@@ -1,6 +1,6 @@
 import express from "express";
 import { AccountsService } from "../services/AccountsService";
-import { requireAdminSession, requireSession } from "../middleware/requireAuth";
+import { requireAdminSession, requireBareAdminSession, requireSession } from "../middleware/requireAuth";
 
 const router = express.Router();
 
@@ -84,6 +84,14 @@ router.get("/status", async (_req, res) => {
 });
 
 /**
+ * GET /api/v1/accounts/verify
+ * Verifies the current session.
+ */
+router.get("/verify", requireSession, async (req, res) => {
+    res.json(req.auth);
+});
+
+/**
  * GET /api/v1/accounts/verify/admin
  * Verifies the current session is for an admin account.
  */
@@ -92,11 +100,14 @@ router.get("/verify/admin", requireAdminSession, async (req, res) => {
 });
 
 /**
- * GET /api/v1/accounts/verify
- * Verifies the current session.
+ * GET /api/v1/accounts/users
+ * Returns all registered user details.
  */
-router.get("/verify", requireSession, async (req, res) => {
-    res.json(req.auth);
+router.get("/users", requireBareAdminSession, async (req, res) => {
+    const users = await AccountsService.getUsers();
+    res.json({ users });
 });
+
+
 
 export default router;

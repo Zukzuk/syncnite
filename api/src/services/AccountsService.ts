@@ -226,6 +226,21 @@ export const AccountsService = {
     },
 
     /**
+     * Gets a list of all user accounts.
+     */
+    async getUsers(): Promise<Account[]> {
+        const allAccounts = await listAllAccounts();
+        const users = allAccounts.filter((f) => f.endsWith(USER_SUFFIX));
+        const result: Account[] = [];
+        for (const userFile of users) {
+            const email = userFile.slice(0, -USER_SUFFIX.length);
+            const acc = await readAccount(email);
+            if (acc) result.push(acc);
+        }
+        return result;
+    },
+
+    /**
      * Sets or updates the Steam connection for an account.
      * (Steam link metadata lives on the account.)
      */

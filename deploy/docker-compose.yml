@@ -10,8 +10,8 @@ services:
     ports:
       - "3004:3004"
     volumes:
-      - /volume1/docker/syncnite/data:/data
-      - /volume1/docker/syncnite/extension:/extension:ro
+      - /volume1/docker/interlinked/data:/data
+      - /volume1/docker/interlinked/extension:/extension:ro
 
   web:
     image: zukzuk/syncnite-web:latest
@@ -24,5 +24,5 @@ services:
     ports:
       - "3003:3003"
     volumes:
-      - /volume1/docker/syncnite/data:/usr/share/nginx/html/data:ro
-      - /volume1/docker/syncnite/extension:/usr/share/nginx/html/extension:ro
+      - /volume1/docker/interlinked/data:/usr/share/nginx/html/data:ro
+      - /volume1/docker/interlinked/extension:/usr/share/nginx/html/extension:ro
