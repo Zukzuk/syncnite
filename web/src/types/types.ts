@@ -158,7 +158,7 @@ export interface InterLinkedTheme {
     isTablet: boolean;
     isDesktop: boolean;
     isWidescreen: boolean;
-    hasMenu: boolean;
+    hasNavbar: boolean;
     grid: TGrid;
     desktopMode: DesktopNavMode;
     navbarOpened: boolean;

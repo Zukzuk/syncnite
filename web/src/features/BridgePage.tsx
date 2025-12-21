@@ -5,10 +5,10 @@ import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
 
 export default function BridgePage(): JSX.Element {
     const logBus = useLogBus();
-    const { hasMenu, grid } = useInterLinkedTheme();
+    const { hasNavbar, grid } = useInterLinkedTheme();
 
     return (
-        <Container size="sm" pt={hasMenu ? "lg" : grid.rowHeight} pb="lg">
+        <Container size="sm" pt={hasNavbar ? "lg" : grid.rowHeight} pb="lg">
             <Stack gap="lg">
 
                 <SectionCard

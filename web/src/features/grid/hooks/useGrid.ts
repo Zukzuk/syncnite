@@ -37,7 +37,7 @@ export function useGrid({
 }: UseParams): UseReturn {
     const itemsLen = derived.itemsSorted.length;
     const isListView = ui.isListView;
-    const { hasMenu, grid, desktopMode } = useInterLinkedTheme();
+    const { hasNavbar, grid, desktopMode } = useInterLinkedTheme();
     const desktopMini = desktopMode === "mini";
     const { id: routeId } = useParams<{ id?: string }>();
     const navigate = useNavigate();
@@ -49,7 +49,7 @@ export function useGrid({
     // Combined header/controls offset
     const topOffset = controlsH + sortH;
     // Open card CSS + numeric height
-    const openWidth = `calc(100vw - ${desktopMini ? grid.navBarMiniWidth : hasMenu ? grid.navBarWidth : 0}px - ${grid.scrollbarWidth}px)`;
+    const openWidth = `calc(100vw - ${!hasNavbar ? 0 : desktopMini ? grid.navBarMiniWidth : grid.navBarWidth}px)`;
     const openHeight = `calc(100vh - ${topOffset}px)`;
 
     // Open/close state

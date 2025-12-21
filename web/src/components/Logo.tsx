@@ -3,7 +3,7 @@ import { Stack, Text } from "@mantine/core"
 import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
 
 export const Logo = memo(function IconLinkSource() {
-  const { hasMenu, isDark } = useInterLinkedTheme();
+  const { hasNavbar, isDark } = useInterLinkedTheme();
 
   return (
     <Stack
@@ -18,7 +18,7 @@ export const Logo = memo(function IconLinkSource() {
         transform: "skewY(-6deg)",
         transformOrigin: "middle middle",
         WebkitFontSmoothing: "antialiased",
-        left: hasMenu ? 14 : 40,
+        left: hasNavbar ? 14 : 40,
       }}>
       <Text
         truncate

@@ -18,7 +18,7 @@ export const LogoIntro = memo(function LogoIntro({
   desktopMini = false,
   variant = "default",
 }: Props) {
-  const { hasMenu, isDark } = useInterLinkedTheme();
+  const { hasNavbar, isDark } = useInterLinkedTheme();
 
   const [animated, setAnimated] = useState(true);
 
@@ -33,7 +33,7 @@ export const LogoIntro = memo(function LogoIntro({
   const isHero = variant === "loginHero";
 
   // Position/scale knobs (fed into CSS via variables)
-  const left = isHero ? "50%" : `${hasMenu ? 14 : 40}px`;
+  const left = isHero ? "50%" : `${hasNavbar ? 14 : 40}px`;
   const top = isHero ? "42px" : "20px";
   const translateX = isHero ? "-50%" : "0px";
   const scale = isHero ? 1.65 : 1.0;

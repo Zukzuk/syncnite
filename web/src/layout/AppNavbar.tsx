@@ -10,7 +10,7 @@ import { IconButton } from "../components/IconButton";
 import { TGrid } from "../types/types";
 
 type Props = {
-    hasMenu: boolean;
+    hasNavbar: boolean;
     isDark: boolean;
     grid: TGrid;
     gateStyle: CSSProperties;
@@ -19,7 +19,7 @@ type Props = {
     toggleNavbar: () => void;
 };
 
-export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle, desktopMini = false, hasMenu, isDark, grid }: Props): JSX.Element {
+export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle, desktopMini = false, hasNavbar, isDark, grid }: Props): JSX.Element {
     const { state, logout } = useAuth({ pollMs: 0 });
     const isAdmin = state.role === "admin";
     const location = useLocation();
@@ -31,7 +31,7 @@ export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle, desktopMini = 
     const isAccount = location.pathname.startsWith("/account");
 
     // On mobile (no menu), close overlay after selection
-    const onNavClick = hasMenu ? undefined : toggleNavbar;
+    const onNavClick = hasNavbar ? undefined : toggleNavbar;
 
     const wrap = (label: string, node: ReactNode) =>
         desktopMini ? (
@@ -170,7 +170,7 @@ export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle, desktopMini = 
                         text={desktopMini ? undefined : "Logout"}
                         type="button"
                         style={{
-                            width: hasMenu ? "100%" : "130px",
+                            width: hasNavbar ? "100%" : "130px",
                         }}
                     />
 

@@ -14,7 +14,7 @@ export const HeaderSort = memo(function HeaderSort({
   ui,
 }: Props) {
   const { sortKey, sortDir, onToggleSort, isListView } = ui;
-  const { hasMenu, grid } = useInterLinkedTheme();
+  const { hasNavbar, grid } = useInterLinkedTheme();
 
   const label = (base: string, key: SortKey) =>
     sortKey === key ? `${base} ${sortDir === "asc" ? "▲" : "▼"}` : base;
@@ -87,7 +87,7 @@ export const HeaderSort = memo(function HeaderSort({
           </Text>
         </UnstyledButton>
 
-        {hasMenu && (
+        {hasNavbar && (
           <UnstyledButton
             onClick={() => onToggleSort("series")}
             role="columnheader"

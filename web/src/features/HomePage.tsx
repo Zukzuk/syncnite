@@ -5,7 +5,7 @@ import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
 
 export default function HomePage(): JSX.Element {
     const [readmeData, setReadmeData] = useState<string | null>(null);
-    const { hasMenu, grid } = useInterLinkedTheme();
+    const { hasNavbar, grid } = useInterLinkedTheme();
 
     useEffect(() => {
         fetch("/README.md")
@@ -17,7 +17,7 @@ export default function HomePage(): JSX.Element {
     if (!readmeData) {
         return (
             <Stack style={{ height: "100%", minHeight: 0 }}>
-                <Center w={`calc(100vw - ${hasMenu ? grid.navBarWidth : 0}px)`} h={`calc(100vh)`}>
+                <Center w={`calc(100vw - ${hasNavbar ? grid.navBarWidth : 0}px)`} h={`calc(100vh)`}>
                     <Loader size="md" type="bars" />
                 </Center>
             </Stack>
@@ -25,7 +25,7 @@ export default function HomePage(): JSX.Element {
     }
 
     return (
-        <Container size="sm" pt={hasMenu ? "lg" : grid.rowHeight} pb="lg">
+        <Container size="sm" pt={hasNavbar ? "lg" : grid.rowHeight} pb="lg">
             <Markdown content={readmeData} />
         </Container>
     );

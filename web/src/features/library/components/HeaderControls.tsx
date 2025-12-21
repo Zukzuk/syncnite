@@ -20,7 +20,7 @@ export const HeaderControls = memo(function HeaderControls({
   ui,
   derived,
 }: Props) {
-  const { hasMenu, grid } = useInterLinkedTheme();
+  const { hasNavbar, grid } = useInterLinkedTheme();
   const { allSources, allTags, allSeries } = libraryData;
 
   const {
@@ -58,7 +58,7 @@ export const HeaderControls = memo(function HeaderControls({
       style={{
         minHeight: grid.rowHeight,
         padding: grid.gap,
-        paddingLeft: hasMenu ? grid.gap : grid.gap * 5,
+        paddingLeft: hasNavbar ? grid.gap : grid.gap * 5,
       }}
     >
       <Flex
@@ -69,31 +69,8 @@ export const HeaderControls = memo(function HeaderControls({
         style={{ width: "100%", height: "100%" }}
         gap={grid.gap}
       >
+
         <Group>
-          <SearchInput 
-            width={282}
-            value={q} 
-            onChange={setQ} 
-          />
-        </Group>
-
-        <Group
-          gap={grid.gap}
-          wrap="wrap"
-        >
-          <SegmentedControl
-            value={switches}
-            size="xs"
-            radius="sm"
-            w={110}
-            color="var(--interlinked-color-primary)"
-            onChange={(t) => setSwitches(t as SwitchesMode)}
-            data={[
-              { value: "enabled", label: `${filteredCount}` },
-              { value: "disabled", label: `${totalCount}` },
-            ]}
-          />
-
           <SegmentedControl
             value={view}
             size="xs"
@@ -106,6 +83,26 @@ export const HeaderControls = memo(function HeaderControls({
             ]}
           />
 
+          <SearchInput
+            value={q}
+            onChange={setQ}
+          />
+
+          <SegmentedControl
+            value={switches}
+            size="xs"
+            radius="sm"
+            w={110}
+            color="var(--interlinked-color-primary)"
+            onChange={(t) => setSwitches(t as SwitchesMode)}
+            data={[
+              { value: "enabled", label: `${filteredCount}` },
+              { value: "disabled", label: `${totalCount}` },
+            ]}
+          />
+        </Group>
+
+        <Group>
           <IconToggleWithLabel
             label="installed"
             ariaLabel="Show installed only"
@@ -119,12 +116,7 @@ export const HeaderControls = memo(function HeaderControls({
             checked={showHidden}
             toggle={setShowHidden}
           />
-        </Group>
 
-        <Group
-          gap={4}
-          wrap="wrap"
-        >
           <MultiSelectInput
             width={139}
             placeholder="Tags"
@@ -144,7 +136,6 @@ export const HeaderControls = memo(function HeaderControls({
           />
         </Group>
       </Flex>
-
     </Box>
   );
 });

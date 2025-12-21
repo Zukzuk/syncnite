@@ -18,7 +18,7 @@ export function ControlPanelTile({
     compIcon,
     toggleNavbar,
 }: Props) {
-    const { hasMenu } = useInterLinkedTheme();
+    const { hasNavbar } = useInterLinkedTheme();
     const hasToggle = !!toggleNavbar;
 
     return (
@@ -50,7 +50,7 @@ export function ControlPanelTile({
                         {icon ? (
                             <ActionIcon
                                 component={Link}
-                                onClick={!hasMenu && hasToggle ? toggleNavbar : undefined}
+                                onClick={!hasNavbar && hasToggle ? toggleNavbar : undefined}
                                 to="/account"
                                 variant="subtle"
                                 size="md"

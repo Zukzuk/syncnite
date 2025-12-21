@@ -26,7 +26,7 @@ export function useInterLinkedTheme(): InterLinkedTheme {
         { getInitialValueInEffect: false }
     );
 
-    const hasMenu = useMediaQuery(`(min-width: ${theme.breakpoints.sm})`, false, {
+    const hasNavbar = useMediaQuery(`(min-width: ${theme.breakpoints.sm})`, false, {
         getInitialValueInEffect: false,
     });
 
@@ -107,7 +107,7 @@ export function useInterLinkedTheme(): InterLinkedTheme {
         isTablet,
         isDesktop,
         isWidescreen,
-        hasMenu,
+        hasNavbar,
         grid,
         desktopMode,
         navbarOpened,

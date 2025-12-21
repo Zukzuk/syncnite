@@ -5,10 +5,10 @@ import PlayniteCard from "../features/account/PlayniteCard";
 import SteamCard from "../features/account/SteamCard";
 
 export default function AccountPage(): JSX.Element {
-    const { hasMenu, grid } = useInterLinkedTheme();
+    const { hasNavbar, grid } = useInterLinkedTheme();
 
     return (
-        <Container size="sm" pt={hasMenu ? "lg" : grid.rowHeight} pb="lg">
+        <Container size="sm" pt={hasNavbar ? "lg" : grid.rowHeight} pb="lg">
             <Stack gap="lg">
 
                 <Stack gap={4}>

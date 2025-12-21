@@ -11,10 +11,10 @@ type Props = {
 }
 
 export default function AppShellLayout({ children, hideSite = false }: Props) {
-  const { grid, hasMenu, desktopMode, navbarOpened, isDark, toggleNavbar, closeNavbar, setDesktopMode } = useInterLinkedTheme();
+  const { grid, hasNavbar, desktopMode, navbarOpened, isDark, toggleNavbar, closeNavbar, setDesktopMode } = useInterLinkedTheme();
   const desktopClosed = desktopMode === "closed";
   const desktopMini = desktopMode === "mini";
-  console.log("AppShellLayout render:", { hideSite, hasMenu, desktopMode, navbarOpened });
+  console.log("AppShellLayout render:", { hideSite, hasNavbar, desktopMode, navbarOpened });
 
   // Intro flow for the navbar burger
   const flow = useIntroFlow({
@@ -57,11 +57,11 @@ export default function AppShellLayout({ children, hideSite = false }: Props) {
             desktopMini={desktopMini}
             toggleNavbar={() => {
               // Close overlay only on mobile after clicking an item
-              if (!hasMenu) closeNavbar();
+              if (!hasNavbar) closeNavbar();
             }}
             onIntroDone={flow.gate.onIntroDone}
             gateStyle={flow.gate.gateStyle}
-            hasMenu={hasMenu}
+            hasNavbar={hasNavbar}
             isDark={isDark}
             grid={grid}
           />
@@ -69,7 +69,7 @@ export default function AppShellLayout({ children, hideSite = false }: Props) {
       )}
 
       {/* MOBILE burger (your existing behavior) */}
-      {!hasMenu && (
+      {!hasNavbar && (
         <Box
           style={{
             position: "absolute",
@@ -93,7 +93,7 @@ export default function AppShellLayout({ children, hideSite = false }: Props) {
       )}
 
       {/* DESKTOP controls (sm+): full-height right-edge column */}
-      {!hideSite && hasMenu && !desktopClosed && (
+      {!hideSite && hasNavbar && !desktopClosed && (
         <Box
           visibleFrom="sm"
           role="button"

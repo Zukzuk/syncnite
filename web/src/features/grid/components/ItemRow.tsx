@@ -22,7 +22,7 @@ export function ItemRow({ item, isOpen, isListView }: Props): JSX.Element | null
     if (!isOpen && !isListView) return null;
 
     const { playniteLink, isInstalled, isHidden, iconUrl, title, year, source, series, htmlLink, sourceLink, version } = item;
-    const { hasMenu, grid } = useInterLinkedTheme();
+    const { hasNavbar, grid } = useInterLinkedTheme();
     const [isHovered, setIsHovered] = useState(false);
 
     return (
@@ -121,7 +121,7 @@ export function ItemRow({ item, isOpen, isListView }: Props): JSX.Element | null
                         </Group>
                     </Box>
 
-                    {hasMenu ? (
+                    {hasNavbar ? (
                         <Flex gap={8} style={{ minWidth: 0 }}>
                             <Text
                                 style={{
