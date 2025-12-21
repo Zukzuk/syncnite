@@ -36,11 +36,11 @@ export const IconButton = memo(function IconButton({
             radius={0}
             variant="light"
             justify="space-between"
-            rightSection={<span />}
-            leftSection={icon}
+            rightSection={text && icon ? <span /> : undefined}
+            leftSection={text && icon ? icon : undefined}
             style={{ ...style }}
         >
-            {text}
+            {text ? text : icon ? icon : null}
         </Button>
     );
 

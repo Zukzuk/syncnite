@@ -46,7 +46,7 @@ export const themeResolver: CSSVariablesResolver = (theme) => ({
     },
     dark: {
         '--interlinked-color-light': `var(--mantine-color-grey-1)`,
-        '--interlinked-color-dark': `var(--mantine-color-dark-8)`,
+        '--interlinked-color-dark': `var(--mantine-color-dark-9)`,
         '--interlinked-color-suppressed': `var(--mantine-color-dark-8)`,
         '--interlinked-color-body': `var(--mantine-color-body)`,
 

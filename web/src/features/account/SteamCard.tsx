@@ -106,7 +106,7 @@ export default function SteamCard(): JSX.Element {
 
                 <Group gap={grid.gap * 2}>
                     <ThemeIcon radius="xl" variant="light">
-                        <CustomIconSVG type="steampowered" />
+                        <CustomIconSVG type="steam" />
                     </ThemeIcon>
 
                     <Stack gap={0}>

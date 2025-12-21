@@ -29,7 +29,7 @@ export const IconLinkSource = memo(function IconLinkSource({
                 size="sm"
                 style={{ lineHeight: 0, height: "100%", display: "flex", alignItems: "center" }}
             >
-                <CustomIconSVG type={source as TCustomIcon} />
+                <CustomIconSVG type={source as TCustomIcon} size={14} />
             </ActionIcon>
         </Tooltip>
     );

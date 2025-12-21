@@ -17,7 +17,7 @@ function getPath(type: TCustomIcon): { d: string; viewBox: string } {
   let viewBox = "0 0 0 0";
 
   switch (type) {
-    case "steampowered":
+    case "steam":
       d = SteampoweredPath;
       viewBox = "0 0 32 32";
       break;
@@ -64,7 +64,7 @@ type Props = {
 
 export const CustomIconSVG = memo(function CustomIconSVG({
   type,
-  size = 14,
+  size = 15,
   style,
   title,
 }: Props) {

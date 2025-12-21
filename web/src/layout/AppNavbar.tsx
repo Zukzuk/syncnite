@@ -1,25 +1,27 @@
 import { CSSProperties, ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Box, Stack, Text, Tooltip, ScrollArea, NavLink, Group } from "@mantine/core";
-import { IconAlignBoxLeftBottom, IconLibraryPhoto, IconDeviceTv, IconUser, IconAffiliate, IconLogout2 } from "@tabler/icons-react";
+import { IconAlignBoxLeftBottom, IconLibraryPhoto, IconDeviceTv, IconAffiliate, IconLogout2, IconUserHexagon } from "@tabler/icons-react";
 import { useAuth } from "../hooks/useAuth";
 import { WEB_APP_VERSION } from "../constants";
-import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
 import { ControlPanel } from "../features/controlpanel/ControlPanel";
 import { LogoIntro } from "../components/LogoIntro";
 import { IconButton } from "../components/IconButton";
+import { TGrid } from "../types/types";
 
 type Props = {
+    hasMenu: boolean;
+    isDark: boolean;
+    grid: TGrid;
     gateStyle: CSSProperties;
-    mini?: boolean;
+    desktopMini?: boolean;
     onIntroDone: () => void;
     toggleNavbar: () => void;
 };
 
-export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle, mini = false }: Props): JSX.Element {
+export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle, desktopMini = false, hasMenu, isDark, grid }: Props): JSX.Element {
     const { state, logout } = useAuth({ pollMs: 0 });
     const isAdmin = state.role === "admin";
-    const { hasMenu, isDark, grid } = useInterLinkedTheme();
     const location = useLocation();
 
     const isHome = location.pathname === "/";
@@ -32,7 +34,7 @@ export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle, mini = false }
     const onNavClick = hasMenu ? undefined : toggleNavbar;
 
     const wrap = (label: string, node: ReactNode) =>
-        mini ? (
+        desktopMini ? (
             <Tooltip withArrow position="right" label={label}>
                 <Box>{node}</Box>
             </Tooltip>
@@ -44,18 +46,18 @@ export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle, mini = false }
     const navLinkStyles = {
         root: {
             borderRadius: 0,
-            padding: mini ? grid.gap : undefined,
-            justifyContent: mini ? "center" : undefined,
+            padding: desktopMini ? grid.gap : undefined,
+            justifyContent: desktopMini ? "center" : undefined,
         },
         body: {
-            display: mini ? "none" : undefined, // hide label/description container
+            display: desktopMini ? "none" : undefined, // hide label/description container
         },
         section: {
             // leftSection wrapper
-            marginInlineEnd: mini ? 0 : undefined,
+            marginInlineEnd: desktopMini ? 0 : undefined,
         },
         label: {
-            display: mini ? "none" : undefined,
+            display: desktopMini ? "none" : undefined,
         },
     } as const;
 
@@ -69,7 +71,7 @@ export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle, mini = false }
         >
             {/* Top row */}
             <Box px="xs" style={{ height: grid.rowHeight, position: "relative" }}>
-                <Group h="100%" justify={mini ? "center" : "flex-start"}>
+                <Group h="100%" justify={desktopMini ? "center" : "flex-start"}>
                     <LogoIntro onDone={onIntroDone} />
                 </Group>
             </Box>
@@ -77,7 +79,7 @@ export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle, mini = false }
             {/* Middle */}
             <Box style={{ flex: 1, minHeight: 0, paddingTop: grid.halfRowHeight, ...gateStyle }}>
                 <ScrollArea style={{ height: "100%" }}>
-                    <Stack gap={6} px={mini ? grid.gap : 0}>
+                    <Stack gap={6} px={desktopMini ? grid.gap : 0}>
                         {wrap(
                             "Home",
                             <NavLink
@@ -127,7 +129,7 @@ export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle, mini = false }
                                 onClick={onNavClick}
                                 to="/account"
                                 label="Account"
-                                leftSection={<IconUser color="var(--interlinked-color-secondary)" size={18} />}
+                                leftSection={<IconUserHexagon color="var(--interlinked-color-secondary)" size={18} />}
                                 active={isAccount}
                                 variant="light"
                                 styles={navLinkStyles}
@@ -153,25 +155,26 @@ export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle, mini = false }
             </Box>
 
             {/* Bottom */}
-            <Box px={mini ? grid.gap : "sm"} py="xs" style={gateStyle}>
-                <Stack gap="xs" align={mini ? "center" : "stretch"}>
+            <Box px={desktopMini ? grid.gap : "sm"} py="xs" style={gateStyle}>
+                <Stack gap="xs" align={desktopMini ? "center" : "stretch"}>
 
-                    <ControlPanel toggleNavbar={toggleNavbar} />
+                    <ControlPanel
+                        desktopMini={desktopMini}
+                        toggleNavbar={toggleNavbar}
+                    />
 
                     <IconButton
                         label={`Logout ${state.email} (${state.role})`}
                         onClick={logout}
                         icon={<IconLogout2 color="var(--interlinked-color-secondary)" size={14} />}
-                        text={mini ? "" : "Logout"}
+                        text={desktopMini ? undefined : "Logout"}
                         type="button"
                         style={{
-                            width: mini ? 44 : undefined,
-                            minWidth: mini ? 44 : undefined,
-                            paddingInline: mini ? 0 : undefined,
+                            width: hasMenu ? "100%" : "130px",
                         }}
                     />
 
-                    {!mini && (
+                    {!desktopMini && (
                         <Text size="xs" mt="xs" c="dimmed">
                             {WEB_APP_VERSION}
                         </Text>

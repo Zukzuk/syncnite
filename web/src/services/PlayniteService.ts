@@ -236,7 +236,7 @@ function getInstalled(id: string, installedSet: Set<string> | null): boolean {
 
 // Get Playnite protocol link
 function getPlayniteProtocolLink(isInstalled: boolean, id: string): string {
-    return isInstalled ? "playnite://playnite/start" : `playnite://playnite/showgame/${id}`;
+    return isInstalled ? `playnite://playnite/start/${id}` : `playnite://playnite/showgame/${id}`;
 }
 
 // Get TagIds to Tag Names (ignore missing)

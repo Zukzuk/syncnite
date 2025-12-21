@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Group } from "@mantine/core";
-import { IconUser } from "@tabler/icons-react";
+import { IconUserHexagon } from "@tabler/icons-react";
 import { useAuth } from "../../hooks/useAuth";
 import { useExtensionStatus } from "../../hooks/useExtensionStatus";
 import { useSteamWishlist } from "../../hooks/useSteamWishlist";
@@ -9,14 +9,14 @@ import { INTERVAL_MS, WEB_APP_VERSION } from "../../constants";
 import type { SteamStatusResponse } from "../../types/types";
 import { IconThemeSwitch } from "../../components/IconThemeSwitch";
 import { ControlPanelTile } from "./components/ControlPanelTile";
-import { PLAYNITE_SOURCE_MAP } from "../../services/PlayniteService";
 import { CustomIconSVG } from "../../components/CustomIcon";
 
 type Props = {
+    desktopMini?: boolean;
     toggleNavbar?: () => void;
 }
 
-export function ControlPanel({ toggleNavbar }: Props): JSX.Element {
+export function ControlPanel({ desktopMini = false, toggleNavbar }: Props): JSX.Element {
     const { state } = useAuth({ pollMs: 0 });
     const isAdmin = state.role === "admin";
     const isLoggedIn = state.loggedIn;
@@ -98,11 +98,11 @@ export function ControlPanel({ toggleNavbar }: Props): JSX.Element {
     const themeTip = "Theme: toggle light/dark mode";
 
     return (
-        <Group gap={8} wrap="wrap">
-            <ControlPanelTile tooltip={accountTip} dotColor={accountDot} icon={<IconUser size={18} />} toggleNavbar={toggleNavbar} />
+        <Group gap={8} wrap="wrap" justify={desktopMini ? "center" : "flex-start"}>
+            <ControlPanelTile tooltip={accountTip} dotColor={accountDot} icon={<IconUserHexagon size={18} />} toggleNavbar={toggleNavbar} />
             <ControlPanelTile tooltip={bridgeTip} dotColor={bridgeDot} icon={<CustomIconSVG type="playnite" />} toggleNavbar={toggleNavbar} />
-            <ControlPanelTile tooltip={steamTip} dotColor={steamDot} icon={<CustomIconSVG type="steampowered" />} toggleNavbar={toggleNavbar}  />
-            <ControlPanelTile tooltip={themeTip} compIcon={<IconThemeSwitch />} />
+            <ControlPanelTile tooltip={steamTip} dotColor={steamDot} icon={<CustomIconSVG type="steam" />} toggleNavbar={toggleNavbar}  />
+            <ControlPanelTile tooltip={themeTip} compIcon={<IconThemeSwitch actionSize={38} />} />
         </Group>
     );
 }

@@ -1,6 +1,6 @@
 import { useMantineColorScheme, useMantineTheme } from "@mantine/core";
-import { DesktopNavMode, InterLinkedTheme } from "../types/types";
 import { useDisclosure, useMediaQuery } from "@mantine/hooks";
+import { DesktopNavMode, InterLinkedTheme } from "../types/types";
 import { useState } from "react";
 
 /**

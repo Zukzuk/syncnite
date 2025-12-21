@@ -10,8 +10,8 @@ type Props = {
   hideSite?: boolean;
 }
 
-export default function AppShellLayout({ children, hideSite = false }: Props) { 
-  const { grid, hasMenu, desktopMode, navbarOpened, toggleNavbar, closeNavbar, setDesktopMode } = useInterLinkedTheme();
+export default function AppShellLayout({ children, hideSite = false }: Props) {
+  const { grid, hasMenu, desktopMode, navbarOpened, isDark, toggleNavbar, closeNavbar, setDesktopMode } = useInterLinkedTheme();
   const desktopClosed = desktopMode === "closed";
   const desktopMini = desktopMode === "mini";
 
@@ -36,8 +36,8 @@ export default function AppShellLayout({ children, hideSite = false }: Props) {
             },
             breakpoint: "sm",
             collapsed: {
-              mobile: !navbarOpened, // mobile open/close
-              desktop: desktopClosed, // desktop closed/not shown
+              mobile: !navbarOpened,
+              desktop: desktopClosed,
             },
           }
       }
@@ -48,27 +48,31 @@ export default function AppShellLayout({ children, hideSite = false }: Props) {
         },
       }}
     >
-      {/* Render navbar only when not hidden and not desktop-closed */}
+
+      {/* DESKTOP navbar (sm+): mini/normal */}
       {!hideSite && !desktopClosed && (
         <AppShell.Navbar p={0} withBorder={false}>
           <AppNavbar
-            mini={desktopMini}
+            desktopMini={desktopMini}
             toggleNavbar={() => {
               // Close overlay only on mobile after clicking an item
               if (!hasMenu) closeNavbar();
             }}
             onIntroDone={flow.gate.onIntroDone}
             gateStyle={flow.gate.gateStyle}
+            hasMenu={hasMenu}
+            isDark={isDark}
+            grid={grid}
           />
         </AppShell.Navbar>
       )}
 
       {/* MOBILE burger (your existing behavior) */}
-      {!hideSite && flow.gate.showBurger && (
+      {!hasMenu && (
         <Box
           style={{
             position: "absolute",
-            top: -5,
+            top: -grid.gap,
             left: 10,
             height: grid.rowHeight,
             display: "flex",
@@ -80,7 +84,7 @@ export default function AppShellLayout({ children, hideSite = false }: Props) {
             opened={navbarOpened}
             onClick={toggleNavbar}
             size="sm"
-            hiddenFrom="sm"
+            lineSize={2}
             aria-label="Toggle navigation"
             color="var(--interlinked-color-primary)"
           />
@@ -88,12 +92,11 @@ export default function AppShellLayout({ children, hideSite = false }: Props) {
       )}
 
       {/* DESKTOP controls (sm+): closed + mini/normal */}
-      {!hideSite && (
+      {!hideSite && hasMenu && (
         <Box
-          visibleFrom="sm"
           style={{
             position: "absolute",
-            top: -5,
+            top: -12,
             left: 10,
             height: grid.rowHeight,
             display: "flex",
@@ -101,28 +104,17 @@ export default function AppShellLayout({ children, hideSite = false }: Props) {
             zIndex: grid.z.top,
           }}
         >
-          <Group gap={6}>
-            <ActionIcon
-              variant="subtle"
-              aria-label="Toggle navbar open/closed"
-              onClick={() => setDesktopMode((m) => (m === "closed" ? "mini" : "closed"))}
-            >
-              <IconMenu2 size={18} />
-            </ActionIcon>
-
-            <ActionIcon
-              variant="subtle"
-              aria-label="Toggle navbar mini/normal"
-              disabled={desktopClosed}
-              onClick={() => setDesktopMode((m) => (m === "normal" ? "mini" : "normal"))}
-            >
-              {desktopMode === "normal" ? (
-                <IconChevronLeft size={18} />
-              ) : (
-                <IconChevronRight size={18} />
-              )}
-            </ActionIcon>
-          </Group>
+          <ActionIcon
+            variant="transparent"
+            aria-label="Toggle navbar mini/normal"
+            onClick={() => setDesktopMode((m) => (m === "normal" ? "mini" : "normal"))}
+          >
+            {desktopMode === "normal" ? (
+              <IconChevronLeft size={24} stroke={2} />
+            ) : (
+              <IconChevronRight size={24} stroke={2} />
+            )}
+          </ActionIcon>
         </Box>
       )}
 

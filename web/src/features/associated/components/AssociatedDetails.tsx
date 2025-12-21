@@ -6,6 +6,8 @@ import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";
 import { IconLinkExternal } from "../../../components/IconExternalLink";
 import { IconLinkSource } from "../../../components/IconSourceLink";
 import { IconIsInstalled } from "../../../components/IconIsInstalled";
+import { IconExecuteOverlay } from "../../../components/IconExecuteOverlay";
+import { useState } from "react";
 
 type Props = {
     item: GameItem;
@@ -14,9 +16,10 @@ type Props = {
 
 // Component to display associated details of a library item.   
 export function AssociatedDetails({ item, onWallpaperBg }: Props): JSX.Element {
-    const { sortingName, tags = [], series = [], isInstalled, isHidden, links, coverUrl, bgUrl, source, htmlLink, sourceLink, title } = item;
+    const { playniteLink, sortingName, tags = [], series = [], isInstalled, isHidden, links, coverUrl, bgUrl, source, htmlLink, sourceLink, title } = item;
     const isOpenDelayed = useDelayedFlag({ active: true, delayMs: 70 });
     const { isDark, grid } = useInterLinkedTheme();
+    const [isHovered, setIsHovered] = useState(false);
 
     return (
         <Stack
@@ -50,12 +53,18 @@ export function AssociatedDetails({ item, onWallpaperBg }: Props): JSX.Element {
                 }}
             >
                 <Box
-                    w={grid.coverWidth}
-                    h={grid.coverHeight}
+                    component="a"
+                    href={playniteLink}
                     style={{
+                        display: "block",
                         position: "relative",
                         overflow: "hidden",
+                        width: grid.coverWidth,
+                        height: grid.coverHeight,
                     }}
+                    onMouseEnter={() => setIsHovered(true)}
+                    onMouseLeave={() => setIsHovered(false)}
+                    onClick={(e) => e.stopPropagation()}
                 >
                     <Image
                         src={coverUrl}
@@ -72,7 +81,19 @@ export function AssociatedDetails({ item, onWallpaperBg }: Props): JSX.Element {
                         isListView={false}
                         isInstalled={isInstalled}
                     />
+
+                    <IconExecuteOverlay
+                        type="circle"
+                        iconsSize={30}
+                        title={title}
+                        w={grid.coverWidth}
+                        h={grid.coverHeight}
+                        isInstalled={isInstalled}
+                        isHovered={isHovered}
+                    />
                 </Box>
+
+
             </Box>
 
             <Stack gap={6} align="stretch" style={{ width: "100%" }}>

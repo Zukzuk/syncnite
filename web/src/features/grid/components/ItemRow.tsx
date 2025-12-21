@@ -9,6 +9,7 @@ import { IconIsHidden } from "../../../components/IconIsHidden";
 import { IconCopyTitle } from "../../../components/IconCopyTitle";
 import { IconLinkExternal } from "../../../components/IconExternalLink";
 import { IconLinkSource } from "../../../components/IconSourceLink";
+import { IconExecuteOverlay } from "../../../components/IconExecuteOverlay";
 
 type Props = {
     item: GameItem;
@@ -43,7 +44,6 @@ export function ItemRow({ item, isOpen, isListView }: Props): JSX.Element | null
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
                     onClick={(e) => e.stopPropagation()}
-                    title={title}
                     style={{
                         position: "relative",
                         width: grid.iconSize,
@@ -55,35 +55,14 @@ export function ItemRow({ item, isOpen, isListView }: Props): JSX.Element | null
                         cursor: "pointer",
                     }}
                 >
-                    <Box
-                        style={{
-                            position: "absolute",
-                            inset: 0,
-                            opacity: isHovered ? 0.2 : 1,
-                            transition: "opacity 140ms ease",
-                        }}
-                    >
-                        <IconGame src={iconUrl} />
-                    </Box>
-
-                    <Box
-                        style={{
-                            position: "relative",
-                            display: "flex",
-                            color: "var(--interlinked-color-primary-soft)",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            opacity: isHovered ? 1 : 0,
-                            transform: isHovered ? "scale(1)" : "scale(0.96)",
-                            transition: "opacity 140ms ease, transform 140ms ease",
-                        }}
-                    >
-                        {isInstalled ? (
-                            <IconPlayerPlay size={26} stroke={2} />
-                        ) : (
-                            <IconDownload size={26} stroke={2} />
-                        )}
-                    </Box>
+                    <IconGame src={iconUrl} />
+                    <IconExecuteOverlay
+                        title={title}
+                        w={grid.iconSize}
+                        h={grid.iconSize}
+                        isInstalled={isInstalled}
+                        isHovered={isHovered}
+                    />
                 </Box>
             </Flex>
 
