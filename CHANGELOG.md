@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.38.1](https://github.com/Zukzuk/syncnite/compare/v1.38.0...v1.38.1) (2025-12-22)
+
+
+### Bug Fixes
+
+* bundles the .pext with the api image ([624b645](https://github.com/Zukzuk/syncnite/commit/624b6452c3e02ca4d783aec13712d45f8025e6fb))
+
 ## [1.38.0](https://github.com/Zukzuk/syncnite/compare/v1.37.11...v1.38.0) (2025-12-22)
 
 
