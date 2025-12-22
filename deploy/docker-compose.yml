@@ -24,4 +24,3 @@ services:
       - "3003:3003"
     volumes:
       - /volume1/docker/interlinked/data:/usr/share/nginx/html/data:ro
-      - /volume1/docker/interlinked/extension:/usr/share/nginx/html/extension:ro
