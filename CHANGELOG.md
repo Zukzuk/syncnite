@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.38.0](https://github.com/Zukzuk/syncnite/compare/v1.37.11...v1.38.0) (2025-12-22)
+
+
+### Features
+
+* added control heaader reset option and cleaned up overlay execution item ([ad9347a](https://github.com/Zukzuk/syncnite/commit/ad9347ae0aad1bb878bbdc519b34425ba48fec7b))
+
 ### [1.37.11](https://github.com/Zukzuk/syncnite/compare/v1.37.10...v1.37.11) (2025-12-21)
 
 ### [1.37.10](https://github.com/Zukzuk/syncnite/compare/v1.37.9...v1.37.10) (2025-12-21)
