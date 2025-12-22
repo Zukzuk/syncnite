@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.38.2](https://github.com/Zukzuk/syncnite/compare/v1.38.1...v1.38.2) (2025-12-22)
+
+
+### Bug Fixes
+
+* fixing release with ext image ([ec24ca3](https://github.com/Zukzuk/syncnite/commit/ec24ca3adff42fbc844145484b2d1698889c2519))
+
 ### [1.38.1](https://github.com/Zukzuk/syncnite/compare/v1.38.0...v1.38.1) (2025-12-22)
 
 
