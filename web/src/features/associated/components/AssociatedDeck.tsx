@@ -1,17 +1,18 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Badge, Box, Stack, Text } from "@mantine/core";
-import { GameItem, NavMode } from "../../../types/types";
+import { NavMode } from "../../../types/app";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 import { AssociatedDeckCard } from "./AssociatedDeckCard";
 import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";
 import { useLibraryContext } from "../../LibraryContext";
+import { InterLinkedGameItem } from "../../../types/interlinked";
 
 type Props = {
     deckKey: string;
     animateIn?: boolean;
     label: string;
     currentItemId: string;
-    items: GameItem[];
+    items: InterLinkedGameItem[];
     deckColumns: number;
     maxCardsPerColumn: number | null;
     onToggleClickBounded: (id?: string, navMode?: NavMode) => void;

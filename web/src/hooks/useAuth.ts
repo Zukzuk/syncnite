@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { AuthState } from "../types/types";
+import { AuthState } from "../types/app";
 import { clearCreds, verifySession } from "../services/AccountService";
 
 type UseParams = {

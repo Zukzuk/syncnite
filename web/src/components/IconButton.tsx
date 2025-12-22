@@ -1,7 +1,7 @@
 
 import { memo } from "react";
 import { Button, CSSProperties, Tooltip } from "@mantine/core";
-import { ButtonTypes } from "../types/types";
+import { ButtonTypes } from "../types/app";
 
 type Props = {
     type: ButtonTypes;

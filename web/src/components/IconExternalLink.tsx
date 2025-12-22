@@ -1,9 +1,9 @@
 import { memo } from "react";
 import { ActionIcon, Tooltip } from "@mantine/core";
 import { IconExternalLink } from "@tabler/icons-react";
-import { GameItem } from "../types/types";
+import { InterLinkedGameItem } from "../types/interlinked";
 
-type Props = Pick<GameItem, "htmlLink" | "title" | "source">;
+type Props = Pick<InterLinkedGameItem, "htmlLink" | "title" | "source">;
 
 export const IconLinkExternal = memo(function IconLinkExternal({
     htmlLink, title, source,

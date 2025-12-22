@@ -1,11 +1,11 @@
 import { RefObject, useCallback, useEffect, useRef, useState } from "react";
-import { GameItem } from "../../../types/types";
 import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";
+import { InterLinkedGameItem } from "../../../types/interlinked";
 
 type UseParams = {
   gridRef: RefObject<HTMLDivElement | null>;
   openIds: Set<string>;
-  items: GameItem[];
+  items: InterLinkedGameItem[];
   idToIndex: Map<string, number>;
   viewportH: number;
   closedHeight: number;

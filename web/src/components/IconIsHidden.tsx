@@ -1,11 +1,11 @@
 import { CSSProperties, memo } from "react";
 import { ActionIcon, Tooltip } from "@mantine/core";
 import { IconEyeOff } from "@tabler/icons-react";
-import { GameItem } from "../types/types";
+import { InterLinkedGameItem } from "../types/interlinked";
 import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
 
 type Props = {
-    isHidden: GameItem["isHidden"];
+    isHidden: InterLinkedGameItem["isHidden"];
     isListView: boolean;
 };
 

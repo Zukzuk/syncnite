@@ -51,7 +51,6 @@ export interface SteamAppDetails {
     comingSoon: boolean;
   } | null;
 
-  /** GameItem–aligned derived fields */
   link: string | null;
   links: PlayniteGameLink[] | null;
   year: number | null;

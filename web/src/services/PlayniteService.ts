@@ -1,8 +1,7 @@
-import { ReactNode } from "react";
 import { fetchJson, fetchUser, getCreds } from "./AccountService";
 import { API_ENDPOINTS, FILES } from "../constants";
 import { PlayniteGame, PlayniteGameLink, PlayniteGameReleaseDate, PlayniteSeries, PlayniteSource, PlayniteTag } from "../types/playnite";
-import { GameItem, LoadedData } from "../types/types";
+import { InterLinkedGameItem, InterLinkedOrigin, OriginLoadedData } from "../types/interlinked";
 
 // Get the Playnite Game.Id
 function getPlayniteId(g: PlayniteGame): string {
@@ -79,29 +78,29 @@ function extractYear(val: unknown): number | null {
 }
 
 // Prefer explicit ReleaseYear, otherwise derive from ReleaseDate.ReleaseDate ("yyyy-mm-dd")
-function getYear(releaseYear: number | null | undefined, releaseDate: PlayniteGameReleaseDate | null | undefined): number | null {
+function getYear(releaseYear: number | null | undefined, releaseDate: PlayniteGameReleaseDate | null | undefined): number | undefined {
     if (typeof releaseYear === "number") return releaseYear;
     const iso = releaseDate?.ReleaseDate;
     if (typeof iso === "string") {
         const y = extractYear(iso);
-        return typeof y === "number" ? y : null;
+        return typeof y === "number" ? y : undefined;
     }
-    return null;
+    return undefined;
 }
 // Get the Version (default "")
-function getVersion(version: string | null | undefined): string | null {
-    return !!version ? version : null;
+function getVersion(version: string | null | undefined): string | undefined {
+    return !!version ? version : undefined;
 }
 
 // Prefer Links matching source, then any Links, then sourcish fallback
-function getEffectiveLink(links: PlayniteGameLink[] | undefined, title: string, source: string): string | null {
-    if (!links || links.length === 0) return null;
+function getEffectiveLink(links: PlayniteGameLink[] | undefined, title: string, source: string): string | undefined {
+    if (!links || links.length === 0) return undefined;
 
     const s = source.toLowerCase();
     const hitStrings = [s, "store", "official"];
 
     // Try to find a link whose name directly matches or refers to a "store"
-    const preferredLink = hitStrings.reduce<string | null>((result, needle) => {
+    const preferredLink = hitStrings.reduce<string | undefined>((result, needle) => {
         if (result) return result;
 
         const hit = links.find(link => {
@@ -109,8 +108,8 @@ function getEffectiveLink(links: PlayniteGameLink[] | undefined, title: string, 
             return name === needle || name.includes(needle);
         });
 
-        return hit?.Url ?? null;
-    }, null);
+        return hit?.Url ?? undefined;
+    }, undefined);
     if (preferredLink) return preferredLink;
 
     // Try to find a link whose URL matches known domains for the source
@@ -125,86 +124,87 @@ function getEffectiveLink(links: PlayniteGameLink[] | undefined, title: string, 
     // Fallbacks per source
     switch (s) {
         case "steam":
-            return `https://${PLAYNITE_SOURCE_MAP.steam.online}/app/${encodeURIComponent(title)}`;
+            return `https://${PLAYNITE_SOURCE_MAP.steam?.online}/app/${encodeURIComponent(title)}`;
         case "gog":
-            return `https://${PLAYNITE_SOURCE_MAP.gog.online}/game/${encodeURIComponent(title)}`;
+            return `https://${PLAYNITE_SOURCE_MAP.gog?.online}/game/${encodeURIComponent(title)}`;
         case "ubisoft connect":
         case "uplay":
         case "ubisoft":
-            return `https://${PLAYNITE_SOURCE_MAP["ubisoft connect"].online}/en-us/search?gss-q=${encodeURIComponent(title)}`;
+            return `https://${PLAYNITE_SOURCE_MAP["ubisoft connect"]?.online}/en-us/search?gss-q=${encodeURIComponent(title)}`;
         case "ea app":
-            return null;
+            return undefined;
         case "battle.net":
-            return null;
+            return undefined;
         case "epic":
-            return `https://${PLAYNITE_SOURCE_MAP.epic.online}/store/en-US/p/${encodeURIComponent(title)}`;
+            return `https://${PLAYNITE_SOURCE_MAP.epic?.online}/store/en-US/p/${encodeURIComponent(title)}`;
         case "xbox":
-            return `https://${PLAYNITE_SOURCE_MAP.xbox.online}/en-us/Search/Results?q=${encodeURIComponent(title)}`;
+            return `https://${PLAYNITE_SOURCE_MAP.xbox?.online}/en-us/Search/Results?q=${encodeURIComponent(title)}`;
         case "microsoft store":
-            return `https://${PLAYNITE_SOURCE_MAP["microsoft store"].online}/search?query=${encodeURIComponent(title)}`;
+            return `https://${PLAYNITE_SOURCE_MAP["microsoft store"]?.online}/search?query=${encodeURIComponent(title)}`;
         case "humble":
-            return `https://${PLAYNITE_SOURCE_MAP.humble.online}/store/search?search=${encodeURIComponent(title)}`;
+            return `https://${PLAYNITE_SOURCE_MAP.humble?.online}/store/search?search=${encodeURIComponent(title)}`;
         case "nintendo":
-            return `https://${PLAYNITE_SOURCE_MAP.nintendo.online}/us/search/?q=${encodeURIComponent(title)}`;
+            return `https://${PLAYNITE_SOURCE_MAP.nintendo?.online}/us/search/?q=${encodeURIComponent(title)}`;
         case "abandonware":
-            return `https://${PLAYNITE_SOURCE_MAP.abandonware.online}/search/q/${encodeURIComponent(title)}`;
+            return `https://${PLAYNITE_SOURCE_MAP.abandonware?.online}/search/q/${encodeURIComponent(title)}`;
         default:
-            return null;
+            return undefined;
     }
 }
 
 // Get the source name (alphabetically first, lowercased)
-function getSource(g: PlayniteGame, sourceById: Map<string, string>): string {
+function getSource(g: PlayniteGame, sourceById: Map<string, string>): InterLinkedOrigin {
     const id = g.SourceId ?? null;
     const name = id ? sourceById.get(id) ?? "" : "";
-    return name.toLowerCase().trim();
+    return name.toLowerCase().trim() as InterLinkedOrigin;
 }
 
-function getSourceProtocolLink(source: string, gameId: string | null, href: string | null): string | null {
-    if (!source || !gameId) return null;
+// Get the source protocol link
+function getSourceProtocolLink(source: InterLinkedOrigin, gameId: string | null, href: string | null | undefined): string | undefined {
+    if (!source || !gameId) return undefined;
     const s = source.toLowerCase();
 
     switch (s) {
         case "steam":
-            return `${PLAYNITE_SOURCE_MAP.steam.platform}store/${encodeURIComponent(gameId)}`;
+            return `${PLAYNITE_SOURCE_MAP.steam?.platform}store/${encodeURIComponent(gameId)}`;
         case "gog":
-            return `${PLAYNITE_SOURCE_MAP.gog.platform}openGameView/${encodeURIComponent(gameId)}`;
+            return `${PLAYNITE_SOURCE_MAP.gog?.platform}openGameView/${encodeURIComponent(gameId)}`;
         case "epic": {
             // get epic slug after product/ or p/ from href if possible
             const slug = href?.match(/\/product\/([^/?]+)/)?.[1] || href?.match(/\/p\/([^/?]+)/)?.[1];
-            return slug 
-                ? `${PLAYNITE_SOURCE_MAP.epic.platform}store/product/${encodeURIComponent(slug)}?action=show` 
-                : `${PLAYNITE_SOURCE_MAP.epic.platform}`;
+            return slug
+                ? `${PLAYNITE_SOURCE_MAP.epic?.platform}store/product/${encodeURIComponent(slug)}?action=show`
+                : `${PLAYNITE_SOURCE_MAP.epic?.platform}`;
         }
         case "ubisoft connect":
         case "uplay":
         case "ubisoft":
-            return `${PLAYNITE_SOURCE_MAP["ubisoft connect"].platform}launch/${encodeURIComponent(gameId)}/0`;
+            return `${PLAYNITE_SOURCE_MAP["ubisoft connect"]?.platform}launch/${encodeURIComponent(gameId)}/0`;
         case "ea app":
             const slug = href?.match(/\/product\/([^/?]+)/)?.[1] || href?.match(/\/p\/([^/?]+)/)?.[1];
-            return slug 
-                ? `${PLAYNITE_SOURCE_MAP["ea app"].platform}store/product/${encodeURIComponent(slug)}?action=show` 
-                : `${PLAYNITE_SOURCE_MAP["ea app"].platform}launchgame/${encodeURIComponent(gameId)}`;
+            return slug
+                ? `${PLAYNITE_SOURCE_MAP["ea app"]?.platform}store/product/${encodeURIComponent(slug)}?action=show`
+                : `${PLAYNITE_SOURCE_MAP["ea app"]?.platform}launchgame/${encodeURIComponent(gameId)}`;
         case "battle.net":
-            return `${PLAYNITE_SOURCE_MAP["battle.net"].platform}${encodeURIComponent(gameId)}`;
+            return `${PLAYNITE_SOURCE_MAP["battle.net"]?.platform}${encodeURIComponent(gameId)}`;
         case "xbox":
-            return `${PLAYNITE_SOURCE_MAP.xbox.platform}store/${encodeURIComponent(gameId)}`;
+            return `${PLAYNITE_SOURCE_MAP.xbox?.platform}store/${encodeURIComponent(gameId)}`;
         case "humble":
-            return null;
+            return undefined;
         case "nintendo":
-            return null;
+            return undefined;
         case "microsoft store":
-            return `${PLAYNITE_SOURCE_MAP["microsoft store"].platform}pdp/?productid=${encodeURIComponent(gameId)}`;
+            return `${PLAYNITE_SOURCE_MAP["microsoft store"]?.platform}pdp/?productid=${encodeURIComponent(gameId)}`;
         case "abandonware":
-            return null;
+            return undefined;
         default:
-            return null;
+            return undefined;
     }
 }
 
 // Get all links
-function getLinks(links: PlayniteGameLink[] | undefined): PlayniteGameLink[] | null {
-    if (!links || links.length === 0) return null;
+function getLinks(links: PlayniteGameLink[] | undefined): PlayniteGameLink[] | undefined {
+    if (!links || links.length === 0) return undefined;
     return links;
 }
 
@@ -214,8 +214,8 @@ function getIsHidden(hidden: boolean | null | undefined): boolean {
 }
 
 // Prefetch the local Installed.json (case-insensitive ids)
-async function fetchInstalledList(email: string | null): Promise<Set<string> | null> {
-    let localInstalledSet: Set<string> | null = null;
+async function fetchInstalledList(email: string | null): Promise<Set<string> | undefined> {
+    let localInstalledSet: Set<string> | undefined = undefined;
     if (email) {
         const localInstalled = await fetchJson(
             `${FILES.installed.dir}/${email.toLowerCase()}.${FILES.installed.file}`,
@@ -230,7 +230,7 @@ async function fetchInstalledList(email: string | null): Promise<Set<string> | n
 }
 
 // Check if installed (case-insensitive)
-function getInstalled(id: string, installedSet: Set<string> | null): boolean {
+function getInstalled(id: string, installedSet: Set<string> | undefined): boolean {
     return installedSet ? installedSet.has(id.toLowerCase()) : false;
 }
 
@@ -251,12 +251,12 @@ function getSeriesNames(ids: string[] | undefined, seriesById: Map<string, strin
     return ids.map((id) => seriesById.get(id)).filter(Boolean) as string[];
 }
 
-function buildAssetUrl(uri: string | null | undefined): string | null {
+function buildAssetUrl(uri: string | null | undefined): string | undefined {
     const normUri = uri
         ?.replace(/\\/g, "/")
         .replace(/^\.?\//, '')
         .replace('libraryfiles/', '');
-    if (!normUri) return null;
+    if (!normUri) return undefined;
     else {
         if (/^https?:\/\//i.test(normUri)) return normUri;
         else return `${FILES.libraryfiles.dir}/${normUri}`;
@@ -264,30 +264,30 @@ function buildAssetUrl(uri: string | null | undefined): string | null {
 }
 
 // Get Icon URL (if any)
-function getIconUrl(icon: string | null | undefined): string | null {
+function getIconUrl(icon: string | null | undefined): string | undefined {
     return buildAssetUrl(icon);
 }
 
 // Get CoverImage URL (if any)
-function getCoverUrl(cover: string | null | undefined): string | null {
+function getCoverUrl(cover: string | null | undefined): string | undefined {
     return buildAssetUrl(cover);
 }
 
 // Get BackgroundImage URL (if any)
-function getBgUrl(bg: string | null | undefined): string | null {
+function getBgUrl(bg: string | null | undefined): string | undefined {
     return buildAssetUrl(bg);
 }
 
 // Load and process the full library data
-export async function loadPlayniteLibrary(): Promise<LoadedData> {
+export async function loadPlayniteOrigin(): Promise<OriginLoadedData> {
     // Get the user's email
     const email = fetchUser();
 
     // load raw data
-    const games = await loadDbCollection<PlayniteGame>(PLAYNITE_COLLECTIONS.games);
-    const tags = await loadDbCollection<PlayniteTag>(PLAYNITE_COLLECTIONS.tags);
-    const sources = await loadDbCollection<PlayniteSource>(PLAYNITE_COLLECTIONS.sources);
-    const series = await loadDbCollection<PlayniteSeries>(PLAYNITE_COLLECTIONS.series);
+    const games = await loadDbCollection<PlayniteGame>("games");
+    const tags = await loadDbCollection<PlayniteTag>("tags");
+    const sources = await loadDbCollection<PlayniteSource>("sources");
+    const series = await loadDbCollection<PlayniteSeries>("series");
 
     // index maps (Id -> Name)
     const tagById = new Map<string, string>(tags.map((t) => [t.Id, t.Name]));
@@ -298,7 +298,9 @@ export async function loadPlayniteLibrary(): Promise<LoadedData> {
     const isInstalledSet = await fetchInstalledList(email);
 
     // build items
-    const items: GameItem[] = games.map((g) => {
+    const items: InterLinkedGameItem[] = games.map((g) => {
+        const type = "game";
+        const origin = "playnite";
         const id = getPlayniteId(g);
         const gameId = getGameId(g.GameId);
         const title = getTitle(g.Name, g.Version);
@@ -318,8 +320,9 @@ export async function loadPlayniteLibrary(): Promise<LoadedData> {
         const coverUrl = getCoverUrl(g.CoverImage);
         const bgUrl = getBgUrl(g.BackgroundImage);
 
-        // return the GameItem
+        // return the InterLinkedGameItem
         return {
+            type, origin,
             id, gameId,
             title, sortingName,
             year, version,
@@ -342,151 +345,156 @@ export async function loadPlayniteLibrary(): Promise<LoadedData> {
 }
 
 export const PLAYNITE_SOURCE_MAP: Record<string, {
-  platform?: string;
-  online: string;
-  domains: string[],
-  label: string,
+    platform?: string;
+    online: string;
+    domains: string[];
+    label: string;
 }> = {
-  "steam": {
-    platform: "steam://",
-    online: "store.steampowered.com",
-    domains: ["steampowered.com"],
-    label: "Steampowered",
-  },
-  "gog": {
-    platform: "goggalaxy://",
-    online: "www.gog.com",
-    domains: ["gog.com"],
-    label: "Good Old Games",
-  },
-  "ubisoft connect": {
-    platform: "uplay://",
-    online: "www.ubisoft.com",
-    domains: ["ubisoft.com", "uplay"],
-    label: "Ubisoft Connect",
-  },
-  "ea app": {
-    platform: "link2ea://",
-    online: "www.ea.com/origin",
-    domains: ["ea.com", "origin.com"],
-    label: "EA App",
-  },
-  "battle.net": {
-    platform: "battlenet://",
-    online: "www.battle.net",
-    domains: ["battle.net", "blizzard.com"],
-    label: "Battle.net",
-  },
-  "epic": {
-    platform: "com.epicgames.launcher://",
-    online: "www.epicgames.com",
-    domains: ["epicgames.com"],
-    label: "Epic Games",
-  },
-  "xbox": {
-    platform: "xbox://",
-    online: "www.xbox.com",
-    domains: ["xbox.com", "microsoft.com"],
-    label: "XBox"
-  },
-  "microsoft store": {
-    platform: "ms-windows-store://",
-    domains: ["microsoft.com"],
-    online: "apps.microsoft.com",
-    label: "Microsoft Store"
-  },
-  "humble": {
-    platform: "humble://",
-    domains: ["humblebundle.com"],
-    online: "www.humblebundle.com",
-    label: "Humble Bundle"
-  },
-  "nintendo": {
-    platform: "nintendo://",
-    domains: ["nintendo.com"],
-    online: "www.nintendo.com",
-    label: "Nintendo"
-  },
-  "abandonware": {
-    domains: ["myabandonware.com"],
-    online: "www.myabandonware.com",
-    label: "Abandonware"
-  },
-  "playnite": {
-    domains: ["playnite.com"],
-    online: "www.playnite.com",
-    label: "Playnite",
-  },
+    "steam": {
+        platform: "steam://",
+        online: "store.steampowered.com",
+        domains: ["steampowered.com"],
+        label: "Steampowered",
+    },
+    "gog": {
+        platform: "goggalaxy://",
+        online: "www.gog.com",
+        domains: ["gog.com"],
+        label: "Good Old Games",
+    },
+    "ubisoft connect": {
+        platform: "uplay://",
+        online: "www.ubisoft.com",
+        domains: ["ubisoft.com", "uplay"],
+        label: "Ubisoft Connect",
+    },
+    "ea app": {
+        platform: "link2ea://",
+        online: "www.ea.com/origin",
+        domains: ["ea.com", "origin.com"],
+        label: "EA App",
+    },
+    "battle.net": {
+        platform: "battlenet://",
+        online: "www.battle.net",
+        domains: ["battle.net", "blizzard.com"],
+        label: "Battle.net",
+    },
+    "epic": {
+        platform: "com.epicgames.launcher://",
+        online: "www.epicgames.com",
+        domains: ["epicgames.com"],
+        label: "Epic Games",
+    },
+    "xbox": {
+        platform: "xbox://",
+        online: "www.xbox.com",
+        domains: ["xbox.com", "microsoft.com"],
+        label: "XBox"
+    },
+    "microsoft store": {
+        platform: "ms-windows-store://",
+        domains: ["microsoft.com"],
+        online: "apps.microsoft.com",
+        label: "Microsoft Store"
+    },
+    "humble": {
+        platform: "humble://",
+        domains: ["humblebundle.com"],
+        online: "www.humblebundle.com",
+        label: "Humble Bundle"
+    },
+    "nintendo": {
+        platform: "nintendo://",
+        domains: ["nintendo.com"],
+        online: "www.nintendo.com",
+        label: "Nintendo"
+    },
+    "playnite": {
+        domains: ["playnite.com"],
+        online: "www.playnite.com",
+        label: "Playnite",
+    },
+    "abandonware": {
+        domains: ["myabandonware.com"],
+        online: "www.myabandonware.com",
+        label: "Abandonware"
+    },
+    "emulator": {
+        domains: ["www.romsgames.net"],
+        online: "www.romsgames.net",
+        label: "Emulator"
+    },
 };
 
 export const EXT_STATE_DEFAULTS = {
-  connected: false,
-  lastPingAt: null as string | null,
-  loading: true,
+    connected: false,
+    lastPingAt: null as string | null,
+    loading: true,
 };
 
-export const PLAYNITE_COLLECTIONS = {
-  games: "games",
-  companies: "companies",
-  tags: "tags",
-  sources: "sources",
-  platforms: "platforms",
-  genres: "genres",
-  categories: "categories",
-  features: "features",
-  series: "series",
-  regions: "regions",
-  ageratings: "ageratings",
-  completionstatuses: "completionstatuses",
-  filterpresets: "filterpresets",
-  importexclusions: "importexclusions",
-} as const;
+export const PLAYNITE_COLLECTIONS_LIST = [
+    "games",
+    "companies",
+    "tags",
+    "sources",
+    "platforms",
+    "genres",
+    "categories",
+    "features",
+    "series",
+    "regions",
+    "ageratings",
+    "completionstatuses",
+    "filterpresets",
+    "importexclusions",
+] as const;
 
 // Load a DB collection via the API
 export async function loadDbCollection<T>(collection: string): Promise<T[]> {
-  const url = `${API_ENDPOINTS.PLAYNITE_COLLECTION}${encodeURIComponent(collection)}`;
+    const url = `${API_ENDPOINTS.PLAYNITE_COLLECTION}${encodeURIComponent(collection)}`;
 
-  try {
-    const creds = getCreds();
-    if (!creds) throw new Error("No credentials");
+    try {
+        const creds = getCreds();
+        if (!creds) throw new Error("No credentials");
 
-    const resp = await fetch(url, {
-      headers: {
-        "x-auth-email": creds.email,
-        "x-auth-password": creds.password,
-      },
-    });
+        const resp = await fetch(url, {
+            headers: {
+                "x-auth-email": creds.email,
+                "x-auth-password": creds.password,
+            },
+        });
 
-    const text = await resp.text();
-    return JSON.parse(text);
-  } catch (e) {
-    console.error("Failed to load DB collection:", e);
-    return [];
-  }
+        const text = await resp.text();
+        return JSON.parse(text);
+    } catch (e) {
+        console.error("Failed to load DB collection:", e);
+        return [];
+    }
 }
 
 // Fetch the status of the browser extension connection
 export async function fetchExtensionStatus(): Promise<{
-  ok: boolean;
-  connected: boolean;
-  extVersion: string | null;
-  versionMismatch: boolean;
-  lastPingAt: string | null;
+    ok: boolean;
+    connected: boolean;
+    extVersion: string | null;
+    versionMismatch: boolean;
+    lastPingAt: string | null;
 }> {
-  const creds = getCreds();
-  if (!creds) return { ok: false, connected: false, extVersion: null, versionMismatch: false, lastPingAt: null };
+    const creds = getCreds();
+    if (!creds) return { ok: false, connected: false, extVersion: null, versionMismatch: false, lastPingAt: null };
 
-  const resp = await fetch(API_ENDPOINTS.EXTENSION_STATUS, {
-    headers: {
-      "x-auth-email": creds.email,
-      "x-auth-password": creds.password,
-    },
-  });
+    const resp = await fetch(API_ENDPOINTS.EXTENSION_STATUS, {
+        headers: {
+            "x-auth-email": creds.email,
+            "x-auth-password": creds.password,
+        },
+    });
 
-  if (!resp.ok) {
-    return { ok: false, connected: false, extVersion: null, versionMismatch: false, lastPingAt: null };
-  }
+    if (!resp.ok) {
+        return { ok: false, connected: false, extVersion: null, versionMismatch: false, lastPingAt: null };
+    }
 
-  const payload = await resp.json();
-  return payload;
+    const payload = await resp.json();
+    return payload;
 }

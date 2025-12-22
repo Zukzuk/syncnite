@@ -4,6 +4,7 @@ import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 import { AppNavbar } from "./AppNavbar";
 import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
 import { useIntroFlow } from "../hooks/useIntroFlow";
+import { DesktopNavMode } from "../types/app";
 
 type Props = {
   children: ReactNode;
@@ -98,7 +99,7 @@ export default function AppShellLayout({ children, hideSite = false }: Props) {
           visibleFrom="sm"
           role="button"
           aria-label="Toggle navbar mini/normal"
-          onClick={() => setDesktopMode((m) => (m === "normal" ? "mini" : "normal"))}
+          onClick={() => setDesktopMode((m: DesktopNavMode) => (m === "normal" ? "mini" : "normal"))}
           style={{
             position: "fixed",
             left: desktopMini

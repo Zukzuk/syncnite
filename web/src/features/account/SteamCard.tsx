@@ -1,5 +1,4 @@
-import { useAuth } from "../../hooks/useAuth";
-import { Stack, Text, Card, Group, ThemeIcon, Badge, Divider, Button, Tooltip, Loader } from "@mantine/core";
+import { Stack, Text, Card, Group, ThemeIcon, Badge, Divider, Loader } from "@mantine/core";
 import { IconClock, IconLink, IconListDetails } from "@tabler/icons-react";
 import { useInterLinkedTheme } from "../../hooks/useInterLinkedTheme";
 import { API_ENDPOINTS } from "../../constants";
@@ -8,7 +7,7 @@ import { getCreds } from "../../services/AccountService";
 import { useCallback, useEffect, useState } from "react";
 import { fetchSteamStatus, syncSteamWishlist } from "../../services/SteamService";
 import { useSteamWishlist } from "../../hooks/useSteamWishlist";
-import { SteamStatusResponse } from "../../types/types";
+import { SteamStatusResponse } from "../../types/app";
 import { IconButton } from "../../components/IconButton";
 import { CustomIconSVG } from "../../components/CustomIcon";
 

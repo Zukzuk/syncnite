@@ -1,4 +1,4 @@
-import { AccountCreds, CookieState, Creds, Role, SortDir, SortKey } from "../types/types";
+import { AccountCreds, CookieState, Creds, Role, SortDir, SortKey } from "../types/app";
 import { API_ENDPOINTS } from "../constants";
 
 // Login with email and password

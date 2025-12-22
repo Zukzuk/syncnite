@@ -6,7 +6,7 @@ import { useExtensionStatus } from "../../hooks/useExtensionStatus";
 import { useSteamWishlist } from "../../hooks/useSteamWishlist";
 import { fetchSteamStatus } from "../../services/SteamService";
 import { INTERVAL_MS, WEB_APP_VERSION } from "../../constants";
-import type { SteamStatusResponse } from "../../types/types";
+import type { SteamStatusResponse } from "../../types/app";
 import { IconThemeSwitch } from "../../components/IconThemeSwitch";
 import { ControlPanelTile } from "./components/ControlPanelTile";
 import { CustomIconSVG } from "../../components/CustomIcon";

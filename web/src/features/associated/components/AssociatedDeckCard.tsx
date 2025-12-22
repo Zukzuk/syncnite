@@ -1,12 +1,13 @@
 import { Box, Image } from "@mantine/core";
-import { AssociatedItemCard, GameItem, NavMode } from "../../../types/types";
+import { AssociatedItemCard, NavMode } from "../../../types/app";
 import { IconIsInstalled } from "../../../components/IconIsInstalled";
 import { IconIsHidden } from "../../../components/IconIsHidden";
 import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";
+import { InterLinkedGameItem } from "../../../types/interlinked";
 
 type Props = {
     meta: AssociatedItemCard;
-    item: GameItem;
+    item: InterLinkedGameItem;
     colLengths: number[];
     hoveredMeta: AssociatedItemCard | null;
     hasHoveredCard: boolean;

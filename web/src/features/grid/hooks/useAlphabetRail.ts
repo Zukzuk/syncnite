@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AlphabeticalGroup, GameItem, ItemGroupedByLetter, Letter, SortKey, UIControls, UIDerivedData } from "../../../types/types";
+import { AlphabeticalGroup, ItemGroupedByLetter, Letter, SortKey, UIControls, UIDerivedData } from "../../../types/app";
 import { orderedLetters } from "../../../utils";
 import { LETTERS } from "../../../constants";
+import { InterLinkedGameItem } from "../../../types/interlinked";
 
 // Compute alphabetical groups from grouped items
 function calcAlphabetGroups({ sortKey, itemsGroupedByLetter, itemsSorted }: {
     sortKey: SortKey;
     itemsGroupedByLetter: ItemGroupedByLetter[] | null;
-    itemsSorted: GameItem[] | null;
+    itemsSorted: InterLinkedGameItem[] | null;
 }): {
-    alphabeticalGroups: AlphabeticalGroup[] | null; isGrouped: boolean; flatItems: GameItem[];
+    alphabeticalGroups: AlphabeticalGroup[] | null; isGrouped: boolean; flatItems: InterLinkedGameItem[];
 } {
     const alphabeticalGroups = useMemo<AlphabeticalGroup[] | null>(() => {
         if (sortKey !== "title" || !itemsGroupedByLetter || itemsGroupedByLetter.length === 0) {

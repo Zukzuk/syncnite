@@ -1,6 +1,6 @@
 import { Anchor, Badge, Box, Group, Image, Stack, Text } from "@mantine/core";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
-import { GameItem } from "../../../types/types";
+import { InterLinkedGameItem } from "../../../types/interlinked";
 import { IconShowMaximized } from "../../../components/IconShowMaximized";
 import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";
 import { IconLinkExternal } from "../../../components/IconExternalLink";
@@ -10,7 +10,7 @@ import { IconExecuteOverlay } from "../../../components/IconExecuteOverlay";
 import { useState } from "react";
 
 type Props = {
-    item: GameItem;
+    item: InterLinkedGameItem;
     onWallpaperBg: (hovered: boolean) => void;
 };
 

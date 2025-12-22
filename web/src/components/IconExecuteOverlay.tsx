@@ -1,7 +1,7 @@
 import { Box } from "@mantine/core";
 import { IconDownload, IconPlayerPlayFilled } from "@tabler/icons-react";
 import { memo, useState } from "react";
-import { ItemIconOverlayType } from "../types/types";
+import { ItemIconOverlayType } from "../types/app";
 
 type Props = {
     type?: ItemIconOverlayType;
@@ -11,7 +11,7 @@ type Props = {
     h: number;
     isInstalled: boolean;
     isParentHovered: boolean;
-    link: string;
+    link?: string;
 };
 
 export const IconExecuteOverlay = memo(function IconExecuteOverlay({

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocalStorage } from "@mantine/hooks";
-import type { SortKey, SortDir, GameItem, UIControls, UIDerivedData, ViewMode, SwitchesMode } from "../../../types/types";
+import type { SortKey, SortDir, UIControls, UIDerivedData, ViewMode, SwitchesMode } from "../../../types/app";
 import { loadStateFromCookie, saveStateToCookie } from "../../../services/AccountService";
 import { orderedLetters } from "../../../utils";
+import { InterLinkedGameItem } from "../../../types/interlinked";
 
 // helpers to rank empties last regardless of direction
 const strKey = (s: string | null | undefined) => {
@@ -21,9 +22,9 @@ const yearKey = (y: number | null | undefined) => {
   return { empty, n: empty ? 0 : y as number };
 };
 
-const titleKey = (r: GameItem) => strKey(r.sortingName || r.title);
+const titleKey = (r: InterLinkedGameItem) => strKey(r.sortingName || r.title);
 
-const sort = (pass: GameItem[], sortKey: SortKey, sortDir: SortDir): GameItem[] => {
+const sort = (pass: InterLinkedGameItem[], sortKey: SortKey, sortDir: SortDir): InterLinkedGameItem[] => {
   return pass.sort((a, b) => {
     // Choose primary key
     if (sortKey === "year") {
@@ -41,9 +42,9 @@ const sort = (pass: GameItem[], sortKey: SortKey, sortDir: SortDir): GameItem[] 
 
     const pickKey = () => {
       if (sortKey === "title") return titleKey;
-      if (sortKey === "source") return (r: GameItem) => strKey(r.source);
-      if (sortKey === "tags") return (r: GameItem) => arrKey(r.tags);
-      if (sortKey === "series") return (r: GameItem) => arrKey(r.series);
+      if (sortKey === "source") return (r: InterLinkedGameItem) => strKey(r.source);
+      if (sortKey === "tags") return (r: InterLinkedGameItem) => arrKey(r.tags);
+      if (sortKey === "series") return (r: InterLinkedGameItem) => arrKey(r.series);
       return titleKey;
     };
 
@@ -65,7 +66,7 @@ const sort = (pass: GameItem[], sortKey: SortKey, sortDir: SortDir): GameItem[] 
   });
 };
 
-type UseParams = GameItem[];
+type UseParams = InterLinkedGameItem[];
 
 type UseReturn = {
   uiControls: UIControls;

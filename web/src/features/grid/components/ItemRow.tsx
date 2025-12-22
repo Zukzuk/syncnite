@@ -1,7 +1,5 @@
 import { useState } from "react";
 import { Box, Flex, Text, Group, Badge } from "@mantine/core";
-import { IconPlayerPlay, IconDownload } from "@tabler/icons-react";
-import { GameItem } from "../../../types/types";
 import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";
 import { IconGame } from "../../../components/IconGame";
 import { IconIsInstalled } from "../../../components/IconIsInstalled";
@@ -10,9 +8,10 @@ import { IconCopyTitle } from "../../../components/IconCopyTitle";
 import { IconLinkExternal } from "../../../components/IconExternalLink";
 import { IconLinkSource } from "../../../components/IconSourceLink";
 import { IconExecuteOverlay } from "../../../components/IconExecuteOverlay";
+import { InterLinkedGameItem } from "../../../types/interlinked";
 
 type Props = {
-    item: GameItem;
+    item: InterLinkedGameItem;
     isOpen: boolean;
     isListView: boolean;
 };

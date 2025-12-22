@@ -1,7 +1,8 @@
 import { useMantineColorScheme, useMantineTheme } from "@mantine/core";
 import { useLocalStorage, useMediaQuery } from "@mantine/hooks";
 import { useCallback, useMemo } from "react";
-import { DesktopNavMode, InterLinkedTheme } from "../types/types";
+import { DesktopNavMode } from "../types/app";
+import { InterLinkedTheme } from "../types/interlinked";
 
 /**
   xs	36em	576px

@@ -1,19 +1,19 @@
 import { useEffect, useState } from "react";
-import { LoadedData } from "../../../types/types";
 import { useLibraryRefresh } from "./useLibraryRefresh";
 import { useLocalInstalled } from "./useLocalInstalled";
-import { loadPlayniteLibrary } from "../../../services/PlayniteService";
+import { InterLinkedData } from "../../../types/interlinked";
+import { loadPlayniteOrigin } from "../../../services/PlayniteService";
 
 type UseParams = { pollMs: number };
 
 type UseReturn = {
-    libraryData: LoadedData | null;
+    libraryData: InterLinkedData | null;
     installedUpdatedAt: string | null;
 };
 
 // A hook to manage the library data with automatic refresh and installed status updates.
 export function usePlayniteData({ pollMs }: UseParams): UseReturn {
-    const [libraryData, setData] = useState<LoadedData | null>(null);
+    const [libraryData, setData] = useState<InterLinkedData | null>(null);
 
     // external pollers
     const { version: libraryVersion } = useLibraryRefresh({ pollMs });
@@ -22,10 +22,14 @@ export function usePlayniteData({ pollMs }: UseParams): UseReturn {
     // reload on manifest change
     useEffect(() => {
         let cancelled = false;
+
         (async () => {
-            const fresh = await loadPlayniteLibrary();
-            if (!cancelled) setData(fresh);
+            const data = await loadPlayniteOrigin();
+            if (!cancelled) {
+                setData({ playnite: data });
+            }
         })();
+
         return () => {
             cancelled = true;
         };
@@ -34,13 +38,20 @@ export function usePlayniteData({ pollMs }: UseParams): UseReturn {
     // fast "installed" patch when local installed changes
     useEffect(() => {
         if (!installedSet || !installedUpdatedAt) return;
+
         setData((prev) => {
-            if (!prev) return prev;
-            const items = prev.items.map((item) => ({
-                ...item,
-                isInstalled: installedSet.has(item.id.toLowerCase()),
-            }));
-            return { ...prev, items };
+            if (!prev?.playnite) return prev;
+
+            return {
+                ...prev,
+                playnite: {
+                    ...prev.playnite,
+                    items: prev.playnite.items.map((item) => ({
+                        ...item,
+                        isInstalled: installedSet.has(item.id.toLowerCase()),
+                    })),
+                },
+            };
         });
     }, [installedUpdatedAt, installedSet]);
 

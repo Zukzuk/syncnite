@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Box, UnstyledButton, Text } from "@mantine/core";
-import { SortKey, UIControls } from "../../../types/types";
+import { SortKey, UIControls } from "../../../types/app";
 import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";
 
 type Props = {
@@ -41,7 +41,6 @@ export const HeaderSort = memo(function HeaderSort({
         }}
         role="row"
       >
-        {/* spacer column */}
         <Box role="columnheader" aria-hidden="true" />
 
         <UnstyledButton

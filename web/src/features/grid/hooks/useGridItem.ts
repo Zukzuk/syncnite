@@ -1,15 +1,16 @@
 import { useCallback } from "react";
-import { GameItem, ItemPositions, NavMode, TGrid } from "../../../types/types";
+import { ItemPositions, NavMode } from "../../../types/app";
+import { InterLinkedGrid, InterLinkedGameItem } from "../../../types/interlinked";
 
 type UseParams = {
-    item: GameItem;
+    item: InterLinkedGameItem;
     index: number,
     isOpen: boolean,
     positions: ItemPositions,
     isListView: boolean,
     openWidth: string,
     openHeight: string,
-    grid: TGrid,
+    grid: InterLinkedGrid,
     onToggleItem: (id: string, navMode?: NavMode) => void,
 };
 

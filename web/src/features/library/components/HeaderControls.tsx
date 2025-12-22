@@ -1,15 +1,16 @@
 import { memo, useMemo, useEffect, useCallback } from "react";
 import { Flex, Box, SegmentedControl, Group, Text, Tooltip } from "@mantine/core";
-import { LoadedData, SwitchesMode, UIControls, UIDerivedData, ViewMode, } from "../../../types/types";
+import { SwitchesMode, UIControls, UIDerivedData, ViewMode, } from "../../../types/app";
 import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";
 import { SearchInput } from "../../../components/SearchInput";
 import { MultiSelectInput } from "../../../components/MultiSelectInput";
 import { IconToggleWithLabel } from "../../../components/IconToggleWithLabel";
 import { PLAYNITE_SOURCE_MAP } from "../../../services/PlayniteService";
+import { InterLinkedData, InterLinkedGameItem } from "../../../types/interlinked";
 
 type Props = {
   controlsRef: (el: HTMLDivElement | null) => void;
-  libraryData: LoadedData;
+  libraryData: InterLinkedData;
   ui: UIControls;
   derived: UIDerivedData;
 };
@@ -20,8 +21,11 @@ export const HeaderControls = memo(function HeaderControls({
   ui,
   derived,
 }: Props) {
+  // Hardcoded to Playnite for now
+  const { allSources, allTags, allSeries, items } = libraryData.playnite ?? {};
+  if (!items) return null;
+  
   const { hasNavbar, grid } = useInterLinkedTheme();
-  const { allSources, allTags, allSeries, items } = libraryData;
 
   const {
     view,
@@ -45,7 +49,7 @@ export const HeaderControls = memo(function HeaderControls({
   const { filteredCount } = derived;
 
   const hiddenCount = useMemo(() => {
-    return items.reduce((acc, it: any) => acc + (it.isHidden ? 1 : 0), 0);
+    return items.reduce((acc: number, it: InterLinkedGameItem) => acc + (it.isHidden ? 1 : 0), 0);
   }, [items]);
 
   const baselineTotal = items.length - hiddenCount;
@@ -83,7 +87,7 @@ export const HeaderControls = memo(function HeaderControls({
     () =>
       Array.from(new Set(allSources))
         .sort()
-        .map((s) => ({ value: s, label: PLAYNITE_SOURCE_MAP[s]?.label ?? s })),
+        .map((s) => ({ value: s, label: PLAYNITE_SOURCE_MAP[s as keyof typeof PLAYNITE_SOURCE_MAP]?.label ?? s })),
     [allSources]
   );
 
@@ -91,7 +95,7 @@ export const HeaderControls = memo(function HeaderControls({
     () =>
       Array.from(new Set(allTags))
         .sort()
-        .map((t) => ({ value: t, label: PLAYNITE_SOURCE_MAP[t]?.label ?? t })),
+        .map((t) => ({ value: t, label: PLAYNITE_SOURCE_MAP[t as keyof typeof PLAYNITE_SOURCE_MAP]?.label ?? t })),
     [allTags]
   );
 
@@ -138,6 +142,32 @@ export const HeaderControls = memo(function HeaderControls({
         </Group>
 
         <Group>
+          <MultiSelectInput
+            placeholder="Tags"
+            group="playnite"
+            data={tagsData}
+            value={tags}
+            setData={setTags}
+          />
+
+          <MultiSelectInput
+            placeholder="Sources"
+            group="playnite"
+            data={sourcesData}
+            value={sources}
+            setData={setSources}
+          />
+
+          {<MultiSelectInput
+            placeholder="Series"
+            group="playnite"
+            data={seriesData}
+            value={series}
+            setData={setSeries}
+          />}
+        </Group>
+
+        <Group>
           <IconToggleWithLabel
             label="installed"
             ariaLabel="Show installed only"
@@ -151,33 +181,6 @@ export const HeaderControls = memo(function HeaderControls({
             checked={showHidden}
             toggle={setShowHidden}
           />
-
-          <MultiSelectInput
-            width={139}
-            placeholder="Tags"
-            group="playnite"
-            data={tagsData}
-            value={tags}
-            setData={setTags}
-          />
-
-          <MultiSelectInput
-            width={139}
-            placeholder="Sources"
-            group="playnite"
-            data={sourcesData}
-            value={sources}
-            setData={setSources}
-          />
-
-          {/* <MultiSelectInput
-            width={139}
-            placeholder="Series"
-            group="playnite"
-            data={seriesData}
-            value={series}
-            setData={setSeries}
-          /> */}
         </Group>
 
         <Group>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchSteamWishlist } from "../services/SteamService";
-import type { SteamWishlistResponse } from "../types/types";
+import type { SteamWishlistResponse } from "../types/app";
 import { getCreds } from "../services/AccountService";
 
 type UseParams = {

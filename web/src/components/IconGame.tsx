@@ -3,17 +3,20 @@ import ICO from "icojs";
 import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
 import { CustomIconSVG } from "./CustomIcon";
 
-function isIcoPath(url: string): boolean {
+function isIcoPath(url: string | undefined): boolean {
   try {
+    if (!url) return false;
     const u = new URL(url, window.location.origin);
     return /\.ico(\?|#|$)/i.test(u.pathname);
   } catch {
+    if (!url) return false;
     return /\.ico(\?|#|$)/i.test(url);
   }
 }
 
-async function icoToPngDataUrl(icoUrl: string): Promise<string | null> {
+async function icoToPngDataUrl(icoUrl: string | undefined): Promise<string | null> {
   try {
+    if (!icoUrl) return null;
     const res = await fetch(icoUrl, { cache: "force-cache" });
     if (!res.ok) return null;
     const buf = await res.arrayBuffer();
@@ -33,16 +36,11 @@ async function icoToPngDataUrl(icoUrl: string): Promise<string | null> {
 }
 
 type Props = {
-  src: string | null | undefined;
+  src: string | undefined;
   alt?: string
 };
 
 export function IconGame({ src, alt }: Props) {
-
-  if (!src) {
-    return <CustomIconSVG type="fallback" />;
-  }
-
   const { grid } = useInterLinkedTheme();
   const [url, setUrl] = useState(src);
   const retriedRef = useRef(false);

@@ -1,12 +1,13 @@
 import { RefObject, useCallback, useEffect, useMemo, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { UIControls, UIDerivedData, GameItem, ItemPositions, NavMode } from "../../../types/types";
+import { UIControls, UIDerivedData, ItemPositions, NavMode } from "../../../types/app";
 import { useGridLayout } from "./useGridLayout";
 import { useGridVirtualWindow } from "./useGridVirtualWindow";
 import { useGridOpenItemToggle } from "./useGridOpenItemToggle";
 import { useGridScrollJump } from "./useGridScrollJump";
 import { useGridScrollRestore } from "./useGridScrollRestore";
 import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";
+import { InterLinkedGameItem } from "../../../types/interlinked";
 
 type UseParams = {
     gridRef: RefObject<HTMLDivElement>;
@@ -60,7 +61,7 @@ export function useGrid({
     // Build id -> index map once per items change
     const idToIndex = useMemo(() => {
         const map = new Map<string, number>();
-        derived.itemsSorted.forEach((item: GameItem, index: number) => {
+        derived.itemsSorted.forEach((item: InterLinkedGameItem, index: number) => {
             map.set(item.id, index);
         });
         return map;
@@ -213,7 +214,7 @@ export function useGrid({
     const { syncOpenFromRoute } = useGridScrollRestore({
         gridRef,
         openIds,
-        items: derived.itemsSorted as GameItem[],
+        items: derived.itemsSorted as InterLinkedGameItem[],
         idToIndex,
         viewportH,
         closedHeight,

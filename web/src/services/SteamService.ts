@@ -1,4 +1,4 @@
-import { SteamStatusResponse, SteamWishlistResponse } from "../types/types";
+import { SteamStatusResponse, SteamWishlistResponse } from "../types/app";
 import { API_ENDPOINTS } from "../constants";
 import { getCreds } from "./AccountService";
 

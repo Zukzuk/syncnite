@@ -2,10 +2,11 @@ import { useRef, useState } from "react";
 import { Box } from "@mantine/core";
 import { useGrid } from "./hooks/useGrid";
 import { GridItem } from "./GridItem";
-import { GameItem, UIControls, UIDerivedData } from "../../types/types";
+import { UIControls, UIDerivedData } from "../../types/app";
 import { useInterLinkedTheme } from "../../hooks/useInterLinkedTheme";
 import { useAlphabetRail } from "./hooks/useAlphabetRail";
 import { AlphabeticalRail } from "./components/AlphabeticalRail";
+import { InterLinkedGameItem } from "../../types/interlinked";
 
 type Props = {
     ui: UIControls;
@@ -88,7 +89,7 @@ export function Grid({
 
                 {itemsSorted
                     .slice(visibleRange.startIndex, visibleRange.endIndex)
-                    .map((item: GameItem, i: number) => {
+                    .map((item: InterLinkedGameItem, i: number) => {
                         const key = `${item.id}|${installedUpdatedAt}`;
                         const index = visibleRange.startIndex + i;
                         const isOpen = openIds.has(item.id);

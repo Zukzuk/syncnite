@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Box, Image, Stack, Text } from "@mantine/core";
-import { AssociatedItems } from "../../../types/types";
+import { AssociatedItems } from "../../../types/app";
 import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";
 
 type Props = {

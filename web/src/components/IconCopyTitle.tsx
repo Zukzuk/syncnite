@@ -2,9 +2,9 @@
 import { memo, useState, MouseEvent } from "react";
 import { ActionIcon, Tooltip } from "@mantine/core";
 import { IconCopy } from "@tabler/icons-react";
-import { GameItem } from "../types/types";
+import { InterLinkedGameItem } from "../types/interlinked";
 
-type Props = Pick<GameItem, "title" | "year">;
+type Props = Pick<InterLinkedGameItem, "title" | "year">;
 
 export const IconCopyTitle = memo(function IconCopyTitle({
     title,

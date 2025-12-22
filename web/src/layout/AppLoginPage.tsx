@@ -4,7 +4,7 @@ import { IconLogin2, IconUserHexagon, IconUserScreen } from "@tabler/icons-react
 import { useForm } from "@mantine/form";
 import { Box, Center, Card, Text, Tabs, TextInput, PasswordInput, Button, Stack, Alert, Space } from "@mantine/core";
 import { fetchAdminStatus, login, registerAdmin, registerUser, setCreds } from "../services/AccountService";
-import { AccountCreds } from "../types/types";
+import { AccountCreds } from "../types/app";
 import { useIntroFlow } from "../hooks/useIntroFlow";
 import { LogoIntro } from "../components/LogoIntro";
 import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";

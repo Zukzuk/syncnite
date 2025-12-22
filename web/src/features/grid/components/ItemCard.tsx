@@ -1,5 +1,5 @@
 import { Box, Group, Image, Text } from "@mantine/core";
-import { GameItem } from "../../../types/types";
+import { InterLinkedGameItem } from "../../../types/interlinked";
 import { IconIsInstalled } from "../../../components/IconIsInstalled";
 import { IconIsHidden } from "../../../components/IconIsHidden";
 import { IconCopyTitle } from "../../../components/IconCopyTitle";
@@ -8,7 +8,7 @@ import { IconLinkSource } from "../../../components/IconSourceLink";
 import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";
 
 type Props = {
-    item: GameItem;
+    item: InterLinkedGameItem;
     isOpen: boolean;
     isListView: boolean;
 };

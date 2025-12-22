@@ -1,23 +1,24 @@
 import { memo, useState } from "react";
 import { ActionIcon, Box } from "@mantine/core";
 import { IconX } from "@tabler/icons-react";
-import { GameItem, ItemPositions, NavMode } from "../../types/types";
+import { ItemPositions, NavMode } from "../../types/app";
 import { useInterLinkedTheme } from "../../hooks/useInterLinkedTheme";
 import { useGridItem } from "./hooks/useGridItem";
 import { ItemRow } from "./components/ItemRow";
 import { ItemCard } from "./components/ItemCard";
 import { AssociatedContent } from "../associated/AssociatedContent";
 import { ItemBackground } from "./components/ItemBackground";
+import { InterLinkedGameItem } from "../../types/interlinked";
 
 type Props = {
-    item: GameItem;
+    item: InterLinkedGameItem;
     index: number;
     isOpen: boolean;
     isDark: boolean;
     openWidth: string;
     openHeight: string;
     isListView: boolean;
-    itemsAssociated: GameItem[],
+    itemsAssociated: InterLinkedGameItem[],
     positions: ItemPositions,
     wallpaperBg: boolean;
     onWallpaperBg: (value: boolean) => void;

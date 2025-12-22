@@ -4,10 +4,10 @@ import { useFullscreen } from "@mantine/hooks";
 import { ActionIcon, Box, Center, Group, Loader, Paper, Text, Tooltip } from "@mantine/core";
 import { IconArrowsMaximize, IconArrowsMinimize, IconChevronLeft, IconChevronRight, IconMoon, IconSun, IconX } from "@tabler/icons-react";
 import { INTERVAL_MS } from "../constants";
-import type { GameItem } from "../types/types";
 import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
 import { PLAYNITE_SOURCE_MAP } from "../services/PlayniteService";
 import { usePlayniteData } from "../features/library/hooks/usePlayniteData";
+import { InterLinkedGameItem, InterLinkedOrigin } from "../types/interlinked";
 
 const DISPLAY_MS = 10_000;
 const FADE_MS = 900;
@@ -49,11 +49,12 @@ export default function NarrowcastPage(): JSX.Element {
     const toggleColorScheme = () => setColorScheme(isDark ? "light" : "dark");
 
     const items = useMemo(() => {
-        const src = libraryData?.items ?? [];
-        return src.filter((g) => !!g.coverUrl && !g.isHidden) as GameItem[];
+        // Hardcode to Playnite for now
+        const src = libraryData?.playnite?.items ?? [];
+        return src.filter((g: InterLinkedGameItem) => !!g.coverUrl && !g.isHidden) as InterLinkedGameItem[];
     }, [libraryData]);
 
-    const [order, setOrder] = useState<GameItem[]>([]);
+    const [order, setOrder] = useState<InterLinkedGameItem[]>([]);
     useEffect(() => {
         if (!items.length) return;
         setOrder(shuffle(items));
@@ -98,6 +99,7 @@ export default function NarrowcastPage(): JSX.Element {
 
     // derive current (the actually-visible item index)
     const current = n ? order[clampIndex(idx, n)] : null;
+    const label = current?.source as InterLinkedOrigin ? `${PLAYNITE_SOURCE_MAP[current?.source as keyof typeof PLAYNITE_SOURCE_MAP]?.label}` : " ";
 
     // choose start index from route once we have order
     useEffect(() => {
@@ -430,7 +432,7 @@ export default function NarrowcastPage(): JSX.Element {
                                 textShadow: "0px 1px 2px var(--interlinked-color-suppressed)",
                             }}
                         >
-                            {current?.source ? `${PLAYNITE_SOURCE_MAP[current.source].label}` : " "}
+                            {label}
                         </Text>
                     </Box>
                     <Box

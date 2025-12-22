@@ -1,4 +1,4 @@
-import { ILogBus, LogListener } from "../types/types";
+import { ILogBus, LogListener } from "../types/app";
 
 let lines: string[] = restore();
 const listeners = new Set<LogListener>();

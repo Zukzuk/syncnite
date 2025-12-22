@@ -1,5 +1,5 @@
 import { ActionIcon, TextInput } from "@mantine/core";
-import { IconEyeSearch, IconSearch, IconX } from "@tabler/icons-react";
+import { IconSearch, IconX } from "@tabler/icons-react";
 
 type Props = {
     value: string;
@@ -23,7 +23,7 @@ export function SearchInput({ value, width, onChange }: Props) {
             leftSectionPointerEvents="none"
             leftSection={<IconSearch 
                 size={14} 
-                stroke={1.2} 
+                stroke={hasValue ? 1.6 : 1.2} 
                 color={ hasValue ? "var(--interlinked-color-secondary)" : undefined }
                 aria-hidden 
             />}

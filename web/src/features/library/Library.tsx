@@ -3,11 +3,11 @@ import { useElementSize } from "@mantine/hooks";
 import { HeaderSort } from "./components/HeaderSort";
 import { HeaderControls } from "./components/HeaderControls";
 import { Grid } from "../grid/Grid";
-import { LoadedData } from "../../types/types";
+import { InterLinkedData } from "../../types/interlinked";
 import { useLibraryState } from "./hooks/useLibraryState";
 
 type Props = {
-    libraryData: LoadedData;
+    libraryData: InterLinkedData;
     installedUpdatedAt?: string;
 };
 
@@ -16,7 +16,10 @@ export default function Library({
     libraryData,
     installedUpdatedAt,
 }: Props): JSX.Element {
-    const { uiControls, derivedData } = useLibraryState(libraryData.items);
+    // Hardcoded to Playnite for now
+    const items = libraryData.playnite?.items ?? [];
+
+    const { uiControls, derivedData } = useLibraryState(items);
     const { ref: controlsRef, height: controlsH } = useElementSize();
     const { ref: sortRef, height: sortH } = useElementSize();
 

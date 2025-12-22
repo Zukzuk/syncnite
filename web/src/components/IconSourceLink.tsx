@@ -1,10 +1,12 @@
 import { memo } from "react";
 import { ActionIcon, Tooltip } from "@mantine/core";
-import { GameItem, TCustomIcon } from "../types/types";
 import { PLAYNITE_SOURCE_MAP } from "../services/PlayniteService";
 import { CustomIconSVG } from "./CustomIcon";
+import { InterLinkedGameItem } from "../types/interlinked";
+import { CustomIconType } from "../types/app";
+import { IconCalculatorFilled, IconDeviceGamepadFilled, IconDeviceUnknownFilled } from "@tabler/icons-react";
 
-type Props = Pick<GameItem, "source" | "sourceLink">;
+type Props = Pick<InterLinkedGameItem, "source" | "sourceLink">;
 
 export const IconLinkSource = memo(function IconLinkSource({
     source,
@@ -15,7 +17,7 @@ export const IconLinkSource = memo(function IconLinkSource({
     return (
         <Tooltip
             style={{ fontSize: 10 }}
-            label={PLAYNITE_SOURCE_MAP[source].platform}
+            label={PLAYNITE_SOURCE_MAP[source ?? ""]?.platform}
             withArrow
             position="top"
         >
@@ -29,7 +31,19 @@ export const IconLinkSource = memo(function IconLinkSource({
                 size="sm"
                 style={{ lineHeight: 0, height: "100%", display: "flex", alignItems: "center" }}
             >
-                <CustomIconSVG type={source as TCustomIcon} size={14} />
+                {source === "emulator" ? (
+                    <IconCalculatorFilled size={14} />
+                ) : (
+                    source === "abandonware" ? (
+                        <IconDeviceGamepadFilled size={14} />
+                    ) :
+                        source === "fallback" ? (
+                            <IconDeviceUnknownFilled size={14} />
+                        ) : (
+                            <CustomIconSVG type={source as CustomIconType} size={14} />
+                        )
+                )
+                }
             </ActionIcon>
         </Tooltip>
     );

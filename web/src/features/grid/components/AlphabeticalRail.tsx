@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Paper, Stack, Button, rem } from "@mantine/core";
 import { LETTERS_LIST } from "../../../constants";
-import { Letter } from "../../../types/types";
+import { Letter } from "../../../types/app";
 import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";
 
 type Props = {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { Box } from "@mantine/core";
-import { AssociatedItems } from "../../../types/types";
+import { AssociatedItems } from "../../../types/app";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 import { AssociatedStackCard } from "./AssociatedStackCard";
 import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";

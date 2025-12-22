@@ -1,11 +1,11 @@
 
 import { Box } from "@mantine/core";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
-import { GameItem } from "../../../types/types";
+import { InterLinkedGameItem } from "../../../types/interlinked";
 import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";
 
 type Props = {
-    item: Pick<GameItem, "bgUrl">;
+    item: Pick<InterLinkedGameItem, "bgUrl">;
     isOpen: boolean;
     wallpaperBg: boolean;
 };

@@ -1,11 +1,12 @@
 import { Dispatch, SetStateAction } from "react";
 import { LETTERS } from "../constants";
-import { useMantineTheme } from "@mantine/core";
-import { PlayniteGameLink } from "./playnite";
+import { InterLinkedGameItem } from "./interlinked";
 
 declare global { 
     interface Window { __APP_VERSION__?: string } 
 }
+
+export type Letter = typeof LETTERS[number];
 
 export type SortKey = "title" | "series" | "year" | "source" | "tags";
 
@@ -25,7 +26,7 @@ export type DesktopNavMode = "closed" | "mini" | "normal";
 
 export type ButtonTypes = "button" | "submit" | "link";
 
-export type TCustomIcon = "fallback" | "steam" | "epic" | "gog" | "ea app" | "ubisoft connect" | "battle.net" | "microsoft" | "xbox" | "rockstar" | "windows-store" | "playnite";
+export type CustomIconType = InterLinkedOrigin ;
 
 export type ItemIconOverlayType = "default" | "circle";
 
@@ -85,100 +86,18 @@ export interface UIControls {
 export interface UIDerivedData {
   filteredCount: number;
   totalCount: number;
-  itemsAssociated: GameItem[];
-  itemsSorted: GameItem[];
+  itemsAssociated: InterLinkedGameItem[];
+  itemsSorted: InterLinkedGameItem[];
   itemsGroupedByLetter: ItemGroupedByLetter[];
 };
 
-export interface GameItem {
-  id: string;
-  index?: number;
-  gameId: string;
-  title: string;
-  sortingName: string | null;
-  year: number | null;
-  version: string | null;
-  source: string;
-  sourceLink: string | null;
-  playniteLink: string;
-  htmlLink: string | null;
-  links: PlayniteGameLink[] | null;
-  isHidden: boolean;
-  isInstalled: boolean;
-  tags: string[];
-  series: string[];
-  iconUrl: string | null;
-  coverUrl: string | null;
-  bgUrl: string | null;
-};
-
-export interface LoadedData {
-  items: GameItem[];
-  allSources: string[];
-  allTags: string[];
-  allSeries: string[];
-};
-
-type TZIndex = {
-    belowBase: number;
-    base: number;
-    aboveBase: number;
-    float: number;
-    medium: number;
-    high: number;
-    top: number;
-};
-
-type TOverscan = { top: number; bottom: number }
-
-export type TGrid = {
-    colsList: string;
-    colsGrid: string;
-    colsOpen: string;
-    navBarWidth: number;
-    navBarMiniWidth: number;
-    coverWidth: number;
-    coverHeight: number;
-    cardWidth: number;
-    cardHeight: number;
-    rowHeight: number;
-    halfRowHeight: number;
-    iconSize: number;
-    scrollbarWidth: number;
-    listLeftPadding: number;
-    cardStepY: number;
-    ratio: number;
-    overscan: TOverscan;
-    gap: number;
-    z: TZIndex;
-};
-
-export interface InterLinkedTheme {
-    theme: ReturnType<typeof useMantineTheme>;
-    isDark: boolean;
-    isMobile: boolean;
-    isTablet: boolean;
-    isDesktop: boolean;
-    isWidescreen: boolean;
-    hasNavbar: boolean;
-    grid: TGrid;
-    desktopMode: DesktopNavMode;
-    navbarOpened: boolean;
-    toggleNavbar: () => void;
-    closeNavbar: () => void;
-    setDesktopMode: Dispatch<SetStateAction<DesktopNavMode>>;
-    setColorScheme: (value: ColorScheme) => void;
-}
-
-export type Letter = typeof LETTERS[number];
-
 export interface ItemGroupedByLetter {
-  item: GameItem;
+  item: InterLinkedGameItem;
   itemLetter: Letter
 };
 
 export interface AlphabeticalGroup {
-  items: GameItem[];
+  items: InterLinkedGameItem[];
   groupLetter: string;
 };
 
@@ -215,7 +134,7 @@ export type AssociatedLayout = {
 export interface AssociatedItems {
   key: string;
   label: string;
-  items: GameItem[];
+  items: InterLinkedGameItem[];
 };
 
 export type AssociatedItemCard = {

@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Group, Collapse, Box } from "@mantine/core";
-import { AssociatedLayout, AssociatedItems, GameItem, ScoredHit, NavMode, TGrid } from "../../types/types";
+import { AssociatedLayout, AssociatedItems, ScoredHit, NavMode } from "../../types/app";
 import { AssociatedDeck } from "./components/AssociatedDeck";
 import { AssociatedStacks } from "./components/AssociatedStacks";
 import { AssociatedDetails } from "./components/AssociatedDetails";
 import { useInterLinkedTheme } from "../../hooks/useInterLinkedTheme";
 import { useLibraryContext } from "../LibraryContext";
+import { InterLinkedGrid, InterLinkedGameItem } from "../../types/interlinked";
 
 export function fuzzyWordOverlap<T>(
     query: string,
@@ -54,16 +55,16 @@ function tokenize(input: string): string[] {
 
 function buildAssociatedDecks(
     isOpen: boolean,
-    item: GameItem,
-    all: GameItem[]
+    item: InterLinkedGameItem,
+    all: InterLinkedGameItem[]
 ): { associatedDecks: AssociatedItems[] } {
     if (!isOpen) return { associatedDecks: [] };
 
-    const associatedSeries: GameItem[] = [];
-    const associatedTags: GameItem[] = [];
-    const associatedYear: GameItem[] = [];
-    const associatedInstalled: GameItem[] = [];
-    const associatedHidden: GameItem[] = [];
+    const associatedSeries: InterLinkedGameItem[] = [];
+    const associatedTags: InterLinkedGameItem[] = [];
+    const associatedYear: InterLinkedGameItem[] = [];
+    const associatedInstalled: InterLinkedGameItem[] = [];
+    const associatedHidden: InterLinkedGameItem[] = [];
 
     const seriesSet = item.series ? new Set(item.series) : null;
     const tagsSet = item.tags ? new Set(item.tags) : null;
@@ -164,7 +165,7 @@ function calcAssociatedLayout(
     width: number,
     height: number,
     totalCards: number,
-    grid: TGrid
+    grid: InterLinkedGrid
 ): AssociatedLayout {
     if (width <= 0 || height <= 0 || totalCards === 0) {
         return {
@@ -242,11 +243,11 @@ function calcAssociatedLayout(
 }
 
 type Props = {
-    item: GameItem;
+    item: InterLinkedGameItem;
     isOpen: boolean;
     openWidth: string;
     openHeight: string;
-    itemsAssociated: GameItem[];
+    itemsAssociated: InterLinkedGameItem[];
     onWallpaperBg: (on: boolean) => void;
     onToggleClickBounded: (id?: string, navMode?: NavMode) => void;
 };

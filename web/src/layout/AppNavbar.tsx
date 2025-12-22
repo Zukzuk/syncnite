@@ -7,12 +7,12 @@ import { WEB_APP_VERSION } from "../constants";
 import { ControlPanel } from "../features/controlpanel/ControlPanel";
 import { LogoIntro } from "../components/LogoIntro";
 import { IconButton } from "../components/IconButton";
-import { TGrid } from "../types/types";
+import { InterLinkedGrid } from "../types/interlinked";
 
 type Props = {
     hasNavbar: boolean;
     isDark: boolean;
-    grid: TGrid;
+    grid: InterLinkedGrid;
     gateStyle: CSSProperties;
     desktopMini?: boolean;
     onIntroDone: () => void;
