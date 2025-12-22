@@ -24,6 +24,7 @@ RUN apk add --no-cache p7zip icu-libs
 COPY --from=api-build /app/node_modules ./node_modules
 COPY --from=api-build /app/api/dist ./api/dist
 COPY api/src/openapi/openapi.yaml ./api/dist/openapi/openapi.yaml
+COPY extension/latest.pext /extension/latest.pext
 
 ARG APP_VERSION=dev
 ENV APP_VERSION=$APP_VERSION

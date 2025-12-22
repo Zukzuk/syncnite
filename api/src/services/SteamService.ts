@@ -8,7 +8,7 @@ import {
     saveSteamWishlistSnapshot,
     appendSteamWishlistItemToFile,
 } from "./SteamWishlistStore";
-import { GameLink } from "../types/playnite";
+import { PlayniteGameLink } from "../types/playnite";
 
 // https://steamapi.xpaw.me/
 // https://api.steampowered.com/IWishlistService/GetWishlist/v1/
@@ -173,7 +173,7 @@ async function getWishlistDetails(
                         if (data.franchise) {
                             series.push(String(data.franchise));
                         }
-                        const links: GameLink[] = [];
+                        const links: PlayniteGameLink[] = [];
                         if (storeUrl) {
                             links.push({ Name: "Steam", Url: storeUrl });
                         }

@@ -1,4 +1,4 @@
-import { GameLink } from "./playnite";
+import { PlayniteGameLink } from "./playnite";
 
 declare global {
   namespace Express {
@@ -53,7 +53,7 @@ export interface SteamAppDetails {
 
   /** GameItem–aligned derived fields */
   link: string | null;
-  links: GameLink[] | null;
+  links: PlayniteGameLink[] | null;
   year: number | null;
   tags: string[];
   series: string[];
