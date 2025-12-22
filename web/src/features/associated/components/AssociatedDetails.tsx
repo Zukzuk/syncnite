@@ -81,7 +81,7 @@ export function AssociatedDetails({ item, onWallpaperBg }: Props): JSX.Element {
 
                     <IconExecuteOverlay
                         type="circle"
-                        iconsSize={30}
+                        iconSize={30}
                         title={title}
                         w={grid.coverWidth}
                         h={grid.coverHeight}
