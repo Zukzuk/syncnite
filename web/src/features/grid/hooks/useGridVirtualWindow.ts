@@ -1,8 +1,9 @@
 import { RefObject, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";
+import { InterLinkedGrid } from "../../../types/interlinked";
 
 type UseParams = {
     gridRef: RefObject<HTMLDivElement>;
+    grid: InterLinkedGrid;
     opts: {
         rows: number;
         cols: number;
@@ -26,9 +27,7 @@ type UseReturn = {
 };
 
 // Hook to manage virtual windowing for a grid layout
-export function useGridVirtualWindow({ gridRef, opts }: UseParams): UseReturn {
-    const { grid } = useInterLinkedTheme();
-
+export function useGridVirtualWindow({ gridRef, grid, opts }: UseParams): UseReturn {
     const {
         rows,
         cols,

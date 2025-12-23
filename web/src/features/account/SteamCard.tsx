@@ -1,6 +1,5 @@
 import { Stack, Text, Card, Group, ThemeIcon, Badge, Divider, Loader } from "@mantine/core";
 import { IconClock, IconLink, IconListDetails } from "@tabler/icons-react";
-import { useInterLinkedTheme } from "../../hooks/useInterLinkedTheme";
 import { API_ENDPOINTS } from "../../constants";
 import { TextDataRow } from "../../components/TextDataRow";
 import { getCreds } from "../../services/AccountService";
@@ -10,10 +9,13 @@ import { useSteamWishlist } from "../../hooks/useSteamWishlist";
 import { SteamStatusResponse } from "../../types/app";
 import { IconButton } from "../../components/IconButton";
 import { CustomIconSVG } from "../../components/CustomIcon";
+import { InterLinkedGrid } from "../../types/interlinked";
 
-export default function SteamCard(): JSX.Element {
-    const { grid } = useInterLinkedTheme();
+type Props = {
+    grid: InterLinkedGrid;
+};
 
+export default function SteamCard({ grid }: Props): JSX.Element {
     const [steamStatus, setSteamStatus] = useState<SteamStatusResponse | null>(null);
     const [loadingStatus, setLoadingStatus] = useState(true);
     const [syncing, setSyncing] = useState(false);

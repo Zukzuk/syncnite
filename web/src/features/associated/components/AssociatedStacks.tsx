@@ -3,14 +3,16 @@ import { Box } from "@mantine/core";
 import { AssociatedItems } from "../../../types/app";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 import { AssociatedStackCard } from "./AssociatedStackCard";
-import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";
 import { useLibraryContext } from "../../LibraryContext";
+import { InterLinkedGrid } from "../../../types/interlinked";
 
 type Props = {
     currentItemId: string;
     associatedDecks: AssociatedItems[];
     openDeckKey: string | null;
     stackColumns: number;
+    grid: InterLinkedGrid;
+    isDark: boolean;
     onStackClick: (key: string) => void;
 };
 
@@ -20,6 +22,8 @@ export function AssociatedStacks({
     associatedDecks,
     openDeckKey,
     stackColumns,
+    grid,
+    isDark,
     onStackClick,
 }: Props): JSX.Element | null {
     if (!associatedDecks.length || stackColumns <= 0) return null;
@@ -27,6 +31,7 @@ export function AssociatedStacks({
     const lib = useLibraryContext();
     const scrollRef = useRef<HTMLDivElement | null>(null);
     const rafRef = useRef<number | null>(null);
+    const isOpenDelayed = useDelayedFlag({ active: true, delayMs: 210 });
 
     // Restore stacks scroll position per item
     useLayoutEffect(() => {
@@ -55,9 +60,6 @@ export function AssociatedStacks({
             if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
         };
     }, []);
-
-    const isOpenDelayed = useDelayedFlag({ active: true, delayMs: 210 });
-    const { grid } = useInterLinkedTheme();
 
     return (
         <Box
@@ -95,6 +97,8 @@ export function AssociatedStacks({
                         key={stack.key}
                         stack={stack}
                         isOpen={openDeckKey === stack.key}
+                        grid={grid}
+                        isDark={isDark}
                         onStackClick={onStackClick}
                     />
                 ))}

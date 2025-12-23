@@ -5,7 +5,7 @@ import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
 
 export default function HomePage(): JSX.Element {
     const [readmeData, setReadmeData] = useState<string | null>(null);
-    const { hasNavbar, grid } = useInterLinkedTheme();
+    const { hasNavbar, grid, theme, isDark } = useInterLinkedTheme();
 
     useEffect(() => {
         fetch("/README.md")
@@ -26,7 +26,7 @@ export default function HomePage(): JSX.Element {
 
     return (
         <Container size="sm" pt={hasNavbar ? "lg" : grid.rowHeight} pb="lg">
-            <Markdown content={readmeData} />
+            <Markdown content={readmeData} theme={theme} isDark={isDark} />
         </Container>
     );
 }

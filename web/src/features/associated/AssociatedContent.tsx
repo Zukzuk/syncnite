@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Group, Collapse, Box } from "@mantine/core";
-import { AssociatedLayout, AssociatedItems, ScoredHit, NavMode } from "../../types/app";
+import { AssociatedLayout, AssociatedItems, ScoredHit, NavMode, DesktopNavMode } from "../../types/app";
 import { AssociatedDeck } from "./components/AssociatedDeck";
 import { AssociatedStacks } from "./components/AssociatedStacks";
 import { AssociatedDetails } from "./components/AssociatedDetails";
-import { useInterLinkedTheme } from "../../hooks/useInterLinkedTheme";
 import { useLibraryContext } from "../LibraryContext";
 import { InterLinkedGrid, InterLinkedGameItem } from "../../types/interlinked";
 
@@ -245,6 +244,8 @@ function calcAssociatedLayout(
 type Props = {
     item: InterLinkedGameItem;
     isOpen: boolean;
+    grid: InterLinkedGrid;
+    isDark: boolean;
     openWidth: string;
     openHeight: string;
     itemsAssociated: InterLinkedGameItem[];
@@ -256,6 +257,8 @@ type Props = {
 export function AssociatedContent({
     item,
     isOpen,
+    grid,
+    isDark,
     openWidth,
     openHeight,
     itemsAssociated,
@@ -265,7 +268,6 @@ export function AssociatedContent({
     if (!isOpen) return null;
 
     const { associatedDecks } = buildAssociatedDecks(isOpen, item, itemsAssociated);
-    const { grid } = useInterLinkedTheme();
     const lib = useLibraryContext();
 
     // prepare available deck keys
@@ -354,7 +356,13 @@ export function AssociatedContent({
             }}
         >
             <Group align="flex-start" gap={grid.gap * 3} wrap="nowrap" h="100%">
-                <AssociatedDetails item={item} onWallpaperBg={onWallpaperBg} />
+                <AssociatedDetails 
+                    item={item} 
+                    grid={grid}
+                    isDark={isDark}
+                    onWallpaperBg={onWallpaperBg} 
+                />
+                
                 <Box
                     ref={layoutRef}
                     style={{
@@ -375,6 +383,8 @@ export function AssociatedContent({
                             currentItemId={item.id}
                             deckColumns={layout.deckColumns}
                             maxCardsPerColumn={layout.maxCardsPerDeckColumn}
+                            isDark={isDark}
+                            grid={grid}
                             onToggleClickBounded={onToggleClickBounded}
                         />
                     )}
@@ -384,6 +394,8 @@ export function AssociatedContent({
                             associatedDecks={associatedDecks}
                             openDeckKey={openDeck ? openDeck.key : null}
                             stackColumns={Math.max(layout.stackColumns, layout.minStackColumns)}
+                            isDark={isDark}
+                            grid={grid}
                             onStackClick={onStackClick}
                         />
                     )}

@@ -1,14 +1,13 @@
 import { memo, useState } from "react";
 import { ActionIcon, Box } from "@mantine/core";
 import { IconX } from "@tabler/icons-react";
-import { ItemPositions, NavMode } from "../../types/app";
-import { useInterLinkedTheme } from "../../hooks/useInterLinkedTheme";
+import { DesktopNavMode, ItemPositions, NavMode } from "../../types/app";
 import { useGridItem } from "./hooks/useGridItem";
 import { ItemRow } from "./components/ItemRow";
 import { ItemCard } from "./components/ItemCard";
 import { AssociatedContent } from "../associated/AssociatedContent";
 import { ItemBackground } from "./components/ItemBackground";
-import { InterLinkedGameItem } from "../../types/interlinked";
+import { InterLinkedGameItem, InterLinkedGrid } from "../../types/interlinked";
 
 type Props = {
     item: InterLinkedGameItem;
@@ -21,6 +20,9 @@ type Props = {
     itemsAssociated: InterLinkedGameItem[],
     positions: ItemPositions,
     wallpaperBg: boolean;
+    grid: InterLinkedGrid;
+    desktopMode: DesktopNavMode;
+    hasNavbar: boolean;
     onWallpaperBg: (value: boolean) => void;
     onToggleItem: (id: string, navMode?: NavMode) => void;
 };
@@ -29,7 +31,6 @@ type Props = {
 export const GridItem = memo(function GridItem({
     item,
     isOpen,
-    isDark,
     index,
     openWidth,
     openHeight,
@@ -37,14 +38,16 @@ export const GridItem = memo(function GridItem({
     itemsAssociated,
     positions,
     wallpaperBg,
+    grid,
+    isDark,
+    hasNavbar,
     onWallpaperBg,
     onToggleItem,
 }: Props): JSX.Element {
     const { title, isInstalled } = item;
     const [isHovered, setIsHovered] = useState(false);
-    const { grid } = useInterLinkedTheme();
 
-    const { 
+    const {
         cardLeft,
         cardTop,
         cardWidth,
@@ -156,6 +159,8 @@ export const GridItem = memo(function GridItem({
                         <ItemRow
                             item={item}
                             isOpen={isOpen}
+                            grid={grid}
+                            hasNavbar={hasNavbar}
                             isListView={isListView}
                         />
                     ) : null}
@@ -164,6 +169,7 @@ export const GridItem = memo(function GridItem({
                         <ItemCard
                             item={item}
                             isOpen={isOpen}
+                            grid={grid}
                             isListView={isListView}
                         />
                     ) : null}
@@ -172,6 +178,8 @@ export const GridItem = memo(function GridItem({
                         <AssociatedContent
                             item={item}
                             isOpen={isOpen}
+                            grid={grid}
+                            isDark={isDark}
                             openWidth={openWidth}
                             openHeight={openHeight}
                             itemsAssociated={itemsAssociated}
@@ -185,10 +193,12 @@ export const GridItem = memo(function GridItem({
                     <ItemBackground
                         item={item}
                         isOpen={isOpen}
+                        grid={grid}
+                        isDark={isDark}
                         wallpaperBg={wallpaperBg}
                     />
                 ) : null}
-                
+
             </Box>
         </Box>
     );

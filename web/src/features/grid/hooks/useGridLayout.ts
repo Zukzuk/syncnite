@@ -1,8 +1,9 @@
 import { RefObject, useLayoutEffect, useMemo, useState } from "react";
-import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";
+import { InterLinkedGrid } from "../../../types/interlinked";
 
 type UseParams = {
     gridRef: RefObject<HTMLDivElement>;
+    grid: InterLinkedGrid;
     itemsLen: number;
 };
 
@@ -17,8 +18,7 @@ type UseReturn = {
 };
 
 // A hook to calculate an absolute grid layout for a container.
-export function useGridLayout({ gridRef, itemsLen }: UseParams): UseReturn {
-    const { grid } = useInterLinkedTheme();
+export function useGridLayout({ gridRef, grid, itemsLen }: UseParams): UseReturn {
     const [width, setWidth] = useState(0);
     const [viewportH, setViewportH] = useState(0);
 

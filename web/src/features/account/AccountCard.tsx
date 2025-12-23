@@ -2,15 +2,17 @@ import { useEffect, useState } from "react";
 import { Stack, Text, Card, Group, ThemeIcon, Badge, Divider } from "@mantine/core";
 import { IconUser, IconUserHexagon } from "@tabler/icons-react";
 import { useAuth } from "../../hooks/useAuth";
-import { useInterLinkedTheme } from "../../hooks/useInterLinkedTheme";
 import { fetchUsers } from "../../services/AccountService";
 import { TextDataRow } from "../../components/TextDataRow";
+import { InterLinkedGrid } from "../../types/interlinked";
 
-export default function AccountCard(): JSX.Element {
+type Props = {
+    grid: InterLinkedGrid;
+};
+
+export default function AccountCard({ grid }: Props): JSX.Element {
     const { state } = useAuth({ pollMs: 0 });
     const isAdmin = state.role === "admin";
-
-    const { grid } = useInterLinkedTheme();
 
     const [users, setUsers] = useState<any[]>([]);
     const [loadingUsers, setLoadingUsers] = useState(false);

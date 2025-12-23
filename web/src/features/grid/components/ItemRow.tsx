@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Box, Flex, Text, Group, Badge } from "@mantine/core";
-import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";
 import { IconGame } from "../../../components/IconGame";
 import { IconIsInstalled } from "../../../components/IconIsInstalled";
 import { IconIsHidden } from "../../../components/IconIsHidden";
@@ -8,20 +7,21 @@ import { IconCopyTitle } from "../../../components/IconCopyTitle";
 import { IconLinkExternal } from "../../../components/IconExternalLink";
 import { IconLinkSource } from "../../../components/IconSourceLink";
 import { IconExecuteOverlay } from "../../../components/IconExecuteOverlay";
-import { InterLinkedGameItem } from "../../../types/interlinked";
+import { InterLinkedGameItem, InterLinkedGrid } from "../../../types/interlinked";
 
 type Props = {
     item: InterLinkedGameItem;
     isOpen: boolean;
+    grid: InterLinkedGrid;
+    hasNavbar: boolean;
     isListView: boolean;
 };
 
 // Row component for a library item in list view.
-export function ItemRow({ item, isOpen, isListView }: Props): JSX.Element | null {
+export function ItemRow({ item, isOpen, grid, hasNavbar, isListView }: Props): JSX.Element | null {
     if (!isOpen && !isListView) return null;
 
     const { playniteLink, isInstalled, isHidden, iconUrl, title, year, source, series, htmlLink, sourceLink, version } = item;
-    const { hasNavbar, grid } = useInterLinkedTheme();
     const [isHovered, setIsHovered] = useState(false);
 
     return (

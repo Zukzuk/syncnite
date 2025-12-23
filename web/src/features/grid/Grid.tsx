@@ -3,14 +3,14 @@ import { Box } from "@mantine/core";
 import { useGrid } from "./hooks/useGrid";
 import { GridItem } from "./GridItem";
 import { UIControls, UIDerivedData } from "../../types/app";
-import { useInterLinkedTheme } from "../../hooks/useInterLinkedTheme";
 import { useAlphabetRail } from "./hooks/useAlphabetRail";
 import { AlphabeticalRail } from "./components/AlphabeticalRail";
-import { InterLinkedGameItem } from "../../types/interlinked";
+import { InterLinkedGameItem, InterLinkedTheme } from "../../types/interlinked";
 
 type Props = {
     ui: UIControls;
     derived: UIDerivedData;
+    theme: InterLinkedTheme;
     controlsH: number;
     sortH: number;
     installedUpdatedAt?: string;
@@ -20,14 +20,15 @@ type Props = {
 export function Grid({
     ui,
     derived,
+    theme,
     controlsH,
     sortH,
     installedUpdatedAt,
 }: Props) {
     const { isListView } = ui;
     const { itemsSorted, itemsAssociated } = derived;
+    const { hasNavbar, grid, desktopMode, isDark } = theme;
 
-    const { isDark } = useInterLinkedTheme();
     const [wallpaperBg, onWallpaperBg] = useState(false);
     const gridRef = useRef<HTMLDivElement | null>(null);
 
@@ -47,6 +48,9 @@ export function Grid({
         sortH,
         ui,
         derived,
+        grid,
+        hasNavbar,
+        desktopMode,
     });
 
     // Hook to manage alphabetical rail state and interactions.
@@ -100,7 +104,6 @@ export function Grid({
                                 item={item}
                                 index={index}
                                 isOpen={isOpen}
-                                isDark={isDark}
                                 positions={positions}
                                 openWidth={openWidth}
                                 openHeight={openHeight}
@@ -108,6 +111,10 @@ export function Grid({
                                 itemsAssociated={itemsAssociated}
                                 wallpaperBg={wallpaperBg}
                                 onWallpaperBg={onWallpaperBg}
+                                grid={grid}
+                                isDark={isDark}
+                                desktopMode={desktopMode}
+                                hasNavbar={hasNavbar}
                                 onToggleItem={(id) => onToggleItemWithNav(id, "push")}
                             />
                         );
@@ -116,6 +123,7 @@ export function Grid({
 
             {ui.sortKey === "title" && !wallpaperBg && (
                 <AlphabeticalRail
+                    grid={grid}
                     activeLetter={activeLetter}
                     railCounts={railCounts}
                     onScrollJump={onScrollJump}

@@ -2,8 +2,7 @@ import { Box, Image } from "@mantine/core";
 import { AssociatedItemCard, NavMode } from "../../../types/app";
 import { IconIsInstalled } from "../../../components/IconIsInstalled";
 import { IconIsHidden } from "../../../components/IconIsHidden";
-import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";
-import { InterLinkedGameItem } from "../../../types/interlinked";
+import { InterLinkedGameItem, InterLinkedGrid } from "../../../types/interlinked";
 
 type Props = {
     meta: AssociatedItemCard;
@@ -12,6 +11,8 @@ type Props = {
     hoveredMeta: AssociatedItemCard | null;
     hasHoveredCard: boolean;
     currentItemId: string;
+    isDark: boolean;
+    grid: InterLinkedGrid;
     onToggleClickBounded: (id?: string, navMode?: NavMode) => void;
     setHoveredId: (id: string | null) => void;
 };
@@ -24,10 +25,11 @@ export function AssociatedDeckCard({
     hoveredMeta,
     hasHoveredCard,
     currentItemId,
+    isDark,
+    grid,
     onToggleClickBounded,
     setHoveredId,
 }: Props) {
-    const { isDark, grid } = useInterLinkedTheme();
     const { colIndex, indexInColumn, id, metaIndex } = meta;
     const { title, year, coverUrl, isInstalled, isHidden } = item;
 

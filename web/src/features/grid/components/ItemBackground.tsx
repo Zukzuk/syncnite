@@ -1,22 +1,22 @@
 
 import { Box } from "@mantine/core";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
-import { InterLinkedGameItem } from "../../../types/interlinked";
-import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";
+import { InterLinkedGameItem, InterLinkedGrid } from "../../../types/interlinked";
 
 type Props = {
     item: Pick<InterLinkedGameItem, "bgUrl">;
     isOpen: boolean;
+    grid: InterLinkedGrid;
+    isDark: boolean;
     wallpaperBg: boolean;
 };
 
 // Background component for a library item.
-export function ItemBackground({ item, isOpen, wallpaperBg }: Props): JSX.Element | null {
+export function ItemBackground({ item, isOpen, wallpaperBg, grid, isDark }: Props): JSX.Element | null {
     const { bgUrl } = item;
     if (!isOpen || !bgUrl) return null;
 
     const isOpenDelayed = useDelayedFlag({ active: isOpen, delayMs: 70 });
-    const { isDark, grid } = useInterLinkedTheme();
 
     return (
         <Box

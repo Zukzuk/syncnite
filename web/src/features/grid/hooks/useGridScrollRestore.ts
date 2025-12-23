@@ -1,11 +1,11 @@
 import { RefObject, useCallback, useEffect, useRef, useState } from "react";
-import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";
-import { InterLinkedGameItem } from "../../../types/interlinked";
+import { InterLinkedGameItem, InterLinkedGrid } from "../../../types/interlinked";
 
 type UseParams = {
   gridRef: RefObject<HTMLDivElement | null>;
   openIds: Set<string>;
   items: InterLinkedGameItem[];
+  grid: InterLinkedGrid;
   idToIndex: Map<string, number>;
   viewportH: number;
   closedHeight: number;
@@ -28,6 +28,7 @@ export function useGridScrollRestore({
   gridRef,
   openIds,
   items,
+  grid,
   idToIndex,
   viewportH,
   closedHeight,
@@ -40,8 +41,6 @@ export function useGridScrollRestore({
   toggleOpen,
   replaceOpen,
 }: UseParams): UseReturn {
-  const { grid } = useInterLinkedTheme();
-
   const preOpenScrollTopRef = useRef<number | null>(null);
   const openItemIdRef = useRef<string | null>(null);
   const lockAfterOpenRef = useRef(false);

@@ -1,18 +1,20 @@
 import { useAuth } from "../../hooks/useAuth";
 import { Stack, Text, Card, Group, ThemeIcon, Badge, Divider, Button, Tooltip } from "@mantine/core";
 import { IconClock, IconDownload } from "@tabler/icons-react";
-import { useInterLinkedTheme } from "../../hooks/useInterLinkedTheme";
 import { useExtensionStatus } from "../../hooks/useExtensionStatus";
 import { API_ENDPOINTS, INTERVAL_MS, WEB_APP_VERSION } from "../../constants";
 import { TextDataRow } from "../../components/TextDataRow";
 import { IconButton } from "../../components/IconButton";
 import { CustomIconSVG } from "../../components/CustomIcon";
+import { InterLinkedGrid } from "../../types/interlinked";
 
-export default function PlayniteCard(): JSX.Element {
+type Props = {
+    grid: InterLinkedGrid;
+};
+
+export default function PlayniteCard({ grid }: Props): JSX.Element {
     const { state } = useAuth({ pollMs: 0 });
     const isAdmin = state.role === "admin";
-
-    const { grid } = useInterLinkedTheme();
 
     const { connected, lastPingAt, loading, versionMismatch, extVersion } = useExtensionStatus({ pollMs: INTERVAL_MS });
 

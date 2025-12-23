@@ -8,7 +8,8 @@ import { usePlayniteData } from "../features/library/hooks/usePlayniteData";
 
 export default function LibraryPage(): JSX.Element {
     const { libraryData, installedUpdatedAt } = usePlayniteData({ pollMs: INTERVAL_MS });
-    const { hasNavbar, grid, desktopMode } = useInterLinkedTheme();
+    const theme = useInterLinkedTheme();
+    const { grid, hasNavbar, desktopMode } = theme;
     const desktopMini = desktopMode === "mini";
 
     // Prevent body scrolling when on the library page
@@ -36,6 +37,7 @@ export default function LibraryPage(): JSX.Element {
                 <LibraryProvider>
                     <Library
                         libraryData={libraryData}
+                        theme={theme}
                         installedUpdatedAt={installedUpdatedAt || ""}
                     />
                 </LibraryProvider>

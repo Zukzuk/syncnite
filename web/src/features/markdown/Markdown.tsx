@@ -4,12 +4,12 @@ import {
     Anchor as MantineAnchor,
     Code as MantineCode,
     ScrollArea,
+    MantineTheme,
 } from "@mantine/core";
 import ReactMarkdown from "react-markdown";
 import type { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
-import { useInterLinkedTheme } from "../../hooks/useInterLinkedTheme";
 
 /** Helper to flatten children to text */
 function toText(node: ReactNode): string {
@@ -22,10 +22,11 @@ function toText(node: ReactNode): string {
 
 type Props = {
     content: string;
+    theme: MantineTheme;
+    isDark: boolean;
 };
 
-export default function Markdown({ content }: Props): JSX.Element {
-    const { theme, isDark } = useInterLinkedTheme();
+export default function Markdown({ content, theme, isDark }: Props): JSX.Element {
     const border = isDark ? theme.colors.dark[4] : theme.colors.gray[3];
     const zebra = isDark ? theme.colors.dark[6] : theme.colors.gray[0];
 

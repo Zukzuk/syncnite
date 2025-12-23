@@ -1,24 +1,23 @@
 import { Box, Group, Image, Text } from "@mantine/core";
-import { InterLinkedGameItem } from "../../../types/interlinked";
+import { InterLinkedGameItem, InterLinkedGrid } from "../../../types/interlinked";
 import { IconIsInstalled } from "../../../components/IconIsInstalled";
 import { IconIsHidden } from "../../../components/IconIsHidden";
 import { IconCopyTitle } from "../../../components/IconCopyTitle";
 import { IconLinkExternal } from "../../../components/IconExternalLink";
 import { IconLinkSource } from "../../../components/IconSourceLink";
-import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";
 
 type Props = {
     item: InterLinkedGameItem;
     isOpen: boolean;
+    grid: InterLinkedGrid;
     isListView: boolean;
 };
 
 // Card component for a library item in grid view.
-export function ItemCard({ item, isOpen, isListView }: Props): JSX.Element | null {
+export function ItemCard({ item, isOpen, isListView, grid }: Props): JSX.Element | null {
     if (isOpen || isListView) return null;
 
     const { title, coverUrl, year, source, htmlLink, sourceLink, isHidden, isInstalled } = item;
-    const { grid } = useInterLinkedTheme();
 
     return (
         <Box

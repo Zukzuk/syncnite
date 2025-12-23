@@ -1,8 +1,7 @@
 import { Anchor, Badge, Box, Group, Image, Stack, Text } from "@mantine/core";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
-import { InterLinkedGameItem } from "../../../types/interlinked";
+import { InterLinkedGameItem, InterLinkedGrid } from "../../../types/interlinked";
 import { IconShowMaximized } from "../../../components/IconShowMaximized";
-import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";
 import { IconLinkExternal } from "../../../components/IconExternalLink";
 import { IconLinkSource } from "../../../components/IconSourceLink";
 import { IconIsInstalled } from "../../../components/IconIsInstalled";
@@ -11,14 +10,15 @@ import { useState } from "react";
 
 type Props = {
     item: InterLinkedGameItem;
+    grid: InterLinkedGrid;
+    isDark: boolean;
     onWallpaperBg: (hovered: boolean) => void;
 };
 
 // Component to display associated details of a library item.   
-export function AssociatedDetails({ item, onWallpaperBg }: Props): JSX.Element {
+export function AssociatedDetails({ item, grid, isDark, onWallpaperBg }: Props): JSX.Element {
     const { playniteLink, sortingName, tags = [], series = [], isInstalled, isHidden, links, coverUrl, bgUrl, source, htmlLink, sourceLink, title } = item;
     const isOpenDelayed = useDelayedFlag({ active: true, delayMs: 70 });
-    const { isDark, grid } = useInterLinkedTheme();
     const [isHovered, setIsHovered] = useState(false);
 
     return (

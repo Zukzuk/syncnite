@@ -1,10 +1,11 @@
 import { memo } from "react";
 import { Box, UnstyledButton, Text } from "@mantine/core";
 import { SortKey, UIControls } from "../../../types/app";
-import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";
+import { InterLinkedTheme } from "../../../types/interlinked";
 
 type Props = {
   sortRef: (el: HTMLElement | null) => void;
+  theme: InterLinkedTheme;
   ui: UIControls;
 };
 
@@ -12,9 +13,10 @@ type Props = {
 export const HeaderSort = memo(function HeaderSort({
   sortRef,
   ui,
+  theme,
 }: Props) {
   const { sortKey, sortDir, onToggleSort, isListView } = ui;
-  const { hasNavbar, grid } = useInterLinkedTheme();
+  const { hasNavbar, grid } = theme;
 
   const label = (base: string, key: SortKey) =>
     sortKey === key ? `${base} ${sortDir === "asc" ? "▲" : "▼"}` : base;

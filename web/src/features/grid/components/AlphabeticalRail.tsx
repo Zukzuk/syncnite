@@ -2,21 +2,21 @@ import { useState } from "react";
 import { Paper, Stack, Button, rem } from "@mantine/core";
 import { LETTERS_LIST } from "../../../constants";
 import { Letter } from "../../../types/app";
-import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";
+import { InterLinkedGrid } from "../../../types/interlinked";
 
 type Props = {
+    grid: InterLinkedGrid;
     activeLetter: Letter;
     railCounts: Record<Letter, number>;
     onScrollJump: (letter: Letter) => void;
 };
 
 // Component to display an alphabetical rail for quick navigation in the library view.
-export function AlphabeticalRail({ activeLetter, railCounts, onScrollJump }: Props): JSX.Element | null {
+export function AlphabeticalRail({ activeLetter, railCounts, onScrollJump, grid }: Props): JSX.Element | null {
     const letters = LETTERS_LIST.filter((l) => (railCounts[l] ?? 0) > 0);
     if (letters.length < 10) return null;
 
     const [hoveredLetter, setHoveredLetter] = useState<Letter | null>(null);
-    const { grid } = useInterLinkedTheme();
 
     return (
         <Paper

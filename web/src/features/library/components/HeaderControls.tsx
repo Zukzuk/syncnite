@@ -1,15 +1,15 @@
 import { memo, useMemo, useEffect, useCallback } from "react";
 import { Flex, Box, SegmentedControl, Group, Text, Tooltip } from "@mantine/core";
 import { SwitchesMode, UIControls, UIDerivedData, ViewMode, } from "../../../types/app";
-import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";
 import { SearchInput } from "../../../components/SearchInput";
 import { MultiSelectInput } from "../../../components/MultiSelectInput";
 import { IconToggleWithLabel } from "../../../components/IconToggleWithLabel";
 import { PLAYNITE_SOURCE_MAP } from "../../../services/PlayniteService";
-import { InterLinkedData, InterLinkedGameItem } from "../../../types/interlinked";
+import { InterLinkedData, InterLinkedGameItem, InterLinkedTheme } from "../../../types/interlinked";
 
 type Props = {
   controlsRef: (el: HTMLDivElement | null) => void;
+  theme: InterLinkedTheme;
   libraryData: InterLinkedData;
   ui: UIControls;
   derived: UIDerivedData;
@@ -20,12 +20,13 @@ export const HeaderControls = memo(function HeaderControls({
   libraryData,
   ui,
   derived,
+  theme,
 }: Props) {
   // Hardcoded to Playnite for now
   const { allSources, allTags, allSeries, items } = libraryData.playnite ?? {};
   if (!items) return null;
   
-  const { hasNavbar, grid } = useInterLinkedTheme();
+  const { hasNavbar, grid } = theme;
 
   const {
     view,

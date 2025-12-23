@@ -1,13 +1,12 @@
 import { RefObject, useCallback, useEffect, useMemo, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { UIControls, UIDerivedData, ItemPositions, NavMode } from "../../../types/app";
+import { UIControls, UIDerivedData, ItemPositions, NavMode, DesktopNavMode } from "../../../types/app";
 import { useGridLayout } from "./useGridLayout";
 import { useGridVirtualWindow } from "./useGridVirtualWindow";
 import { useGridOpenItemToggle } from "./useGridOpenItemToggle";
 import { useGridScrollJump } from "./useGridScrollJump";
 import { useGridScrollRestore } from "./useGridScrollRestore";
-import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";
-import { InterLinkedGameItem } from "../../../types/interlinked";
+import { InterLinkedGameItem, InterLinkedGrid } from "../../../types/interlinked";
 
 type UseParams = {
     gridRef: RefObject<HTMLDivElement>;
@@ -15,6 +14,9 @@ type UseParams = {
     sortH: number;
     ui: UIControls;
     derived: UIDerivedData;
+    grid: InterLinkedGrid;
+    hasNavbar: boolean;
+    desktopMode: DesktopNavMode
 };
 
 type UseReturn = {
@@ -35,16 +37,18 @@ export function useGrid({
     sortH,
     ui,
     derived,
+    grid,
+    hasNavbar,
+    desktopMode,
 }: UseParams): UseReturn {
     const itemsLen = derived.itemsSorted.length;
     const isListView = ui.isListView;
-    const { hasNavbar, grid, desktopMode } = useInterLinkedTheme();
     const desktopMini = desktopMode === "mini";
     const { id: routeId } = useParams<{ id?: string }>();
     const navigate = useNavigate();
 
     // Base grid sizing (cols + viewport height)
-    const { cols, viewportH } = useGridLayout({ gridRef, itemsLen });
+    const { cols, viewportH } = useGridLayout({ gridRef, grid, itemsLen });
     const viewCols = isListView ? 1 : Math.max(1, cols || 1);
 
     // Combined header/controls offset
@@ -187,6 +191,7 @@ export function useGrid({
     // Virtual window (variable-height rows) + scroll position
     const { visibleRange, syncScrollTopNow } = useGridVirtualWindow({
         gridRef,
+        grid,
         opts: {
             rows: rowTops.length,
             cols: viewCols,
@@ -215,6 +220,7 @@ export function useGrid({
         gridRef,
         openIds,
         items: derived.itemsSorted as InterLinkedGameItem[],
+        grid,
         idToIndex,
         viewportH,
         closedHeight,

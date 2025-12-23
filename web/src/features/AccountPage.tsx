@@ -19,10 +19,10 @@ export default function AccountPage(): JSX.Element {
                         Manage your InterLinked account and connected services.
                     </Text>
                 </Stack>
-                
-                <AccountCard />
-                <PlayniteCard />
-                <SteamCard />
+
+                <AccountCard grid={grid} />
+                <PlayniteCard grid={grid} />
+                <SteamCard grid={grid} />
             </Stack>
         </Container>
     );

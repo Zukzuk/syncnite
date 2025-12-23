@@ -1,13 +1,13 @@
 import { ReactNode } from "react";
 import { ActionIcon, Card, Center, Indicator, Tooltip } from "@mantine/core";
 import { Link } from "react-router-dom";
-import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";
 
 type Props = {
     tooltip: string;
     dotColor?: string;
     icon?: ReactNode;
     compIcon?: ReactNode;
+    hasNavbar?: boolean;
     toggleNavbar?: () => void;
 }
 
@@ -16,9 +16,9 @@ export function ControlPanelTile({
     dotColor,
     icon,
     compIcon,
+    hasNavbar,
     toggleNavbar,
 }: Props) {
-    const { hasNavbar } = useInterLinkedTheme();
     const hasToggle = !!toggleNavbar;
 
     return (

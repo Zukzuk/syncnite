@@ -3,9 +3,8 @@ import { Badge, Box, Stack, Text } from "@mantine/core";
 import { NavMode } from "../../../types/app";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 import { AssociatedDeckCard } from "./AssociatedDeckCard";
-import { useInterLinkedTheme } from "../../../hooks/useInterLinkedTheme";
 import { useLibraryContext } from "../../LibraryContext";
-import { InterLinkedGameItem } from "../../../types/interlinked";
+import { InterLinkedGameItem, InterLinkedGrid } from "../../../types/interlinked";
 
 type Props = {
     deckKey: string;
@@ -15,6 +14,8 @@ type Props = {
     items: InterLinkedGameItem[];
     deckColumns: number;
     maxCardsPerColumn: number | null;
+    isDark: boolean;
+    grid: InterLinkedGrid;
     onToggleClickBounded: (id?: string, navMode?: NavMode) => void;
 };
 
@@ -27,6 +28,8 @@ export function AssociatedDeck({
     items,
     deckColumns,
     maxCardsPerColumn,
+    isDark,
+    grid,
     onToggleClickBounded,
 }: Props): JSX.Element | null {
     const lib = useLibraryContext();
@@ -36,8 +39,6 @@ export function AssociatedDeck({
     const [hoveredId, setHoveredId] = useState<string | null>(null);
     const isOpenDelayed = useDelayedFlag({ active: animateIn, delayMs: 140 });
     const show = animateIn ? isOpenDelayed : true;
-
-    const { isDark, grid } = useInterLinkedTheme();
 
     const cards = items.filter((g) => g.coverUrl);
     if (cards.length === 0 || deckColumns <= 0) return null;
@@ -175,6 +176,8 @@ export function AssociatedDeck({
                                 hoveredMeta={hoveredMeta}
                                 hasHoveredCard={hasHoveredCard}
                                 currentItemId={currentItemId}
+                                isDark={isDark}
+                                grid={grid}
                                 onToggleClickBounded={onToggleClickBounded}
                                 setHoveredId={setHoveredId}
                             />
