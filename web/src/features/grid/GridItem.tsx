@@ -23,6 +23,8 @@ type Props = {
     grid: InterLinkedGrid;
     desktopMode: DesktopNavMode;
     hasNavbar: boolean;
+    isWidescreen: boolean;
+    isDesktop: boolean;
     onWallpaperBg: (value: boolean) => void;
     onToggleItem: (id: string, navMode?: NavMode) => void;
 };
@@ -41,6 +43,8 @@ export const GridItem = memo(function GridItem({
     grid,
     isDark,
     hasNavbar,
+    isWidescreen,
+    isDesktop,
     onWallpaperBg,
     onToggleItem,
 }: Props): JSX.Element {
@@ -162,6 +166,8 @@ export const GridItem = memo(function GridItem({
                             grid={grid}
                             hasNavbar={hasNavbar}
                             isListView={isListView}
+                            isWidescreen={isWidescreen}
+                            isDesktop={isDesktop}
                         />
                     ) : null}
 

@@ -10,7 +10,7 @@ type Props = {
     w: number;
     h: number;
     isInstalled: boolean;
-    isParentHovered: boolean;
+    showOverlay: boolean;
     link?: string;
 };
 
@@ -21,7 +21,7 @@ export const IconExecuteOverlay = memo(function IconExecuteOverlay({
     w,
     h,
     isInstalled,
-    isParentHovered,
+    showOverlay,
     link,
 }: Props) {
     const isCircle = type === "circle";
@@ -32,7 +32,6 @@ export const IconExecuteOverlay = memo(function IconExecuteOverlay({
     const height = overlaySize ?? h;
     const offset = isCircle ? `calc(50% - ${iconSize}px)` : 0;
     const borderRadius = isCircle ? "50%" : 4;
-    const showOverlay = isParentHovered;
 
     const border = isCircle
         ? hovered

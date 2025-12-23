@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { ActionIcon, Tooltip } from "@mantine/core";
-import { IconExternalLink } from "@tabler/icons-react";
+import { IconCircleArrowUpRightFilled } from "@tabler/icons-react";
 import { InterLinkedGameItem } from "../types/interlinked";
 
 type Props = Pick<InterLinkedGameItem, "htmlLink" | "title" | "source">;
@@ -28,7 +28,7 @@ export const IconLinkExternal = memo(function IconLinkExternal({
                 size="sm"
                 style={{ lineHeight: 0, height: "100%", display: "flex", alignItems: "center" }}
             >
-                <IconExternalLink size={14} stroke={2} />
+                <IconCircleArrowUpRightFilled size={16} stroke={2} />
             </ActionIcon>
         </Tooltip>
     );

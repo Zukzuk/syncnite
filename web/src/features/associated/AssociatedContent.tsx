@@ -64,6 +64,7 @@ function buildAssociatedDecks(
     const associatedYear: InterLinkedGameItem[] = [];
     const associatedInstalled: InterLinkedGameItem[] = [];
     const associatedHidden: InterLinkedGameItem[] = [];
+    const associatedSpecialEditions: InterLinkedGameItem[] = [];
 
     const seriesSet = item.series ? new Set(item.series) : null;
     const tagsSet = item.tags ? new Set(item.tags) : null;
@@ -94,6 +95,11 @@ function buildAssociatedDecks(
         if (item.isHidden && other.isHidden) {
             other.index = i;
             associatedHidden.push(other);
+        }
+
+        if (item.version && other.version) {
+            other.index = i;
+            associatedSpecialEditions.push(other);
         }
     }
 
@@ -149,11 +155,22 @@ function buildAssociatedDecks(
             }
             : null;
 
+    // Special Editions deck
+    const specialEditionsDeck =
+        associatedSpecialEditions.length > 0
+            ? {
+                key: "special-editions",
+                label: "Special Editions",
+                items: associatedSpecialEditions,
+            }
+            : null;
+
     const associatedDecks = [
         ...seriesDecks,
+        ...(specialEditionsDeck ? [specialEditionsDeck] : []),
+        ...tagDecks,
         ...(installedDeck ? [installedDeck] : []),
         ...(hiddenDeck ? [hiddenDeck] : []),
-        ...tagDecks,
         ...(yearDeck ? [yearDeck] : []),
     ];
 
@@ -280,7 +297,9 @@ export function AssociatedContent({
     );
 
     // handle stack click
-    const onStackClick = useCallback((key: string) => lib.setSelectedDeckKey(item.id, key), [lib, item.id]);
+    const handleDeckChange = useCallback(
+        (key: string) => lib.setSelectedDeckKey(item.id, key), [lib, item.id]
+    );
 
     // select the open deck
     const openDeck = useMemo<AssociatedItems | null>(() => {
@@ -310,6 +329,7 @@ export function AssociatedContent({
         maxCardsPerDeckColumn: null,
         minStackColumns: 1,
     });
+    const gapRight = grid.gap * 7;
 
     // update layout on size or deck changes
     useEffect(() => {
@@ -325,7 +345,7 @@ export function AssociatedContent({
 
         const update = () => {
             const rect = el.getBoundingClientRect();
-            const width = rect.width - grid.gap * 5;
+            const width = rect.width - gapRight;
             const height = rect.height;
 
             const totalCards = openDeck.items.filter((g) => g.coverUrl).length;
@@ -346,7 +366,7 @@ export function AssociatedContent({
             in={isOpen}
             transitionDuration={140}
             py={grid.gap}
-            pr={grid.gap * 5}
+            pr={gapRight}
             style={{
                 width: openWidth,
                 height: `calc(${openHeight} - ${grid.rowHeight}px)`,
@@ -356,13 +376,15 @@ export function AssociatedContent({
             }}
         >
             <Group align="flex-start" gap={grid.gap * 3} wrap="nowrap" h="100%">
-                <AssociatedDetails 
-                    item={item} 
+                <AssociatedDetails
+                    item={item}
                     grid={grid}
                     isDark={isDark}
-                    onWallpaperBg={onWallpaperBg} 
+                    openDeckKey={openDeck ? openDeck.key : null}
+                    onBadgeClick={handleDeckChange}
+                    onWallpaperBg={onWallpaperBg}
                 />
-                
+
                 <Box
                     ref={layoutRef}
                     style={{
@@ -396,7 +418,7 @@ export function AssociatedContent({
                             stackColumns={Math.max(layout.stackColumns, layout.minStackColumns)}
                             isDark={isDark}
                             grid={grid}
-                            onStackClick={onStackClick}
+                            onStackClick={handleDeckChange}
                         />
                     )}
                 </Box>

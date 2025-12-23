@@ -24,12 +24,14 @@ export interface InterLinkedGameItem extends InterLinkedItem {
     isInstalled: boolean;
     tags: string[];
     series: string[];
+    playniteLink: string;
+    titleWithoutVersion: string;
+    source: string;
 
     index?: number;
     version?: string;
-    source: string;
     sourceLink?: string;
-    playniteLink: string;
+    playniteOpenLink?: string;
     htmlLink?: string;
     links?: PlayniteGameLink[];
 }
@@ -65,9 +67,6 @@ type TZIndex = {
 type TOverscan = { top: number; bottom: number }
 
 export type InterLinkedGrid = {
-    colsList: string;
-    colsGrid: string;
-    colsOpen: string;
     navBarWidth: number;
     navBarMiniWidth: number;
     coverWidth: number;

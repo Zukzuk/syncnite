@@ -59,6 +59,9 @@ export function useInterLinkedTheme(): InterLinkedTheme {
     }, [setNavbarOpened]);
 
     const RATIO = 23 / 32;
+    const cardMinWidth = 125;
+    const cardMaxWidth = 220;
+    const coverWidth = 220;
 
     const Z_INDEX = useMemo(
         () =>
@@ -78,15 +81,14 @@ export function useInterLinkedTheme(): InterLinkedTheme {
     const grid = useMemo(
         () =>
             ({
-                colsList: `40px minmax(0, 1fr) 60px 80px ${isWidescreen ? "300px" : isDesktop ? "150px" : "0px"}`,
-                colsGrid: "0px 60px 60px 80px 60px",
-                colsOpen: "40px minmax(0, 1fr) 56px",
                 navBarWidth: 155,
                 navBarMiniWidth: 72,
-                coverWidth: 220,
-                coverHeight: 220 * (1 / RATIO),
-                cardWidth: 156 + 4, // + border
-                cardHeight: 156 * (1 / RATIO) + 4 + 52 + 28, // + border + title + icons
+                coverWidth,
+                coverHeight: coverWidth * (1 / RATIO),
+                cardWidth: cardMinWidth + 4, // + border
+                cardHeight: cardMinWidth * (1 / RATIO) + 4 + 52 + 28, // + border + title + icons
+                cardMinWidth,
+                cardMaxWidth,
                 rowHeight: 60,
                 halfRowHeight: 30,
                 iconSize: 38,

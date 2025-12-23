@@ -15,45 +15,40 @@ function getGameId(id: string): string {
 
 // Get the Game Title (default "Untitled")
 function getTitle(name: string | null | undefined, version: string | null | undefined): string {
-    if (name && version) {
-        const escaped = version.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        name = name.replace(new RegExp(`\\s*${escaped}\\s*$`), "");
-    }
-    name = name?.replace(/\s*[:\-]\s*$/, "");
     return name ?? "Untitled";
 }
 
 // Get the SortingName (fallback to Name)
-function getSortingName(sortingName: string | null | undefined, name: string | null | undefined): string {
-    return sortingName ?? name ?? "";
+function getSortingName(sortingName: string | null | undefined, name: string | null | undefined): string | undefined {
+    return sortingName ?? name ?? undefined;
 }
 
-function parseYearFromString(s: string): number | null {
+function parseYearFromString(s: string): number | undefined {
     // Accept "2021", "2021-05-03", "2021/05/03", "2021-05", "May 5, 2021", etc.
     const m = s.match(/(\d{4})/);
-    if (!m) return null;
+    if (!m) return undefined;
     const y = Number(m[1]);
     if (y >= 1970 && y <= 2100) return y;
-    return null;
+    return undefined;
 }
 
-function parseYearFromNumber(n: number): number | null {
+function parseYearFromNumber(n: number): number | undefined {
     // Heuristic: treat 10 or 13 digits as epoch seconds/millis
     if (n > 10_000_000_000) {
         const y = new Date(n).getUTCFullYear();
-        return y >= 1970 && y <= 2100 ? y : null;
+        return y >= 1970 && y <= 2100 ? y : undefined;
     }
     if (n > 1_000_000_000) {
         const y = new Date(n * 1000).getUTCFullYear();
-        return y >= 1970 && y <= 2100 ? y : null;
+        return y >= 1970 && y <= 2100 ? y : undefined;
     }
     // maybe already a year
     if (n >= 1970 && n <= 2100) return n;
-    return null;
+    return undefined;
 }
 
-function extractYear(val: unknown): number | null {
-    if (val == null) return null;
+function extractYear(val: unknown): number | undefined {
+    if (val == null) return undefined;
     if (typeof val === "number") return parseYearFromNumber(val);
     if (typeof val === "string") return parseYearFromString(val);
     if (typeof val === "object") {
@@ -74,7 +69,7 @@ function extractYear(val: unknown): number | null {
         if (typeof o["Value"] === "string") return parseYearFromString(o["Value"]);
         if (typeof o["Value"] === "number") return parseYearFromNumber(o["Value"]);
     }
-    return null;
+    return undefined;
 }
 
 // Prefer explicit ReleaseYear, otherwise derive from ReleaseDate.ReleaseDate ("yyyy-mm-dd")
@@ -87,9 +82,39 @@ function getYear(releaseYear: number | null | undefined, releaseDate: PlayniteGa
     }
     return undefined;
 }
+
 // Get the Version (default "")
 function getVersion(version: string | null | undefined): string | undefined {
     return !!version ? version : undefined;
+}
+
+// Clean the title by removing version info
+function getTtitleWithoutVersion(title: string, version: string | null | undefined): string {
+    // Detects version as a standalone token, optionally wrapped by separators:
+    // "version", ": version", "- version", "(version)", "[version]" anywhere in the title.
+    if (!title || !version) return title;
+
+    const escaped = version.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    // Boundaries: start/end OR whitespace OR common separators.
+    // This prevents removing the version when it's embedded inside another word.
+    const leftBoundary = `(?:^|[\\s:;,_\\-\\(\\[\\{\\/\\\\])`;
+    const rightBoundary = `(?:$|[\\s:;,_\\-\\)\\]\\}\\/\\\\])`;
+
+    // Allow optional wrappers like ": ", "- ", "(", "[", and matching closing wrappers.
+    // We keep it permissive but still boundary-limited.
+    const pattern = new RegExp(
+        `${leftBoundary}(?:[:\\-]\\s*)?(?:[\\(\\[\\{]\\s*)?${escaped}(?:\\s*[\\)\\]\\}])?${rightBoundary}`,
+        "gi"
+    );
+
+    // Replace matches with a single space (keeps words from concatenating),
+    // then normalize whitespace and trim leftover trailing separators.
+    return title
+        .replace(pattern, " ")
+        .replace(/\s{2,}/g, " ")
+        .replace(/\s*[:\-]\s*$/, "")
+        .trim();
 }
 
 // Prefer Links matching source, then any Links, then sourcish fallback
@@ -307,6 +332,7 @@ export async function loadPlayniteOrigin(): Promise<OriginLoadedData> {
         const sortingName = getSortingName(g.SortingName, g.Name);
         const year = getYear(g.ReleaseYear, g.ReleaseDate);
         const version = getVersion(g.Version);
+        const titleWithoutVersion = getTtitleWithoutVersion(title, version);
         const source = getSource(g, sourceById);
         const htmlLink = getEffectiveLink(g.Links, title, source);
         const sourceLink = getSourceProtocolLink(source, gameId, htmlLink);
@@ -314,6 +340,7 @@ export async function loadPlayniteOrigin(): Promise<OriginLoadedData> {
         const isHidden = getIsHidden(g.Hidden);
         const isInstalled = getInstalled(g.Id, isInstalledSet);
         const playniteLink = getPlayniteProtocolLink(isInstalled, id);
+        const playniteOpenLink = getPlayniteProtocolLink(false, id);
         const tags = getTagNames(g.TagIds, tagById);
         const series = getSeriesNames(g.SeriesIds, seriesById);
         const iconUrl = getIconUrl(g.Icon);
@@ -324,11 +351,11 @@ export async function loadPlayniteOrigin(): Promise<OriginLoadedData> {
         return {
             type, origin,
             id, gameId,
-            title, sortingName,
+            title, sortingName, titleWithoutVersion,
             year, version,
             source, sourceLink,
             htmlLink, links,
-            playniteLink,
+            playniteLink, playniteOpenLink,
             isHidden, isInstalled,
             tags, series,
             iconUrl, coverUrl, bgUrl,
@@ -411,6 +438,7 @@ export const PLAYNITE_SOURCE_MAP: Record<string, {
         label: "Nintendo"
     },
     "playnite": {
+        platform: "playnite://",
         domains: ["playnite.com"],
         online: "www.playnite.com",
         label: "Playnite",

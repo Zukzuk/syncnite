@@ -27,8 +27,7 @@ export function Grid({
 }: Props) {
     const { isListView } = ui;
     const { itemsSorted, itemsAssociated } = derived;
-    const { hasNavbar, grid, desktopMode, isDark } = theme;
-
+    const { hasNavbar, grid, desktopMode, isDark, isWidescreen, isDesktop } = theme;
     const [wallpaperBg, onWallpaperBg] = useState(false);
     const gridRef = useRef<HTMLDivElement | null>(null);
 
@@ -110,11 +109,13 @@ export function Grid({
                                 isListView={isListView}
                                 itemsAssociated={itemsAssociated}
                                 wallpaperBg={wallpaperBg}
-                                onWallpaperBg={onWallpaperBg}
                                 grid={grid}
                                 isDark={isDark}
                                 desktopMode={desktopMode}
                                 hasNavbar={hasNavbar}
+                                isWidescreen={isWidescreen}
+                                isDesktop={isDesktop}
+                                onWallpaperBg={onWallpaperBg}
                                 onToggleItem={(id) => onToggleItemWithNav(id, "push")}
                             />
                         );

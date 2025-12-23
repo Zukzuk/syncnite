@@ -5,6 +5,7 @@ import { IconIsHidden } from "../../../components/IconIsHidden";
 import { IconCopyTitle } from "../../../components/IconCopyTitle";
 import { IconLinkExternal } from "../../../components/IconExternalLink";
 import { IconLinkSource } from "../../../components/IconSourceLink";
+import { IconLinkOrigin } from "../../../components/IconOriginLink";
 
 type Props = {
     item: InterLinkedGameItem;
@@ -17,7 +18,7 @@ type Props = {
 export function ItemCard({ item, isOpen, isListView, grid }: Props): JSX.Element | null {
     if (isOpen || isListView) return null;
 
-    const { title, coverUrl, year, source, htmlLink, sourceLink, isHidden, isInstalled } = item;
+    const { title, coverUrl, year, source, htmlLink, sourceLink, isHidden, isInstalled, origin, playniteOpenLink, id } = item;
 
     return (
         <Box
@@ -87,14 +88,16 @@ export function ItemCard({ item, isOpen, isListView, grid }: Props): JSX.Element
 
                 <Box>
                     <Group
-                        gap={6}
+                        gap={0}
+                        mr={4}
                         align="center"
                         wrap="nowrap"
                         style={{ justifyContent: "center" }}
                     >
                         <IconCopyTitle title={title} year={year} />
+                        <IconLinkOrigin origin={origin} playniteOpenLink={playniteOpenLink} id={id} />
+                        {origin !== source && <IconLinkSource source={source} sourceLink={sourceLink} />}
                         <IconLinkExternal source={source} htmlLink={htmlLink} title={title} />
-                        <IconLinkSource source={source} sourceLink={sourceLink} />
                     </Group>
                 </Box>
             </Box>

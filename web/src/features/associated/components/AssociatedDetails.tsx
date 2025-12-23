@@ -7,19 +7,25 @@ import { IconLinkSource } from "../../../components/IconSourceLink";
 import { IconIsInstalled } from "../../../components/IconIsInstalled";
 import { IconExecuteOverlay } from "../../../components/IconExecuteOverlay";
 import { useState } from "react";
+import { IconLinkOrigin } from "../../../components/IconOriginLink";
 
 type Props = {
     item: InterLinkedGameItem;
     grid: InterLinkedGrid;
     isDark: boolean;
+    openDeckKey: string | null;
+    onBadgeClick: (key: string) => void;
     onWallpaperBg: (hovered: boolean) => void;
 };
 
-// Component to display associated details of a library item.   
-export function AssociatedDetails({ item, grid, isDark, onWallpaperBg }: Props): JSX.Element {
-    const { playniteLink, sortingName, tags = [], series = [], isInstalled, isHidden, links, coverUrl, bgUrl, source, htmlLink, sourceLink, title } = item;
+// Component to display associated details of a library item.
+export function AssociatedDetails({ item, grid, isDark, openDeckKey, onBadgeClick, onWallpaperBg }: Props): JSX.Element {
+
+    const { id, playniteLink, sortingName, tags = [], series = [], isInstalled, isHidden,
+        links, coverUrl, bgUrl, origin, htmlLink, playniteOpenLink, title, source, sourceLink } = item;
+
     const isOpenDelayed = useDelayedFlag({ active: true, delayMs: 70 });
-    const [isHovered, setIsHovered] = useState(false);
+    const [isBgHovered, setIsBgHovered] = useState(false);
 
     return (
         <Stack
@@ -60,8 +66,8 @@ export function AssociatedDetails({ item, grid, isDark, onWallpaperBg }: Props):
                         width: grid.coverWidth,
                         height: grid.coverHeight,
                     }}
-                    onMouseEnter={() => setIsHovered(true)}
-                    onMouseLeave={() => setIsHovered(false)}
+                    onMouseEnter={() => setIsBgHovered(true)}
+                    onMouseLeave={() => setIsBgHovered(false)}
                 >
                     <Image
                         src={coverUrl}
@@ -86,39 +92,65 @@ export function AssociatedDetails({ item, grid, isDark, onWallpaperBg }: Props):
                         w={grid.coverWidth}
                         h={grid.coverHeight}
                         isInstalled={isInstalled}
-                        isParentHovered={isHovered}
+                        showOverlay={isBgHovered}
                         link={playniteLink}
                     />
                 </Box>
-
-
             </Box>
 
             <Stack gap={6} align="stretch" style={{ width: "100%" }}>
-                {/* Badges */}
-                <Group gap={6} wrap="wrap">
-                    <Badge
+                {/* State */}
+                <Box>
+                    <Text
                         size="xs"
-                        color={isInstalled
-                            ? "var(--interlinked-color-success)"
-                            : "var(--interlinked-color-dark)"}
-                        variant="filled"
+                        style={{
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                        }}
                     >
-                        {isInstalled ? "Installed" : "Not installed"}
-                    </Badge>
-
-                    {isHidden && (
+                        State
+                    </Text>
+                    <Group gap={6} mt={6} wrap="wrap">
                         <Badge
                             size="xs"
+                            color={isInstalled
+                                ? "var(--interlinked-color-success)"
+                                : "var(--interlinked-color-dark)"}
                             variant="filled"
-                            color="var(--interlinked-color-warning)"
                         >
-                            Hidden
+                            {isInstalled ? "Installed" : "Not installed"}
                         </Badge>
-                    )}
-                    <IconLinkExternal source={source} htmlLink={htmlLink} title={title} />
-                    <IconLinkSource source={source} sourceLink={sourceLink} />
-                </Group>
+                        {isHidden && (
+                            <Badge
+                                size="xs"
+                                variant="filled"
+                                color="var(--interlinked-color-warning)"
+                            >
+                                Hidden
+                            </Badge>
+                        )}
+                    </Group>
+                </Box>
+
+                {/* Sources */}
+                <Box>
+                    <Text
+                        size="xs"
+                        style={{
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                        }}
+                    >
+                        Sources
+                    </Text>
+                    <Group gap={6} mt={6} wrap="wrap">
+                        <IconLinkOrigin origin={origin} playniteOpenLink={playniteOpenLink} id={id} />
+                        {origin !== source && <IconLinkSource source={source} sourceLink={sourceLink} />}
+                        <IconLinkExternal source={source} htmlLink={htmlLink} title={title} />
+                    </Group>
+                </Box>
 
                 {/* Series */}
                 {series.length > 0 && (
@@ -135,7 +167,13 @@ export function AssociatedDetails({ item, grid, isDark, onWallpaperBg }: Props):
                         </Text>
                         <Group gap={6} mt={6} wrap="wrap">
                             {series.map((s) => (
-                                <Badge key={s} size="xs" variant="filled">
+                                <Badge
+                                    key={s}
+                                    size="xs"
+                                    variant={openDeckKey === `series-${s}` ? "filled" : "outline"}
+                                    onClick={() => onBadgeClick(`series-${s}`)}
+                                    style={{ cursor: "pointer" }}
+                                >
                                     {s}
                                 </Badge>
                             ))}
@@ -158,39 +196,54 @@ export function AssociatedDetails({ item, grid, isDark, onWallpaperBg }: Props):
                         </Text>
                         <Group gap={6} mt={6} wrap="wrap">
                             {tags.map((t) => (
-                                <Badge key={t} size="xs" variant="filled">
+                                <Badge
+                                    key={t}
+                                    size="xs"
+                                    variant={openDeckKey === `tag-${t}` ? "filled" : "outline"}
+                                    onClick={() => onBadgeClick(`tag-${t}`)}
+                                    style={{ cursor: "pointer" }}
+                                >
                                     {t}
                                 </Badge>
                             ))}
                         </Group>
                     </Box>
                 )}
-            </Stack>
 
-            {/* Background Image */}
-            <Stack gap={6} align="stretch" style={{ position: "relative", width: "100%" }}>
-                <Image
-                    src={bgUrl}
-                    alt={sortingName || "wallpaper"}
-                    w={grid.coverWidth}
-                    radius="sm"
-                    fit="cover"
-                    loading="lazy"
-                    style={{
-                        border: isDark
-                            ? "2px solid var(--mantine-color-dark-8)"
-                            : "2px solid var(--mantine-color-gray-3)",
-                        boxShadow: "0 0px 8px rgba(0, 0, 0, 0.35)",
-                    }}
-                />
+                {/* Background Image */}
+                <Box>
+                    <Text
+                        size="xs"
+                        style={{
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                        }}
+                    >
+                        Media
+                    </Text>
+                    <Group gap={6} mt={6} wrap="wrap" style={{ position: "relative", width: "100%" }}>
+                        <Image
+                            src={bgUrl}
+                            alt={sortingName || "wallpaper"}
+                            w={grid.coverWidth}
+                            radius="sm"
+                            fit="cover"
+                            loading="lazy"
+                            style={{
+                                border: isDark
+                                    ? "2px solid var(--mantine-color-dark-8)"
+                                    : "2px solid var(--mantine-color-gray-3)",
+                                boxShadow: "0 0px 8px rgba(0, 0, 0, 0.35)",
+                            }}
+                        />
+                        <IconShowMaximized
+                            onHoverChange={onWallpaperBg}
+                        />
+                    </Group>
+                </Box>
 
-                <IconShowMaximized
-                    onHoverChange={onWallpaperBg}
-                />
-            </Stack>
-
-            {/* Links */}
-            <Stack gap={6} align="stretch" style={{ width: "100%" }}>
+                {/* Links */}
                 {Array.isArray(links) && links.length > 0 && (
                     <Box>
                         <Text
@@ -229,6 +282,7 @@ export function AssociatedDetails({ item, grid, isDark, onWallpaperBg }: Props):
                         </Stack>
                     </Box>
                 )}
+
             </Stack>
         </Stack>
     );

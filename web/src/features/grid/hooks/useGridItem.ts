@@ -17,8 +17,8 @@ type UseParams = {
 type UseReturn = {
     cardLeft: number;
     cardTop: number;
-    cardWidth: number | string;
-    cardHeight: number | string;
+    cardWidth: string;
+    cardHeight: string;
     cardZIndex: number;
     onToggleClickBounded: (id?: string, navMode?: NavMode) => void;
 };
@@ -28,12 +28,14 @@ export function useGridItem({
     item, index, isOpen, positions, isListView, openWidth, openHeight, grid, onToggleItem
 }: UseParams): UseReturn {
     const pos = positions[index] ?? { left: grid.gap, top: grid.gap };
-    const cardWidth = isOpen || isListView ? openWidth : grid.cardWidth;
+    const cardWidth = isOpen || isListView 
+        ? `calc(${openWidth} - ${grid.scrollbarWidth}px)` 
+        : `calc(${grid.cardWidth}px)`;
     const cardHeight = isOpen
         ? openHeight
         : isListView
-            ? grid.rowHeight
-            : grid.cardHeight;
+            ? `calc(${grid.rowHeight}px)`
+            : `calc(${grid.cardHeight}px)`;
     const cardTop = pos.top;
     const cardLeft = isOpen || isListView ? 0 : pos.left;
     const cardZIndex = isOpen ? grid.z.aboveBase : grid.z.base;

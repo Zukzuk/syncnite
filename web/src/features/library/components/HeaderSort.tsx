@@ -7,6 +7,7 @@ type Props = {
   sortRef: (el: HTMLElement | null) => void;
   theme: InterLinkedTheme;
   ui: UIControls;
+
 };
 
 // Header sort component for the library view.
@@ -16,10 +17,14 @@ export const HeaderSort = memo(function HeaderSort({
   theme,
 }: Props) {
   const { sortKey, sortDir, onToggleSort, isListView } = ui;
-  const { hasNavbar, grid } = theme;
+  const { hasNavbar, grid, isWidescreen, isDesktop } = theme;
 
   const label = (base: string, key: SortKey) =>
     sortKey === key ? `${base} ${sortDir === "asc" ? "▲" : "▼"}` : base;
+
+  const cols = isListView
+    ? `40px minmax(0, 1fr) 60px 80px ${isWidescreen ? "300px" : isDesktop ? "150px" : "0px"}`
+    : "0px 60px 60px 80px 60px";
 
   return (
     <Box
@@ -37,7 +42,7 @@ export const HeaderSort = memo(function HeaderSort({
           display: "grid",
           alignItems: "center",
           height: "100%",
-          gridTemplateColumns: isListView ? grid.colsList : grid.colsGrid,
+          gridTemplateColumns: cols,
           gap: grid.gap,
           fontWeight: 400,
         }}

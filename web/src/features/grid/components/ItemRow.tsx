@@ -8,6 +8,7 @@ import { IconLinkExternal } from "../../../components/IconExternalLink";
 import { IconLinkSource } from "../../../components/IconSourceLink";
 import { IconExecuteOverlay } from "../../../components/IconExecuteOverlay";
 import { InterLinkedGameItem, InterLinkedGrid } from "../../../types/interlinked";
+import { IconLinkOrigin } from "../../../components/IconOriginLink";
 
 type Props = {
     item: InterLinkedGameItem;
@@ -15,14 +16,20 @@ type Props = {
     grid: InterLinkedGrid;
     hasNavbar: boolean;
     isListView: boolean;
+    isWidescreen: boolean;
+    isDesktop: boolean;
 };
 
 // Row component for a library item in list view.
-export function ItemRow({ item, isOpen, grid, hasNavbar, isListView }: Props): JSX.Element | null {
+export function ItemRow({ item, isOpen, grid, hasNavbar, isListView, isWidescreen, isDesktop }: Props): JSX.Element | null {
     if (!isOpen && !isListView) return null;
 
-    const { playniteLink, isInstalled, isHidden, iconUrl, title, year, source, series, htmlLink, sourceLink, version } = item;
+    const { playniteLink, isInstalled, isHidden, iconUrl, year, source, titleWithoutVersion,
+        title, series, htmlLink, sourceLink, version, origin, playniteOpenLink, id } = item;
     const [isHovered, setIsHovered] = useState(false);
+    const cols = isOpen
+        ? "40px minmax(0, 1fr) 56px"
+        : `40px minmax(0, 1fr) 60px 80px ${isWidescreen ? "300px" : isDesktop ? "150px" : "0px"}`;
 
     return (
         <Box
@@ -32,7 +39,7 @@ export function ItemRow({ item, isOpen, grid, hasNavbar, isListView }: Props): J
                 alignItems: "center",
                 height: grid.rowHeight,
                 gap: grid.gap,
-                gridTemplateColumns: isOpen ? grid.colsOpen : grid.colsList,
+                gridTemplateColumns: cols,
             }}
         >
             { /* GAME ICON SECTION */}
@@ -56,7 +63,7 @@ export function ItemRow({ item, isOpen, grid, hasNavbar, isListView }: Props): J
                         w={grid.iconSize}
                         h={grid.iconSize}
                         isInstalled={isInstalled}
-                        isParentHovered={isHovered}
+                        showOverlay={isHovered}
                         link={playniteLink}
                     />
                 </Box>
@@ -77,13 +84,13 @@ export function ItemRow({ item, isOpen, grid, hasNavbar, isListView }: Props): J
                         transition: "font-size 140ms ease",
                     }}
                 >
-                    {title}
+                    {titleWithoutVersion}
                 </Text>
 
                 {version ? (
                     <Badge
                         size="sm"
-                        variant="filled"
+                        variant="outline"
                         color="var(--interlinked-color-primary)"
                     >
                         {version}
@@ -114,9 +121,10 @@ export function ItemRow({ item, isOpen, grid, hasNavbar, isListView }: Props): J
                     )}
 
                     <Box>
-                        <Group gap={4} wrap="nowrap" style={{ justifyContent: "center" }}>
+                        <Group gap={2} wrap="nowrap" style={{ justifyContent: "center" }}>
+                            <IconLinkOrigin origin={origin} playniteOpenLink={playniteOpenLink} id={id} />
+                            {origin !== source && <IconLinkSource source={source} sourceLink={sourceLink} />}
                             <IconLinkExternal source={source} htmlLink={htmlLink} title={title} />
-                            <IconLinkSource source={source} sourceLink={sourceLink} />
                         </Group>
                     </Box>
 
