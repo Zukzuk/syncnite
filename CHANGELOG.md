@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.38.6](https://github.com/Zukzuk/syncnite/compare/v1.38.5...v1.38.6) (2025-12-23)
+
+
+### Bug Fixes
+
+* fixed a bug where filtered out items couldnt be selected anymore ([4476a10](https://github.com/Zukzuk/syncnite/commit/4476a109ed554f630f56b25f3b26744044127c36))
+
 ### [1.38.5](https://github.com/Zukzuk/syncnite/compare/v1.38.4...v1.38.5) (2025-12-23)
 
 ### [1.38.4](https://github.com/Zukzuk/syncnite/compare/v1.38.3...v1.38.4) (2025-12-23)
