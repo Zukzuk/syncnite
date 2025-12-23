@@ -4,7 +4,7 @@ import { InterLinkedGameItem, InterLinkedGrid } from "../../../types/interlinked
 type UseParams = {
   gridRef: RefObject<HTMLDivElement | null>;
   openIds: Set<string>;
-  items: InterLinkedGameItem[];
+  itemsSorted: InterLinkedGameItem[];
   grid: InterLinkedGrid;
   idToIndex: Map<string, number>;
   viewportH: number;
@@ -27,7 +27,7 @@ type UseReturn = {
 export function useGridScrollRestore({
   gridRef,
   openIds,
-  items,
+  itemsSorted,
   grid,
   idToIndex,
   viewportH,
@@ -169,7 +169,7 @@ export function useGridScrollRestore({
 
     const el = gridRef.current;
     const idx = pendingScrollIndex;
-    const item = items[idx];
+    const item = itemsSorted[idx];
 
     if (!el || !item || !openIds.has(item.id)) {
       setPendingScrollIndex(null);
@@ -199,7 +199,7 @@ export function useGridScrollRestore({
     setPendingScrollIndex(null);
   }, [
     pendingScrollIndex,
-    items,
+    itemsSorted,
     openIds,
     scrollItemIntoView,
     gridRef,

@@ -23,8 +23,8 @@ type UseReturn = {
     containerHeight: number;
     positions: { left: number; top: number }[];
     visibleRange: { startIndex: number; endIndex: number };
-    openWidth: string;
-    openHeight: string;
+    cssOpenWidth: string;
+    cssOpenHeight: string;
     openIds: Set<string>;
     scrollItemIntoView: (index: number) => void;
     onToggleItemWithNav: (id: string, mode: NavMode) => void;
@@ -41,21 +41,22 @@ export function useGrid({
     hasNavbar,
     desktopMode,
 }: UseParams): UseReturn {
-    const itemsLen = derived.itemsSorted.length;
-    const isListView = ui.isListView;
+    const { itemsSorted } = derived;
+    const { isListView, resetAllFilters } = ui;
+    const itemsLen = itemsSorted.length;
     const desktopMini = desktopMode === "mini";
+
     const { id: routeId } = useParams<{ id?: string }>();
     const navigate = useNavigate();
 
     // Base grid sizing (cols + viewport height)
     const { cols, viewportH } = useGridLayout({ gridRef, grid, itemsLen });
     const viewCols = isListView ? 1 : Math.max(1, cols || 1);
-
     // Combined header/controls offset
     const topOffset = controlsH + sortH;
-    // Open card CSS + numeric height
-    const openWidth = `calc(100vw - ${!hasNavbar ? 0 : desktopMini ? grid.navBarMiniWidth : grid.navBarWidth}px)`;
-    const openHeight = `calc(100vh - ${topOffset}px)`;
+    // Card CSS sizes for open item
+    const cssOpenWidth = `calc(100vw - ${!hasNavbar ? 0 : desktopMini ? grid.navBarMiniWidth : grid.navBarWidth}px)`;
+    const cssOpenHeight = `calc(100vh - ${topOffset}px)`;
 
     // Open/close state
     const { openIds, toggleOpen, replaceOpen } = useGridOpenItemToggle({
@@ -65,22 +66,21 @@ export function useGrid({
     // Build id -> index map once per items change
     const idToIndex = useMemo(() => {
         const map = new Map<string, number>();
-        derived.itemsSorted.forEach((item: InterLinkedGameItem, index: number) => {
+        itemsSorted.forEach((item: InterLinkedGameItem, index: number) => {
             map.set(item.id, index);
         });
         return map;
-    }, [derived.itemsSorted]);
+    }, [itemsSorted]);
 
     // Build grid rows with open items occupying dedicated full-width rows
     const { rowItems, rowIsOpen } = useMemo(() => {
-        const itemsLen = derived.itemsSorted.length;
         const rows: number[][] = [];
         const rowIsOpen: boolean[] = [];
 
         let currentRow: number[] = [];
 
         for (let i = 0; i < itemsLen; i++) {
-            const item = derived.itemsSorted[i];
+            const item = itemsSorted[i];
             if (!item) continue;
             const isOpen = openIds.has(item.id);
 
@@ -110,7 +110,7 @@ export function useGrid({
         }
 
         return { rowItems: rows, rowIsOpen };
-    }, [derived.itemsSorted, openIds, viewCols]);
+    }, [itemsSorted, openIds, viewCols]);
 
     // Compute row layout
     const {
@@ -219,7 +219,7 @@ export function useGrid({
     const { syncOpenFromRoute } = useGridScrollRestore({
         gridRef,
         openIds,
-        items: derived.itemsSorted as InterLinkedGameItem[],
+        itemsSorted,
         grid,
         idToIndex,
         viewportH,
@@ -238,6 +238,7 @@ export function useGrid({
     const onToggleItemWithNav = useCallback(
         (id: string, navMode: NavMode) => {
             const willOpen = !openIds.has(id);
+            if(itemsSorted.findIndex(item => item.id === id) === -1) resetAllFilters();
 
             if (willOpen) {
                 // When URL is source of truth, switching/opening is done by route sync
@@ -246,7 +247,7 @@ export function useGrid({
                 navigate(`/library`, { replace: true });
             }
         },
-        [openIds, navigate]
+        [openIds, itemsSorted, navigate]
     );
 
     useEffect(() => {
@@ -334,8 +335,8 @@ export function useGrid({
         containerHeight,
         positions,
         visibleRange,
-        openWidth,
-        openHeight,
+        cssOpenWidth,
+        cssOpenHeight,
         openIds,
         scrollItemIntoView,
         onToggleItemWithNav,

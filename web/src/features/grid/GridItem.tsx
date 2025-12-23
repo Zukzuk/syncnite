@@ -14,8 +14,8 @@ type Props = {
     index: number;
     isOpen: boolean;
     isDark: boolean;
-    openWidth: string;
-    openHeight: string;
+    cssOpenWidth: string;
+    cssOpenHeight: string;
     isListView: boolean;
     itemsAssociated: InterLinkedGameItem[],
     positions: ItemPositions,
@@ -34,8 +34,8 @@ export const GridItem = memo(function GridItem({
     item,
     isOpen,
     index,
-    openWidth,
-    openHeight,
+    cssOpenWidth,
+    cssOpenHeight,
     isListView,
     itemsAssociated,
     positions,
@@ -64,8 +64,8 @@ export const GridItem = memo(function GridItem({
         isOpen,
         positions,
         isListView,
-        openWidth,
-        openHeight,
+        cssOpenWidth,
+        cssOpenHeight,
         grid,
         onToggleItem,
     });
@@ -157,7 +157,7 @@ export const GridItem = memo(function GridItem({
                         transitionTimingFunction: "ease",
                     }}
                     w={"100%"}
-                    h={isOpen ? openHeight : "100%"}
+                    h={isOpen ? cssOpenHeight : "100%"}
                 >
                     {(isOpen || isListView) ? (
                         <ItemRow
@@ -186,8 +186,8 @@ export const GridItem = memo(function GridItem({
                             isOpen={isOpen}
                             grid={grid}
                             isDark={isDark}
-                            openWidth={openWidth}
-                            openHeight={openHeight}
+                            cssOpenWidth={cssOpenWidth}
+                            cssOpenHeight={cssOpenHeight}
                             itemsAssociated={itemsAssociated}
                             onWallpaperBg={onWallpaperBg}
                             onToggleClickBounded={onToggleClickBounded}

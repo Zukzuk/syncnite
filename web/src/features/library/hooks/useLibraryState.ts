@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocalStorage } from "@mantine/hooks";
 import type { SortKey, SortDir, UIControls, UIDerivedData, ViewMode, SwitchesMode } from "../../../types/app";
 import { loadStateFromCookie, saveStateToCookie } from "../../../services/AccountService";
@@ -75,6 +75,16 @@ type UseReturn = {
 
 // A hook to manage library state including filtering, sorting, and persistence.
 export function useLibraryState(items: UseParams): UseReturn {
+  const cookieState = useMemo(loadStateFromCookie, []);
+
+  const [q, setQ] = useState<string>(cookieState.q);
+  const [sources, setSources] = useState<string[]>(cookieState.sources);
+  const [tags, setTags] = useState<string[]>(cookieState.tags);
+  const [series, setSeries] = useState<string[]>(cookieState.series);
+  const [showHidden, setShowHidden] = useState<boolean>(cookieState.showHidden);
+  const [installedOnly, setShowInstalledOnly] = useState<boolean>(cookieState.installedOnly);
+  const [sortKey, setSortKey] = useState<SortKey>(cookieState.sortKey);
+  const [sortDir, setSortDir] = useState<SortDir>(cookieState.sortDir);
 
   const [view, setView] = useLocalStorage<ViewMode>({
     key: "library.view",
@@ -89,16 +99,21 @@ export function useLibraryState(items: UseParams): UseReturn {
     getInitialValueInEffect: false,
   });
 
-  const cookieState = useMemo(loadStateFromCookie, []);
-
-  const [q, setQ] = useState<string>(cookieState.q);
-  const [sources, setSources] = useState<string[]>(cookieState.sources);
-  const [tags, setTags] = useState<string[]>(cookieState.tags);
-  const [series, setSeries] = useState<string[]>(cookieState.series);
-  const [showHidden, setShowHidden] = useState<boolean>(cookieState.showHidden);
-  const [installedOnly, setShowInstalledOnly] = useState<boolean>(cookieState.installedOnly);
-  const [sortKey, setSortKey] = useState<SortKey>(cookieState.sortKey);
-  const [sortDir, setSortDir] = useState<SortDir>(cookieState.sortDir);
+  const resetAllFilters = useCallback(() => {
+    setQ("");
+    setTags([]);
+    setSources([]);
+    setSeries([]);
+    setShowInstalledOnly(false);
+    setShowHidden(false);
+  }, [
+    setQ,
+    setTags,
+    setSources,
+    setSeries,
+    setShowInstalledOnly,
+    setShowHidden,
+  ]);
 
   useEffect(() => {
     const toSave = { q, sources, tags, series, showHidden, installedOnly, sortKey, sortDir };
@@ -155,7 +170,7 @@ export function useLibraryState(items: UseParams): UseReturn {
   return {
     uiControls: {
       view, setView, isListView,
-      switches, setSwitches,
+      switches, setSwitches, resetAllFilters,
       q, setQ,
       sources, setSources,
       tags, setTags,

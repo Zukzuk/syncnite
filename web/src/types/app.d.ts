@@ -65,6 +65,7 @@ export interface UIControls {
   isListView: boolean;
   switches: SwitchesMode,
   setSwitches: (mode: SwitchesMode) => void;
+  resetAllFilters: () => void;
   q: string;
   setQ: Dispatch<SetStateAction<string>>;
   sources: string[];

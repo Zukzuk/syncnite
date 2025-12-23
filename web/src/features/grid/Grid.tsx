@@ -36,8 +36,8 @@ export function Grid({
         containerHeight,
         positions,
         visibleRange,
-        openWidth,
-        openHeight,
+        cssOpenWidth,
+        cssOpenHeight,
         openIds,
         scrollItemIntoView,
         onToggleItemWithNav,
@@ -104,8 +104,8 @@ export function Grid({
                                 index={index}
                                 isOpen={isOpen}
                                 positions={positions}
-                                openWidth={openWidth}
-                                openHeight={openHeight}
+                                cssOpenWidth={cssOpenWidth}
+                                cssOpenHeight={cssOpenHeight}
                                 isListView={isListView}
                                 itemsAssociated={itemsAssociated}
                                 wallpaperBg={wallpaperBg}

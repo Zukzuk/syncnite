@@ -8,8 +8,8 @@ type UseParams = {
     isOpen: boolean,
     positions: ItemPositions,
     isListView: boolean,
-    openWidth: string,
-    openHeight: string,
+    cssOpenWidth: string,
+    cssOpenHeight: string,
     grid: InterLinkedGrid,
     onToggleItem: (id: string, navMode?: NavMode) => void,
 };
@@ -25,14 +25,14 @@ type UseReturn = {
 
 // A hook to calculate the position and size of a grid item.
 export function useGridItem({
-    item, index, isOpen, positions, isListView, openWidth, openHeight, grid, onToggleItem
+    item, index, isOpen, positions, isListView, cssOpenWidth, cssOpenHeight, grid, onToggleItem
 }: UseParams): UseReturn {
     const pos = positions[index] ?? { left: grid.gap, top: grid.gap };
-    const cardWidth = isOpen || isListView 
-        ? `calc(${openWidth} - ${grid.scrollbarWidth}px)` 
+    const cardWidth = isOpen || isListView
+        ? `calc(${cssOpenWidth} - ${grid.scrollbarWidth}px)`
         : `calc(${grid.cardWidth}px)`;
     const cardHeight = isOpen
-        ? openHeight
+        ? cssOpenHeight
         : isListView
             ? `calc(${grid.rowHeight}px)`
             : `calc(${grid.cardHeight}px)`;

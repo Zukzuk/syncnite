@@ -33,6 +33,7 @@ export const HeaderControls = memo(function HeaderControls({
     setView,
     switches,
     setSwitches,
+    resetAllFilters,
     q,
     setQ,
     sources,
@@ -67,22 +68,6 @@ export const HeaderControls = memo(function HeaderControls({
     const desired: SwitchesMode = hasActiveFilters ? "enabled" : "disabled";
     if (switches !== desired) setSwitches(desired);
   }, [hasActiveFilters, switches, setSwitches]);
-
-  const resetAllFilters = useCallback(() => {
-    setQ("");
-    setTags([]);
-    setSources([]);
-    setSeries([]);
-    setShowInstalledOnly(false);
-    setShowHidden(false);
-  }, [
-    setQ,
-    setTags,
-    setSources,
-    setSeries,
-    setShowInstalledOnly,
-    setShowHidden,
-  ]);
 
   const sourcesData = useMemo(
     () =>

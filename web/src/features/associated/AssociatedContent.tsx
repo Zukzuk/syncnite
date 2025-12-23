@@ -263,8 +263,8 @@ type Props = {
     isOpen: boolean;
     grid: InterLinkedGrid;
     isDark: boolean;
-    openWidth: string;
-    openHeight: string;
+    cssOpenWidth: string;
+    cssOpenHeight: string;
     itemsAssociated: InterLinkedGameItem[];
     onWallpaperBg: (on: boolean) => void;
     onToggleClickBounded: (id?: string, navMode?: NavMode) => void;
@@ -276,8 +276,8 @@ export function AssociatedContent({
     isOpen,
     grid,
     isDark,
-    openWidth,
-    openHeight,
+    cssOpenWidth,
+    cssOpenHeight,
     itemsAssociated,
     onWallpaperBg,
     onToggleClickBounded,
@@ -368,8 +368,8 @@ export function AssociatedContent({
             py={grid.gap}
             pr={gapRight}
             style={{
-                width: openWidth,
-                height: `calc(${openHeight} - ${grid.rowHeight}px)`,
+                width: cssOpenWidth,
+                height: `calc(${cssOpenHeight} - ${grid.rowHeight}px)`,
                 backgroundColor: "transparent",
                 overflowX: "hidden",
                 overflowY: "hidden",
