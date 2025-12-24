@@ -13,6 +13,7 @@ type Props = {
         right: string;
     };
     readOnly?: boolean;
+    width?: number;
     value: string;
     data: { value: string; label: string }[];
     onChange: (value: string) => void;
@@ -23,6 +24,7 @@ export const WrappedSegmentedControl = memo(function WrappedSegmentedControl({
     tooltip,
     label,
     readOnly = false,
+    width,
     value,
     data,
     onChange,
@@ -32,7 +34,7 @@ export const WrappedSegmentedControl = memo(function WrappedSegmentedControl({
             value={value}
             size="xs"
             radius="sm"
-            w={110}
+            w={width ? width : undefined}
             color="var(--interlinked-color-primary)"
             onChange={onChange}
             readOnly={readOnly && value === "disabled" ? true : false}
