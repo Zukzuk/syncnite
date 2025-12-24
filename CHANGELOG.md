@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.39.2](https://github.com/Zukzuk/syncnite/compare/v1.39.1...v1.39.2) (2025-12-24)
+
+
+### Bug Fixes
+
+* fixed issue where navbar mini chevron was not animating ([00c1641](https://github.com/Zukzuk/syncnite/commit/00c1641f5fd0905642a761d12922226680228eb7))
+
 ### [1.39.1](https://github.com/Zukzuk/syncnite/compare/v1.39.0...v1.39.1) (2025-12-24)
 
 
