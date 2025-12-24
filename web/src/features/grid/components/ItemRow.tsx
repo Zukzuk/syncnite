@@ -89,9 +89,10 @@ export function ItemRow({ item, isOpen, grid, hasNavbar, isListView, isWidescree
 
                 {version ? (
                     <Badge
-                        size="sm"
+                        size="xs"
                         variant="outline"
                         color="var(--interlinked-color-primary)"
+                        style={{ display: "inline-block" }}
                     >
                         {version}
                     </Badge>

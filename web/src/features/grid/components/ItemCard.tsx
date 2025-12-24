@@ -1,4 +1,4 @@
-import { Box, Group, Image, Text } from "@mantine/core";
+import { Badge, Box, Group, Image, Text } from "@mantine/core";
 import { InterLinkedGameItem, InterLinkedGrid } from "../../../types/interlinked";
 import { IconIsInstalled } from "../../../components/IconIsInstalled";
 import { IconIsHidden } from "../../../components/IconIsHidden";
@@ -18,7 +18,9 @@ type Props = {
 export function ItemCard({ item, isOpen, isListView, grid }: Props): JSX.Element | null {
     if (isOpen || isListView) return null;
 
-    const { title, coverUrl, year, source, htmlLink, sourceLink, isHidden, isInstalled, origin, playniteOpenLink, id } = item;
+    const { title, coverUrl, year, source, htmlLink, sourceLink, isHidden,
+        isInstalled, origin, playniteOpenLink, id, titleWithoutVersion, version
+    } = item;
 
     return (
         <Box
@@ -68,7 +70,16 @@ export function ItemCard({ item, isOpen, isListView, grid }: Props): JSX.Element
                     transition: "font-size 140ms ease",
                 }}
             >
-                {title}
+                {titleWithoutVersion}&nbsp;{version ? (
+                    <Badge
+                        size="xs"
+                        variant="outline"
+                        color="var(--interlinked-color-primary)"
+                        style={{ display: "inline-block", position: "relative", top: 3 }}
+                    >
+                        {version}
+                    </Badge>
+                ) : null}
             </Text>
 
             <Box
