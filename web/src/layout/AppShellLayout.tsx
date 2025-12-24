@@ -113,6 +113,7 @@ export default function AppShellLayout({ children, hideSite = false }: Props) {
             cursor: "pointer",
             userSelect: "none",
             zIndex: grid.z.top,
+            ...flow.gate.gateStyle,
           }}
         >
           {desktopMode === "normal" ? (
