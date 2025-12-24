@@ -183,7 +183,16 @@ function calcAssociatedLayout(
     totalCards: number,
     grid: InterLinkedGrid
 ): AssociatedLayout {
-    if (width <= 0 || height <= 0 || totalCards === 0) {
+    if (!grid.cardWidth || !grid.cardHeight) {
+        return {
+            deckColumns: 0,
+            stackColumns: 0,
+            maxCardsPerDeckColumn: null,
+            minStackColumns: 1,
+        };
+    }
+
+    if (width <= 0 || height <= 0 || !totalCards) {
         return {
             deckColumns: 0,
             stackColumns: Math.max(1, Math.floor(width / (grid.cardWidth * 0.7))),
@@ -194,11 +203,9 @@ function calcAssociatedLayout(
 
     const deckColWidth = grid.cardWidth + grid.gap * 2;
     const stackColWidth = grid.cardWidth * 0.7 + grid.gap;
-
     const cardHeight = (grid.cardWidth * 32) / 23;
     const stepY = grid.cardStepY;
     const maxCardsPerColumnByHeight = Math.max(1, Math.floor((height - cardHeight) / stepY) + 1);
-
     const neededColsByHeight = Math.max(1, Math.ceil(totalCards / maxCardsPerColumnByHeight));
 
     let maxDeckColsByWidth = 0;
@@ -235,7 +242,6 @@ function calcAssociatedLayout(
     const deckColumns = Math.min(neededColsByHeight, maxDeckColsByWidth);
     const minStackColumns = deckColumns >= 6 ? 2 : 1;
     const hitWidthLimit = deckColumns < neededColsByHeight;
-
     const usedWidthForDeck = deckColumns * deckColWidth;
     const remainingWidth = width - usedWidthForDeck;
     const maxStackColsByWidth = remainingWidth > 0 ? Math.floor(remainingWidth / stackColWidth) : 0;
@@ -288,7 +294,9 @@ export function AssociatedContent({
     const lib = useLibraryContext();
 
     // prepare available deck keys
-    const availableKeys = useMemo(() => associatedDecks.map((d) => d.key), [associatedDecks]);
+    const availableKeys = useMemo(
+        () => associatedDecks.map((d) => d.key), [associatedDecks]
+    );
 
     // pick the open deck key
     const openDeckKey = useMemo(
@@ -347,7 +355,6 @@ export function AssociatedContent({
             const rect = el.getBoundingClientRect();
             const width = rect.width - gapRight;
             const height = rect.height;
-
             const totalCards = openDeck.items.filter((g) => g.coverUrl).length;
 
             setLayout(calcAssociatedLayout(width, height, totalCards, grid));
@@ -358,7 +365,7 @@ export function AssociatedContent({
         update();
 
         return () => ro.disconnect();
-    }, [openDeck?.key, openDeck?.items.length]);
+    }, [openDeck?.key, openDeck?.items.length, grid]);
 
     return (
         <Collapse
