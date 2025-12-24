@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.39.1](https://github.com/Zukzuk/syncnite/compare/v1.39.0...v1.39.1) (2025-12-24)
+
+
+### Bug Fixes
+
+* fix associated reflow ([318c432](https://github.com/Zukzuk/syncnite/commit/318c432a315147cef4e686b8ee3595e91608874a))
+
 ## [1.39.0](https://github.com/Zukzuk/syncnite/compare/v1.38.6...v1.39.0) (2025-12-24)
 
 
