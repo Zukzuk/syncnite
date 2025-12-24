@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.39.4](https://github.com/Zukzuk/syncnite/compare/v1.39.3...v1.39.4) (2025-12-24)
+
+
+### Bug Fixes
+
+* fixed bug wehere version was not rendered on cards ([5a5096d](https://github.com/Zukzuk/syncnite/commit/5a5096d0c3277df341cedff9ae4b0eee07147c2b))
+
 ### [1.39.3](https://github.com/Zukzuk/syncnite/compare/v1.39.2...v1.39.3) (2025-12-24)
 
 
