@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.39.0](https://github.com/Zukzuk/syncnite/compare/v1.38.6...v1.39.0) (2025-12-24)
+
+
+### Features
+
+* added slider for card size scaling ([fbbf4af](https://github.com/Zukzuk/syncnite/commit/fbbf4af1870156eab8373525ee758e2fa3c2a98c))
+
 ### [1.38.6](https://github.com/Zukzuk/syncnite/compare/v1.38.5...v1.38.6) (2025-12-23)
 
 
