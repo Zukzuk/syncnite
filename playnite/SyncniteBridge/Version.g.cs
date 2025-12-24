@@ -3,6 +3,6 @@ namespace SyncniteBridge
 {
     internal static class BridgeVersion
     {
-        public const string Current = "1.39.2";
+        public const string Current = "1.39.3";
     }
 }

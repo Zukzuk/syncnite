@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.39.3](https://github.com/Zukzuk/syncnite/compare/v1.39.2...v1.39.3) (2025-12-24)
+
+
+### Bug Fixes
+
+* fix header flex ([538e653](https://github.com/Zukzuk/syncnite/commit/538e65310e4062ada68ea8784547767a7a10d859))
+
 ### [1.39.2](https://github.com/Zukzuk/syncnite/compare/v1.39.1...v1.39.2) (2025-12-24)
 
 
