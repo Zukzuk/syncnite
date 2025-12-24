@@ -8,14 +8,22 @@ type Props = {
     toggle: (v: boolean) => void;
 }
 
-export const IconToggleWithLabel = memo(function IconToggleWithLabel({
+export const WrappedSwitch = memo(function WrappedSwitch({
     label,
     ariaLabel,
     checked,
     toggle,
 }: Props) {
     return (
-        <Flex direction="column" align="center" justify="center" style={{ alignSelf: "stretch" }}>
+        <Flex
+            h={47}
+            direction="column"
+            align="center"
+            justify="center"
+            style={{
+                alignSelf: "stretch"
+            }}
+        >
             <Switch
                 aria-label={ariaLabel ?? label}
                 checked={checked}

@@ -8,7 +8,9 @@ type Props = {
     onChange: (v: string) => void;
 }
 
-export function SearchInput({ value, width, onChange }: Props) {
+export function SearchInput({ 
+    value, width, onChange 
+}: Props) {
     const hasValue = !!value;
 
     return (

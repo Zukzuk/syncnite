@@ -28,6 +28,7 @@ export function Grid({
     const { isListView } = ui;
     const { itemsSorted, itemsAssociated } = derived;
     const { hasNavbar, grid, desktopMode, isDark, isWidescreen, isDesktop } = theme;
+
     const [wallpaperBg, onWallpaperBg] = useState(false);
     const gridRef = useRef<HTMLDivElement | null>(null);
 
@@ -39,6 +40,7 @@ export function Grid({
         cssOpenWidth,
         cssOpenHeight,
         openIds,
+        dynamicGrid,
         scrollItemIntoView,
         onToggleItemWithNav,
     } = useGrid({
@@ -109,7 +111,7 @@ export function Grid({
                                 isListView={isListView}
                                 itemsAssociated={itemsAssociated}
                                 wallpaperBg={wallpaperBg}
-                                grid={grid}
+                                grid={dynamicGrid}
                                 isDark={isDark}
                                 desktopMode={desktopMode}
                                 hasNavbar={hasNavbar}
@@ -124,7 +126,7 @@ export function Grid({
 
             {ui.sortKey === "title" && !wallpaperBg && (
                 <AlphabeticalRail
-                    grid={grid}
+                    grid={dynamicGrid}
                     activeLetter={activeLetter}
                     railCounts={railCounts}
                     onScrollJump={onScrollJump}

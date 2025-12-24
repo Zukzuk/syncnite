@@ -3,7 +3,7 @@ import { useLocalStorage } from "@mantine/hooks";
 import type { SortKey, SortDir, UIControls, UIDerivedData, ViewMode, SwitchesMode } from "../../../types/app";
 import { loadStateFromCookie, saveStateToCookie } from "../../../services/AccountService";
 import { orderedLetters } from "../../../utils";
-import { InterLinkedGameItem } from "../../../types/interlinked";
+import { InterLinkedGameItem, InterLinkedTheme } from "../../../types/interlinked";
 
 // helpers to rank empties last regardless of direction
 const strKey = (s: string | null | undefined) => {
@@ -86,6 +86,8 @@ export function useLibraryState(items: UseParams): UseReturn {
   const [sortKey, setSortKey] = useState<SortKey>(cookieState.sortKey);
   const [sortDir, setSortDir] = useState<SortDir>(cookieState.sortDir);
 
+  const [sliderValue, setSliderValue] = useState(cookieState.sliderValue);
+
   const [view, setView] = useLocalStorage<ViewMode>({
     key: "library.view",
     defaultValue: "grid", // optional: your preferred default
@@ -116,9 +118,9 @@ export function useLibraryState(items: UseParams): UseReturn {
   ]);
 
   useEffect(() => {
-    const toSave = { q, sources, tags, series, showHidden, installedOnly, sortKey, sortDir };
+    const toSave = { q, sliderValue, sources, tags, series, showHidden, installedOnly, sortKey, sortDir };
     saveStateToCookie(toSave);
-  }, [q, sources, tags, series, showHidden, installedOnly, sortKey, sortDir]);
+  }, [q, sliderValue, sources, tags, series, showHidden, installedOnly, sortKey, sortDir]);
 
   const onToggleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -171,6 +173,7 @@ export function useLibraryState(items: UseParams): UseReturn {
     uiControls: {
       view, setView, isListView,
       switches, setSwitches, resetAllFilters,
+      sliderValue, setSliderValue,
       q, setQ,
       sources, setSources,
       tags, setTags,

@@ -163,6 +163,7 @@ export function fetchUser(): string | null {
 export function loadStateFromCookie(): CookieState {
     const cookie = {
         q: "",
+        sliderValue: 156,
         sources: [],
         tags: [],
         series: [],

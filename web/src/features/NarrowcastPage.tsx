@@ -47,6 +47,7 @@ export default function NarrowcastPage(): JSX.Element {
     const navigate = useNavigate();
     const { grid, isDark, setColorScheme } = useInterLinkedTheme();
     const toggleColorScheme = () => setColorScheme(isDark ? "light" : "dark");
+    const [isHovered, setIsHovered] = useState(false);
 
     const items = useMemo(() => {
         // Hardcode to Playnite for now
@@ -213,7 +214,7 @@ export default function NarrowcastPage(): JSX.Element {
             if (e.key === "ArrowRight") void goTo(idx + 1);
             if (e.key === "ArrowLeft") void goTo(idx - 1);
             if (e.key.toLowerCase() === "f") toggleFs();
-            if (e.key === "Escape") navigate("/", { replace: true });
+            if (e.key === "Escape") navigate("/library", { replace: true });
         };
         window.addEventListener("keydown", onKeyDown);
         return () => window.removeEventListener("keydown", onKeyDown);
@@ -321,7 +322,7 @@ export default function NarrowcastPage(): JSX.Element {
                                 e.preventDefault();
                                 e.stopPropagation();
                                 bumpUi();
-                                navigate("/", { replace: true });
+                                navigate("/library", { replace: true });
                             }}
                             aria-label="Close"
                         >
@@ -393,25 +394,42 @@ export default function NarrowcastPage(): JSX.Element {
             <Paper
                 withBorder
                 radius="md"
+                onMouseOver={() => setIsHovered(true)}
+                onMouseOut={() => setIsHovered(false)}
+                onClick={() => {
+                    navigate(`/library/${id}`);
+                }}
                 style={{
                     position: "absolute",
                     left: 12,
                     bottom: 12,
                     zIndex: grid.z.float,
+                    cursor: "pointer",
                     maxWidth: "min(720px, 70vw)",
-                    background: isDark ? "rgba(20, 20, 20, 0.45)" : "rgba(255, 255, 255, 0.55)",
+                    background: isDark 
+                        ? "rgba(20, 20, 20, 0.45)" 
+                        : "rgba(255, 255, 255, 0.55)",
                     backdropFilter: "blur(14px) saturate(1.2)",
                     WebkitBackdropFilter: "blur(14px) saturate(1.2)",
-                    borderColor: isDark ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.12)",
-                    boxShadow: isDark ? "0 8px 30px rgba(0, 0, 0, 0.55)" : "0 8px 30px rgba(0, 0, 0, 0.15)",
+                    borderColor: isHovered 
+                        ? "var(--interlinked-color-primary-soft)" 
+                        : isDark 
+                            ? "rgba(255, 255, 255, 0.12)" 
+                            : "rgba(0, 0, 0, 0.12)",
+                    boxShadow: isDark 
+                        ? "0 8px 30px rgba(0, 0, 0, 0.55)" 
+                        : "0 8px 30px rgba(0, 0, 0, 0.15)",
                 }}
             >
                 <Group justify="space-between" gap={0} wrap="nowrap">
                     <Box
+                        py={grid.gap}
+                        px={grid.gap * 2}
                         style={{
                             minWidth: 0,
-                            padding: grid.gap * 2,
-                            borderRight: isDark ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid rgba(0, 0, 0, 0.12)",
+                            borderRight: isDark 
+                                ? "1px solid rgba(255, 255, 255, 0.12)" 
+                                : "1px solid rgba(0, 0, 0, 0.12)",
                         }}
                     >
                         <Text
@@ -436,9 +454,9 @@ export default function NarrowcastPage(): JSX.Element {
                         </Text>
                     </Box>
                     <Box
+                        px={grid.gap * 2}
                         style={{
                             minWidth: 0,
-                            padding: grid.gap * 2,
                         }}
                     >
                         <Text

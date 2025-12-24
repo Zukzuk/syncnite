@@ -71,8 +71,11 @@ export type InterLinkedGrid = {
     navBarMiniWidth: number;
     coverWidth: number;
     coverHeight: number;
-    cardWidth: number;
-    cardHeight: number;
+    cardWidth: number | undefined;
+    cardHeight: number | undefined;
+    cardMinWidth: number;
+    cardDefaultWidth: number;
+    cardMaxWidth: number;
     rowHeight: number;
     halfRowHeight: number;
     iconSize: number;

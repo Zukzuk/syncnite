@@ -50,6 +50,7 @@ export interface AccountCreds {
 
 export interface CookieState {
   q: string;
+  sliderValue: number;
   sources: string[];
   tags: string[];
   series: string[];
@@ -66,6 +67,8 @@ export interface UIControls {
   switches: SwitchesMode,
   setSwitches: (mode: SwitchesMode) => void;
   resetAllFilters: () => void;
+  sliderValue: number;
+  setSliderValue: (value: number) => void;
   q: string;
   setQ: Dispatch<SetStateAction<string>>;
   sources: string[];

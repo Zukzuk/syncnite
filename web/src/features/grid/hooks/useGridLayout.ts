@@ -3,7 +3,7 @@ import { InterLinkedGrid } from "../../../types/interlinked";
 
 type UseParams = {
     gridRef: RefObject<HTMLDivElement>;
-    grid: InterLinkedGrid;
+    dynamicGrid: InterLinkedGrid;
     itemsLen: number;
 };
 
@@ -18,7 +18,7 @@ type UseReturn = {
 };
 
 // A hook to calculate an absolute grid layout for a container.
-export function useGridLayout({ gridRef, grid, itemsLen }: UseParams): UseReturn {
+export function useGridLayout({ gridRef, dynamicGrid, itemsLen }: UseParams): UseReturn {
     const [width, setWidth] = useState(0);
     const [viewportH, setViewportH] = useState(0);
 
@@ -46,25 +46,35 @@ export function useGridLayout({ gridRef, grid, itemsLen }: UseParams): UseReturn
         positions, 
         containerHeight,
     } = useMemo(() => {
-        const innerW = Math.max(0, width - grid.gap * 2);
-        const strideX = grid.cardWidth + grid.gap;
-        const cols = Math.max(1, Math.floor((innerW + grid.gap) / strideX));
-        const strideY = grid.cardHeight + grid.gap;
+        if (!dynamicGrid.cardWidth || !dynamicGrid.cardHeight) {
+            return {
+                cols: 1,
+                rows: 0,
+                strideY: 0,
+                positions: [],
+                containerHeight: 0,
+            };
+        }
+
+        const innerW = Math.max(0, width - dynamicGrid.gap * 2);
+        const strideX = dynamicGrid.cardWidth + dynamicGrid.gap;
+        const cols = Math.max(1, Math.floor((innerW + dynamicGrid.gap) / strideX));
+        const strideY = dynamicGrid.cardHeight + dynamicGrid.gap;
         const positions: { left: number; top: number }[] = new Array(itemsLen);
 
         for (let i = 0; i < itemsLen; i++) {
             const col = i % cols;
             const row = Math.floor(i / cols);
-            positions[i] = { left: grid.gap + col * strideX, top: grid.gap + row * strideY };
+            positions[i] = { left: dynamicGrid.gap + col * strideX, top: dynamicGrid.gap + row * strideY };
         }
 
         const rows = Math.ceil(itemsLen / cols);
         const containerHeight = rows === 0 
-            ? grid.gap * 2 + grid.cardHeight 
-            : grid.gap + rows * (grid.cardHeight + grid.gap);
+            ? dynamicGrid.gap * 2 + dynamicGrid.cardHeight 
+            : dynamicGrid.gap + rows * (dynamicGrid.cardHeight + dynamicGrid.gap);
 
         return { cols, rows, strideY, positions, containerHeight };
-    }, [width, itemsLen]);
+    }, [width, itemsLen, dynamicGrid]);
 
     return { width, viewportH, cols, rows, strideY, positions, containerHeight } as const;
 }

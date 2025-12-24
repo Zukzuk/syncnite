@@ -26,6 +26,7 @@ type UseReturn = {
     cssOpenWidth: string;
     cssOpenHeight: string;
     openIds: Set<string>;
+    dynamicGrid: InterLinkedGrid;
     scrollItemIntoView: (index: number) => void;
     onToggleItemWithNav: (id: string, mode: NavMode) => void;
 };
@@ -42,21 +43,28 @@ export function useGrid({
     desktopMode,
 }: UseParams): UseReturn {
     const { itemsSorted } = derived;
-    const { isListView, resetAllFilters } = ui;
+    const { isListView, sliderValue, resetAllFilters } = ui;
     const itemsLen = itemsSorted.length;
     const desktopMini = desktopMode === "mini";
 
     const { id: routeId } = useParams<{ id?: string }>();
     const navigate = useNavigate();
 
+    // Dynamic grid based on user slider value
+    const dynamicGrid = useMemo(() => {
+        // keep everything else from the theme grid
+        return {
+            ...grid,
+            cardWidth: sliderValue + 4, // + border
+            cardHeight: sliderValue * (1 / grid.ratio) + 4 + 52 + 28, // same formula you used in theme
+        };
+    }, [sliderValue, grid]);
+
     // Base grid sizing (cols + viewport height)
-    const { cols, viewportH } = useGridLayout({ gridRef, grid, itemsLen });
+    const { cols, viewportH } = useGridLayout({ gridRef, dynamicGrid, itemsLen });
     const viewCols = isListView ? 1 : Math.max(1, cols || 1);
-    // Combined header/controls offset
-    const topOffset = controlsH + sortH;
-    // Card CSS sizes for open item
-    const cssOpenWidth = `calc(100vw - ${!hasNavbar ? 0 : desktopMini ? grid.navBarMiniWidth : grid.navBarWidth}px)`;
-    const cssOpenHeight = `calc(100vh - ${topOffset}px)`;
+    const cssOpenWidth = `calc(100vw - ${!hasNavbar ? 0 : desktopMini ? dynamicGrid.navBarMiniWidth : dynamicGrid.navBarWidth}px)`;
+    const cssOpenHeight = `calc(100vh - ${controlsH + sortH}px)`;
 
     // Open/close state
     const { openIds, toggleOpen, replaceOpen } = useGridOpenItemToggle({
@@ -126,8 +134,8 @@ export function useGrid({
         const itemRowIndex = new Array<number>(itemsLen);
         const itemColIndex = new Array<number>(itemsLen);
 
-        const closedHeight = isListView ? grid.rowHeight : grid.cardHeight;
-        let y = isListView ? 0 : grid.gap;
+        const closedHeight = isListView ? dynamicGrid.rowHeight : dynamicGrid.cardHeight;
+        let y = isListView ? 0 : dynamicGrid.gap;
 
         for (let r = 0; r < rowCount; r++) {
             rowTops[r] = y;
@@ -142,13 +150,13 @@ export function useGrid({
                 itemColIndex[idx] = c;
             }
 
-            y += height + (isListView ? 0 : grid.gap);
+            y += height + (isListView ? 0 : dynamicGrid.gap);
         }
 
         const containerHeight =
             rowCount === 0
-                ? grid.gap * 2 + closedHeight
-                : y - (isListView ? 0 : grid.gap * 2);
+                ? dynamicGrid.gap * 2 + closedHeight
+                : y - (isListView ? 0 : dynamicGrid.gap * 2);
 
         return {
             rowTops,
@@ -157,7 +165,7 @@ export function useGrid({
             itemRowIndex,
             itemColIndex,
         };
-    }, [rowItems, rowIsOpen, itemsLen, viewportH, isListView]);
+    }, [rowItems, rowIsOpen, itemsLen, viewportH, isListView, dynamicGrid]);
 
     // Per-row first/last item indices
     const rowFirstItemIndex = useMemo(
@@ -172,7 +180,7 @@ export function useGrid({
     // Compute absolute item positions
     const positions = useMemo(() => {
         const out: ItemPositions = new Array(itemsLen);
-        const strideX = grid.cardWidth + grid.gap;
+        const strideX = dynamicGrid.cardWidth + dynamicGrid.gap;
 
         for (let i = 0; i < itemsLen; i++) {
             const r = itemRowIndex[i];
@@ -180,18 +188,18 @@ export function useGrid({
 
             const c = itemColIndex[i] ?? 0;
             out[i] = {
-                left: grid.gap + c * strideX,
-                top: rowTops[r] ?? grid.gap,
+                left: dynamicGrid.gap + c * strideX,
+                top: rowTops[r] ?? dynamicGrid.gap,
             };
         }
 
         return out;
-    }, [itemsLen, itemRowIndex, itemColIndex, rowTops]);
+    }, [itemsLen, itemRowIndex, itemColIndex, rowTops, dynamicGrid]);
 
     // Virtual window (variable-height rows) + scroll position
     const { visibleRange, syncScrollTopNow } = useGridVirtualWindow({
         gridRef,
-        grid,
+        dynamicGrid,
         opts: {
             rows: rowTops.length,
             cols: viewCols,
@@ -212,7 +220,7 @@ export function useGrid({
     });
 
     // Heights needed for restore logic
-    const closedHeight = isListView ? grid.rowHeight : grid.cardHeight;
+    const closedHeight = isListView ? dynamicGrid.rowHeight : dynamicGrid.cardHeight;
     const openRowHeight = Math.max(closedHeight, viewportH);
 
     // Open/close behavior with scroll restore according to the new rules
@@ -220,7 +228,7 @@ export function useGrid({
         gridRef,
         openIds,
         itemsSorted,
-        grid,
+        dynamicGrid,
         idToIndex,
         viewportH,
         closedHeight,
@@ -238,7 +246,7 @@ export function useGrid({
     const onToggleItemWithNav = useCallback(
         (id: string, navMode: NavMode) => {
             const willOpen = !openIds.has(id);
-            if(itemsSorted.findIndex(item => item.id === id) === -1) resetAllFilters();
+            if (itemsSorted.findIndex(item => item.id === id) === -1) resetAllFilters();
 
             if (willOpen) {
                 // When URL is source of truth, switching/opening is done by route sync
@@ -267,7 +275,7 @@ export function useGrid({
     //         const rowIdx = itemRowIndex[idx];
     //         if (rowIdx == null) continue;
 
-    //         const top = rowTops[rowIdx] ?? grid.gap;
+    //         const top = rowTops[rowIdx] ?? dynamicGrid.gap;
     //         const height = rowHeights[rowIdx] ?? 0;
     //         const bottom = top + height;
 
@@ -280,6 +288,7 @@ export function useGrid({
 
     //     return false;
     // }, [
+    //     dynamicGrid.gap,
     //     isListView,
     //     openIds,
     //     idToIndex,
@@ -338,6 +347,7 @@ export function useGrid({
         cssOpenWidth,
         cssOpenHeight,
         openIds,
+        dynamicGrid,
         scrollItemIntoView,
         onToggleItemWithNav,
     } as const;

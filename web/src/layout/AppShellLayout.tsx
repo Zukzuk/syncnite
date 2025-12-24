@@ -15,7 +15,6 @@ export default function AppShellLayout({ children, hideSite = false }: Props) {
   const { grid, hasNavbar, desktopMode, navbarOpened, isDark, toggleNavbar, closeNavbar, setDesktopMode } = useInterLinkedTheme();
   const desktopClosed = desktopMode === "closed";
   const desktopMini = desktopMode === "mini";
-  console.log("AppShellLayout render:", { hideSite, hasNavbar, desktopMode, navbarOpened });
 
   // Intro flow for the navbar burger
   const flow = useIntroFlow({

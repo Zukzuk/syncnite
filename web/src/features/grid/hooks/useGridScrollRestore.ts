@@ -5,7 +5,7 @@ type UseParams = {
   gridRef: RefObject<HTMLDivElement | null>;
   openIds: Set<string>;
   itemsSorted: InterLinkedGameItem[];
-  grid: InterLinkedGrid;
+  dynamicGrid: InterLinkedGrid;
   idToIndex: Map<string, number>;
   viewportH: number;
   closedHeight: number;
@@ -28,7 +28,7 @@ export function useGridScrollRestore({
   gridRef,
   openIds,
   itemsSorted,
-  grid,
+  dynamicGrid,
   idToIndex,
   viewportH,
   closedHeight,
@@ -83,7 +83,7 @@ export function useGridScrollRestore({
         } else {
           const prevRowIdx = Math.max(0, rowIdx - 1);
           const prevRowTop = rowTops[prevRowIdx] ?? rowTop;
-          el.scrollTop = prevRowTop - grid.gap;
+          el.scrollTop = prevRowTop - dynamicGrid.gap;
         }
       } else if (rowBottom > viewBottom) {
         el.scrollTop = viewTop;
@@ -92,7 +92,7 @@ export function useGridScrollRestore({
       }
     },
     [
-      grid.gap,
+      dynamicGrid.gap,
       gridRef,
       idToIndex,
       itemRowIndex,
@@ -189,7 +189,7 @@ export function useGridScrollRestore({
         const delta = openRowHeight - closedHeight;
         preOpenScrollTopRef.current = Math.max(
           0,
-          el.scrollTop - delta - grid.gap
+          el.scrollTop - delta - dynamicGrid.gap
         );
       }
 
@@ -206,7 +206,7 @@ export function useGridScrollRestore({
     isListView,
     openRowHeight,
     closedHeight,
-    grid.gap,
+    dynamicGrid.gap,
   ]);
 
   return { syncOpenFromRoute };

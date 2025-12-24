@@ -3,7 +3,7 @@ import { InterLinkedGrid } from "../../../types/interlinked";
 
 type UseParams = {
     gridRef: RefObject<HTMLDivElement>;
-    grid: InterLinkedGrid;
+    dynamicGrid: InterLinkedGrid;
     opts: {
         rows: number;
         cols: number;
@@ -27,7 +27,7 @@ type UseReturn = {
 };
 
 // Hook to manage virtual windowing for a grid layout
-export function useGridVirtualWindow({ gridRef, grid, opts }: UseParams): UseReturn {
+export function useGridVirtualWindow({ gridRef, dynamicGrid, opts }: UseParams): UseReturn {
     const {
         rows,
         cols,
@@ -80,10 +80,10 @@ export function useGridVirtualWindow({ gridRef, grid, opts }: UseParams): UseRet
     const visibleRange = useMemo(() => {
         if (!rows || !cols) return { startIndex: 0, endIndex: 0 };
 
-        const vTop = Math.max(0, scrollTop - grid.overscan.top);
+        const vTop = Math.max(0, scrollTop - dynamicGrid.overscan.top);
         const vBot = Math.min(
             containerHeight,
-            scrollTop + viewportH + grid.overscan.bottom
+            scrollTop + viewportH + dynamicGrid.overscan.bottom
         );
 
         // find first row whose bottom > vTop
@@ -140,6 +140,7 @@ export function useGridVirtualWindow({ gridRef, grid, opts }: UseParams): UseRet
         itemsLen,
         rowFirstItemIndex,
         rowLastItemIndex,
+        dynamicGrid,
     ]);
 
     // function to sync scrollTop immediately

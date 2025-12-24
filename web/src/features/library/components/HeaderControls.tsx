@@ -1,11 +1,12 @@
-import { memo, useMemo, useEffect, useCallback } from "react";
-import { Flex, Box, SegmentedControl, Group, Text, Tooltip } from "@mantine/core";
+import { memo, useMemo, useEffect, useState } from "react";
+import { Flex, Box, Group, Slider } from "@mantine/core";
 import { SwitchesMode, UIControls, UIDerivedData, ViewMode, } from "../../../types/app";
 import { SearchInput } from "../../../components/SearchInput";
 import { MultiSelectInput } from "../../../components/MultiSelectInput";
-import { IconToggleWithLabel } from "../../../components/IconToggleWithLabel";
+import { WrappedSwitch } from "../../../components/WrappedSwitch";
 import { PLAYNITE_SOURCE_MAP } from "../../../services/PlayniteService";
 import { InterLinkedData, InterLinkedGameItem, InterLinkedTheme } from "../../../types/interlinked";
+import { WrappedSegmentedControl } from "../../../components/WrappedSegmentedControl";
 
 type Props = {
   controlsRef: (el: HTMLDivElement | null) => void;
@@ -25,27 +26,20 @@ export const HeaderControls = memo(function HeaderControls({
   // Hardcoded to Playnite for now
   const { allSources, allTags, allSeries, items } = libraryData.playnite ?? {};
   if (!items) return null;
-  
+
   const { hasNavbar, grid } = theme;
 
   const {
-    view,
-    setView,
-    switches,
-    setSwitches,
-    resetAllFilters,
-    q,
-    setQ,
-    sources,
-    setSources,
-    tags,
-    setTags,
-    series,
-    setSeries,
-    showHidden,
-    setShowHidden,
-    installedOnly,
-    setShowInstalledOnly,
+    view, setView,
+    isListView,
+    switches, setSwitches, resetAllFilters,
+    sliderValue, setSliderValue,
+    q, setQ,
+    sources, setSources,
+    tags, setTags,
+    series, setSeries,
+    showHidden, setShowHidden,
+    installedOnly, setShowInstalledOnly,
   } = ui;
 
   const { filteredCount } = derived;
@@ -112,106 +106,111 @@ export const HeaderControls = memo(function HeaderControls({
         gap={grid.gap}
       >
         <Group>
-          <SegmentedControl
+          <WrappedSegmentedControl
+            leftIsActive={isListView}
             value={view}
-            size="xs"
-            radius="sm"
-            color="var(--interlinked-color-primary)"
-            onChange={(v) => setView(v as ViewMode)}
             data={[
               { value: "list", label: "List" },
               { value: "grid", label: "Grid" },
             ]}
+            onChange={(v) => setView(v as ViewMode)}
           />
 
-          <SearchInput value={q} onChange={setQ} />
-        </Group>
-
-        <Group>
-          <MultiSelectInput
-            placeholder="Tags"
-            group="playnite"
-            data={tagsData}
-            value={tags}
-            setData={setTags}
+          <Slider
+            w={160}
+            step={1}
+            size="sm"
+            value={sliderValue}
+            onChange={setSliderValue}
+            defaultValue={grid.cardDefaultWidth}
+            min={grid.cardMinWidth}
+            max={grid.cardMaxWidth}
+            marks={[
+              { value: grid.cardMinWidth, label: 'S' },
+              { value: grid.cardDefaultWidth, label: 'M' },
+              { value: grid.cardMaxWidth, label: 'L' },
+            ]}
+            styles={{
+              root: { top: 7 },
+              markLabel: { position: "relative", top: -30, fontSize: 10 },
+              label: { fontSize: 10, top: -10 }
+            }}
           />
 
-          <MultiSelectInput
-            placeholder="Sources"
-            group="playnite"
-            data={sourcesData}
-            value={sources}
-            setData={setSources}
-          />
-
-          {<MultiSelectInput
-            placeholder="Series"
-            group="playnite"
-            data={seriesData}
-            value={series}
-            setData={setSeries}
-          />}
-        </Group>
-
-        <Group>
-          <IconToggleWithLabel
-            label="installed"
-            ariaLabel="Show installed only"
-            checked={installedOnly}
-            toggle={setShowInstalledOnly}
-          />
-
-          <IconToggleWithLabel
-            label="hidden"
-            ariaLabel="Show hidden"
-            checked={showHidden}
-            toggle={setShowHidden}
+          <SearchInput
+            width={262}
+            value={q}
+            onChange={setQ}
           />
         </Group>
 
         <Group>
-          <Flex
-            direction="column"
-            align="center"
-            justify="center"
-            style={{ alignSelf: "stretch" }}
-          >
-            <Tooltip
-              label={
-                hasActiveFilters
-                  ? "Filters active! Click the right side to reset"
-                  : "Nothing is filtered! Nothing to reset"
-              }
-              withArrow
-              position="bottom"
-              style={{ fontSize: 10 }}
-            >
-              <SegmentedControl
-                value={switches}
-                size="xs"
-                radius="sm"
-                w={110}
-                color="var(--interlinked-color-primary)"
-                onChange={(next) => {
-                  const mode = next as SwitchesMode;
+          <Group>
+            <MultiSelectInput
+              placeholder="Tags"
+              group="playnite"
+              data={tagsData}
+              value={tags}
+              setData={setTags}
+            />
 
-                  // enabled = indicator only
-                  if (mode === "enabled") return;
+            <MultiSelectInput
+              placeholder="Sources"
+              group="playnite"
+              data={sourcesData}
+              value={sources}
+              setData={setSources}
+            />
 
-                  // disabled = reset
-                  resetAllFilters();
-                }}
-                readOnly={switches === "enabled" ? false : true}
-                data={[
-                  { value: "enabled", label: `${filteredCount}` },
-                  { value: "disabled", label: `${baselineTotal}` },
-                ]}
-              />
-            </Tooltip>
-            <Text c="dimmed" style={{ fontSize: 10 }}>
-              {hasActiveFilters ? "filters active" : "showing all items"}
-            </Text>
-          </Flex>
+            {<MultiSelectInput
+              placeholder="Series"
+              group="playnite"
+              data={seriesData}
+              value={series}
+              setData={setSeries}
+            />}
+          </Group>
+
+          <Group>
+            <WrappedSwitch
+              label="installed"
+              ariaLabel="Show installed only"
+              checked={installedOnly}
+              toggle={setShowInstalledOnly}
+            />
+
+            <WrappedSwitch
+              label="hidden"
+              ariaLabel="Show hidden"
+              checked={showHidden}
+              toggle={setShowHidden}
+            />
+          </Group>
+        </Group>
+
+        <Group>
+          <WrappedSegmentedControl
+            leftIsActive={hasActiveFilters}
+            tooltip={{
+              left: "Filters active! Click the right side to reset",
+              right: "Nothing is filtered! Nothing to reset"
+            }}
+            label={{
+              left: "filters active",
+              right: "showing all items"
+            }}
+            readOnly={true}
+            value={switches}
+            data={[
+              { value: "enabled", label: `${filteredCount}` },
+              { value: "disabled", label: `${baselineTotal}` },
+            ]}
+            onChange={(next) => {
+              const mode = next as SwitchesMode;
+              if (mode === "enabled") return; // enabled = indicator only
+              resetAllFilters(); // disabled = reset all filters
+            }}
+          />
         </Group>
 
       </Flex>
