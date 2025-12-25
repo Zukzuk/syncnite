@@ -20,13 +20,15 @@ interface InterLinkedItem {
 };
 
 export interface InterLinkedGameItem extends InterLinkedItem {
-    gameId: string; 
+    gameId: string;
     isInstalled: boolean;
     tags: string[];
     series: string[];
     playniteLink: string;
     titleWithoutVersion: string;
     source: string;
+    developers: string[];
+    publishers: string[];
 
     index?: number;
     version?: string;

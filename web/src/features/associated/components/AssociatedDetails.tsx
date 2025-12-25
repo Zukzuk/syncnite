@@ -1,4 +1,4 @@
-import { Anchor, Badge, Box, Group, Image, Stack, Text } from "@mantine/core";
+import { Anchor, Badge, Box, Group, Image, Stack, Text, Highlight } from "@mantine/core";
 import { useDelayedFlag } from "../../../hooks/useDelayedFlag";
 import { InterLinkedGameItem, InterLinkedGrid } from "../../../types/interlinked";
 import { IconShowMaximized } from "../../../components/IconShowMaximized";
@@ -21,7 +21,7 @@ type Props = {
 // Component to display associated details of a library item.
 export function AssociatedDetails({ item, grid, isDark, openDeckKey, onBadgeClick, onWallpaperBg }: Props): JSX.Element {
 
-    const { id, playniteLink, sortingName, tags = [], series = [], isInstalled, isHidden,
+    const { id, playniteLink, sortingName, tags = [], series = [], isInstalled, isHidden, developers,
         links, coverUrl, bgUrl, origin, htmlLink, playniteOpenLink, title, source, sourceLink } = item;
 
     const isOpenDelayed = useDelayedFlag({ active: true, delayMs: 70 });
@@ -145,6 +145,24 @@ export function AssociatedDetails({ item, grid, isDark, openDeckKey, onBadgeClic
                     >
                         Sources
                     </Text>
+                    {developers.map((d) => (
+                        <Group gap={6} mt={6} pl={2} wrap="wrap">
+                            <Text
+                                size="xs"
+                                c="var(--interlinked-color-primary-soft)"
+                                onClick={() => onBadgeClick(`developer-${d}`)}
+                                style={{
+                                    fontWeight: openDeckKey === `developer-${d}` ? 700 : 500,
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                    cursor: "pointer"
+                                }}
+                            >
+                                {d}
+                            </Text>
+                        </Group>
+                    ))} 
                     <Group gap={6} mt={6} wrap="wrap">
                         <IconLinkOrigin origin={origin} playniteOpenLink={playniteOpenLink} id={id} />
                         {origin !== source && <IconLinkSource source={source} sourceLink={sourceLink} />}

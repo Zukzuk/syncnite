@@ -1,3 +1,8 @@
+export interface PlayniteCompany {
+  Id: string;
+  Name: string;
+}
+
 export interface PlayniteSeries {
   Id: string;
   Name: string;

@@ -61,13 +61,16 @@ function buildAssociatedDecks(
 
     const associatedSeries: InterLinkedGameItem[] = [];
     const associatedTags: InterLinkedGameItem[] = [];
+    const associatedDevelopers: InterLinkedGameItem[] = [];
     const associatedYear: InterLinkedGameItem[] = [];
     const associatedInstalled: InterLinkedGameItem[] = [];
     const associatedHidden: InterLinkedGameItem[] = [];
     const associatedSpecialEditions: InterLinkedGameItem[] = [];
+    const associatedMods: InterLinkedGameItem[] = [];
 
     const seriesSet = item.series ? new Set(item.series) : null;
     const tagsSet = item.tags ? new Set(item.tags) : null;
+    const developersSet = item.developers ? new Set(item.developers) : null;
 
     for (let i = 0; i < all.length; i++) {
         const other = all[i];
@@ -80,6 +83,11 @@ function buildAssociatedDecks(
         if (tagsSet && other.tags && other.tags.some((t) => tagsSet.has(t))) {
             other.index = i;
             associatedTags.push(other);
+        }
+
+        if (developersSet && other.developers && other.developers.some((d) => developersSet.has(d))) {
+            other.index = i;
+            associatedDevelopers.push(other);
         }
 
         if (item.year && other.year === item.year) {
@@ -97,15 +105,21 @@ function buildAssociatedDecks(
             associatedHidden.push(other);
         }
 
-        if (item.version && other.version) {
+        if (item.version && item.version.toLowerCase() !== "mod" && other.version && other.version.toLowerCase() !== "mod") {
             other.index = i;
             associatedSpecialEditions.push(other);
+        }
+
+        if ( item.version && item.version.toLowerCase() === "mod" && other.version && other.version.toLowerCase() === "mod") {
+            other.index = i;
+            associatedMods.push(other);
         }
     }
 
     const scoredWords = fuzzyWordOverlap(item.sortingName ?? item.title, item.series ?? []);
     const seriesNames = scoredWords.sort((a, b) => b.score - a.score).map((w) => w.item);
     const tagNames = item.tags ?? [];
+    const developerNames = item.developers ?? [];
 
     // One deck per series
     const seriesDecks = seriesNames
@@ -114,7 +128,7 @@ function buildAssociatedDecks(
             label: name,
             items: associatedSeries.filter((g) => g.series?.includes(name)),
         }))
-        .filter((deck) => deck.items.length > 0);
+        .filter((deck) => deck.items.length > 1);
 
     // One deck per tag
     const tagDecks = tagNames
@@ -123,11 +137,20 @@ function buildAssociatedDecks(
             label: name,
             items: associatedTags.filter((g) => g.tags?.includes(name)),
         }))
-        .filter((deck) => deck.items.length > 0);
+        .filter((deck) => deck.items.length > 1);
+
+    // One deck per developer
+    const developerDecks = developerNames
+        .map((name) => ({
+            key: `developer-${name}`,
+            label: name,
+            items: associatedDevelopers.filter((g) => g.developers?.includes(name)),
+        }))
+        .filter((deck) => deck.items.length > 1);
 
     // Year deck
     const yearDeck =
-        associatedYear.length > 0
+        associatedYear.length > 1
             ? {
                 key: "year",
                 label: item.year ? `Year ${String(item.year)}` : "Year",
@@ -137,7 +160,7 @@ function buildAssociatedDecks(
 
     // Installed deck
     const installedDeck =
-        associatedInstalled.length > 0
+        associatedInstalled.length > 1
             ? {
                 key: "installed",
                 label: "Installed",
@@ -147,7 +170,7 @@ function buildAssociatedDecks(
 
     // Hidden deck
     const hiddenDeck =
-        associatedHidden.length > 0
+        associatedHidden.length > 1
             ? {
                 key: "hidden",
                 label: "Hidden",
@@ -157,7 +180,7 @@ function buildAssociatedDecks(
 
     // Special Editions deck
     const specialEditionsDeck =
-        associatedSpecialEditions.length > 0
+        associatedSpecialEditions.length > 1
             ? {
                 key: "special-editions",
                 label: "Special Editions",
@@ -165,9 +188,21 @@ function buildAssociatedDecks(
             }
             : null;
 
+    // Special Editions deck
+    const modsDeck =
+        associatedMods.length > 1
+            ? {
+                key: "mods",
+                label: "Mods",
+                items: associatedMods,
+            }
+            : null;
+
     const associatedDecks = [
         ...seriesDecks,
+        ...(modsDeck ? [modsDeck] : []),
         ...(specialEditionsDeck ? [specialEditionsDeck] : []),
+        ...developerDecks,
         ...tagDecks,
         ...(installedDeck ? [installedDeck] : []),
         ...(hiddenDeck ? [hiddenDeck] : []),

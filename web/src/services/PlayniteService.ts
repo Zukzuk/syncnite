@@ -1,6 +1,6 @@
 import { fetchJson, fetchUser, getCreds } from "./AccountService";
 import { API_ENDPOINTS, FILES } from "../constants";
-import { PlayniteGame, PlayniteGameLink, PlayniteGameReleaseDate, PlayniteSeries, PlayniteSource, PlayniteTag } from "../types/playnite";
+import { PlayniteCompany, PlayniteGame, PlayniteGameLink, PlayniteGameReleaseDate, PlayniteSeries, PlayniteSource, PlayniteTag } from "../types/playnite";
 import { InterLinkedGameItem, InterLinkedOrigin, OriginLoadedData } from "../types/interlinked";
 
 // Get the Playnite Game.Id
@@ -276,6 +276,11 @@ function getSeriesNames(ids: string[] | undefined, seriesById: Map<string, strin
     return ids.map((id) => seriesById.get(id)).filter(Boolean) as string[];
 }
 
+function getCompanyNames(ids: string[] | undefined, companyById: Map<string, string>): string[] {
+    if (!ids || ids.length === 0) return [];
+    return ids.map((id) => companyById.get(id)).filter(Boolean) as string[];
+}
+
 function buildAssetUrl(uri: string | null | undefined): string | undefined {
     const normUri = uri
         ?.replace(/\\/g, "/")
@@ -313,11 +318,13 @@ export async function loadPlayniteOrigin(): Promise<OriginLoadedData> {
     const tags = await loadDbCollection<PlayniteTag>("tags");
     const sources = await loadDbCollection<PlayniteSource>("sources");
     const series = await loadDbCollection<PlayniteSeries>("series");
+    const companies = await loadDbCollection<PlayniteCompany>("companies");
 
     // index maps (Id -> Name)
     const tagById = new Map<string, string>(tags.map((t) => [t.Id, t.Name]));
     const sourceById = new Map<string, string>(sources.map((s) => [s.Id, s.Name]));
     const seriesById = new Map<string, string>(series.map((s) => [s.Id, s.Name]));
+    const companyById = new Map<string, string>(companies.map((c) => [c.Id, c.Name]));
 
     // prefetch installed set (case-insensitive ids)
     const isInstalledSet = await fetchInstalledList(email);
@@ -343,6 +350,8 @@ export async function loadPlayniteOrigin(): Promise<OriginLoadedData> {
         const playniteOpenLink = getPlayniteProtocolLink(false, id);
         const tags = getTagNames(g.TagIds, tagById);
         const series = getSeriesNames(g.SeriesIds, seriesById);
+        const developers = getCompanyNames(g.DeveloperIds, companyById);
+        const publishers = getCompanyNames(g.PublisherIds, companyById);
         const iconUrl = getIconUrl(g.Icon);
         const coverUrl = getCoverUrl(g.CoverImage);
         const bgUrl = getBgUrl(g.BackgroundImage);
@@ -358,6 +367,7 @@ export async function loadPlayniteOrigin(): Promise<OriginLoadedData> {
             playniteLink, playniteOpenLink,
             isHidden, isInstalled,
             tags, series,
+            developers, publishers,
             iconUrl, coverUrl, bgUrl,
         };
     });

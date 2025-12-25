@@ -23,6 +23,7 @@ namespace SyncniteBridge.Models
         public string GameId { get; set; } = "";
 
         public Guid SourceId { get; set; }
+        public Guid CompletionStatusId { get; set; }
 
         public List<Guid> TagIds { get; set; } = new List<Guid>();
         public List<Guid> PlatformIds { get; set; } = new List<Guid>();
@@ -30,9 +31,6 @@ namespace SyncniteBridge.Models
         public List<Guid> CategoryIds { get; set; } = new List<Guid>();
         public List<Guid> FeatureIds { get; set; } = new List<Guid>();
         public List<Guid> SeriesIds { get; set; } = new List<Guid>();
-
-        public Guid CompletionStatusId { get; set; }
-
         public List<Guid> AgeRatingIds { get; set; } = new List<Guid>();
         public List<Guid> RegionIds { get; set; } = new List<Guid>();
         public List<Guid> DeveloperIds { get; set; } = new List<Guid>();

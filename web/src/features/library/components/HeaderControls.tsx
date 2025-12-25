@@ -89,6 +89,8 @@ export const HeaderControls = memo(function HeaderControls({
 
   return (
     <Flex
+      ref={controlsRef}
+      aria-label="header-controls"
       direction="row"
       align="center" // vertical middle for the whole row
       wrap="nowrap" // only the left part wraps
