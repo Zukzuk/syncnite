@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.40.0](https://github.com/Zukzuk/syncnite/compare/v1.39.4...v1.40.0) (2025-12-25)
+
+
+### Features
+
+* added developers deck and details, fixed content resize bug ([31c1e14](https://github.com/Zukzuk/syncnite/commit/31c1e1458d76528804cd0b76e905f409396bcd2d))
+
 ### [1.39.4](https://github.com/Zukzuk/syncnite/compare/v1.39.3...v1.39.4) (2025-12-24)
 
 
