@@ -1,7 +1,8 @@
 import { useMantineTheme } from "@mantine/core";
 import { PlayniteGameLink } from "./playnite";
 
-export type InterLinkedMedia = "game" | "movie" | "series" | "audiobook" | "book" | "music-album" | "animated-series" | "animated-movie";
+export type InterLinkedMedia = "game" | "movie" | "series" | "audiobook" | 
+    "book" | "music-album" | "animated-series" | "animated-movie";
 
 interface InterLinkedItem {
     type: InterLinkedMedia;
@@ -75,6 +76,8 @@ export type InterLinkedGrid = {
     coverHeight: number;
     cardWidth: number | undefined;
     cardHeight: number | undefined;
+    stackWidth: number | undefined;
+    stackHeight: number | undefined;
     cardMinWidth: number;
     cardDefaultWidth: number;
     cardMaxWidth: number;
@@ -99,10 +102,10 @@ export interface InterLinkedTheme {
     isWidescreen: boolean;
     hasNavbar: boolean;
     grid: InterLinkedGrid;
-    desktopMode: DesktopNavMode;
+    desktopMode: DesktopMode;
     navbarOpened: boolean;
     toggleNavbar: () => void;
     closeNavbar: () => void;
-    setDesktopMode: Dispatch<SetStateAction<DesktopNavMode>>;
+    setDesktopMode: Dispatch<SetStateAction<DesktopMode>>;
     setColorScheme: (value: ColorScheme) => void;
 }

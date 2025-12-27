@@ -2,12 +2,12 @@ import { CSSProperties, ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Box, Stack, Text, Tooltip, ScrollArea, NavLink, Group } from "@mantine/core";
 import { IconAlignBoxLeftBottom, IconLibraryPhoto, IconDeviceTv, IconAffiliate, IconLogout2, IconUserHexagon } from "@tabler/icons-react";
-import { useAuth } from "../hooks/useAuth";
 import { WEB_APP_VERSION } from "../constants";
-import { ControlPanel } from "../features/controlpanel/ControlPanel";
-import { LogoIntro } from "../components/LogoIntro";
-import { IconButton } from "../components/IconButton";
 import { InterLinkedGrid } from "../types/interlinked";
+import { useAuth } from "./hooks/useAuth";
+import { LogoIntro } from "./components/LogoIntro";
+import { ControlPanel } from "./features/controlpanel/ControlPanel";
+import { IconButton } from "./components/IconButton";
 
 type Props = {
     hasNavbar: boolean;

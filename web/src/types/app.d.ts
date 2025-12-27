@@ -20,9 +20,9 @@ export type SwitchesMode = "enabled" | "disabled";
 
 export type Role = "admin" | "user" | "unknown";
 
-export type NavMode = "replace" | "push";
+export type HistoryNavMode = "replace" | "push";
 
-export type DesktopNavMode = "closed" | "mini" | "normal";
+export type DesktopMode = "closed" | "mini" | "normal";
 
 export type ButtonTypes = "button" | "submit" | "link";
 
@@ -171,5 +171,12 @@ export type SteamWishlistResponse = {
   ok: boolean;
   lastSynced: string | null;
   items: any[]; // raw items for now; can type later if you want
+};
+
+export type DeckCardMeta = {
+    id: string;
+    metaIndex: number;
+    colIndex: number;
+    indexInColumn: number;
 };
 

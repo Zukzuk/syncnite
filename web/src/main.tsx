@@ -4,7 +4,6 @@ import { RouterProvider } from "react-router-dom";
 import { MantineProvider } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
 import { router } from "./router";
-import { AppError } from "./components/BoundaryAppError";
 import { startGlobalSse } from "./services/SseClient";
 import { interlinkedTheme, themeResolver } from "./styles/theme";
 
@@ -14,6 +13,7 @@ import "@mantine/notifications/styles.css";
 import "./styles/body.scss";
 import "./styles/fonts.scss";
 import "./styles/scroller.scss";
+import { AppError } from "./error/BoundaryAppError";
 
 function App() {
   useEffect(() => {
