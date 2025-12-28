@@ -1,5 +1,5 @@
 import { Box, Image } from "@mantine/core";
-import { InterLinkedGameItem, InterLinkedGrid } from "../../../../../types/interlinked";
+import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../../../types/interlinked";
 import { AssociatedItemCard, HistoryNavMode } from "../../../../../types/app";
 import { IconIsInstalled } from "../../../../components/IconIsInstalled";
 import { IconIsHidden } from "../../../../components/IconIsHidden";
@@ -13,6 +13,7 @@ type Props = {
     currentItemId: string;
     isDark: boolean;
     grid: InterLinkedGrid;
+    dynamicGrid: InterLinkedDynamicGrid;
     onToggleClickBounded: (id?: string, navMode?: HistoryNavMode) => void;
     setHoveredId: (id: string | null) => void;
 };
@@ -27,15 +28,14 @@ export function AssociatedDeckCard({
     currentItemId,
     isDark,
     grid,
+    dynamicGrid,
     onToggleClickBounded,
     setHoveredId,
 }: Props): JSX.Element | null {
-    if (grid.cardWidth == null || grid.cardHeight == null) return null;
-
     const { colIndex, indexInColumn, id, metaIndex } = meta;
     const { title, year, coverUrl, isInstalled, isHidden } = item;
 
-    const left = colIndex * (grid.cardWidth + grid.gap * 2);
+    const left = colIndex * (dynamicGrid.gridCardWidth + grid.gap * 2);
     const top = indexInColumn * grid.cardStepY;
 
     let zIndex = indexInColumn + 1;
@@ -69,7 +69,7 @@ export function AssociatedDeckCard({
                 position: "absolute",
                 left,
                 top,
-                width: grid.cardWidth,
+                width: dynamicGrid.gridCardWidth,
                 zIndex,
                 cursor: "pointer",
                 borderRadius: 4,

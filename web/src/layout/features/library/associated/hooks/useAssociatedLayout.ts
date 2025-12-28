@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { InterLinkedGameItem, InterLinkedGrid } from "../../../../../types/interlinked";
+import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../../../types/interlinked";
 import { AssociatedLayout } from "../../../../../types/app";
 
 type UseParams = {
@@ -7,32 +7,24 @@ type UseParams = {
     height: number;
     totalCards: number;
     grid: InterLinkedGrid;
+    dynamicGrid: InterLinkedDynamicGrid;
 };
 
 type UseReturn = AssociatedLayout;
 
-function calcAssociatedLayout({ width, height, totalCards, grid }: UseParams): UseReturn {
-    if (!grid.cardWidth || !grid.cardHeight || !grid.stackWidth || !grid.stackHeight) {
-        return {
-            deckColumns: 0,
-            stackColumns: 0,
-            maxCardsPerDeckColumn: null,
-            minStackColumns: 1,
-        };
-    }
-
+function calcAssociatedLayout({ width, height, totalCards, grid, dynamicGrid }: UseParams): UseReturn {
     if (width <= 0 || height <= 0 || !totalCards) {
         return {
             deckColumns: 0,
-            stackColumns:  Math.max(1, Math.floor(width / (grid.stackWidth))),
+            stackColumns:  Math.max(1, Math.floor(width / (dynamicGrid.stackWidth))),
             maxCardsPerDeckColumn: null,
             minStackColumns: 1,
         };
     }
 
-    const deckColWidth = grid.cardWidth + grid.gap * 2;
-    const stackColWidth = grid.stackWidth + grid.gap;
-    const cardHeight = grid.cardWidth * (1 / grid.ratio);
+    const deckColWidth = dynamicGrid.gridCardWidth + grid.gap * 2;
+    const stackColWidth = dynamicGrid.stackWidth + grid.gap;
+    const cardHeight = dynamicGrid.gridCardWidth * (1 / grid.ratio);
     const stepY = grid.cardStepY;
     const maxCardsPerColumnByHeight = Math.max(1, Math.floor((height - cardHeight) / stepY) + 1);
     const neededColsByHeight = Math.max(1, Math.ceil(totalCards / maxCardsPerColumnByHeight));
@@ -92,8 +84,8 @@ function calcAssociatedLayout({ width, height, totalCards, grid }: UseParams): U
 
 type Args = {
     grid: InterLinkedGrid;
+    dynamicGrid: InterLinkedDynamicGrid;
     openDeck: { key: string; items: InterLinkedGameItem[] } | null;
-    /** extra right padding used by parent, so content width becomes rect.width - gapRight */
     gapRight: number;
 };
 
@@ -104,7 +96,7 @@ const EMPTY_LAYOUT: AssociatedLayout = {
     minStackColumns: 1,
 };
 
-export function useAssociatedLayout({ grid, openDeck, gapRight }: Args) {
+export function useAssociatedLayout({ grid, dynamicGrid, openDeck, gapRight }: Args) {
     const ref = useRef<HTMLDivElement | null>(null);
     const [layout, setLayout] = useState<AssociatedLayout>({
         deckColumns: 1,
@@ -131,7 +123,7 @@ export function useAssociatedLayout({ grid, openDeck, gapRight }: Args) {
             const width = rect.width - gapRight;
             const height = rect.height;
 
-            setLayout(calcAssociatedLayout({width, height, totalCards, grid}));
+            setLayout(calcAssociatedLayout({width, height, totalCards, grid, dynamicGrid}));
         };
 
         const ro = new ResizeObserver(update);

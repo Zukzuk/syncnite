@@ -3,18 +3,16 @@ import { InterLinkedGrid } from "../../../../../types/interlinked";
 
 type UseParams = {
     gridRef: RefObject<HTMLDivElement>;
-    dynamicGrid: InterLinkedGrid;
-    opts: {
-        rows: number;
-        cols: number;
-        itemsLen: number;
-        rowTops: number[];
-        rowHeights: number[];
-        containerHeight: number;
-        viewportH: number;
-        rowFirstItemIndex?: number[];
-        rowLastItemIndex?: number[];
-    };
+    grid: InterLinkedGrid;
+    rows: number;
+    cols: number;
+    itemsLen: number;
+    rowTops: number[];
+    rowHeights: number[];
+    containerHeight: number;
+    viewportH: number;
+    rowFirstItemIndex?: number[];
+    rowLastItemIndex?: number[];
 };
 
 type UseReturn = {
@@ -27,19 +25,10 @@ type UseReturn = {
 };
 
 // Hook to manage virtual windowing for a grid layout
-export function useGridVirtualWindow({ gridRef, dynamicGrid, opts }: UseParams): UseReturn {
-    const {
-        rows,
-        cols,
-        itemsLen,
-        rowTops,
-        rowHeights,
-        containerHeight,
-        viewportH,
-        rowFirstItemIndex,
-        rowLastItemIndex,
-    } = opts;
-
+export function useGridVirtualWindow({ 
+    gridRef, grid, rows, cols, itemsLen, rowTops, rowHeights, 
+    containerHeight, viewportH, rowFirstItemIndex, rowLastItemIndex 
+}: UseParams): UseReturn {
     const [scrollTop, setScrollTop] = useState(0);
     const rafRef = useRef<number | null>(null);
 
@@ -80,10 +69,10 @@ export function useGridVirtualWindow({ gridRef, dynamicGrid, opts }: UseParams):
     const visibleRange = useMemo(() => {
         if (!rows || !cols) return { startIndex: 0, endIndex: 0 };
 
-        const vTop = Math.max(0, scrollTop - dynamicGrid.overscan.top);
+        const vTop = Math.max(0, scrollTop - grid.overscan.top);
         const vBot = Math.min(
             containerHeight,
-            scrollTop + viewportH + dynamicGrid.overscan.bottom
+            scrollTop + viewportH + grid.overscan.bottom
         );
 
         // find first row whose bottom > vTop
@@ -140,7 +129,6 @@ export function useGridVirtualWindow({ gridRef, dynamicGrid, opts }: UseParams):
         itemsLen,
         rowFirstItemIndex,
         rowLastItemIndex,
-        dynamicGrid,
     ]);
 
     // function to sync scrollTop immediately

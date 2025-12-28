@@ -1,9 +1,8 @@
 import { Box } from "@mantine/core";
 import { usePersistedScrollTop } from "../hooks/usePersistedScrollTop";
 import { AssociatedItems } from "../../../../../types/app";
-import { InterLinkedGrid } from "../../../../../types/interlinked";
+import { InterLinkedDynamicGrid, InterLinkedGrid } from "../../../../../types/interlinked";
 import { useLibraryContext } from "../../../LibraryContext";
-import { useDelayedFlag } from "../../../../hooks/useDelayedFlag";
 import { AssociatedStackCard } from "./AssociatedStackCard";
 
 type Props = {
@@ -12,6 +11,7 @@ type Props = {
     openDeckKey: string | null;
     stackColumns: number;
     grid: InterLinkedGrid;
+    dynamicGrid: InterLinkedDynamicGrid;
     isDark: boolean;
     onStackClick: (key: string) => void;
 };
@@ -22,6 +22,7 @@ export function AssociatedStacks({
     openDeckKey,
     stackColumns,
     grid,
+    dynamicGrid,
     isDark,
     onStackClick,
 }: Props): JSX.Element | null {
@@ -54,7 +55,7 @@ export function AssociatedStacks({
             <Box
                 style={{
                     display: "grid",
-                    gridTemplateColumns: `repeat(${stackColumns}, ${grid.stackWidth}px)`,
+                    gridTemplateColumns: `repeat(${stackColumns}, ${dynamicGrid.stackWidth}px)`,
                     gap: grid.gap,
                     justifyContent: "flex-start",
                     alignContent: "flex-start",
@@ -66,6 +67,7 @@ export function AssociatedStacks({
                         stack={stack}
                         isOpen={openDeckKey === stack.key}
                         grid={grid}
+                        dynamicGrid={dynamicGrid}
                         isDark={isDark}
                         onStackClick={onStackClick}
                     />

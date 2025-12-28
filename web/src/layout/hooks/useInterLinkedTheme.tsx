@@ -63,49 +63,39 @@ export function useInterLinkedTheme(): InterLinkedTheme {
     const cardDefaultWidth = 156;
     const cardMaxWidth = 220;
     const coverWidth = 220;
+    const detailsPanelWidth = 236;
 
-    const z = useMemo(
-        () =>
-            ({
-                belowBase: 0,
-                base: 1,
-                aboveBase: 2,
-                float: 10,
-                medium: 50,
-                high: 100,
-                heigher: 500,
-                top: 1000,
-            }) as const,
-        []
-    );
+    const z = {
+        belowBase: 0,
+        base: 1,
+        aboveBase: 2,
+        float: 10,
+        medium: 50,
+        high: 100,
+        heigher: 500,
+        top: 1000,
+    };
 
-    const grid = useMemo(
-        () =>
-            ({
-                navBarWidth: 155,
-                navBarMiniWidth: 72,
-                coverWidth,
-                coverHeight: coverWidth * (1 / ratio),
-                cardWidth: undefined,
-                cardHeight: undefined,
-                stackWidth: undefined,
-                stackHeight: undefined,
-                cardDefaultWidth,
-                cardMinWidth,
-                cardMaxWidth,
-                rowHeight: 60,
-                halfRowHeight: 30,
-                iconSize: 38,
-                scrollbarWidth: 15,
-                listLeftPadding: 12,
-                gap: 8,
-                cardStepY: 90,
-                ratio,
-                overscan: { top: 600, bottom: 800 } as const,
-                z,
-            }) as const,
-        [isWidescreen, isDesktop, z]
-    );
+    const grid = {
+        navBarWidth: 155,
+        navBarMiniWidth: 72,
+        coverWidth,
+        coverHeight: coverWidth * (1 / ratio),
+        detailsPanelWidth,
+        cardDefaultWidth,
+        cardMinWidth,
+        cardMaxWidth,
+        rowHeight: 60,
+        halfRowHeight: 30,
+        iconSize: 38,
+        scrollbarWidth: 15,
+        listLeftPadding: 12,
+        gap: 8,
+        cardStepY: 90,
+        ratio,
+        overscan: { top: 600, bottom: 800 } as const,
+        z,
+    };
 
     return {
         theme,

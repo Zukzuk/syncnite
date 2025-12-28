@@ -5,17 +5,16 @@ import { AssociatedStacks } from "./components/AssociatedStacks";
 import { AssociatedDetails } from "./components/AssociatedDetails";
 import { useOpenAssociatedDeck } from "./hooks/useOpenAssociatedDeck";
 import { useAssociatedLayout } from "./hooks/useAssociatedLayout";
-import { InterLinkedGameItem, InterLinkedGrid } from "../../../../types/interlinked";
+import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../../types/interlinked";
 import { HistoryNavMode } from "../../../../types/app";
 import { useAssociatedData } from "../../../hooks/useAssociatedData";
 
 type Props = {
     item: InterLinkedGameItem;
     isOpen: boolean;
-    grid: InterLinkedGrid;
     isDark: boolean;
-    cssOpenWidth: string;
-    cssOpenHeight: string;
+    grid: InterLinkedGrid;
+    dynamicGrid: InterLinkedDynamicGrid;
     itemsAssociated: InterLinkedGameItem[];
     onWallpaperBg: (on: boolean) => void;
     onToggleClickBounded: (id?: string, navMode?: HistoryNavMode) => void;
@@ -27,8 +26,7 @@ export function AssociatedContent({
     isOpen,
     grid,
     isDark,
-    cssOpenWidth,
-    cssOpenHeight,
+    dynamicGrid,
     itemsAssociated,
     onWallpaperBg,
     onToggleClickBounded,
@@ -46,6 +44,7 @@ export function AssociatedContent({
 
     const { layoutRef, layout } = useAssociatedLayout({
         grid,
+        dynamicGrid,
         openDeck: openDeck ? { key: openDeck.key, items: openDeck.items } : null,
         gapRight,
     });
@@ -60,8 +59,8 @@ export function AssociatedContent({
             py={grid.gap}
             pr={gapRight}
             style={{
-                width: cssOpenWidth,
-                height: `calc(${cssOpenHeight} - ${grid.rowHeight}px)`,
+                width: dynamicGrid.gridViewportW,
+                height: dynamicGrid.gridViewportH - grid.rowHeight,
                 backgroundColor: "transparent",
                 overflowX: "hidden",
                 overflowY: "hidden",
@@ -71,6 +70,7 @@ export function AssociatedContent({
                 <AssociatedDetails
                     item={item}
                     grid={grid}
+                    dynamicGrid={dynamicGrid}
                     isDark={isDark}
                     openDeckKey={openDeckKey}
                     onBadgeClick={setOpenDeckKey}
@@ -98,6 +98,7 @@ export function AssociatedContent({
                             maxCardsPerColumn={layout.maxCardsPerDeckColumn}
                             isDark={isDark}
                             grid={grid}
+                            dynamicGrid={dynamicGrid}
                             onToggleClickBounded={onToggleClickBounded}
                         />
                     )}
@@ -107,9 +108,10 @@ export function AssociatedContent({
                             currentItemId={item.id}
                             associatedData={associatedData}
                             openDeckKey={openDeckKey}
-                            stackColumns={stackColumns} 
+                            stackColumns={stackColumns}
                             isDark={isDark}
                             grid={grid}
+                            dynamicGrid={dynamicGrid}
                             onStackClick={setOpenDeckKey}
                         />
                     )}

@@ -34,24 +34,18 @@ export function Grid({
 
     // Hook to manage grid layout, scrolling, and item toggling.
     const {
-        containerHeight,
+        gridTotalHeight,
         positions,
         visibleRange,
-        cssOpenWidth,
-        cssOpenHeight,
         openIds,
         dynamicGrid,
         scrollItemIntoView,
         onToggleItemWithNav,
     } = useGrid({
         gridRef,
-        controlsH,
-        sortH,
+        grid,
         ui,
         derived,
-        grid,
-        hasNavbar,
-        desktopMode,
     });
 
     // Hook to manage alphabetical rail state and interactions.
@@ -88,7 +82,7 @@ export function Grid({
                     role="grid-height-spacer"
                     style={{
                         width: "100%",
-                        height: containerHeight,
+                        height: gridTotalHeight,
                     }}
                 />
 
@@ -106,12 +100,11 @@ export function Grid({
                                 index={index}
                                 isOpen={isOpen}
                                 positions={positions}
-                                cssOpenWidth={cssOpenWidth}
-                                cssOpenHeight={cssOpenHeight}
                                 isListView={isListView}
                                 itemsAssociated={itemsAssociated}
                                 wallpaperBg={wallpaperBg}
-                                grid={dynamicGrid}
+                                grid={grid}
+                                dynamicGrid={dynamicGrid}
                                 isDark={isDark}
                                 desktopMode={desktopMode}
                                 hasNavbar={hasNavbar}
@@ -126,7 +119,7 @@ export function Grid({
 
             {ui.sortKey === "title" && !wallpaperBg && (
                 <AlphabeticalRail
-                    grid={dynamicGrid}
+                    grid={grid}
                     activeLetter={activeLetter}
                     railCounts={railCounts}
                     onScrollJump={onScrollJump}

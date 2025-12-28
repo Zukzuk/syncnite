@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Anchor, Badge, Box, Group, Image, Stack, Text } from "@mantine/core";
-import { InterLinkedGameItem, InterLinkedGrid } from "../../../../../types/interlinked";
-import { useDelayedFlag } from "../../../../hooks/useDelayedFlag";
+import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../../../types/interlinked";
 import { IconIsInstalled } from "../../../../components/IconIsInstalled";
 import { IconExecuteOverlay } from "../../../../components/IconExecuteOverlay";
 import { IconLinkOrigin } from "../../../../components/IconOriginLink";
@@ -12,6 +11,7 @@ import { IconShowMaximized } from "../../../../components/IconShowMaximized";
 type Props = {
     item: InterLinkedGameItem;
     grid: InterLinkedGrid;
+    dynamicGrid: InterLinkedDynamicGrid;
     isDark: boolean;
     openDeckKey: string | null;
     onBadgeClick: (key: string) => void;

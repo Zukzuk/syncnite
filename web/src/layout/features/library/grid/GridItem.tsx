@@ -6,7 +6,7 @@ import { ItemRow } from "./components/ItemRow";
 import { ItemCard } from "./components/ItemCard";
 import { AssociatedContent } from "../associated/AssociatedContent";
 import { ItemBackground } from "./components/ItemBackground";
-import { InterLinkedGameItem, InterLinkedGrid } from "../../../../types/interlinked";
+import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../../types/interlinked";
 import { DesktopMode, HistoryNavMode, ItemPositions } from "../../../../types/app";
 
 type Props = {
@@ -15,13 +15,12 @@ type Props = {
     installedUpdatedAt?: string;
     isOpen: boolean;
     isDark: boolean;
-    cssOpenWidth: string;
-    cssOpenHeight: string;
     isListView: boolean;
     itemsAssociated: InterLinkedGameItem[],
     positions: ItemPositions,
     wallpaperBg: boolean;
     grid: InterLinkedGrid;
+    dynamicGrid: InterLinkedDynamicGrid;
     desktopMode: DesktopMode;
     hasNavbar: boolean;
     isWidescreen: boolean;
@@ -35,13 +34,12 @@ export const GridItem = memo(function GridItem({
     item,
     isOpen,
     index,
-    cssOpenWidth,
-    cssOpenHeight,
     isListView,
     itemsAssociated,
     positions,
     wallpaperBg,
     grid,
+    dynamicGrid,
     isDark,
     hasNavbar,
     isWidescreen,
@@ -65,9 +63,8 @@ export const GridItem = memo(function GridItem({
         isOpen,
         positions,
         isListView,
-        cssOpenWidth,
-        cssOpenHeight,
         grid,
+        dynamicGrid,
         onToggleItem,
     });
 
@@ -158,7 +155,7 @@ export const GridItem = memo(function GridItem({
                         transitionTimingFunction: "ease",
                     }}
                     w={"100%"}
-                    h={isOpen ? cssOpenHeight : "100%"}
+                    h={isOpen ? dynamicGrid.gridViewportH : "100%"}
                 >
                     {(isOpen || isListView) ? (
                         <ItemRow
@@ -186,9 +183,8 @@ export const GridItem = memo(function GridItem({
                             item={item}
                             isOpen={isOpen}
                             grid={grid}
+                            dynamicGrid={dynamicGrid}
                             isDark={isDark}
-                            cssOpenWidth={cssOpenWidth}
-                            cssOpenHeight={cssOpenHeight}
                             itemsAssociated={itemsAssociated}
                             onWallpaperBg={onWallpaperBg}
                             onToggleClickBounded={onToggleClickBounded}
@@ -201,6 +197,7 @@ export const GridItem = memo(function GridItem({
                         item={item}
                         isOpen={isOpen}
                         grid={grid}
+                        dynamicGrid={dynamicGrid}
                         isDark={isDark}
                         wallpaperBg={wallpaperBg}
                     />

@@ -1,7 +1,7 @@
 import { useMantineTheme } from "@mantine/core";
 import { PlayniteGameLink } from "./playnite";
 
-export type InterLinkedMedia = "game" | "movie" | "series" | "audiobook" | 
+export type InterLinkedMedia = "game" | "movie" | "series" | "audiobook" |
     "book" | "music-album" | "animated-series" | "animated-movie";
 
 interface InterLinkedItem {
@@ -74,10 +74,7 @@ export type InterLinkedGrid = {
     navBarMiniWidth: number;
     coverWidth: number;
     coverHeight: number;
-    cardWidth: number | undefined;
-    cardHeight: number | undefined;
-    stackWidth: number | undefined;
-    stackHeight: number | undefined;
+    detailsPanelWidth: number;
     cardMinWidth: number;
     cardDefaultWidth: number;
     cardMaxWidth: number;
@@ -92,6 +89,21 @@ export type InterLinkedGrid = {
     gap: number;
     z: TZIndex;
 };
+
+export type InterLinkedDynamicGrid = {
+    gridViewportW: number;
+    gridViewportH: number;
+    allContentWidth: number;
+    allContentHeight: number;
+    deckAndStacksWidth: number;
+    deckAndStacksHeight: number;
+    gridCardWidth: number;
+    gridCardHeight: number;
+    stackWidth: number;
+    stackHeight: number;
+    numOfCols: number;
+    strideX: number;
+}
 
 export interface InterLinkedTheme {
     theme: ReturnType<typeof useMantineTheme>;

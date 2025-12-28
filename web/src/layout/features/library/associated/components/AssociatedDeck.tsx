@@ -2,10 +2,9 @@ import { useMemo, useState } from "react";
 import { Badge, Box, Stack, Text } from "@mantine/core";
 import { useAssociatedDeckLayout } from "../hooks/useAssociatedDeckLayout";
 import { usePersistedScrollTop } from "../hooks/usePersistedScrollTop";
-import { InterLinkedGameItem, InterLinkedGrid } from "../../../../../types/interlinked";
+import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../../../types/interlinked";
 import { HistoryNavMode } from "../../../../../types/app";
 import { useLibraryContext } from "../../../LibraryContext";
-import { useDelayedFlag } from "../../../../hooks/useDelayedFlag";
 import { AssociatedDeckCard } from "./AssociatedDeckCard";
 
 type Props = {
@@ -18,12 +17,12 @@ type Props = {
     maxCardsPerColumn: number | null;
     isDark: boolean;
     grid: InterLinkedGrid;
+    dynamicGrid: InterLinkedDynamicGrid;
     onToggleClickBounded: (id?: string, navMode?: HistoryNavMode) => void;
 };
 
 export function AssociatedDeck({
     deckKey,
-    animateIn = true,
     label,
     currentItemId,
     items,
@@ -31,11 +30,12 @@ export function AssociatedDeck({
     maxCardsPerColumn,
     isDark,
     grid,
+    dynamicGrid,
     onToggleClickBounded,
 }: Props): JSX.Element | null {
     const lib = useLibraryContext();
     const { cards, width, columnHeight, cardMeta, colLengths } =
-        useAssociatedDeckLayout({ items, deckColumns, maxCardsPerColumn, grid });
+        useAssociatedDeckLayout({ items, deckColumns, maxCardsPerColumn, grid, dynamicGrid });
 
     // nothing to show
     if (cards.length === 0 || deckColumns <= 0) return null;
@@ -126,6 +126,7 @@ export function AssociatedDeck({
                                 currentItemId={currentItemId}
                                 isDark={isDark}
                                 grid={grid}
+                                dynamicGrid={dynamicGrid}
                                 onToggleClickBounded={onToggleClickBounded}
                                 setHoveredId={setHoveredId}
                             />

@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import { InterLinkedGameItem, InterLinkedGrid } from "../../../../../types/interlinked";
+import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../../../types/interlinked";
 import { HistoryNavMode, ItemPositions } from "../../../../../types/app";
 
 type UseParams = {
@@ -8,18 +8,17 @@ type UseParams = {
     isOpen: boolean;
     positions: ItemPositions;
     isListView: boolean;
-    cssOpenWidth: string;
-    cssOpenHeight: string;
     grid: InterLinkedGrid;
+    dynamicGrid: InterLinkedDynamicGrid;
     installedUpdatedAt?: string;
     onToggleItem: (id: string, navMode?: HistoryNavMode) => void;
 };
 
 type UseReturn = {
-    cardLeft: number | string;
-    cardTop: number | string;
-    cardWidth: string;
-    cardHeight: string;
+    cardLeft: number;
+    cardTop: number;
+    cardWidth: number;
+    cardHeight: number;
     cardZIndex: number;
     onToggleClickBounded: (id?: string, navMode?: HistoryNavMode) => void;
 };
@@ -27,7 +26,7 @@ type UseReturn = {
 // Hook to manage individual grid item positioning and toggle behavior.
 export function useGridItem({
     item, index, isOpen, positions, isListView,
-    cssOpenWidth, cssOpenHeight, grid, onToggleItem
+    grid, dynamicGrid, onToggleItem
 }: UseParams): UseReturn {
 
     const {
@@ -38,34 +37,41 @@ export function useGridItem({
         cardZIndex,
     } = useMemo(() => {
         const pos = positions[index] ?? { left: grid.gap, top: grid.gap };
-
+        const cardLeft = isOpen || isListView
+            ? 0
+            : pos.left;
+        const cardTop = pos.top;
         const cardWidth =
             isOpen || isListView
-                ? `calc(${cssOpenWidth} - ${grid.scrollbarWidth}px)`
-                : `calc(${grid.cardWidth}px)`;
-
+                ? dynamicGrid.gridViewportW - grid.scrollbarWidth
+                : dynamicGrid.gridCardWidth;
         const cardHeight =
             isOpen
-                ? cssOpenHeight
+                ? dynamicGrid.gridViewportH
                 : isListView
-                    ? `calc(${grid.rowHeight}px)`
-                    : `calc(${grid.cardHeight}px)`;
+                    ? grid.rowHeight
+                    : dynamicGrid.gridCardHeight;
+        const cardZIndex = isOpen
+            ? grid.z.aboveBase
+            : grid.z.base
 
         return {
-            cardLeft: isOpen || isListView ? 0 : pos.left,
-            cardTop: pos.top,
+            cardLeft,
+            cardTop,
             cardWidth,
             cardHeight,
-            cardZIndex: isOpen ? grid.z.aboveBase : grid.z.base,
+            cardZIndex,
         };
     }, [
         index,
         isOpen,
         isListView,
         positions,
-        cssOpenWidth,
-        cssOpenHeight,
         grid,
+        dynamicGrid.gridViewportW,
+        dynamicGrid.gridViewportH,
+        dynamicGrid.gridCardWidth,
+        dynamicGrid.gridCardHeight,
     ]);
 
     const onToggleClickBounded = useCallback(

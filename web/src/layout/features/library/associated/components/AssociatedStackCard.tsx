@@ -1,21 +1,22 @@
 import { useState } from "react";
 import { Box, Image, Stack, Text } from "@mantine/core";
 import { AssociatedItems } from "../../../../../types/app";
-import { InterLinkedGrid } from "../../../../../types/interlinked";
+import { InterLinkedDynamicGrid, InterLinkedGrid } from "../../../../../types/interlinked";
 
 type Props = {
     stack: AssociatedItems;
     isOpen: boolean;
-    grid: InterLinkedGrid;
     isDark: boolean;
+    grid: InterLinkedGrid;
+    dynamicGrid: InterLinkedDynamicGrid;
     onStackClick: (key: string) => void;
 };
 
 // Card component for an associated stack of decks in the library view.
-export function AssociatedStackCard({ stack, isOpen, onStackClick, grid, isDark }: Props): JSX.Element | null {
+export function AssociatedStackCard({ stack, isOpen, onStackClick, grid, dynamicGrid, isDark }: Props): JSX.Element | null {
     const { label, items, key } = stack;
     if (!items.length) return null;
-    
+
     const [isHovered, setIsHovered] = useState(false);
 
     const numberOfItems = items.length;
@@ -34,7 +35,7 @@ export function AssociatedStackCard({ stack, isOpen, onStackClick, grid, isDark 
             bg="var(--mantine-color-body)"
             style={{
                 flex: "0 0 auto",
-                width: grid.stackWidth,
+                width: dynamicGrid.stackWidth,
                 borderRadius: 4,
             }}
         >

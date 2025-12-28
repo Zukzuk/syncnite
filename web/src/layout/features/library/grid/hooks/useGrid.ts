@@ -1,32 +1,24 @@
-import { RefObject, useCallback, useEffect, useMemo, useRef } from "react";
+import { RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useGridLayout } from "./useGridLayout";
 import { useGridVirtualWindow } from "./useGridVirtualWindow";
 import { useGridOpenItemToggle } from "./useGridOpenItemToggle";
-import { useGridScrollJump } from "./useGridScrollJump";
 import { useGridScrollRestore } from "./useGridScrollRestore";
-import { DesktopMode, HistoryNavMode, ItemPositions, UIControls, UIDerivedData } from "../../../../../types/app";
-import { InterLinkedGameItem, InterLinkedGrid } from "../../../../../types/interlinked";
+import { HistoryNavMode, ItemPositions, UIControls, UIDerivedData } from "../../../../../types/app";
+import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../../../types/interlinked";
 
 type UseParams = {
     gridRef: RefObject<HTMLDivElement>;
-    controlsH: number;
-    sortH: number;
     ui: UIControls;
     derived: UIDerivedData;
     grid: InterLinkedGrid;
-    hasNavbar: boolean;
-    desktopMode: DesktopMode
 };
 
 type UseReturn = {
-    containerHeight: number;
+    gridTotalHeight: number;
     positions: { left: number; top: number }[];
     visibleRange: { startIndex: number; endIndex: number };
-    cssOpenWidth: string;
-    cssOpenHeight: string;
     openIds: Set<string>;
-    dynamicGrid: InterLinkedGrid;
+    dynamicGrid: InterLinkedDynamicGrid;
     scrollItemIntoView: (index: number) => void;
     onToggleItemWithNav: (id: string, navMode: HistoryNavMode) => void;
 };
@@ -34,46 +26,67 @@ type UseReturn = {
 // Main grid hook
 export function useGrid({
     gridRef,
-    controlsH,
-    sortH,
     ui,
     derived,
     grid,
-    hasNavbar,
-    desktopMode,
 }: UseParams): UseReturn {
     const { itemsSorted } = derived;
     const { isListView, sliderValue, resetAllFilters } = ui;
     const itemsLen = itemsSorted.length;
-    const desktopMini = desktopMode === "mini";
 
     const { id: routeId } = useParams<{ id?: string }>();
     const navigate = useNavigate();
 
-    // Dynamic grid based on user slider value
-    const dynamicGrid = useMemo(() => {
-        // keep everything else from the theme grid
-        const cardWidth = sliderValue + 4; // + border
-        const cardHeight = sliderValue * (1 / grid.ratio) + 4 + 52 + 28; // same formula you used in theme
-        return {
-            ...grid,
-            cardWidth,
-            cardHeight,
-            stackWidth: cardWidth * 0.7,
-            stackHeight: cardHeight * 0.7,
-        };
-    }, [sliderValue, grid]);
-
     // Base grid sizing (cols + viewport height)
-    const { cols, viewportH } = useGridLayout({ gridRef, dynamicGrid, itemsLen });
-    const viewCols = isListView ? 1 : Math.max(1, cols || 1);
-    const cssOpenWidth = `calc(100vw - ${!hasNavbar ? 0 : desktopMini ? dynamicGrid.navBarMiniWidth : dynamicGrid.navBarWidth}px)`;
-    const cssOpenHeight = `calc(100vh - ${controlsH + sortH}px)`;
+    const [gridViewportW, setW] = useState(0);
+    const [gridViewportH, setH] = useState(0);
 
-    // Open/close state
-    const { openIds, toggleOpen, replaceOpen } = useGridOpenItemToggle({
-        allowMultipleOpen: false,
-    });
+    useLayoutEffect(() => {
+        const el = gridRef.current;
+        if (!el) return;
+
+        const onSize = () => {
+            const rect = el.getBoundingClientRect();
+            setW(Math.max(0, Math.floor(rect.width)));
+            setH(Math.max(0, Math.floor(rect.height)));
+        };
+
+        const ro = new ResizeObserver(onSize);
+        ro.observe(el);
+        onSize();
+
+        return () => ro.disconnect();
+    }, []);
+
+    //const cssOpenWidth = `calc(100vw - ${!hasNavbar ? 0 : desktopMini ? grid.navBarMiniWidth : grid.navBarWidth}px)`;
+    //const cssOpenHeight = `calc(100vh - ${controlsH + sortH}px)`;
+
+    const dynamicGrid = useMemo(() => {
+        const gridCardWidth = sliderValue + 4; // + border
+        const gridCardHeight = sliderValue * (1 / grid.ratio) + 4 + 52 + 28; // + border + title + extra info
+        const allContentWidth = gridViewportW - grid.gap - grid.scrollbarWidth;
+        const allContentHeight = gridViewportH - grid.rowHeight;
+        const deckAndStacksWidth = gridViewportW - grid.gap - grid.detailsPanelWidth - grid.scrollbarWidth;
+        const deckAndStacksHeight = gridViewportH - grid.rowHeight;
+        const stackWidth = gridCardWidth * 0.7;
+        const stackHeight = gridCardHeight * 0.7;
+        const strideX = gridCardWidth + grid.gap;
+        const numOfCols = isListView ? 1 : Math.max(1, Math.floor((allContentWidth + grid.gap) / strideX));
+        return {
+            gridViewportW,
+            gridViewportH,
+            allContentWidth,
+            allContentHeight,
+            deckAndStacksWidth,
+            deckAndStacksHeight,
+            gridCardWidth,
+            gridCardHeight,
+            stackWidth,
+            stackHeight,
+            numOfCols,
+            strideX,
+        };
+    }, [gridViewportW, gridViewportH, sliderValue]);
 
     // Build id -> index map once per items change
     const idToIndex = useMemo(() => {
@@ -84,7 +97,12 @@ export function useGrid({
         return map;
     }, [itemsSorted]);
 
-    // Build grid rows with open items occupying dedicated full-width rows
+    // Open/close state
+    const { openIds, toggleOpen, replaceOpen } = useGridOpenItemToggle({
+        allowMultipleOpen: false,
+    });
+
+    // Build grid rows with open items occupying full width
     const { rowItems, rowIsOpen } = useMemo(() => {
         const rows: number[][] = [];
         const rowIsOpen: boolean[] = [];
@@ -107,7 +125,7 @@ export function useGrid({
                 rowIsOpen.push(true);
             } else {
                 currentRow.push(i);
-                if (currentRow.length === viewCols) {
+                if (currentRow.length === dynamicGrid.numOfCols) {
                     rows.push(currentRow);
                     rowIsOpen.push(false);
                     currentRow = [];
@@ -122,13 +140,13 @@ export function useGrid({
         }
 
         return { rowItems: rows, rowIsOpen };
-    }, [itemsSorted, openIds, viewCols]);
+    }, [itemsSorted, openIds, dynamicGrid.numOfCols, itemsLen]);
 
     // Compute row layout
     const {
         rowTops,
         rowHeights,
-        containerHeight,
+        gridTotalHeight,
         itemRowIndex,
         itemColIndex,
     } = useMemo(() => {
@@ -138,12 +156,12 @@ export function useGrid({
         const itemRowIndex = new Array<number>(itemsLen);
         const itemColIndex = new Array<number>(itemsLen);
 
-        const closedHeight = isListView ? dynamicGrid.rowHeight : dynamicGrid.cardHeight;
-        let y = isListView ? 0 : dynamicGrid.gap;
+        const closedHeight = isListView ? grid.rowHeight : dynamicGrid.gridCardHeight;
+        let yOffset = isListView ? 0 : grid.gap;
 
         for (let r = 0; r < rowCount; r++) {
-            rowTops[r] = y;
-            const openHeight = Math.max(closedHeight, viewportH);
+            rowTops[r] = yOffset;
+            const openHeight = Math.max(closedHeight, dynamicGrid.gridViewportH);
             const height = rowIsOpen[r] ? openHeight : closedHeight;
             rowHeights[r] = height;
 
@@ -154,22 +172,22 @@ export function useGrid({
                 itemColIndex[idx] = c;
             }
 
-            y += height + (isListView ? 0 : dynamicGrid.gap);
+            yOffset += height + (isListView ? 0 : grid.gap);
         }
 
-        const containerHeight =
+        const gridTotalHeight =
             rowCount === 0
-                ? dynamicGrid.gap * 2 + closedHeight
-                : y - (isListView ? 0 : dynamicGrid.gap * 2);
+                ? grid.gap * 2 + closedHeight
+                : yOffset - (isListView ? 0 : grid.gap * 2);
 
         return {
             rowTops,
             rowHeights,
-            containerHeight,
+            gridTotalHeight,
             itemRowIndex,
             itemColIndex,
         };
-    }, [rowItems, rowIsOpen, itemsLen, viewportH, isListView, dynamicGrid]);
+    }, [rowItems, rowIsOpen, isListView, dynamicGrid.gridViewportH, dynamicGrid.gridCardHeight, itemsLen]);
 
     // Per-row first/last item indices
     const rowFirstItemIndex = useMemo(
@@ -181,10 +199,24 @@ export function useGrid({
         [rowItems]
     );
 
+    // Virtual window (variable-height rows) + scroll position
+    const { visibleRange, syncScrollTopNow } = useGridVirtualWindow({
+        gridRef,
+        grid,
+        rows: rowTops.length,
+        cols: dynamicGrid.numOfCols,
+        itemsLen,
+        rowTops,
+        rowHeights,
+        containerHeight: gridTotalHeight,
+        viewportH: dynamicGrid.gridViewportH,
+        rowFirstItemIndex,
+        rowLastItemIndex,
+    });
+
     // Compute absolute item positions
     const positions = useMemo(() => {
         const out: ItemPositions = new Array(itemsLen);
-        const strideX = dynamicGrid.cardWidth + dynamicGrid.gap;
 
         for (let i = 0; i < itemsLen; i++) {
             const r = itemRowIndex[i];
@@ -192,49 +224,38 @@ export function useGrid({
 
             const c = itemColIndex[i] ?? 0;
             out[i] = {
-                left: dynamicGrid.gap + c * strideX,
-                top: rowTops[r] ?? dynamicGrid.gap,
+                left: grid.gap + c * dynamicGrid.strideX,
+                top: rowTops[r] ?? grid.gap,
             };
         }
 
         return out;
-    }, [itemsLen, itemRowIndex, itemColIndex, rowTops, dynamicGrid]);
-
-    // Virtual window (variable-height rows) + scroll position
-    const { visibleRange, syncScrollTopNow } = useGridVirtualWindow({
-        gridRef,
-        dynamicGrid,
-        opts: {
-            rows: rowTops.length,
-            cols: viewCols,
-            itemsLen,
-            rowTops,
-            rowHeights,
-            containerHeight,
-            viewportH,
-            rowFirstItemIndex,
-            rowLastItemIndex,
-        },
-    });
+    }, [itemsLen, itemRowIndex, itemColIndex, rowTops, dynamicGrid.strideX]);
 
     // Jump-to-scroll, based on positions
-    const { scrollItemIntoView } = useGridScrollJump({
-        gridRef,
-        positions,
-    });
+    const scrollItemIntoView = useCallback((index: number) => {
+        const el = gridRef.current;
+        if (!el) return;
+
+        const top = positions[index]?.top ?? 0;
+        const maxTop = Math.max(0, el.scrollHeight - el.clientHeight);
+        const target = Math.max(0, Math.min(top, maxTop));
+
+        el.scrollTo({ top: target, behavior: "auto" });
+    }, [gridRef, positions]);
 
     // Heights needed for restore logic
-    const closedHeight = isListView ? dynamicGrid.rowHeight : dynamicGrid.cardHeight;
-    const openRowHeight = Math.max(closedHeight, viewportH);
+    const closedHeight = isListView ? grid.rowHeight : dynamicGrid.gridCardHeight;
+    const openRowHeight = Math.max(closedHeight, dynamicGrid.gridViewportH);
 
     // Open/close behavior with scroll restore according to the new rules
     const { syncOpenFromRoute } = useGridScrollRestore({
         gridRef,
         openIds,
         itemsSorted,
-        dynamicGrid,
+        grid,
         idToIndex,
-        viewportH,
+        viewportH: dynamicGrid.gridViewportH,
         closedHeight,
         openRowHeight,
         itemRowIndex,
@@ -266,46 +287,10 @@ export function useGrid({
         syncOpenFromRoute(routeId);
     }, [routeId, syncOpenFromRoute]);
 
-    // // Open item must be "near" the top: from 100px above its top until its bottom
-    // // passes the top of the viewport.
-    // const hasOpenItemInView = useMemo(() => {
-    //     if (isListView) return false;
-    //     if (openIds.size === 0) return false;
-
-    //     for (const openId of openIds) {
-    //         const idx = idToIndex.get(openId);
-    //         if (idx == null) continue;
-
-    //         const rowIdx = itemRowIndex[idx];
-    //         if (rowIdx == null) continue;
-
-    //         const top = rowTops[rowIdx] ?? dynamicGrid.gap;
-    //         const height = rowHeights[rowIdx] ?? 0;
-    //         const bottom = top + height;
-
-    //         const activationStart = top - 100;
-    //         const activationEnd = bottom;
-
-    //         if (scrollTop >= activationStart && scrollTop <= activationEnd)
-    //             return true;
-    //     }
-
-    //     return false;
-    // }, [
-    //     dynamicGrid.gap,
-    //     isListView,
-    //     openIds,
-    //     idToIndex,
-    //     itemRowIndex,
-    //     rowTops,
-    //     rowHeights,
-    //     scrollTop,
-    // ]);
-
     // keep open item in view on layout changes
     const layoutRef = useRef({
-        viewportH,
-        containerHeight,
+        viewportH: dynamicGrid.gridViewportH,
+        containerHeight: gridTotalHeight,
         itemsLen,
     });
 
@@ -321,7 +306,7 @@ export function useGrid({
         if (idx == null) return;
 
         const prev = layoutRef.current;
-        const next = { viewportH, containerHeight, itemsLen };
+        const next = { viewportH: dynamicGrid.gridViewportH, containerHeight: gridTotalHeight, itemsLen };
 
         const layoutChanged =
             !prev ||
@@ -336,8 +321,8 @@ export function useGrid({
         // Use the existing jump hook to keep the open item in view
         scrollItemIntoView(idx);
     }, [
-        viewportH,
-        containerHeight,
+        dynamicGrid.gridViewportH,
+        gridTotalHeight,
         itemsLen,
         openIds,
         idToIndex,
@@ -345,11 +330,9 @@ export function useGrid({
     ]);
 
     return {
-        containerHeight,
+        gridTotalHeight,
         positions,
         visibleRange,
-        cssOpenWidth,
-        cssOpenHeight,
         openIds,
         dynamicGrid,
         scrollItemIntoView,
