@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.40.3](https://github.com/Zukzuk/syncnite/compare/v1.40.2...v1.40.3) (2025-12-28)
+
+
+### Bug Fixes
+
+* fixed some dynamic grid stuf ([69b543b](https://github.com/Zukzuk/syncnite/commit/69b543bfcb30f2cf8c4cbfb4cdfc3d4f2368ef16))
+
 ### [1.40.2](https://github.com/Zukzuk/syncnite/compare/v1.40.1...v1.40.2) (2025-12-28)
 
 
