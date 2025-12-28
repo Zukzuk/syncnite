@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.40.2](https://github.com/Zukzuk/syncnite/compare/v1.40.1...v1.40.2) (2025-12-28)
+
+
+### Bug Fixes
+
+* removed buggy animations ([15910ea](https://github.com/Zukzuk/syncnite/commit/15910eadf8c523e4de33fcceae9457affc7068ab))
+
 ### [1.40.1](https://github.com/Zukzuk/syncnite/compare/v1.40.0...v1.40.1) (2025-12-27)
 
 ## [1.40.0](https://github.com/Zukzuk/syncnite/compare/v1.39.4...v1.40.0) (2025-12-25)
