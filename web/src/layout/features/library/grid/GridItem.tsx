@@ -12,6 +12,7 @@ import { DesktopMode, HistoryNavMode, ItemPositions } from "../../../../types/ap
 type Props = {
     item: InterLinkedGameItem;
     index: number;
+    installedUpdatedAt?: string;
     isOpen: boolean;
     isDark: boolean;
     cssOpenWidth: string;

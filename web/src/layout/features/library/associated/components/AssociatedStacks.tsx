@@ -28,7 +28,6 @@ export function AssociatedStacks({
     if (!associatedData.length || stackColumns <= 0) return null;
 
     const lib = useLibraryContext();
-    const isOpenDelayed = useDelayedFlag({ active: true, delayMs: 210 });
 
     const { scrollRef, onScroll } = usePersistedScrollTop({
         key: currentItemId,
@@ -50,12 +49,6 @@ export function AssociatedStacks({
                 overflowY: "auto",
                 overflowX: "hidden",
                 overscrollBehaviorY: "contain",
-                opacity: isOpenDelayed ? 1 : 0,
-                transform: isOpenDelayed ? "translateY(0)" : "translateY(12px)",
-                willChange: "opacity, transform",
-                transitionProperty: "opacity, transform",
-                transitionDuration: "220ms, 260ms",
-                transitionTimingFunction: "ease, ease",
             }}
         >
             <Box

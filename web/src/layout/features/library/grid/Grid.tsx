@@ -55,10 +55,10 @@ export function Grid({
     });
 
     // Hook to manage alphabetical rail state and interactions.
-    const { 
-        railCounts, 
-        activeLetter, 
-        onScrollJump 
+    const {
+        railCounts,
+        activeLetter,
+        onScrollJump
     } = useAlphabetRail({
         ui,
         derived,
@@ -95,14 +95,14 @@ export function Grid({
                 {itemsSorted
                     .slice(visibleRange.startIndex, visibleRange.endIndex)
                     .map((item: InterLinkedGameItem, i: number) => {
-                        const key = `${item.id}|${installedUpdatedAt}`;
                         const index = visibleRange.startIndex + i;
                         const isOpen = openIds.has(item.id);
 
                         return (
                             <GridItem
-                                key={key}
+                                key={item.id}
                                 item={item}
+                                // installedUpdatedAt={installedUpdatedAt}
                                 index={index}
                                 isOpen={isOpen}
                                 positions={positions}

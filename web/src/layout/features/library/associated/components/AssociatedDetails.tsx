@@ -24,7 +24,6 @@ export function AssociatedDetails({ item, grid, isDark, openDeckKey, onBadgeClic
     const { id, playniteLink, sortingName, tags = [], series = [], isInstalled, isHidden, developers,
         links, coverUrl, bgUrl, origin, htmlLink, playniteOpenLink, title, source, sourceLink } = item;
 
-    const isOpenDelayed = useDelayedFlag({ active: true, delayMs: 70 });
     const [isBgHovered, setIsBgHovered] = useState(false);
 
     return (
@@ -40,12 +39,6 @@ export function AssociatedDetails({ item, grid, isDark, openDeckKey, onBadgeClic
                 overflowY: "auto",
                 overflowX: "hidden",
                 overscrollBehaviorY: "contain",
-                opacity: isOpenDelayed ? 1 : 0,
-                transform: isOpenDelayed ? "translateY(0)" : "translateY(12px)",
-                willChange: "opacity, transform",
-                transitionProperty: "opacity, transform",
-                transitionDuration: "220ms, 260ms",
-                transitionTimingFunction: "ease, ease",
             }}
         >
             <Box

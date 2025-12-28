@@ -37,7 +37,7 @@ export function AssociatedContent({
 
     const { associatedData } = useAssociatedData(isOpen, item, itemsAssociated);
 
-    const { openDeck, openDeckKey, animateDeckIn, setOpenDeckKey } = useOpenAssociatedDeck({
+    const { openDeck, openDeckKey, setOpenDeckKey } = useOpenAssociatedDeck({
         itemId: item.id,
         associatedData,
     });
@@ -91,7 +91,6 @@ export function AssociatedContent({
                     {openDeck && layout.deckColumns > 0 && (
                         <AssociatedDeck
                             deckKey={openDeck.key}
-                            animateIn={animateDeckIn}
                             label={openDeck.label}
                             items={openDeck.items}
                             currentItemId={item.id}
@@ -108,7 +107,7 @@ export function AssociatedContent({
                             currentItemId={item.id}
                             associatedData={associatedData}
                             openDeckKey={openDeckKey}
-                            stackColumns={stackColumns}
+                            stackColumns={stackColumns} 
                             isDark={isDark}
                             grid={grid}
                             onStackClick={setOpenDeckKey}

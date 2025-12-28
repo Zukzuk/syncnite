@@ -10,7 +10,6 @@ type UseParams = {
 type UseReturn = {
     openDeck: AssociatedItems | null;
     openDeckKey: string | null;
-    animateDeckIn: boolean;
     setOpenDeckKey: (key: string) => void;
 };
 
@@ -33,21 +32,10 @@ export function useOpenAssociatedDeck({ itemId, associatedData }: UseParams): Us
         return associatedData[0];
     }, [associatedData, openDeckKey]);
 
-    const perItemSelected = lib.getSelectedDeckKey(itemId);
-    const lastSelected = lib.getLastSelectedDeckKey();
-
-    const animateDeckIn =
-        !(
-            perItemSelected == null &&
-            lastSelected != null &&
-            openDeckKey != null &&
-            openDeckKey === lastSelected
-        );
-
     const setOpenDeckKey = useCallback(
         (key: string) => lib.setSelectedDeckKey(itemId, key),
         [lib, itemId]
     );
 
-    return { openDeck, openDeckKey: openDeck?.key ?? null, animateDeckIn, setOpenDeckKey };
+    return { openDeck, openDeckKey: openDeck?.key ?? null, setOpenDeckKey };
 }

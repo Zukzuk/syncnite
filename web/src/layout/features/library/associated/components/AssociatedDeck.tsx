@@ -34,11 +34,7 @@ export function AssociatedDeck({
     onToggleClickBounded,
 }: Props): JSX.Element | null {
     const lib = useLibraryContext();
-
-    const isOpenDelayed = useDelayedFlag({ active: animateIn, delayMs: 140 });
-    const show = animateIn ? isOpenDelayed : true;
-
-    const { cards, colCount, width, columnHeight, cardMeta, colLengths } =
+    const { cards, width, columnHeight, cardMeta, colLengths } =
         useAssociatedDeckLayout({ items, deckColumns, maxCardsPerColumn, grid });
 
     // nothing to show
@@ -69,11 +65,6 @@ export function AssociatedDeck({
                 display: "flex",
                 alignItems: "stretch",
                 overflow: "hidden",
-                opacity: show ? 1 : 0,
-                transform: show ? "translateY(0)" : "translateY(12px)",
-                transitionProperty: "opacity, transform",
-                transitionDuration: "220ms, 260ms",
-                transitionTimingFunction: "ease, ease",
                 maxWidth: width,
             }}
         >

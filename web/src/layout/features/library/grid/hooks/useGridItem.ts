@@ -11,6 +11,7 @@ type UseParams = {
     cssOpenWidth: string;
     cssOpenHeight: string;
     grid: InterLinkedGrid;
+    installedUpdatedAt?: string;
     onToggleItem: (id: string, navMode?: HistoryNavMode) => void;
 };
 
