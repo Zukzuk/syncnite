@@ -100,8 +100,10 @@ export type InterLinkedDynamicGrid = {
     deckAndStacksHeight: number;
     gridCardWidth: number;
     gridCardHeight: number;
-    stackWidth: number;
-    stackHeight: number;
+    deckCardWidth: number;
+    deckCardHeight: number;
+    stackCardWidth: number;
+    stackCardHeight: number;
     numOfCols: number;
     strideX: number;
     cardStepY: number;

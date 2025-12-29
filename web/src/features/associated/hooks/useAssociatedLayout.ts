@@ -8,10 +8,9 @@ function calcAssociatedLayout({ totalCards, grid, dynamicGrid }: {
     dynamicGrid: InterLinkedDynamicGrid;
 }): AssociatedLayout {
     const deckColWidth = dynamicGrid.gridCardWidth + grid.gap * 2;
-    const stackColWidth = dynamicGrid.stackWidth + grid.gap;
-    const cardHeight = dynamicGrid.gridCardWidth * (1 / grid.ratio);
+    const stackColWidth = dynamicGrid.stackCardWidth + grid.gap;
     const stepY = dynamicGrid.cardStepY;
-    const maxCardsPerColumnByHeight = Math.max(1, Math.floor((dynamicGrid.deckAndStacksHeight - cardHeight) / stepY) + 1);
+    const maxCardsPerColumnByHeight = Math.max(1, Math.floor((dynamicGrid.deckAndStacksHeight - dynamicGrid.deckCardHeight) / stepY) + 1);
     const neededColsByHeight = Math.max(1, Math.ceil(totalCards / maxCardsPerColumnByHeight));
 
     let maxDeckColsByWidth = 0;

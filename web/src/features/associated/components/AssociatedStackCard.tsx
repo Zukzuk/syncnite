@@ -35,7 +35,7 @@ export function AssociatedStackCard({ stack, isOpen, onStackClick, grid, dynamic
             bg="var(--mantine-color-body)"
             style={{
                 flex: "0 0 auto",
-                width: dynamicGrid.stackWidth,
+                width: dynamicGrid.stackCardWidth,
                 borderRadius: 4,
             }}
         >

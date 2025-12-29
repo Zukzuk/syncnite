@@ -3,7 +3,7 @@ import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "..
 import { DeckCardMeta } from "../../../types/app";
 
 type UseParams = {
-    items: InterLinkedGameItem[];
+    cards: InterLinkedGameItem[];
     deckColumns: number;
     maxCardsPerColumn: number | null;
     grid: InterLinkedGrid;
@@ -11,17 +11,15 @@ type UseParams = {
 };
 
 type UseReturn = {
-    cards: InterLinkedGameItem[];
     colCount: number;
-    width: number;
+    deckWidth: number;
     columnHeight: number;
     cardMeta: DeckCardMeta[];
     colLengths: number[];
 };
 
-export function useAssociatedDeckLayout({ items, deckColumns, maxCardsPerColumn, grid, dynamicGrid }: UseParams): UseReturn {
+export function useAssociatedDeckLayout({ cards, deckColumns, maxCardsPerColumn, grid, dynamicGrid }: UseParams): UseReturn {
     return useMemo(() => {
-        const cards = items.filter((g) => g.coverUrl);
         const colCount = Math.max(1, deckColumns);
         const total = cards.length;
 
@@ -37,9 +35,8 @@ export function useAssociatedDeckLayout({ items, deckColumns, maxCardsPerColumn,
             cardsPerColumn = Math.ceil(total / colCount);
         }
 
-        const cardHeight = dynamicGrid.gridCardWidth * (1 / grid.ratio);
         const columnHeight =
-            cardsPerColumn > 0 ? cardHeight + dynamicGrid.cardStepY * (cardsPerColumn - 1) : 0;
+            cardsPerColumn > 0 ? dynamicGrid.deckCardHeight + dynamicGrid.cardStepY * (cardsPerColumn - 1) : 0;
 
         const cardMeta: DeckCardMeta[] = cards.map((c, index) => {
             const colIndex = Math.floor(index / cardsPerColumn);
@@ -52,15 +49,14 @@ export function useAssociatedDeckLayout({ items, deckColumns, maxCardsPerColumn,
             colLengths[m.colIndex] = Math.max(colLengths[m.colIndex] || 0, m.indexInColumn + 1);
         });
 
-        const width = colCount * (dynamicGrid.gridCardWidth + grid.gap * 2) + grid.gap * 2;
+        const deckWidth = colCount * (dynamicGrid.gridCardWidth + grid.gap * 2) + grid.gap * 2;
 
         return {
-            cards,
             colCount,
-            width,
+            deckWidth,
             columnHeight,
             cardMeta,
             colLengths,
         };
-    }, [items, deckColumns, maxCardsPerColumn, dynamicGrid.gridCardWidth]);
+    }, [cards, deckColumns, maxCardsPerColumn, dynamicGrid.gridCardWidth]);
 }

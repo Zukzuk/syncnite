@@ -34,15 +34,14 @@ export function AssociatedDeck({
     onToggleClickBounded,
 }: Props): JSX.Element | null {
     const lib = useLibraryContext();
-    const { cards, width, columnHeight, cardMeta, colLengths } =
-        useAssociatedDeckLayout({ items, deckColumns, maxCardsPerColumn, grid, dynamicGrid });
+    const cards = items.filter((g) => g.coverUrl);
 
-    // nothing to show
     if (cards.length === 0 || deckColumns <= 0) return null;
 
-    // hover behavior local state (fine to keep here)
-    const [hoveredId, setHoveredId] = useState<string | null>(null);
+    const { deckWidth, columnHeight, cardMeta, colLengths } =
+        useAssociatedDeckLayout({ cards, deckColumns, maxCardsPerColumn, grid, dynamicGrid });
 
+    const [hoveredId, setHoveredId] = useState<string | null>(null);
     const hoveredIndex = useMemo(
         () => (hoveredId ? cardMeta.findIndex((m) => m.id === hoveredId) : -1),
         [hoveredId, cardMeta]
@@ -65,7 +64,7 @@ export function AssociatedDeck({
                 display: "flex",
                 alignItems: "stretch",
                 overflow: "hidden",
-                maxWidth: width,
+                maxWidth: deckWidth,
             }}
         >
             <Text
@@ -108,7 +107,7 @@ export function AssociatedDeck({
                     onMouseLeave={() => setHoveredId(null)}
                     style={{
                         position: "relative",
-                        width: width - grid.gap * 2,
+                        width: deckWidth - grid.gap * 2,
                         height: columnHeight,
                         overflow: "visible",
                     }}

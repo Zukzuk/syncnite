@@ -1,12 +1,9 @@
 import { Box } from "@mantine/core";
-import { usePersistedScrollTop } from "../hooks/usePersistedScrollTop";
 import { AssociatedItems } from "../../../types/app";
 import { InterLinkedDynamicGrid, InterLinkedGrid } from "../../../types/interlinked";
 import { AssociatedStackCard } from "./AssociatedStackCard";
-import { useLibraryContext } from "../../../layout/LibraryContext";
 
 type Props = {
-    currentItemId: string;
     associatedData: AssociatedItems[];
     openDeckKey: string | null;
     stackColumns: number;
@@ -17,7 +14,6 @@ type Props = {
 };
 
 export function AssociatedStacks({
-    currentItemId,
     associatedData,
     openDeckKey,
     stackColumns,
@@ -28,18 +24,8 @@ export function AssociatedStacks({
 }: Props): JSX.Element | null {
     if (!associatedData.length || stackColumns <= 0) return null;
 
-    const lib = useLibraryContext();
-
-    const { scrollRef, onScroll } = usePersistedScrollTop({
-        key: currentItemId,
-        get: () => lib.getStacksScrollTop(currentItemId),
-        set: (top: number) => lib.setStacksScrollTop(currentItemId, top),
-    });
-
     return (
         <Box
-            ref={scrollRef}
-            onScroll={onScroll}
             className="subtle-scrollbar"
             pl={4}
             style={{
@@ -55,7 +41,7 @@ export function AssociatedStacks({
             <Box
                 style={{
                     display: "grid",
-                    gridTemplateColumns: `repeat(${stackColumns}, ${dynamicGrid.stackWidth}px)`,
+                    gridTemplateColumns: `repeat(${stackColumns}, ${dynamicGrid.stackCardWidth}px)`,
                     gap: grid.gap,
                     justifyContent: "flex-start",
                     alignContent: "flex-start",

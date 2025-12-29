@@ -61,18 +61,22 @@ export function useGrid({
         gridCardWidth,
         deckAndStacksHeight,
         deckAndStacksWidth,
-        stackHeight,
-        stackWidth,
+        deckCardHeight,
+        deckCardWidth,
+        stackCardHeight,
+        stackCardWidth,
         numOfCols,
         strideX,
         cardStepY,
     } = useMemo(() => {
         const gridCardWidth = sliderValue + 4;
         const gridCardHeight = sliderValue * (1 / grid.ratio) + 4 + grid.gridCardBottom;
+        const deckCardWidth = sliderValue;
+        const deckCardHeight = deckCardWidth * (1 / grid.ratio);
         const deckAndStacksWidth = gridViewportW - grid.gap - grid.detailsPanelWidth - grid.gapAssociated * 2 - grid.gapRight - grid.scrollbarWidth;
         const deckAndStacksHeight = gridViewportH - grid.rowHeight;
-        const stackWidth = gridCardWidth * 0.7;
-        const stackHeight = gridCardHeight * 0.7;
+        const stackCardWidth = gridCardWidth * 0.7;
+        const stackCardHeight = gridCardHeight * 0.7;
         const strideX = gridCardWidth + grid.gap;
         const cardStepY = gridCardHeight / 3;
         const numOfCols = isListView ? 1 : Math.max(1, Math.floor((gridViewportW - grid.scrollbarWidth) / strideX));
@@ -84,8 +88,10 @@ export function useGrid({
             deckAndStacksHeight,
             gridCardWidth,
             gridCardHeight,
-            stackWidth,
-            stackHeight,
+            deckCardWidth,
+            deckCardHeight,
+            stackCardWidth,
+            stackCardHeight,
             numOfCols,
             strideX,
             cardStepY,
@@ -342,8 +348,10 @@ export function useGrid({
             gridViewportW,
             deckAndStacksHeight,
             deckAndStacksWidth,
-            stackHeight,
-            stackWidth,
+            deckCardHeight,
+            deckCardWidth,
+            stackCardHeight,
+            stackCardWidth,
             numOfCols,
             strideX,
             cardStepY,

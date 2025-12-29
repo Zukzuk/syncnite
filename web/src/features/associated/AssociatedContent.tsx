@@ -100,9 +100,8 @@ export function AssociatedContent({
                         />
                     )}
 
-                    {associatedData.length > 0 && (
+                    {stackColumns > 0 && (
                         <AssociatedStacks
-                            currentItemId={item.id}
                             associatedData={associatedData}
                             openDeckKey={openDeckKey}
                             stackColumns={stackColumns}
