@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.41.0](https://github.com/Zukzuk/syncnite/compare/v1.40.12...v1.41.0) (2025-12-29)
+
+
+### Features
+
+* added drawer to controls header ([715520f](https://github.com/Zukzuk/syncnite/commit/715520f09e4a835c6b70e3001c53eaaec396bbff))
+
 ### [1.40.12](https://github.com/Zukzuk/syncnite/compare/v1.40.11...v1.40.12) (2025-12-29)
 
 ### [1.40.11](https://github.com/Zukzuk/syncnite/compare/v1.40.10...v1.40.11) (2025-12-29)
