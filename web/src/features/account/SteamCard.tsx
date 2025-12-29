@@ -1,15 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-    Stack,
-    Text,
-    Card,
-    Group,
-    ThemeIcon,
-    Badge,
-    Divider,
-    Loader,
-    PasswordInput,
-} from "@mantine/core";
+import { Card, Group, Stack, Text, ThemeIcon, Divider, Badge, Loader, PasswordInput } from "@mantine/core";
 import { IconClock, IconLink, IconListDetails } from "@tabler/icons-react";
 import { API_ENDPOINTS } from "../../constants";
 import { SteamStatusResponse } from "../../types/app";
@@ -28,31 +18,14 @@ type Props = {
 export default function SteamCard({ grid }: Props): JSX.Element {
     const [steamStatus, setSteamStatus] = useState<SteamStatusResponse | null>(null);
     const [loadingStatus, setLoadingStatus] = useState(true);
-
-    // "syncing" here means: user pressed sync (or we are waiting for syncInProgress to clear)
     const [syncing, setSyncing] = useState(false);
     const [linking, setLinking] = useState(false);
-
-    // NEW: API key input state (prefilled from status)
     const [steamApiKey, setSteamApiKey] = useState("");
 
     // Polling wishlist via hook (similar behaviour to useLocalInstalled)
     const wishlist = useSteamWishlist({ pollMs: 3000 });
-
-    // NEW: syncInProgress comes from GET /steam/wishlist payload
     const syncInProgress = Boolean(wishlist?.syncInProgress);
-
-    // NEW: keep UI loading while either:
-    // - user initiated a sync (syncing=true) OR
-    // - server reports background sync still running (syncInProgress=true)
-    const syncingUi = useMemo(() => syncing || syncInProgress, [syncing, syncInProgress]);
-
-    // NEW: when the server reports sync is done, drop local syncing flag
-    useEffect(() => {
-        if (!syncInProgress) {
-            setSyncing(false);
-        }
-    }, [syncInProgress]);
+    const syncingUi = syncing || syncInProgress;
 
     // Initial load of Steam status (one-shot)
     useEffect(() => {
@@ -81,15 +54,13 @@ export default function SteamCard({ grid }: Props): JSX.Element {
     }, []);
 
     const handleSyncWishlist = useCallback(async () => {
-        // IMPORTANT: do NOT stop loading immediately after POST returns;
-        // rely on wishlist.syncInProgress turning false.
+        // Show loading while the POST /sync call is in flight
         setSyncing(true);
         try {
             await syncSteamWishlist();
-        } catch (e) {
-            // if the call itself fails, stop loading
+        } finally {
+            // After request returns, rely on wishlist.syncInProgress for the long-running state
             setSyncing(false);
-            throw e;
         }
     }, []);
 
@@ -115,7 +86,6 @@ export default function SteamCard({ grid }: Props): JSX.Element {
                     "x-auth-email": creds.email,
                     "x-auth-password": creds.password,
                 },
-                // NEW: no backward compat — always send apiKey
                 body: JSON.stringify({ apiKey }),
             });
 
@@ -164,7 +134,7 @@ export default function SteamCard({ grid }: Props): JSX.Element {
 
                 <Badge
                     color={
-                        steamConnected
+                        steamConnected || syncingUi
                             ? "var(--interlinked-color-success)"
                             : "var(--interlinked-color-error)"
                     }
@@ -176,7 +146,11 @@ export default function SteamCard({ grid }: Props): JSX.Element {
                         right: grid.gap,
                     }}
                 >
-                    {steamConnected ? "Linked" : "Not linked"}
+                    {syncingUi
+                        ? "syncing..."
+                        : steamConnected
+                            ? "linked"
+                            : "unlinked"}
                 </Badge>
             </Group>
 
@@ -191,7 +165,7 @@ export default function SteamCard({ grid }: Props): JSX.Element {
                 </Group>
             ) : (
                 <Stack gap="sm">
-                    {/* NEW: Steam Web API key input (native Mantine) */}
+                    {/* API key input */}
                     <PasswordInput
                         label="Steam Web API key"
                         description="Required to sync your wishlist. Stored on your InterLinked account."
@@ -232,6 +206,7 @@ export default function SteamCard({ grid }: Props): JSX.Element {
                             type="button"
                             onClick={handleLinkSteam}
                             icon={<IconLink color="var(--interlinked-color-secondary)" size={14} />}
+                            disabled={!steamApiKey || syncingUi}
                             loading={linking}
                             text={steamConnected ? "Re-link" : "Link"}
                             label={steamConnected ? "Re-link your Steam account" : "Link your Steam account"}
@@ -246,16 +221,6 @@ export default function SteamCard({ grid }: Props): JSX.Element {
                                 text={syncingUi ? "Syncing wishlist…" : "Sync wishlist now"}
                                 label={"Sync your Steam wishlist items now"}
                             />
-                        )}
-
-                        {/* Optional tiny indicator when server says background sync still running */}
-                        {steamConnected && syncInProgress && !loadingStatus && (
-                            <Group gap="xs">
-                                <Loader size="xs" type="dots" />
-                                <Text size="xs" c="dimmed">
-                                    Wishlist sync in progress…
-                                </Text>
-                            </Group>
                         )}
                     </Group>
                 </Stack>

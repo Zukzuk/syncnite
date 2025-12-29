@@ -1,6 +1,6 @@
 
 import { memo } from "react";
-import { Button, CSSProperties, Tooltip } from "@mantine/core";
+import { Button, CSSProperties, Tooltip, Text } from "@mantine/core";
 import { ButtonTypes } from "../types/app";
 
 type Props = {
@@ -11,6 +11,7 @@ type Props = {
     icon?: JSX.Element;
     style?: CSSProperties;
     loading?: boolean;
+    disabled?: boolean;
     onClick?: () => void;
 };
 
@@ -21,17 +22,20 @@ export const IconButton = memo(function IconButton({
     style,
     type,
     href,
-    loading,
+    loading = false,
+    disabled = false,
     onClick,
 }: Props) {
-    
+
     const button = (
         <Button
             component={type === "button" || type === "link" ? "a" : undefined}
             type={type === "submit" ? "submit" : undefined}
             onClick={type === "button" ? onClick : undefined}
             href={type === "link" ? href : undefined}
+            disabled={disabled}
             loading={loading === null || loading === undefined ? false : loading}
+            loaderProps={{ type: 'dots' }}
             size="xs"
             radius={0}
             variant="light"
@@ -46,12 +50,12 @@ export const IconButton = memo(function IconButton({
 
     return (
         <>
-            { label &&
+            {label &&
                 <Tooltip withArrow label={label} style={{ fontSize: 10 }}>
                     {button}
                 </Tooltip>
             }
-            { !label && button }
+            {!label && button}
         </>
     );
 });

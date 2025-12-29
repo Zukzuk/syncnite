@@ -62,7 +62,11 @@ export default function PlayniteCard({ grid }: Props): JSX.Element {
                             size="sm"
                             style={{ position: "absolute", top: grid.gap, right: grid.gap }}
                         >
-                            {!connected ? "offline" : versionMismatch ? "version mismatch" : "connected"}
+                            {!connected 
+                                ? "unlinked"
+                                : versionMismatch 
+                                    ? "version mismatch" 
+                                    : "linked"}
                         </Badge>
                     </Tooltip>
                 )}
