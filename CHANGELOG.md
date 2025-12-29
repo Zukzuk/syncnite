@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.40.10](https://github.com/Zukzuk/syncnite/compare/v1.40.9...v1.40.10) (2025-12-29)
+
+
+### Bug Fixes
+
+* fixed wishlist loading status ([3df3859](https://github.com/Zukzuk/syncnite/commit/3df38592bc8a58394eb647d0e9ac37473976c89e))
+
 ### [1.40.9](https://github.com/Zukzuk/syncnite/compare/v1.40.8...v1.40.9) (2025-12-29)
 
 
