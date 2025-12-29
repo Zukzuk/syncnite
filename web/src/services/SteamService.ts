@@ -25,7 +25,7 @@ export async function fetchSteamStatus(): Promise<SteamStatusResponse> {
 // Fetch the user's Steam wishlist
 export async function fetchSteamWishlist(): Promise<SteamWishlistResponse> {
   const creds = getCreds();
-  if (!creds) return { ok: false, lastSynced: null, items: [] };
+  if (!creds) return { ok: false, lastSynced: null, items: [], syncInProgress: false };
 
   const resp = await fetch(API_ENDPOINTS.STEAM_WISHLIST, {
     headers: {
@@ -35,7 +35,7 @@ export async function fetchSteamWishlist(): Promise<SteamWishlistResponse> {
   });
 
   if (!resp.ok) {
-    return { ok: false, lastSynced: null, items: [] };
+    return { ok: false, lastSynced: null, items: [], syncInProgress: false };
   }
 
   const payload = await resp.json();
@@ -45,7 +45,7 @@ export async function fetchSteamWishlist(): Promise<SteamWishlistResponse> {
 // Trigger a sync of the Steam wishlist
 export async function syncSteamWishlist(): Promise<SteamWishlistResponse> {
   const creds = getCreds();
-  if (!creds) return { ok: false, lastSynced: null, items: [] };
+  if (!creds) return { ok: false, lastSynced: null, items: [], syncInProgress: false };
 
   const resp = await fetch(API_ENDPOINTS.STEAM_WISHLIST_SYNC, {
     method: "POST",
@@ -56,7 +56,7 @@ export async function syncSteamWishlist(): Promise<SteamWishlistResponse> {
   });
 
   if (!resp.ok) {
-    return { ok: false, lastSynced: null, items: [] };
+    return { ok: false, lastSynced: null, items: [], syncInProgress: false };
   }
 
   const payload = await resp.json();

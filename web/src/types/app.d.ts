@@ -2,8 +2,8 @@ import { Dispatch, SetStateAction } from "react";
 import { LETTERS } from "../constants";
 import { InterLinkedGameItem } from "./interlinked";
 
-declare global { 
-    interface Window { __APP_VERSION__?: string } 
+declare global {
+  interface Window { __APP_VERSION__?: string }
 }
 
 export type Letter = typeof LETTERS[number];
@@ -26,7 +26,7 @@ export type DesktopMode = "closed" | "mini" | "normal";
 
 export type ButtonTypes = "button" | "submit" | "link";
 
-export type CustomIconType = InterLinkedOrigin ;
+export type CustomIconType = InterLinkedOrigin;
 
 export type ItemIconOverlayType = "default" | "circle";
 
@@ -129,8 +129,8 @@ export interface VisibleRange {
 }
 
 export type ScoredHit<T = string> = {
-    item: T;
-    score: number;
+  item: T;
+  score: number;
 };
 
 export type AssociatedLayout = {
@@ -165,22 +165,23 @@ export type SteamStatusResponse = {
   ok: boolean;
   connected: boolean;
   steam?: {
-    webApiKey?: string; // masked as "***" from backend
-    steamId?: string | null;
-    linkedAt?: string | null;
+    webApiKey: string;
+    steamId?: string;
+    linkedAt?: string;
   };
 };
 
 export type SteamWishlistResponse = {
   ok: boolean;
   lastSynced: string | null;
-  items: any[]; // raw items for now; can type later if you want
+  items: SteamWishlistEntry[];
+  syncInProgress: boolean;
 };
 
 export type DeckCardMeta = {
-    id: string;
-    metaIndex: number;
-    colIndex: number;
-    indexInColumn: number;
+  id: string;
+  metaIndex: number;
+  colIndex: number;
+  indexInColumn: number;
 };
 

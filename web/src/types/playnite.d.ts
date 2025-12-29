@@ -42,50 +42,39 @@ export interface PlayniteGame {
   SortingName?: string;
   GameId: string;
   Version?: string;
-
-  // visibility
-  Hidden?: boolean;
-
-  // joins (IDs to other collections)
   SourceId?: string | null;
-  TagIds?: string[];
-  PlatformIds?: string[];
-  GenreIds?: string[];
-  CategoryIds?: string[];
-  FeatureIds?: string[];
-  SeriesIds?: string[];
-  CompletionStatusId?: string | null;
-  AgeRatingIds?: string[];
-  RegionIds?: string[];
-  DeveloperIds?: string[];
-  PublisherIds?: string[];
-  PluginId?: string | null;
-
-  // dates + art
+  Hidden?: boolean;
+  Description?: string | null;
+  Notes?: string | null;
   ReleaseDate?: PlayniteGameReleaseDate | null;
   ReleaseYear?: number | null;
   Icon?: string | null;
   CoverImage?: string | null;
   BackgroundImage?: string | null;
+  Links?: PlayniteGameLink[];
 
-  // usage/activity
-  Added?: string | null;        // ISO datetime with offset
-  Modified?: string | null;     // ISO datetime with offset
-  LastActivity?: string | null; // ISO datetime with offset
-  Playtime?: number | null;     // minutes
+  TagIds?: string[];
+  SeriesIds?: string[];
+  DeveloperIds?: string[];
+
+  PlatformIds?: string[];
+  GenreIds?: string[];
+  CategoryIds?: string[];
+  FeatureIds?: string[];
+  AgeRatingIds?: string[];
+  RegionIds?: string[];
+  PublisherIds?: string[];
+  PluginId?: string | null;
+  CompletionStatusId?: string | null;
+
+  Added?: string | null;
+  Modified?: string | null; 
+  LastActivity?: string | null;
+  Playtime?: number | null; 
   PlayCount?: number | null;
-
-  // scores
   UserScore?: number | null;
   CommunityScore?: number | null;
   CriticScore?: number | null;
-
-  // content
-  Description?: string | null;
-  Notes?: string | null;
-
-  // links/actions/roms
-  Links?: PlayniteGameLink[];
   GameActions?: unknown[]; 
   Roms?: unknown[];   
 }

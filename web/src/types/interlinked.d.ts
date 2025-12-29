@@ -1,6 +1,5 @@
 import { useMantineTheme } from "@mantine/core";
 import { PlayniteGameLink } from "./playnite";
-import { ItemPositions, VisibleRange } from "./app";
 
 export type InterLinkedMedia = "game" | "movie" | "series" | "audiobook" |
     "book" | "music-album" | "animated-series" | "animated-movie";
@@ -24,11 +23,9 @@ interface InterLinkedItem {
 export interface InterLinkedGameItem extends InterLinkedItem {
     gameId: string;
     isInstalled: boolean;
-    tags: string[];
-    series: string[];
+    source: string;
     playniteLink: string;
     titleWithoutVersion: string;
-    source: string;
     developers: string[];
     publishers: string[];
 
@@ -113,14 +110,14 @@ export type InterLinkedDynamicGrid = {
 }
 
 export interface InterLinkedTheme {
-    theme: ReturnType<typeof useMantineTheme>;
+    theme: InterLinkedTheme;
+    grid: InterLinkedGrid;
     isDark: boolean;
     isMobile: boolean;
     isTablet: boolean;
     isDesktop: boolean;
     isWidescreen: boolean;
     hasNavbar: boolean;
-    grid: InterLinkedGrid;
     desktopMode: DesktopMode;
     navbarOpened: boolean;
     setDesktopMode: Dispatch<SetStateAction<DesktopMode>>;

@@ -130,13 +130,19 @@ components:
       type: object
       description: Steam link info stored on the InterLinked account
       properties:
+        apiKey:
+          type: string
+          description: Steam Web API key stored per-account
         steamId:
           type: string
           description: SteamID64
+          nullable: true
         linkedAt:
           type: string
           format: date-time
           description: When this Steam account was linked
+          nullable: true
+      required: [apiKey]
     SteamWishlistItemDetails:
       type: object
       description: Hydrated store details for a Steam app
@@ -199,8 +205,7 @@ components:
             $ref: "#/components/schemas/SteamWishlistItem"
 
 paths:
-
-# App endpoints
+  # App endpoints
 
   /ping:
     get:
@@ -285,7 +290,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-        
+
   /sse:
     get:
       tags: [App]
@@ -322,7 +327,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-# Extension endpoints
+  # Extension endpoints
 
   /extension/download:
     get:
@@ -338,7 +343,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-# Accounts endpoints
+  # Accounts endpoints
 
   /accounts/register/admin:
     post:
@@ -375,7 +380,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-                
+
   /accounts/admin/release:
     post:
       tags: [Accounts]
@@ -552,7 +557,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-# Playnite endpoints
+  # Playnite endpoints
 
   /playnite/installed:
     post:
@@ -965,7 +970,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-# Steam endpoints
+  # Steam endpoints
 
   /steam:
     get:
@@ -1003,13 +1008,14 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /steam/link:
+  /steam/auth/start:
     post:
       tags: [Steam]
-      summary: Link a Steam account to the current InterLinked account
+      summary: Get Steam OpenID login URL
       description: >
-        Links the given SteamID64 to the currently authenticated InterLinked
-        account. Typically called after a successful /steam/auth/callback.
+        Returns the Steam OpenID login URL to which the client should redirect
+        the user to start the login flow. This endpoint does not require
+        InterLinked authentication and is typically called by the web app.
       security:
         - XAuthEmail: []
           XAuthPassword: []
@@ -1021,53 +1027,24 @@ paths:
             schema:
               type: object
               properties:
-                steamId:
+                apiKey:
                   type: string
-                  description: SteamID64 obtained from /steam/auth/callback
-              required: [steamId]
+              required: [apiKey]
       responses:
         "200":
-          description: Steam account linked
+          description: Steam OpenID login URL
           content:
             application/json:
               schema:
                 type: object
                 properties:
                   ok: { type: boolean }
-                  steam:
-                    $ref: "#/components/schemas/SteamConnection"
-        "400":
-          description: Missing or invalid SteamID
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                  url:
+                    type: string
+                    format: uri
+                    description: Steam OpenID login URL
         "500":
-          description: Failed to persist Steam connection
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-  /steam/auth:
-    get:
-      tags: [Steam]
-      summary: Start Steam login (OpenID)
-      description: >
-        Redirects the browser to Steam's OpenID login page. This endpoint does
-        not require InterLinked authentication and is typically called by the web
-        app to start the "Sign in through Steam" flow.
-      responses:
-        "302":
-          description: Redirect to Steam OpenID login
-        "500":
-          description: Failed to construct redirect
+          description: Failed to construct URL
           content:
             application/json:
               schema:
@@ -1168,6 +1145,10 @@ paths:
                   lastSynced:
                     type: string
                     format: date-time
+                  syncInProgress:
+                    type: boolean
+                    description: >
+                      True if a full sync is still in progress (Hydrated details).
         "400":
           description: Steam not linked or Steam API error
           content:
@@ -1186,4 +1167,3 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-

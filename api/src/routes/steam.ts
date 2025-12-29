@@ -28,7 +28,7 @@ router.get("/", requireSession, async (req, res) => {
 
     try {
         const status = await SteamService.getConnectionStatus(email);
-        return res.json({ ok: true, ...status });
+        return res.json({ ...status });
     } catch (e) {
         return handleSteamError(res, e);
     }
@@ -44,13 +44,19 @@ router.post("/auth/start", requireSession, async (req, res) => {
         return res.status(401).json({ ok: false, error: "missing_auth" });
     }
 
+    const apiKey = String(req.body?.apiKey ?? "").trim();
+    if (!apiKey) {
+        return res.status(400).json({ ok: false, error: "missing_steam_webapi_key" });
+    }
+
     try {
-        const { redirectUrl } = await SteamService.startAuthForEmail(email);
+        const { redirectUrl } = await SteamService.startAuthForEmail(email, apiKey);
         return res.json({ ok: true, redirectUrl });
     } catch (e) {
         return handleSteamError(res, e);
     }
 });
+
 
 /**
  * GET /api/v1/steam/auth/callback

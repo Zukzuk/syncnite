@@ -119,8 +119,9 @@ export type InstalledStateRow = {
 // Account
 
 export type SteamConnection = {
-  steamId: string;
-  linkedAt: string;
+  apiKey: string;
+  steamId?: string;
+  linkedAt?: string;
 };
 
 export type Role = "admin" | "user" | "unknown";
