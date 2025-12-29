@@ -33,12 +33,10 @@ export default function Library({
                 ui={uiControls}
                 derived={derivedData}
             />
-
             <HeaderSort
                 theme={theme}
                 ui={uiControls}
             />
-
             <Grid
                 theme={theme}
                 ui={uiControls}
