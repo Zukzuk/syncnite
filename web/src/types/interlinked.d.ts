@@ -1,4 +1,4 @@
-import { useMantineTheme } from "@mantine/core";
+import { MantineTheme, useMantineTheme } from "@mantine/core";
 import { PlayniteGameLink } from "./playnite";
 
 export type InterLinkedMedia = "game" | "movie" | "series" | "audiobook" |
@@ -85,8 +85,8 @@ export type InterLinkedGrid = {
     ratio: number;
     overscan: TOverscan;
     gap: number;
-    gapRight: number;
-    gapAssociated: number;
+    gapMd: number;
+    gapLg: number;
     z: TZIndex;
 };
 
@@ -110,7 +110,8 @@ export type InterLinkedDynamicGrid = {
 }
 
 export interface InterLinkedTheme {
-    theme: InterLinkedTheme;
+    mantine: MantineTheme;
+    breakpointLabel: "xs" | "sm" | "md" | "lg" | "xl";
     grid: InterLinkedGrid;
     isDark: boolean;
     isMobile: boolean;

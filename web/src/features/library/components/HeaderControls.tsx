@@ -25,7 +25,7 @@ export const HeaderControls = memo(function HeaderControls({
   const { allSources, allTags, allSeries, items } = libraryData.playnite ?? {};
   if (!items) return null;
 
-  const { grid } = theme;
+  const { grid, hasNavbar } = theme;
 
   const {
     view, setView,
@@ -91,17 +91,16 @@ export const HeaderControls = memo(function HeaderControls({
       direction="row"
       align="center" // vertical middle for the whole row
       wrap="nowrap" // only the left part wraps
-      px={grid.gap * 2}
+      pl={hasNavbar ? grid.gap * 2 : grid.gapLg}
+      pr={grid.gap * 2}
       style={{ width: "100%", minHeight: grid.rowHeight }}
-      gap={grid.gap}
     >
       <Flex
         align="center"
         wrap="wrap"
         style={{ flex: 1, minWidth: 0 }} // minWidth:0 allows wrapping/shrinking
-        gap={grid.gap}
       >
-        <Group>
+        <Group gap={4}>
           <Group>
             <WrappedSegmentedControl
               leftIsActive={isListView}
@@ -113,107 +112,113 @@ export const HeaderControls = memo(function HeaderControls({
               onChange={(v) => setView(v as ViewMode)}
             />
 
-            <Slider
-              w={160}
-              step={1}
-              size="sm"
-              value={sliderValue}
-              onChange={setSliderValue}
-              defaultValue={grid.cardDefaultWidth}
-              min={grid.cardMinWidth}
-              max={grid.cardMaxWidth}
-              marks={[
-                { value: grid.cardMinWidth, label: "S" },
-                { value: grid.cardDefaultWidth, label: "M" },
-                { value: grid.cardMaxWidth, label: "L" },
-              ]}
-              styles={{
-                root: { top: 7 },
-                markLabel: { position: "relative", top: -30, fontSize: 10 },
-                label: { fontSize: 10, top: -10 },
-              }}
-            />
+            {hasNavbar &&
+              <Slider
+                w={160}
+                step={1}
+                size="sm"
+                value={sliderValue}
+                onChange={setSliderValue}
+                defaultValue={grid.cardDefaultWidth}
+                min={grid.cardMinWidth}
+                max={grid.cardMaxWidth}
+                marks={[
+                  { value: grid.cardMinWidth, label: "S" },
+                  { value: grid.cardDefaultWidth, label: "M" },
+                  { value: grid.cardMaxWidth, label: "L" },
+                ]}
+                styles={{
+                  root: { top: 7 },
+                  markLabel: { position: "relative", top: -30, fontSize: 10 },
+                  label: { fontSize: 10, top: -10 },
+                }}
+              />
+            }
 
             <SearchInput width={262} value={q} onChange={setQ} />
           </Group>
 
+          {hasNavbar &&
+            <Group>
+              <Group>
+                <MultiSelectInput
+                  placeholder="Tags"
+                  group="playnite"
+                  data={tagsData}
+                  value={tags}
+                  setData={setTags}
+                />
+
+                <MultiSelectInput
+                  placeholder="Sources"
+                  group="playnite"
+                  data={sourcesData}
+                  value={sources}
+                  setData={setSources}
+                />
+
+                <MultiSelectInput
+                  placeholder="Series"
+                  group="playnite"
+                  data={seriesData}
+                  value={series}
+                  setData={setSeries}
+                />
+              </Group>
+
+              <Group>
+                <WrappedSwitch
+                  label="installed"
+                  ariaLabel="Show installed only"
+                  checked={installedOnly}
+                  toggle={setShowInstalledOnly}
+                />
+
+                <WrappedSwitch
+                  label="hidden"
+                  ariaLabel="Show hidden"
+                  checked={showHidden}
+                  toggle={setShowHidden}
+                />
+              </Group>
+            </Group>
+          }
+        </Group>
+      </Flex>
+
+      {hasNavbar &&
+        <Flex
+          justify="flex-end"
+          align="center"
+          style={{ flex: 0, height: "100%" }}
+        >
           <Group>
-            <Group>
-              <MultiSelectInput
-                placeholder="Tags"
-                group="playnite"
-                data={tagsData}
-                value={tags}
-                setData={setTags}
-              />
-
-              <MultiSelectInput
-                placeholder="Sources"
-                group="playnite"
-                data={sourcesData}
-                value={sources}
-                setData={setSources}
-              />
-
-              <MultiSelectInput
-                placeholder="Series"
-                group="playnite"
-                data={seriesData}
-                value={series}
-                setData={setSeries}
-              />
-            </Group>
-
-            <Group>
-              <WrappedSwitch
-                label="installed"
-                ariaLabel="Show installed only"
-                checked={installedOnly}
-                toggle={setShowInstalledOnly}
-              />
-
-              <WrappedSwitch
-                label="hidden"
-                ariaLabel="Show hidden"
-                checked={showHidden}
-                toggle={setShowHidden}
-              />
-            </Group>
+            <WrappedSegmentedControl
+              leftIsActive={hasActiveFilters}
+              tooltip={{
+                left: "Filters active! Click the right side to reset",
+                right: "Nothing is filtered! Nothing to reset",
+              }}
+              label={{
+                left: "filters active",
+                right: "showing all items",
+              }}
+              readOnly={true}
+              width={110}
+              value={switches}
+              data={[
+                { value: "enabled", label: `${filteredCount}` },
+                { value: "disabled", label: `${baselineTotal}` },
+              ]}
+              onChange={(next) => {
+                const mode = next as SwitchesMode;
+                if (mode === "enabled") return;
+                resetAllFilters();
+              }}
+            />
           </Group>
-        </Group>
-      </Flex>
-
-      <Flex
-        justify="flex-end"
-        align="center"
-        style={{ flex: 0, height: "100%" }}
-      >
-        <Group>
-          <WrappedSegmentedControl
-            leftIsActive={hasActiveFilters}
-            tooltip={{
-              left: "Filters active! Click the right side to reset",
-              right: "Nothing is filtered! Nothing to reset",
-            }}
-            label={{
-              left: "filters active",
-              right: "showing all items",
-            }}
-            readOnly={true}
-            width={110}
-            value={switches}
-            data={[
-              { value: "enabled", label: `${filteredCount}` },
-              { value: "disabled", label: `${baselineTotal}` },
-            ]}
-            onChange={(next) => {
-              const mode = next as SwitchesMode;
-              if (mode === "enabled") return;
-              resetAllFilters();
-            }}
-          />
-        </Group>
-      </Flex>
+        </Flex>
+      }
     </Flex>
   );
 });

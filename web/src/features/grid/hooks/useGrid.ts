@@ -45,8 +45,8 @@ export function useGrid({
 
         const onSize = () => {
             const rect = el.getBoundingClientRect();
-            setW(Math.max(0, Math.floor(rect.width)));
-            setH(Math.max(0, Math.floor(rect.height)));
+            setW(Math.max(550, Math.floor(rect.width)));
+            setH(Math.max(250, Math.floor(rect.height)));
         };
 
         const ro = new ResizeObserver(onSize);
@@ -73,7 +73,7 @@ export function useGrid({
         const gridCardHeight = sliderValue * (1 / grid.ratio) + 4 + grid.gridCardBottom;
         const deckCardWidth = sliderValue;
         const deckCardHeight = deckCardWidth * (1 / grid.ratio);
-        const deckAndStacksWidth = gridViewportW - grid.gap - grid.detailsPanelWidth - grid.gapAssociated * 2 - grid.gapRight - grid.scrollbarWidth;
+        const deckAndStacksWidth = gridViewportW - grid.gap - grid.detailsPanelWidth - grid.gapMd * 2 - grid.gapLg - grid.scrollbarWidth;
         const deckAndStacksHeight = gridViewportH - grid.rowHeight;
         const stackCardWidth = gridCardWidth * 0.7;
         const stackCardHeight = gridCardHeight * 0.7;

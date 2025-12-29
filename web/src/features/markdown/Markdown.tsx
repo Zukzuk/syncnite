@@ -22,13 +22,13 @@ function toText(node: ReactNode): string {
 
 type Props = {
     content: string;
-    theme: MantineTheme;
+    mantine: MantineTheme;
     isDark: boolean;
 };
 
-export default function Markdown({ content, theme, isDark }: Props): JSX.Element {
-    const border = isDark ? theme.colors.dark[4] : theme.colors.gray[3];
-    const zebra = isDark ? theme.colors.dark[6] : theme.colors.gray[0];
+export default function Markdown({ content, mantine, isDark }: Props): JSX.Element {
+    const border = isDark ? mantine.colors.dark[4] : mantine.colors.gray[3];
+    const zebra = isDark ? mantine.colors.dark[6] : mantine.colors.gray[0];
 
     // Inline code (react-markdown v9 only uses this for inline)
     const CodeRenderer: Components["code"] = ({ children, ...props }) => (
@@ -55,10 +55,10 @@ export default function Markdown({ content, theme, isDark }: Props): JSX.Element
                 <pre
                     {...props}
                     style={{
-                        padding: theme.spacing.md,
+                        padding: mantine.spacing.md,
                         border: `1px solid ${border}`,
-                        borderRadius: theme.radius.md,
-                        margin: `${theme.spacing.sm} 0`,
+                        borderRadius: mantine.radius.md,
+                        margin: `${mantine.spacing.sm} 0`,
                         overflow: "auto",
                     }}
                 >
@@ -77,7 +77,7 @@ export default function Markdown({ content, theme, isDark }: Props): JSX.Element
 
     // Tables
     const TableRenderer: Components["table"] = (props) => (
-        <div style={{ overflowX: "auto", margin: `${theme.spacing.sm} 0` }}>
+        <div style={{ overflowX: "auto", margin: `${mantine.spacing.sm} 0` }}>
             <table
                 style={{
                     width: "100%",
@@ -93,7 +93,7 @@ export default function Markdown({ content, theme, isDark }: Props): JSX.Element
         <th
             style={{
                 textAlign: "left",
-                padding: `${theme.spacing.xs} ${theme.spacing.sm}`,
+                padding: `${mantine.spacing.xs} ${mantine.spacing.sm}`,
                 borderBottom: `1px solid ${border}`,
                 borderRight: `1px solid ${border}`,
                 background: zebra,
@@ -107,7 +107,7 @@ export default function Markdown({ content, theme, isDark }: Props): JSX.Element
     const TdRenderer: Components["td"] = (props) => (
         <td
             style={{
-                padding: `${theme.spacing.xs} ${theme.spacing.sm}`,
+                padding: `${mantine.spacing.xs} ${mantine.spacing.sm}`,
                 borderBottom: `1px solid ${border}`,
                 borderRight: `1px solid ${border}`,
                 verticalAlign: "top",

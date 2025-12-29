@@ -5,7 +5,7 @@ import { HistoryNavMode } from "../../../types/app";
 import { useAssociatedDeckLayout } from "../hooks/useAssociatedDeckLayout";
 import { usePersistedScrollTop } from "../hooks/usePersistedScrollTop";
 import { AssociatedDeckCard } from "./AssociatedDeckCard";
-import { useLibraryContext } from "../../../layout/LibraryContext";
+import { useLibraryContext } from "../../../pages/LibraryContext";
 
 type Props = {
     deckKey: string;

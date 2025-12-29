@@ -33,7 +33,7 @@ export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle, desktopMini = 
     // On mobile (no menu), close overlay after selection
     const onNavClick = hasNavbar ? undefined : toggleNavbar;
 
-    const wrap = (label: string, node: ReactNode) =>
+    const navLinkSWrapper = (label: string, node: ReactNode) =>
         desktopMini ? (
             <Tooltip withArrow position="right" label={label}>
                 <Box>{node}</Box>
@@ -42,7 +42,6 @@ export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle, desktopMini = 
             node
         );
 
-    // Mini-mode "rail" style for NavLink
     const navLinkStyles = {
         root: {
             borderRadius: 0,
@@ -50,10 +49,9 @@ export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle, desktopMini = 
             justifyContent: desktopMini ? "center" : undefined,
         },
         body: {
-            display: desktopMini ? "none" : undefined, // hide label/description container
+            display: desktopMini ? "none" : undefined, 
         },
         section: {
-            // leftSection wrapper
             marginInlineEnd: desktopMini ? 0 : undefined,
         },
         label: {
@@ -64,9 +62,13 @@ export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle, desktopMini = 
     return (
         <Stack
             h="100%"
+            w={desktopMini ? grid.navBarMiniWidth : grid.navBarWidth}
             gap={0}
             style={{
-                boxShadow: isDark ? "3px 0 12px rgba(0, 0, 0, 0.2)" : "3px 0 12px rgba(0, 0, 0, 0.1)",
+                backgroundColor: "var(--interlinked-color-body)",
+                boxShadow: isDark 
+                    ? "3px 0 12px rgba(0, 0, 0, 0.2)" 
+                    : "3px 0 12px rgba(0, 0, 0, 0.1)",
             }}
         >
             {/* Top row */}
@@ -80,7 +82,7 @@ export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle, desktopMini = 
             <Box style={{ flex: 1, minHeight: 0, paddingTop: grid.halfRowHeight, ...gateStyle }}>
                 <ScrollArea style={{ height: "100%" }}>
                     <Stack gap={6} px={desktopMini ? grid.gap : 0}>
-                        {wrap(
+                        {navLinkSWrapper(
                             "Home",
                             <NavLink
                                 component={Link}
@@ -94,7 +96,7 @@ export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle, desktopMini = 
                             />
                         )}
 
-                        {wrap(
+                        {navLinkSWrapper(
                             "Library",
                             <NavLink
                                 component={Link}
@@ -108,7 +110,7 @@ export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle, desktopMini = 
                             />
                         )}
 
-                        {wrap(
+                        {navLinkSWrapper(
                             "Cast",
                             <NavLink
                                 component={Link}
@@ -122,7 +124,7 @@ export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle, desktopMini = 
                             />
                         )}
 
-                        {wrap(
+                        {navLinkSWrapper(
                             "Account",
                             <NavLink
                                 component={Link}
@@ -137,7 +139,7 @@ export function AppNavbar({ toggleNavbar, onIntroDone, gateStyle, desktopMini = 
                         )}
 
                         {isAdmin &&
-                            wrap(
+                            navLinkSWrapper(
                                 "Bridge",
                                 <NavLink
                                     component={Link}

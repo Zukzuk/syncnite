@@ -55,7 +55,7 @@ export function AssociatedContent({
             in={isOpen}
             transitionDuration={140}
             py={grid.gap}
-            pr={grid.gapRight}
+            pr={grid.gapLg}
             style={{
                 width: dynamicGrid.gridViewportW,
                 height: dynamicGrid.gridViewportH - grid.rowHeight,
@@ -64,7 +64,7 @@ export function AssociatedContent({
                 overflowY: "hidden",
             }}
         >
-            <Group align="flex-start" gap={grid.gapAssociated} wrap="nowrap" h="100%">
+            <Group align="flex-start" gap={grid.gapMd} wrap="nowrap" h="100%">
                 <AssociatedDetails
                     item={item}
                     grid={grid}
@@ -81,7 +81,7 @@ export function AssociatedContent({
                         minWidth: 0,
                         height: "100%",
                         display: "flex",
-                        gap: grid.gapAssociated,
+                        gap: grid.gapMd,
                         overflow: "hidden",
                     }}
                 >

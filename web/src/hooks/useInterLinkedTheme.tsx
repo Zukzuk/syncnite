@@ -25,9 +25,9 @@ export const interlinkedTheme = createTheme({
     },
 });
 
-export const themeResolver: CSSVariablesResolver = (theme) => ({
+export const themeResolver: CSSVariablesResolver = (mantine) => ({
     variables: {
-        //'--mantine-hero-height': theme.other.heroHeight,
+        //'--mantine-hero-height': mantine.other.heroHeight,
     },
     light: {
         '--interlinked-color-light': `var(--mantine-color-grey-1)`,
@@ -81,29 +81,30 @@ export const themeResolver: CSSVariablesResolver = (theme) => ({
 
 // Custom hook to provide theme and layout-related information for InterLinked.
 export function useInterLinkedTheme(): InterLinkedTheme {
-    const theme = useMantineTheme();
+    const mantine = useMantineTheme();
     const { colorScheme, setColorScheme } = useMantineColorScheme();
     const isDark = colorScheme === "dark";
+    const breakpointLabel = "md";
 
-    const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.xs})`, false, {
+    const isMobile = useMediaQuery(`(max-width: ${mantine.breakpoints.xs})`, false, {
         getInitialValueInEffect: false,
     });
 
     const isTablet = useMediaQuery(
-        `(min-width: ${theme.breakpoints.xs}) and (max-width: ${theme.breakpoints.sm})`, false,
+        `(min-width: ${mantine.breakpoints.xs}) and (max-width: ${mantine.breakpoints.md})`, false,
         { getInitialValueInEffect: false }
     );
 
-    const hasNavbar = useMediaQuery(`(min-width: ${theme.breakpoints.sm})`, false, {
+    const hasNavbar = useMediaQuery(`(min-width: ${mantine.breakpoints.md})`, false, {
         getInitialValueInEffect: false,
     });
 
     const isDesktop = useMediaQuery(
-        `(min-width: ${theme.breakpoints.sm}) and (max-width: ${theme.breakpoints.xl})`, false,
+        `(min-width: ${mantine.breakpoints.md}) and (max-width: ${mantine.breakpoints.xl})`, false,
         { getInitialValueInEffect: false }
     );
 
-    const isWidescreen = useMediaQuery(`(min-width: ${theme.breakpoints.xl})`, false, {
+    const isWidescreen = useMediaQuery(`(min-width: ${mantine.breakpoints.xl})`, false, {
         getInitialValueInEffect: false,
     });
 
@@ -131,6 +132,7 @@ export function useInterLinkedTheme(): InterLinkedTheme {
     const cardMaxWidth = 220;
     const coverWidth = 220;
     const detailsPanelWidth = 236;
+    const gap = 8;
 
     const z = {
         belowBase: 0,
@@ -158,16 +160,17 @@ export function useInterLinkedTheme(): InterLinkedTheme {
         iconSize: 38,
         scrollbarWidth: 15,
         listLeftPadding: 12,
-        gap: 8,
-        gapRight: 8 * 7,
-        gapAssociated: 8 * 3,
+        gap,
+        gapLg: gap * 7,
+        gapMd: gap * 3,
         ratio,
         overscan: { top: 600, bottom: 800 } as const,
         z,
     };
 
     return {
-        theme,
+        mantine,
+        breakpointLabel,
         isDark,
         isMobile,
         isTablet,

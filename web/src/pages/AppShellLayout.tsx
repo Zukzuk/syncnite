@@ -9,14 +9,24 @@ import { DesktopMode } from "../types/app";
 type Props = {
   children: ReactNode;
   hideSite?: boolean;
-}
+};
 
 export default function AppShellLayout({ children, hideSite = false }: Props) {
-  const { grid, hasNavbar, desktopMode, navbarOpened, isDark, toggleNavbar, closeNavbar, setDesktopMode } = useInterLinkedTheme();
+  const {
+    grid,
+    hasNavbar,
+    desktopMode,
+    navbarOpened,
+    isDark,
+    toggleNavbar,
+    closeNavbar,
+    setDesktopMode,
+    breakpointLabel,
+  } = useInterLinkedTheme();
+
   const desktopClosed = desktopMode === "closed";
   const desktopMini = desktopMode === "mini";
 
-  // Intro flow for the navbar burger
   const flow = useIntroFlow({
     gateEnabled: !hideSite,
     gateStartsHidden: true,
@@ -29,13 +39,11 @@ export default function AppShellLayout({ children, hideSite = false }: Props) {
         hideSite
           ? undefined
           : {
-            // base is ignored in mobile-open state (overlay becomes 100% width by design)
-            // sm+ is where we do mini/normal widths
             width: {
               base: grid.navBarWidth,
-              sm: desktopMini ? grid.navBarMiniWidth : grid.navBarWidth,
+              [breakpointLabel]: desktopMini ? grid.navBarMiniWidth : grid.navBarWidth,
             },
-            breakpoint: "sm",
+            breakpoint: breakpointLabel,
             collapsed: {
               mobile: !navbarOpened,
               desktop: desktopClosed,
@@ -45,18 +53,44 @@ export default function AppShellLayout({ children, hideSite = false }: Props) {
       styles={{
         navbar: {
           overflow: "hidden",
-          transition: "width 200ms ease",
+          background: isDark
+            ? "rgba(36, 36, 36, 0.65)"
+            : "rgba(200, 200, 200, 0.65)",
+          backdropFilter: "blur(14px) saturate(1.2)",
+          WebkitBackdropFilter: "blur(14px) saturate(1.2)",
         },
       }}
     >
+      {/* MOBILE burger */}
+      {!hasNavbar && (
+        <Box
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 7,
+            height: grid.rowHeight,
+            display: "flex",
+            alignItems: "center",
+            zIndex: grid.z.top + 1,
+          }}
+        >
+          <Burger
+            opened={navbarOpened}
+            onClick={toggleNavbar}
+            size="sm"
+            lineSize={navbarOpened ? 3 : 2}
+            aria-label="Toggle navigation"
+            color="var(--interlinked-color-primary-soft)"
+          />
+        </Box>
+      )}
 
-      {/* DESKTOP navbar (sm+): mini/normal */}
+      {/* DESKTOP navbar mini/normal */}
       {!hideSite && !desktopClosed && (
-        <AppShell.Navbar p={0} withBorder={false}>
+        <AppShell.Navbar p={0} withBorder={false} style={{ zIndex: grid.z.top }}>
           <AppNavbar
             desktopMini={desktopMini}
             toggleNavbar={() => {
-              // Close overlay only on mobile after clicking an item
               if (!hasNavbar) closeNavbar();
             }}
             onIntroDone={flow.gate.onIntroDone}
@@ -68,42 +102,16 @@ export default function AppShellLayout({ children, hideSite = false }: Props) {
         </AppShell.Navbar>
       )}
 
-      {/* MOBILE burger (your existing behavior) */}
-      {!hasNavbar && (
-        <Box
-          style={{
-            position: "absolute",
-            top: -grid.gap,
-            left: 10,
-            height: grid.rowHeight,
-            display: "flex",
-            alignItems: "center",
-            zIndex: grid.z.top,
-          }}
-        >
-          <Burger
-            opened={navbarOpened}
-            onClick={toggleNavbar}
-            size="sm"
-            lineSize={2}
-            aria-label="Toggle navigation"
-            color="var(--interlinked-color-primary)"
-          />
-        </Box>
-      )}
-
-      {/* DESKTOP controls (sm+): full-height right-edge column */}
+      {/* DESKTOP right-edge toggle rail */}
       {!hideSite && hasNavbar && !desktopClosed && (
         <Box
-          visibleFrom="sm"
+          visibleFrom={breakpointLabel}
           role="button"
           aria-label="Toggle navbar mini/normal"
           onClick={() => setDesktopMode((m: DesktopMode) => (m === "normal" ? "mini" : "normal"))}
           style={{
             position: "fixed",
-            left: desktopMini
-              ? grid.navBarMiniWidth - grid.gap
-              : grid.navBarWidth - grid.gap,
+            left: desktopMini ? grid.navBarMiniWidth - grid.gap : grid.navBarWidth - grid.gap,
             top: 0,
             height: "100dvh",
             width: grid.gap * 2,
@@ -117,17 +125,9 @@ export default function AppShellLayout({ children, hideSite = false }: Props) {
           }}
         >
           {desktopMode === "normal" ? (
-            <IconChevronLeft
-              size={18}
-              stroke={2}
-              color="var(--interlinked-color-suppressed)"
-            />
+            <IconChevronLeft size={18} stroke={2} color="var(--interlinked-color-suppressed)" />
           ) : (
-            <IconChevronRight
-              size={18}
-              stroke={2}
-              color="var(--interlinked-color-suppressed)"
-            />
+            <IconChevronRight size={18} stroke={2} color="var(--interlinked-color-suppressed)" />
           )}
         </Box>
       )}

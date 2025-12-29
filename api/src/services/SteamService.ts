@@ -22,7 +22,7 @@ if (!SERVER_REALM) {
 
 // Steam OpenID return URL
 const STEAM_RETURN_PATH = process.env.STEAM_RETURN_PATH;
-const STEAM_RETURN_URL = `${SERVER_REALM}/${STEAM_RETURN_PATH}`;
+const STEAM_RETURN_URL = `${SERVER_REALM}${STEAM_RETURN_PATH}`;
 
 // Steam Web API endpoints
 const STEAM_API_BASE = "https://api.steampowered.com";

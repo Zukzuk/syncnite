@@ -1,5 +1,5 @@
 import { useRouteError, isRouteErrorResponse } from "react-router-dom";
-import AppShellLayout from "../layout/AppShellLayout";
+import AppShellLayout from "../pages/AppShellLayout";
 
 export default function RouteError() {
     const err = useRouteError();
