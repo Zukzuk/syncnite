@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.40.7](https://github.com/Zukzuk/syncnite/compare/v1.40.6...v1.40.7) (2025-12-29)
+
+
+### Bug Fixes
+
+* more calc refresh fixes ([4948ab3](https://github.com/Zukzuk/syncnite/commit/4948ab398cd55854be41e2e788d10e84b7d7143c))
+
 ### [1.40.6](https://github.com/Zukzuk/syncnite/compare/v1.40.5...v1.40.6) (2025-12-29)
 
 ### [1.40.5](https://github.com/Zukzuk/syncnite/compare/v1.40.4...v1.40.5) (2025-12-29)
