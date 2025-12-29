@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.40.11](https://github.com/Zukzuk/syncnite/compare/v1.40.10...v1.40.11) (2025-12-29)
+
 ### [1.40.10](https://github.com/Zukzuk/syncnite/compare/v1.40.9...v1.40.10) (2025-12-29)
 
 
