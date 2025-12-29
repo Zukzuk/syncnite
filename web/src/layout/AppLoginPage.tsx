@@ -5,12 +5,12 @@ import { useForm } from "@mantine/form";
 import { Box, Center, Card, Text, Tabs, TextInput, PasswordInput, Stack, Alert, Space } from "@mantine/core";
 import { fetchAdminStatus, login, registerAdmin, registerUser, setCreds } from "../services/AccountService";
 import { AccountCreds } from "../types/app";
+import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
+import { useIntroFlow } from "../hooks/useIntroFlow";
+import { LogoIntro } from "../components/LogoIntro";
+import { IconButton } from "../components/IconButton";
 
 import styles from "./AppLoginPage.module.css";
-import { useInterLinkedTheme } from "./hooks/useInterLinkedTheme";
-import { useIntroFlow } from "./hooks/useIntroFlow";
-import { LogoIntro } from "./components/LogoIntro";
-import { IconButton } from "./components/IconButton";
 
 export default function AppLoginPage(): JSX.Element {
   const [tab, setTab] = useState<"login" | "user" | "admin">("login");

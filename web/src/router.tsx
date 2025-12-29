@@ -3,14 +3,14 @@ import { createBrowserRouter, Navigate, Outlet, useNavigate } from "react-router
 import { INTERVAL_MS } from "./constants";
 import { clearCreds } from "./services/AccountService";
 import AppShellLayout from "./layout/AppShellLayout";
-import HomePage from "./layout/features/HomePage";
-import LibraryPage from "./layout/features/LibraryPage";
-import BridgePage from "./layout/features/BridgePage";
+import HomePage from "./layout/HomePage";
+import LibraryPage from "./layout/LibraryPage";
+import BridgePage from "./layout/BridgePage";
 import AppLoginPage from "./layout/AppLoginPage";
-import AccountPage from "./layout/features/AccountPage";
-import NarrowcastPage from "./layout/features/NarrowcastPage";
-import { useAuth } from "./layout/hooks/useAuth";
-import { useAdminGate } from "./layout/hooks/useAdminGate";
+import AccountPage from "./layout/AccountPage";
+import NarrowcastPage from "./layout/NarrowcastPage";
+import { useAuth } from "./hooks/useAuth";
+import { useAdminGate } from "./hooks/useAdminGate";
 import RouteError from "./error/BounderyRouteError";
 
 function WithShell({ hideSite = false }: { hideSite?: boolean }) {

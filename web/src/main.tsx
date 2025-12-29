@@ -5,8 +5,8 @@ import { MantineProvider } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
 import { router } from "./router";
 import { startGlobalSse } from "./services/SseClient";
-import { interlinkedTheme, themeResolver } from "./styles/theme";
 import { AppError } from "./error/BoundaryAppError";
+import { interlinkedTheme, themeResolver } from "./hooks/useInterLinkedTheme";
 
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";

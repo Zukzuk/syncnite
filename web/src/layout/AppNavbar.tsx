@@ -4,10 +4,10 @@ import { Box, Stack, Text, Tooltip, ScrollArea, NavLink, Group } from "@mantine/
 import { IconAlignBoxLeftBottom, IconLibraryPhoto, IconDeviceTv, IconAffiliate, IconLogout2, IconUserHexagon } from "@tabler/icons-react";
 import { WEB_APP_VERSION } from "../constants";
 import { InterLinkedGrid } from "../types/interlinked";
-import { useAuth } from "./hooks/useAuth";
-import { LogoIntro } from "./components/LogoIntro";
-import { ControlPanel } from "./features/controlpanel/ControlPanel";
-import { IconButton } from "./components/IconButton";
+import { useAuth } from "../hooks/useAuth";
+import { LogoIntro } from "../components/LogoIntro";
+import { ControlPanel } from "../features/controlpanel/ControlPanel";
+import { IconButton } from "../components/IconButton";
 
 type Props = {
     hasNavbar: boolean;

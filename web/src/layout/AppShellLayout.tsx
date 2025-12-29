@@ -2,8 +2,8 @@ import { ReactNode } from "react";
 import { AppShell, Burger, Box } from "@mantine/core";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 import { AppNavbar } from "./AppNavbar";
-import { useInterLinkedTheme } from "./hooks/useInterLinkedTheme";
-import { useIntroFlow } from "./hooks/useIntroFlow";
+import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
+import { useIntroFlow } from "../hooks/useIntroFlow";
 import { DesktopMode } from "../types/app";
 
 type Props = {
