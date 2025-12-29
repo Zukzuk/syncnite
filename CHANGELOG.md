@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.40.9](https://github.com/Zukzuk/syncnite/compare/v1.40.8...v1.40.9) (2025-12-29)
+
+
+### Bug Fixes
+
+* fixed steam api should be configurable by user ([67558e5](https://github.com/Zukzuk/syncnite/commit/67558e5f6aa8b1cf83b23ed57eb1e2eae3f8c721))
+
 ### [1.40.8](https://github.com/Zukzuk/syncnite/compare/v1.40.7...v1.40.8) (2025-12-29)
 
 ### [1.40.7](https://github.com/Zukzuk/syncnite/compare/v1.40.6...v1.40.7) (2025-12-29)
