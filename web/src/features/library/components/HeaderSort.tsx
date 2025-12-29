@@ -27,6 +27,7 @@ export const HeaderSort = memo(function HeaderSort({
     <Box
       aria-label="header-sort"
       style={{
+        minWidth: grid.minSiteWidth,
         position: "relative",
         background: "var(--interlinked-color-body)",
         height: grid.halfRowHeight,

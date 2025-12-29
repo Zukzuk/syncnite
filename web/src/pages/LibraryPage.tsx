@@ -12,6 +12,8 @@ export default function LibraryPage(): JSX.Element {
     const { grid, hasNavbar, desktopMode } = theme;
     const desktopMini = desktopMode === "mini";
 
+    const subtract = !hasNavbar ? 0 : desktopMini ? grid.navBarMiniWidth : grid.navBarWidth
+
     // Prevent body scrolling when on the library page
     useLayoutEffect(() => {
         const prevOverflow = document.body.style.overflow;
@@ -24,7 +26,7 @@ export default function LibraryPage(): JSX.Element {
     if (!libraryData) {
         return (
             <Stack style={{ height: "100%", minHeight: 0 }}>
-                <Center w={`calc(100vw - ${!hasNavbar ? 0 : desktopMini ? grid.navBarMiniWidth : grid.navBarWidth}px)`} h="100vh">
+                <Center w={`calc(100vw - ${subtract}px)`} h="100vh">
                     <Loader size="md" type="bars" />
                 </Center>
             </Stack>
@@ -32,8 +34,8 @@ export default function LibraryPage(): JSX.Element {
     }
 
     return (
-        <Stack style={{ height: "100%", minHeight: 0 }}>
-            <Box w={`calc(100vw - ${!hasNavbar ? 0 : desktopMini ? grid.navBarMiniWidth : grid.navBarWidth}px)`} h="100vh">
+        <Stack style={{ minWidth: grid.minSiteWidth, height: "100%", minHeight: 0 }}>
+            <Box w={`calc(100vw - ${subtract}px)`} h="100vh">
                 <LibraryProvider>
                     <Library
                         libraryData={libraryData}

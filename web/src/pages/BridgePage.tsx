@@ -8,9 +8,15 @@ export default function BridgePage(): JSX.Element {
     const { hasNavbar, grid } = useInterLinkedTheme();
 
     return (
-        <Container size="sm" pt={hasNavbar ? "lg" : grid.rowHeight} pb="lg">
+        <Container 
+            size="sm" 
+            pt={hasNavbar ? "lg" : grid.rowHeight} 
+            pb="lg"
+            style={{
+                minWidth: grid.minSiteWidth,
+            }}
+        >
             <Stack gap="lg">
-
                 <SectionCard
                     title="Logs"
                     action={

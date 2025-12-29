@@ -20,7 +20,13 @@ export default function Library({
     const { uiControls, derivedData } = useLibraryState(items);
 
     return (
-        <Flex direction="column" style={{ width: "100%", height: "100%" }}>
+        <Flex 
+            direction="column" 
+            style={{ 
+                width: "100%", 
+                height: "100%" 
+            }}
+        >
             <HeaderControls
                 libraryData={libraryData}
                 theme={theme}

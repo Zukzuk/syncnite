@@ -93,7 +93,11 @@ export const HeaderControls = memo(function HeaderControls({
       wrap="nowrap" // only the left part wraps
       pl={hasNavbar ? grid.gap * 2 : grid.gapLg}
       pr={grid.gap * 2}
-      style={{ width: "100%", minHeight: grid.rowHeight }}
+      style={{ 
+        minWidth: grid.minSiteWidth,
+        width: "100%", 
+        minHeight: grid.rowHeight 
+      }}
     >
       <Flex
         align="center"
@@ -119,13 +123,13 @@ export const HeaderControls = memo(function HeaderControls({
                 size="sm"
                 value={sliderValue}
                 onChange={setSliderValue}
-                defaultValue={grid.cardDefaultWidth}
-                min={grid.cardMinWidth}
-                max={grid.cardMaxWidth}
+                defaultValue={grid.gridCardDefaultWidth}
+                min={grid.gridCardMinWidth}
+                max={grid.gridCardMaxWidth}
                 marks={[
-                  { value: grid.cardMinWidth, label: "S" },
-                  { value: grid.cardDefaultWidth, label: "M" },
-                  { value: grid.cardMaxWidth, label: "L" },
+                  { value: grid.gridCardMinWidth, label: "S" },
+                  { value: grid.gridCardDefaultWidth, label: "M" },
+                  { value: grid.gridCardMaxWidth, label: "L" },
                 ]}
                 styles={{
                   root: { top: 7 },
@@ -186,39 +190,37 @@ export const HeaderControls = memo(function HeaderControls({
         </Group>
       </Flex>
 
-      {hasNavbar &&
-        <Flex
-          justify="flex-end"
-          align="center"
-          style={{ flex: 0, height: "100%" }}
-        >
-          <Group>
-            <WrappedSegmentedControl
-              leftIsActive={hasActiveFilters}
-              tooltip={{
-                left: "Filters active! Click the right side to reset",
-                right: "Nothing is filtered! Nothing to reset",
-              }}
-              label={{
-                left: "filters active",
-                right: "showing all items",
-              }}
-              readOnly={true}
-              width={110}
-              value={switches}
-              data={[
-                { value: "enabled", label: `${filteredCount}` },
-                { value: "disabled", label: `${baselineTotal}` },
-              ]}
-              onChange={(next) => {
-                const mode = next as SwitchesMode;
-                if (mode === "enabled") return;
-                resetAllFilters();
-              }}
-            />
-          </Group>
-        </Flex>
-      }
+      <Flex
+        justify="flex-end"
+        align="center"
+        style={{ flex: 0, height: "100%" }}
+      >
+        <Group>
+          <WrappedSegmentedControl
+            leftIsActive={hasActiveFilters}
+            tooltip={{
+              left: "Filters active! Click the right side to reset",
+              right: "Nothing is filtered! Nothing to reset",
+            }}
+            label={{
+              left: "filters active",
+              right: "showing all items",
+            }}
+            readOnly={true}
+            width={110}
+            value={switches}
+            data={[
+              { value: "enabled", label: `${filteredCount}` },
+              { value: "disabled", label: `${baselineTotal}` },
+            ]}
+            onChange={(next) => {
+              const mode = next as SwitchesMode;
+              if (mode === "enabled") return;
+              resetAllFilters();
+            }}
+          />
+        </Group>
+      </Flex>
     </Flex>
   );
 });

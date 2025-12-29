@@ -53,7 +53,14 @@ export function Grid({
     });
 
     return (
-        <Box style={{ position: "relative", flex: 1, overflow: "auto" }}>
+        <Box 
+            style={{ 
+                position: "relative", 
+                flex: 1, 
+                overflow: "auto", 
+                minWidth: grid.minSiteWidth 
+            }}
+        >
             <Box
                 ref={gridRef}
                 aria-label="absolute-grid"

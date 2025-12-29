@@ -111,7 +111,9 @@ export default function AppShellLayout({ children, hideSite = false }: Props) {
           onClick={() => setDesktopMode((m: DesktopMode) => (m === "normal" ? "mini" : "normal"))}
           style={{
             position: "fixed",
-            left: desktopMini ? grid.navBarMiniWidth - grid.gap : grid.navBarWidth - grid.gap,
+            left: desktopMini 
+              ? grid.navBarMiniWidth - grid.gap 
+              : grid.navBarWidth - grid.gap,
             top: 0,
             height: "100dvh",
             width: grid.gap * 2,

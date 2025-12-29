@@ -45,8 +45,8 @@ export function useGrid({
 
         const onSize = () => {
             const rect = el.getBoundingClientRect();
-            setW(Math.max(550, Math.floor(rect.width)));
-            setH(Math.max(250, Math.floor(rect.height)));
+            setW(Math.max(grid.minSiteWidth, Math.floor(rect.width)));
+            setH(Math.max(0, Math.floor(rect.height)));
         };
 
         const ro = new ResizeObserver(onSize);

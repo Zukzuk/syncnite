@@ -73,9 +73,9 @@ export type InterLinkedGrid = {
     coverWidth: number;
     coverHeight: number;
     detailsPanelWidth: number;
-    cardMinWidth: number;
-    cardDefaultWidth: number;
-    cardMaxWidth: number;
+    gridCardMinWidth: number;
+    gridCardDefaultWidth: number;
+    gridCardMaxWidth: number;
     gridCardBottom: number;
     rowHeight: number;
     halfRowHeight: number;
@@ -83,10 +83,11 @@ export type InterLinkedGrid = {
     scrollbarWidth: number;
     listLeftPadding: number;
     ratio: number;
-    overscan: TOverscan;
     gap: number;
     gapMd: number;
     gapLg: number;
+    minSiteWidth: number;
+    overscan: TOverscan;
     z: TZIndex;
 };
 

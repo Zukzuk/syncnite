@@ -25,7 +25,14 @@ export default function HomePage(): JSX.Element {
     }
 
     return (
-        <Container size="sm" pt={hasNavbar ? "lg" : grid.rowHeight} pb="lg">
+        <Container 
+            size="sm" 
+            pt={hasNavbar ? "lg" : grid.rowHeight} 
+            pb="lg"
+            style={{
+                minWidth: grid.minSiteWidth,
+            }}
+        >
             <Markdown content={readmeData} mantine={mantine} isDark={isDark} />
         </Container>
     );

@@ -127,12 +127,13 @@ export function useInterLinkedTheme(): InterLinkedTheme {
     }, [setNavbarOpened]);
 
     const ratio = 23 / 32;
-    const cardMinWidth = 125;
-    const cardDefaultWidth = 156;
-    const cardMaxWidth = 220;
-    const coverWidth = 220;
+    const gridCardMinWidth = 125;
+    const gridCardDefaultWidth = 156;
+    const gridCardMaxWidth = 220;
+    const coverWidth = gridCardMaxWidth;
     const detailsPanelWidth = 236;
     const gap = 8;
+    const minSiteWidth = 550;
 
     const z = {
         belowBase: 0,
@@ -151,9 +152,9 @@ export function useInterLinkedTheme(): InterLinkedTheme {
         coverWidth,
         coverHeight: coverWidth * (1 / ratio),
         detailsPanelWidth,
-        cardDefaultWidth,
-        cardMinWidth,
-        cardMaxWidth,
+        gridCardDefaultWidth,
+        gridCardMinWidth,
+        gridCardMaxWidth,
         gridCardBottom: 52 + 28, // title + extra info
         rowHeight: 60,
         halfRowHeight: 30,
@@ -166,6 +167,7 @@ export function useInterLinkedTheme(): InterLinkedTheme {
         ratio,
         overscan: { top: 600, bottom: 800 } as const,
         z,
+        minSiteWidth,
     };
 
     return {
