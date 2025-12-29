@@ -61,8 +61,6 @@ export function useGrid({
     const { 
         gridCardHeight,
         gridCardWidth,
-        allContentHeight,
-        allContentWidth,
         deckAndStacksHeight,
         deckAndStacksWidth,
         stackHeight,
@@ -72,19 +70,15 @@ export function useGrid({
     } = useMemo(() => {
         const gridCardWidth = sliderValue + 4; // + border
         const gridCardHeight = sliderValue * (1 / grid.ratio) + 4 + 52 + 28; // + border + title + extra info
-        const allContentWidth = gridViewportW - grid.gap - grid.gapRight - grid.scrollbarWidth;
-        const allContentHeight = gridViewportH - grid.rowHeight;
         const deckAndStacksWidth = gridViewportW - grid.gap - grid.detailsPanelWidth - grid.gapAssociated * 2 - grid.gapRight - grid.scrollbarWidth;
         const deckAndStacksHeight = gridViewportH - grid.rowHeight;
         const stackWidth = gridCardWidth * 0.7;
         const stackHeight = gridCardHeight * 0.7;
         const strideX = gridCardWidth + grid.gap;
-        const numOfCols = isListView ? 1 : Math.max(1, Math.floor((allContentWidth + grid.gap) / strideX));
+        const numOfCols = isListView ? 1 : Math.max(1, Math.floor((gridViewportW - grid.scrollbarWidth) / strideX));
         return {
             gridViewportW,
             gridViewportH,
-            allContentWidth,
-            allContentHeight,
             deckAndStacksWidth,
             deckAndStacksHeight,
             gridCardWidth,
@@ -344,8 +338,6 @@ export function useGrid({
             gridCardWidth,
             gridViewportH,
             gridViewportW,
-            allContentHeight,
-            allContentWidth,
             deckAndStacksHeight,
             deckAndStacksWidth,
             stackHeight,

@@ -96,8 +96,6 @@ export type InterLinkedGrid = {
 export type InterLinkedDynamicGrid = {
     gridViewportW: number;
     gridViewportH: number;
-    allContentWidth: number;
-    allContentHeight: number;
     deckAndStacksWidth: number;
     deckAndStacksHeight: number;
     gridCardWidth: number;
