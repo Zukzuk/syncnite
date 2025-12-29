@@ -11,6 +11,7 @@ type UseParams = {
     ui: UIControls;
     derived: UIDerivedData;
     grid: InterLinkedGrid;
+    isListView: boolean;
 };
 
 type UseReturn = {
@@ -55,9 +56,6 @@ export function useGrid({
         return () => ro.disconnect();
     }, []);
 
-    //const cssOpenWidth = `calc(100vw - ${!hasNavbar ? 0 : desktopMini ? grid.navBarMiniWidth : grid.navBarWidth}px)`;
-    //const cssOpenHeight = `calc(100vh - ${controlsH + sortH}px)`;
-
     const { 
         gridCardHeight,
         gridCardWidth,
@@ -66,16 +64,19 @@ export function useGrid({
         stackHeight,
         stackWidth,
         numOfCols,
-        strideX
+        strideX,
+        cardStepY,
     } = useMemo(() => {
-        const gridCardWidth = sliderValue + 4; // + border
-        const gridCardHeight = sliderValue * (1 / grid.ratio) + 4 + 52 + 28; // + border + title + extra info
+        const gridCardWidth = sliderValue + 4;
+        const gridCardHeight = sliderValue * (1 / grid.ratio) + 4 + grid.gridCardBottom;
         const deckAndStacksWidth = gridViewportW - grid.gap - grid.detailsPanelWidth - grid.gapAssociated * 2 - grid.gapRight - grid.scrollbarWidth;
         const deckAndStacksHeight = gridViewportH - grid.rowHeight;
         const stackWidth = gridCardWidth * 0.7;
         const stackHeight = gridCardHeight * 0.7;
         const strideX = gridCardWidth + grid.gap;
+        const cardStepY = gridCardHeight / 3;
         const numOfCols = isListView ? 1 : Math.max(1, Math.floor((gridViewportW - grid.scrollbarWidth) / strideX));
+
         return {
             gridViewportW,
             gridViewportH,
@@ -87,8 +88,9 @@ export function useGrid({
             stackHeight,
             numOfCols,
             strideX,
+            cardStepY,
         };
-    }, [gridViewportW, gridViewportH, sliderValue]);
+    }, [gridViewportW, gridViewportH, sliderValue, isListView]);
 
     // Build id -> index map once per items change
     const idToIndex = useMemo(() => {
@@ -344,6 +346,7 @@ export function useGrid({
             stackWidth,
             numOfCols,
             strideX,
+            cardStepY,
             gridTotalHeight,
             positions,
             visibleRange,

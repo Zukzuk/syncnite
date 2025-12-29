@@ -36,7 +36,7 @@ export function AssociatedDeckCard({
     const { title, year, coverUrl, isInstalled, isHidden } = item;
 
     const left = colIndex * (dynamicGrid.gridCardWidth + grid.gap * 2);
-    const top = indexInColumn * grid.cardStepY;
+    const top = indexInColumn * dynamicGrid.cardStepY;
 
     let zIndex = indexInColumn + 1;
     const isTopCard = hasHoveredCard && hoveredMeta?.metaIndex === metaIndex;

@@ -39,7 +39,7 @@ export function useAssociatedDeckLayout({ items, deckColumns, maxCardsPerColumn,
 
         const cardHeight = dynamicGrid.gridCardWidth * (1 / grid.ratio);
         const columnHeight =
-            cardsPerColumn > 0 ? cardHeight + grid.cardStepY * (cardsPerColumn - 1) : 0;
+            cardsPerColumn > 0 ? cardHeight + dynamicGrid.cardStepY * (cardsPerColumn - 1) : 0;
 
         const cardMeta: DeckCardMeta[] = cards.map((c, index) => {
             const colIndex = Math.floor(index / cardsPerColumn);

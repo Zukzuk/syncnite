@@ -37,6 +37,7 @@ export function Grid({
         grid,
         ui,
         derived,
+        isListView,
     });
 
     // Hook to manage alphabetical rail state and interactions.

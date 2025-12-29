@@ -79,12 +79,12 @@ export type InterLinkedGrid = {
     cardMinWidth: number;
     cardDefaultWidth: number;
     cardMaxWidth: number;
+    gridCardBottom: number;
     rowHeight: number;
     halfRowHeight: number;
     iconSize: number;
     scrollbarWidth: number;
     listLeftPadding: number;
-    cardStepY: number;
     ratio: number;
     overscan: TOverscan;
     gap: number;
@@ -104,6 +104,7 @@ export type InterLinkedDynamicGrid = {
     stackHeight: number;
     numOfCols: number;
     strideX: number;
+    cardStepY: number;
     gridTotalHeight: number;
     positions: ItemPositions;
     visibleRange: VisibleRange;

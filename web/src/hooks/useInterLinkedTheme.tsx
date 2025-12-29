@@ -152,6 +152,7 @@ export function useInterLinkedTheme(): InterLinkedTheme {
         cardDefaultWidth,
         cardMinWidth,
         cardMaxWidth,
+        gridCardBottom: 52 + 28, // title + extra info
         rowHeight: 60,
         halfRowHeight: 30,
         iconSize: 38,
@@ -160,7 +161,6 @@ export function useInterLinkedTheme(): InterLinkedTheme {
         gap: 8,
         gapRight: 8 * 7,
         gapAssociated: 8 * 3,
-        cardStepY: 90,
         ratio,
         overscan: { top: 600, bottom: 800 } as const,
         z,
