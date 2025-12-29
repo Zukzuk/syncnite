@@ -1,15 +1,14 @@
 import { memo, useMemo, useEffect } from "react";
 import { Flex, Group, Slider } from "@mantine/core";
 import { SwitchesMode, UIControls, UIDerivedData, ViewMode, } from "../../../../types/app";
-import { PLAYNITE_SOURCE_MAP } from "../../../../services/PlayniteService";
 import { InterLinkedData, InterLinkedGameItem, InterLinkedTheme } from "../../../../types/interlinked";
+import { PLAYNITE_SOURCE_MAP } from "../../../../services/PlayniteService";
 import { WrappedSegmentedControl } from "../../../components/WrappedSegmentedControl";
 import { SearchInput } from "../../../components/SearchInput";
 import { MultiSelectInput } from "../../../components/MultiSelectInput";
 import { WrappedSwitch } from "../../../components/WrappedSwitch";
 
 type Props = {
-  controlsRef: (el: HTMLDivElement | null) => void;
   theme: InterLinkedTheme;
   libraryData: InterLinkedData;
   ui: UIControls;
@@ -17,7 +16,6 @@ type Props = {
 };
 
 export const HeaderControls = memo(function HeaderControls({
-  controlsRef,
   libraryData,
   ui,
   derived,
@@ -27,7 +25,7 @@ export const HeaderControls = memo(function HeaderControls({
   const { allSources, allTags, allSeries, items } = libraryData.playnite ?? {};
   if (!items) return null;
 
-  const { hasNavbar, grid } = theme;
+  const { grid } = theme;
 
   const {
     view, setView,
@@ -89,7 +87,6 @@ export const HeaderControls = memo(function HeaderControls({
 
   return (
     <Flex
-      ref={controlsRef}
       aria-label="header-controls"
       direction="row"
       align="center" // vertical middle for the whole row

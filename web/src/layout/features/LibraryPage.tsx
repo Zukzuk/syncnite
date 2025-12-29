@@ -1,9 +1,9 @@
 import { useLayoutEffect } from "react";
 import { Stack, Loader, Box, Center } from "@mantine/core";
 import { INTERVAL_MS } from "../../constants";
-import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
 import Library from "./library/Library";
 import { LibraryProvider } from "./LibraryContext";
+import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
 import { usePlayniteData } from "../hooks/usePlayniteData";
 
 export default function LibraryPage(): JSX.Element {
@@ -38,7 +38,6 @@ export default function LibraryPage(): JSX.Element {
                     <Library
                         libraryData={libraryData}
                         theme={theme}
-                        installedUpdatedAt={installedUpdatedAt}
                     />
                 </LibraryProvider>
             </Box>

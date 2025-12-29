@@ -1,19 +1,16 @@
 import { useRef, useState } from "react";
 import { Box } from "@mantine/core";
 import { useGrid } from "./hooks/useGrid";
-import { GridItem } from "./GridItem";
 import { useAlphabetRail } from "./hooks/useAlphabetRail";
 import { AlphabeticalRail } from "./components/AlphabeticalRail";
-import { UIControls, UIDerivedData } from "../../../../types/app";
-import { InterLinkedGameItem, InterLinkedTheme } from "../../../../types/interlinked";
+import { UIControls, UIDerivedData } from "../../../types/app";
+import { InterLinkedGameItem, InterLinkedTheme } from "../../../types/interlinked";
+import { GridItem } from "./GridItem";
 
 type Props = {
     ui: UIControls;
     derived: UIDerivedData;
     theme: InterLinkedTheme;
-    controlsH: number;
-    sortH: number;
-    installedUpdatedAt?: string;
 };
 
 // Main grid component for the library view, handling item layout and rendering.
@@ -21,9 +18,6 @@ export function Grid({
     ui,
     derived,
     theme,
-    controlsH,
-    sortH,
-    installedUpdatedAt,
 }: Props) {
     const { isListView } = ui;
     const { itemsSorted, itemsAssociated } = derived;
@@ -34,9 +28,6 @@ export function Grid({
 
     // Hook to manage grid layout, scrolling, and item toggling.
     const {
-        gridTotalHeight,
-        positions,
-        visibleRange,
         openIds,
         dynamicGrid,
         scrollItemIntoView,
@@ -56,7 +47,7 @@ export function Grid({
     } = useAlphabetRail({
         ui,
         derived,
-        visibleRange,
+        visibleRange: dynamicGrid.visibleRange,
         scrollItemIntoView,
     });
 
@@ -82,34 +73,32 @@ export function Grid({
                     role="grid-height-spacer"
                     style={{
                         width: "100%",
-                        height: gridTotalHeight,
+                        height: dynamicGrid.gridTotalHeight,
                     }}
                 />
 
                 {itemsSorted
-                    .slice(visibleRange.startIndex, visibleRange.endIndex)
+                    .slice(dynamicGrid.visibleRange.startIndex, dynamicGrid.visibleRange.endIndex)
                     .map((item: InterLinkedGameItem, i: number) => {
-                        const index = visibleRange.startIndex + i;
+                        const index = dynamicGrid.visibleRange.startIndex + i;
                         const isOpen = openIds.has(item.id);
 
                         return (
                             <GridItem
                                 key={item.id}
                                 item={item}
-                                // installedUpdatedAt={installedUpdatedAt}
                                 index={index}
                                 isOpen={isOpen}
-                                positions={positions}
+                                isDark={isDark}
                                 isListView={isListView}
                                 itemsAssociated={itemsAssociated}
                                 wallpaperBg={wallpaperBg}
-                                grid={grid}
-                                dynamicGrid={dynamicGrid}
-                                isDark={isDark}
                                 desktopMode={desktopMode}
                                 hasNavbar={hasNavbar}
                                 isWidescreen={isWidescreen}
                                 isDesktop={isDesktop}
+                                grid={grid}
+                                dynamicGrid={dynamicGrid}
                                 onWallpaperBg={onWallpaperBg}
                                 onToggleItem={(id) => onToggleItemWithNav(id, "push")}
                             />

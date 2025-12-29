@@ -1,5 +1,6 @@
 import { useMantineTheme } from "@mantine/core";
 import { PlayniteGameLink } from "./playnite";
+import { ItemPositions, VisibleRange } from "./app";
 
 export type InterLinkedMedia = "game" | "movie" | "series" | "audiobook" |
     "book" | "music-album" | "animated-series" | "animated-movie";
@@ -87,6 +88,8 @@ export type InterLinkedGrid = {
     ratio: number;
     overscan: TOverscan;
     gap: number;
+    gapRight: number;
+    gapAssociated: number;
     z: TZIndex;
 };
 
@@ -103,6 +106,9 @@ export type InterLinkedDynamicGrid = {
     stackHeight: number;
     numOfCols: number;
     strideX: number;
+    gridTotalHeight: number;
+    positions: ItemPositions;
+    visibleRange: VisibleRange;
 }
 
 export interface InterLinkedTheme {
@@ -116,8 +122,8 @@ export interface InterLinkedTheme {
     grid: InterLinkedGrid;
     desktopMode: DesktopMode;
     navbarOpened: boolean;
+    setDesktopMode: Dispatch<SetStateAction<DesktopMode>>;
     toggleNavbar: () => void;
     closeNavbar: () => void;
-    setDesktopMode: Dispatch<SetStateAction<DesktopMode>>;
     setColorScheme: (value: ColorScheme) => void;
 }

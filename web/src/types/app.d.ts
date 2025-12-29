@@ -123,6 +123,11 @@ export interface ItemPositions extends Array<{
   top: number
 }> { };
 
+export interface VisibleRange {
+  startIndex: number;
+  endIndex: number;
+}
+
 export type ScoredHit<T = string> = {
     item: T;
     score: number;
@@ -131,8 +136,7 @@ export type ScoredHit<T = string> = {
 export type AssociatedLayout = {
   deckColumns: number;
   stackColumns: number;
-  maxCardsPerDeckColumn: number | null;
-  minStackColumns: number;
+  maxCardsPerDeckColumn: number;
 };
 
 export interface AssociatedItems {

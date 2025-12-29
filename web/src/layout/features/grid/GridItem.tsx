@@ -1,13 +1,13 @@
 import { memo, useState } from "react";
 import { ActionIcon, Box } from "@mantine/core";
 import { IconX } from "@tabler/icons-react";
+import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../types/interlinked";
+import { DesktopMode, HistoryNavMode } from "../../../types/app";
 import { useGridItem } from "./hooks/useGridItem";
 import { ItemRow } from "./components/ItemRow";
 import { ItemCard } from "./components/ItemCard";
-import { AssociatedContent } from "../associated/AssociatedContent";
 import { ItemBackground } from "./components/ItemBackground";
-import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../../types/interlinked";
-import { DesktopMode, HistoryNavMode, ItemPositions } from "../../../../types/app";
+import { AssociatedContent } from "../associated/AssociatedContent";
 
 type Props = {
     item: InterLinkedGameItem;
@@ -16,15 +16,14 @@ type Props = {
     isOpen: boolean;
     isDark: boolean;
     isListView: boolean;
-    itemsAssociated: InterLinkedGameItem[],
-    positions: ItemPositions,
     wallpaperBg: boolean;
-    grid: InterLinkedGrid;
-    dynamicGrid: InterLinkedDynamicGrid;
     desktopMode: DesktopMode;
     hasNavbar: boolean;
     isWidescreen: boolean;
     isDesktop: boolean;
+    itemsAssociated: InterLinkedGameItem[],
+    grid: InterLinkedGrid;
+    dynamicGrid: InterLinkedDynamicGrid;
     onWallpaperBg: (value: boolean) => void;
     onToggleItem: (id: string, navMode?: HistoryNavMode) => void;
 };
@@ -36,7 +35,6 @@ export const GridItem = memo(function GridItem({
     index,
     isListView,
     itemsAssociated,
-    positions,
     wallpaperBg,
     grid,
     dynamicGrid,
@@ -61,7 +59,7 @@ export const GridItem = memo(function GridItem({
         item,
         index,
         isOpen,
-        positions,
+        positions: dynamicGrid.positions,
         isListView,
         grid,
         dynamicGrid,
@@ -182,9 +180,9 @@ export const GridItem = memo(function GridItem({
                         <AssociatedContent
                             item={item}
                             isOpen={isOpen}
+                            isDark={isDark}
                             grid={grid}
                             dynamicGrid={dynamicGrid}
-                            isDark={isDark}
                             itemsAssociated={itemsAssociated}
                             onWallpaperBg={onWallpaperBg}
                             onToggleClickBounded={onToggleClickBounded}
@@ -196,9 +194,8 @@ export const GridItem = memo(function GridItem({
                     <ItemBackground
                         item={item}
                         isOpen={isOpen}
-                        grid={grid}
-                        dynamicGrid={dynamicGrid}
                         isDark={isDark}
+                        grid={grid}
                         wallpaperBg={wallpaperBg}
                     />
                 ) : null}

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Box, Image, Stack, Text } from "@mantine/core";
-import { AssociatedItems } from "../../../../../types/app";
-import { InterLinkedDynamicGrid, InterLinkedGrid } from "../../../../../types/interlinked";
+import { AssociatedItems } from "../../../../types/app";
+import { InterLinkedDynamicGrid, InterLinkedGrid } from "../../../../types/interlinked";
 
 type Props = {
     stack: AssociatedItems;

@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Box, Flex, Text, Group, Badge } from "@mantine/core";
-import { InterLinkedGameItem, InterLinkedGrid } from "../../../../../types/interlinked";
-import { IconExecuteOverlay } from "../../../../components/IconExecuteOverlay";
-import { IconGame } from "../../../../components/IconGame";
-import { IconIsInstalled } from "../../../../components/IconIsInstalled";
-import { IconIsHidden } from "../../../../components/IconIsHidden";
-import { IconCopyTitle } from "../../../../components/IconCopyTitle";
-import { IconLinkOrigin } from "../../../../components/IconOriginLink";
-import { IconLinkSource } from "../../../../components/IconSourceLink";
-import { IconLinkExternal } from "../../../../components/IconExternalLink";
+import { InterLinkedGameItem, InterLinkedGrid } from "../../../../types/interlinked";
+import { IconExecuteOverlay } from "../../../components/IconExecuteOverlay";
+import { IconGame } from "../../../components/IconGame";
+import { IconIsInstalled } from "../../../components/IconIsInstalled";
+import { IconIsHidden } from "../../../components/IconIsHidden";
+import { IconCopyTitle } from "../../../components/IconCopyTitle";
+import { IconLinkOrigin } from "../../../components/IconOriginLink";
+import { IconLinkSource } from "../../../components/IconSourceLink";
+import { IconLinkExternal } from "../../../components/IconExternalLink";
 
 type Props = {
     item: InterLinkedGameItem;

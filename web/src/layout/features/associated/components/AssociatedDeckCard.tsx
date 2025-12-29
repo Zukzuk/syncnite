@@ -1,8 +1,8 @@
 import { Box, Image } from "@mantine/core";
-import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../../../types/interlinked";
-import { AssociatedItemCard, HistoryNavMode } from "../../../../../types/app";
-import { IconIsInstalled } from "../../../../components/IconIsInstalled";
-import { IconIsHidden } from "../../../../components/IconIsHidden";
+import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../../types/interlinked";
+import { AssociatedItemCard, HistoryNavMode } from "../../../../types/app";
+import { IconIsInstalled } from "../../../components/IconIsInstalled";
+import { IconIsHidden } from "../../../components/IconIsHidden";
 
 type Props = {
     meta: AssociatedItemCard;

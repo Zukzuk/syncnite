@@ -1,5 +1,5 @@
 import { RefObject, useCallback, useEffect, useRef, useState } from "react";
-import { InterLinkedGameItem, InterLinkedGrid } from "../../../../../types/interlinked";
+import { InterLinkedGameItem, InterLinkedGrid } from "../../../../types/interlinked";
 
 type UseParams = {
   gridRef: RefObject<HTMLDivElement | null>;

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocalStorage } from "@mantine/hooks";
 import type { SortKey, SortDir, UIControls, UIDerivedData, ViewMode, SwitchesMode } from "../../../../types/app";
-import { orderedLetters } from "../../../../utils";
 import { InterLinkedGameItem } from "../../../../types/interlinked";
+import { orderedLetters } from "../../../../utils";
 import { sortItems } from "../../../../services/SearchService";
 import { loadStateFromCookie, saveStateToCookie } from "../../../../services/AccountService";
 

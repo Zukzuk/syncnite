@@ -1,8 +1,8 @@
 import { Box } from "@mantine/core";
 import { usePersistedScrollTop } from "../hooks/usePersistedScrollTop";
-import { AssociatedItems } from "../../../../../types/app";
-import { InterLinkedDynamicGrid, InterLinkedGrid } from "../../../../../types/interlinked";
-import { useLibraryContext } from "../../../LibraryContext";
+import { AssociatedItems } from "../../../../types/app";
+import { InterLinkedDynamicGrid, InterLinkedGrid } from "../../../../types/interlinked";
+import { useLibraryContext } from "../../LibraryContext";
 import { AssociatedStackCard } from "./AssociatedStackCard";
 
 type Props = {

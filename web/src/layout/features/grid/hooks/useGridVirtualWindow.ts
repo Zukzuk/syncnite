@@ -1,5 +1,6 @@
 import { RefObject, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { InterLinkedGrid } from "../../../../../types/interlinked";
+import { InterLinkedGrid } from "../../../../types/interlinked";
+import { VisibleRange } from "../../../../types/app";
 
 type UseParams = {
     gridRef: RefObject<HTMLDivElement>;
@@ -17,10 +18,7 @@ type UseParams = {
 
 type UseReturn = {
     scrollTop: number;
-    visibleRange: {
-        startIndex: number;
-        endIndex: number;
-    };
+    visibleRange: VisibleRange;
     syncScrollTopNow: () => void;
 };
 

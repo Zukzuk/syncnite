@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AlphabeticalGroup, ItemGroupedByLetter, Letter, SortKey, UIControls, UIDerivedData } from "../../../../../types/app";
-import { InterLinkedGameItem } from "../../../../../types/interlinked";
-import { orderedLetters } from "../../../../../utils";
-import { LETTERS } from "../../../../../constants";
+import { AlphabeticalGroup, ItemGroupedByLetter, Letter, SortKey, UIControls, UIDerivedData, VisibleRange } from "../../../../types/app";
+import { InterLinkedGameItem } from "../../../../types/interlinked";
+import { orderedLetters } from "../../../../utils";
+import { LETTERS } from "../../../../constants";
 
 // Compute alphabetical groups from grouped items
 function calcAlphabetGroups({ sortKey, itemsGroupedByLetter, itemsSorted }: {
@@ -40,7 +40,7 @@ function calcAlphabetGroups({ sortKey, itemsGroupedByLetter, itemsSorted }: {
 type UseParams = {
     ui: UIControls;
     derived: UIDerivedData;
-    visibleRange: { startIndex: number; endIndex: number };
+    visibleRange: VisibleRange;
     scrollItemIntoView: (index: number) => void;
 };
 

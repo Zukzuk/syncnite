@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
-import { AssociatedItems } from "../../../../../types/app";
-import { useLibraryContext } from "../../../LibraryContext";
+import { AssociatedItems } from "../../../../types/app";
+import { useLibraryContext } from "../../LibraryContext";
 
 type UseParams = {
     itemId: string;

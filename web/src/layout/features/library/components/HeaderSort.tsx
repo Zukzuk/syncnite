@@ -4,14 +4,12 @@ import { SortKey, UIControls } from "../../../../types/app";
 import { InterLinkedTheme } from "../../../../types/interlinked";
 
 type Props = {
-  sortRef: (el: HTMLElement | null) => void;
   theme: InterLinkedTheme;
   ui: UIControls;
 };
 
 // Header sort component for the library view.
 export const HeaderSort = memo(function HeaderSort({
-  sortRef,
   ui,
   theme,
 }: Props) {
@@ -27,7 +25,6 @@ export const HeaderSort = memo(function HeaderSort({
 
   return (
     <Box
-      ref={sortRef}
       aria-label="header-sort"
       style={{
         position: "relative",

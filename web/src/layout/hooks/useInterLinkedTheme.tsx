@@ -1,6 +1,6 @@
 import { useMantineColorScheme, useMantineTheme } from "@mantine/core";
 import { useLocalStorage, useMediaQuery } from "@mantine/hooks";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { InterLinkedTheme } from "../../types/interlinked";
 import { DesktopMode } from "../../types/app";
 
@@ -91,6 +91,8 @@ export function useInterLinkedTheme(): InterLinkedTheme {
         scrollbarWidth: 15,
         listLeftPadding: 12,
         gap: 8,
+        gapRight: 8 * 7,
+        gapAssociated: 8 * 3,
         cardStepY: 90,
         ratio,
         overscan: { top: 600, bottom: 800 } as const,

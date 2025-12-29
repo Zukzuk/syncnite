@@ -1,10 +1,10 @@
 import { useMemo, useState } from "react";
 import { Badge, Box, Stack, Text } from "@mantine/core";
+import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../../types/interlinked";
+import { HistoryNavMode } from "../../../../types/app";
 import { useAssociatedDeckLayout } from "../hooks/useAssociatedDeckLayout";
 import { usePersistedScrollTop } from "../hooks/usePersistedScrollTop";
-import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../../../types/interlinked";
-import { HistoryNavMode } from "../../../../../types/app";
-import { useLibraryContext } from "../../../LibraryContext";
+import { useLibraryContext } from "../../LibraryContext";
 import { AssociatedDeckCard } from "./AssociatedDeckCard";
 
 type Props = {
@@ -14,7 +14,7 @@ type Props = {
     currentItemId: string;
     items: InterLinkedGameItem[];
     deckColumns: number;
-    maxCardsPerColumn: number | null;
+    maxCardsPerColumn: number;
     isDark: boolean;
     grid: InterLinkedGrid;
     dynamicGrid: InterLinkedDynamicGrid;

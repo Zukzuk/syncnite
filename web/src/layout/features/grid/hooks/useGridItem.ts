@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
-import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../../../types/interlinked";
-import { HistoryNavMode, ItemPositions } from "../../../../../types/app";
+import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../../types/interlinked";
+import { HistoryNavMode, ItemPositions } from "../../../../types/app";
 
 type UseParams = {
     item: InterLinkedGameItem;

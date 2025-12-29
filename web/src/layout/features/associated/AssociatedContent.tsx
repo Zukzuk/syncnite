@@ -1,13 +1,12 @@
-import { useMemo } from "react";
 import { Group, Collapse, Box } from "@mantine/core";
+import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../types/interlinked";
+import { HistoryNavMode } from "../../../types/app";
 import { AssociatedDeck } from "./components/AssociatedDeck";
 import { AssociatedStacks } from "./components/AssociatedStacks";
 import { AssociatedDetails } from "./components/AssociatedDetails";
 import { useOpenAssociatedDeck } from "./hooks/useOpenAssociatedDeck";
 import { useAssociatedLayout } from "./hooks/useAssociatedLayout";
-import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../../types/interlinked";
-import { HistoryNavMode } from "../../../../types/app";
-import { useAssociatedData } from "../../../hooks/useAssociatedData";
+import { useAssociatedData } from "../../hooks/useAssociatedData";
 
 type Props = {
     item: InterLinkedGameItem;
@@ -40,16 +39,15 @@ export function AssociatedContent({
         associatedData,
     });
 
-    const gapRight = useMemo(() => grid.gap * 7, [grid.gap]);
-
-    const { layoutRef, layout } = useAssociatedLayout({
+    const { 
+        deckColumns,
+        stackColumns,
+        maxCardsPerDeckColumn,
+     } = useAssociatedLayout({
         grid,
         dynamicGrid,
         openDeck: openDeck ? { key: openDeck.key, items: openDeck.items } : null,
-        gapRight,
     });
-
-    const stackColumns = Math.max(layout.stackColumns, layout.minStackColumns);
 
     return (
         <Collapse
@@ -57,7 +55,7 @@ export function AssociatedContent({
             in={isOpen}
             transitionDuration={140}
             py={grid.gap}
-            pr={gapRight}
+            pr={grid.gapRight}
             style={{
                 width: dynamicGrid.gridViewportW,
                 height: dynamicGrid.gridViewportH - grid.rowHeight,
@@ -66,7 +64,7 @@ export function AssociatedContent({
                 overflowY: "hidden",
             }}
         >
-            <Group align="flex-start" gap={grid.gap * 3} wrap="nowrap" h="100%">
+            <Group align="flex-start" gap={grid.gapAssociated} wrap="nowrap" h="100%">
                 <AssociatedDetails
                     item={item}
                     grid={grid}
@@ -78,24 +76,23 @@ export function AssociatedContent({
                 />
 
                 <Box
-                    ref={layoutRef}
                     style={{
                         flex: 1,
                         minWidth: 0,
                         height: "100%",
                         display: "flex",
-                        gap: grid.gap * 3,
+                        gap: grid.gapAssociated,
                         overflow: "hidden",
                     }}
                 >
-                    {openDeck && layout.deckColumns > 0 && (
+                    {openDeck && deckColumns > 0 && (
                         <AssociatedDeck
                             deckKey={openDeck.key}
                             label={openDeck.label}
                             items={openDeck.items}
                             currentItemId={item.id}
-                            deckColumns={layout.deckColumns}
-                            maxCardsPerColumn={layout.maxCardsPerDeckColumn}
+                            deckColumns={deckColumns}
+                            maxCardsPerColumn={maxCardsPerDeckColumn}
                             isDark={isDark}
                             grid={grid}
                             dynamicGrid={dynamicGrid}

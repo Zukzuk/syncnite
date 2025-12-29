@@ -1,11 +1,11 @@
 import { Badge, Box, Group, Image, Text } from "@mantine/core";
-import { InterLinkedGameItem, InterLinkedGrid } from "../../../../../types/interlinked";
-import { IconIsInstalled } from "../../../../components/IconIsInstalled";
-import { IconIsHidden } from "../../../../components/IconIsHidden";
-import { IconCopyTitle } from "../../../../components/IconCopyTitle";
-import { IconLinkOrigin } from "../../../../components/IconOriginLink";
-import { IconLinkSource } from "../../../../components/IconSourceLink";
-import { IconLinkExternal } from "../../../../components/IconExternalLink";
+import { InterLinkedGameItem, InterLinkedGrid } from "../../../../types/interlinked";
+import { IconIsInstalled } from "../../../components/IconIsInstalled";
+import { IconIsHidden } from "../../../components/IconIsHidden";
+import { IconCopyTitle } from "../../../components/IconCopyTitle";
+import { IconLinkOrigin } from "../../../components/IconOriginLink";
+import { IconLinkSource } from "../../../components/IconSourceLink";
+import { IconLinkExternal } from "../../../components/IconExternalLink";
 
 type Props = {
     item: InterLinkedGameItem;

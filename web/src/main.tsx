@@ -6,6 +6,7 @@ import { Notifications } from "@mantine/notifications";
 import { router } from "./router";
 import { startGlobalSse } from "./services/SseClient";
 import { interlinkedTheme, themeResolver } from "./styles/theme";
+import { AppError } from "./error/BoundaryAppError";
 
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
@@ -13,7 +14,6 @@ import "@mantine/notifications/styles.css";
 import "./styles/body.scss";
 import "./styles/fonts.scss";
 import "./styles/scroller.scss";
-import { AppError } from "./error/BoundaryAppError";
 
 function App() {
   useEffect(() => {

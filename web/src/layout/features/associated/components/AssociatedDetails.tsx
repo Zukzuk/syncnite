@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Anchor, Badge, Box, Group, Image, Stack, Text } from "@mantine/core";
-import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../../../types/interlinked";
-import { IconIsInstalled } from "../../../../components/IconIsInstalled";
-import { IconExecuteOverlay } from "../../../../components/IconExecuteOverlay";
-import { IconLinkOrigin } from "../../../../components/IconOriginLink";
-import { IconLinkSource } from "../../../../components/IconSourceLink";
-import { IconLinkExternal } from "../../../../components/IconExternalLink";
-import { IconShowMaximized } from "../../../../components/IconShowMaximized";
+import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../../types/interlinked";
+import { IconIsInstalled } from "../../../components/IconIsInstalled";
+import { IconExecuteOverlay } from "../../../components/IconExecuteOverlay";
+import { IconLinkOrigin } from "../../../components/IconOriginLink";
+import { IconLinkSource } from "../../../components/IconSourceLink";
+import { IconLinkExternal } from "../../../components/IconExternalLink";
+import { IconShowMaximized } from "../../../components/IconShowMaximized";
 
 type Props = {
     item: InterLinkedGameItem;

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../../../types/interlinked";
-import { DeckCardMeta } from "../../../../../types/app";
+import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../../types/interlinked";
+import { DeckCardMeta } from "../../../../types/app";
 
 type UseParams = {
     items: InterLinkedGameItem[];
