@@ -2,7 +2,7 @@ import { promises as fs } from "node:fs";
 import { join, dirname, resolve, sep } from "node:path";
 import { createHash } from "node:crypto";
 import { rootLog } from "../logger";
-import { DB_ROOT, INSTALLED_ROOT, MEDIA_ROOT, SNAPSHOT_ROOT, COLLECTIONS } from "../constants";
+import { PLAYNITE_DB_ROOT, PLAYNITE_INSTALLED_ROOT, PLAYNITE_MEDIA_ROOT, SNAPSHOT_ROOT, PLAYNITE_COLLECTIONS, INSTALLED_SUFFIX } from "../constants";
 import { InstalledStateRow, PlayniteClientManifest, PlayniteDeltaManifest, PlayniteError } from "../types/types";
 
 const log = rootLog.child("playniteService");
@@ -47,7 +47,7 @@ function sanitizeMediaFolderName(name: string): string {
 // Sanitize collection
 function sanitizeCollection(col: string): string {
     const c = String(col ?? "").trim().toLowerCase();
-    if (!COLLECTIONS.has(c)) {
+    if (!PLAYNITE_COLLECTIONS.has(c)) {
         throw new PlayniteError(
             400,
             "unknown_collection",
@@ -59,7 +59,7 @@ function sanitizeCollection(col: string): string {
 
 // Resolve document path
 function resolveDocPath(collection: string, id: string) {
-    return join(DB_ROOT, collection, `${id}.json`);
+    return join(PLAYNITE_DB_ROOT, collection, `${id}.json`);
 }
 
 // Read JSON file if exists
@@ -139,7 +139,7 @@ async function loadCollectionFromDisk(
 
     try {
         const collection = sanitizeCollection(collectionRaw);
-        const dir = join(DB_ROOT, collection);
+        const dir = join(PLAYNITE_DB_ROOT, collection);
         const entries = await fs.readdir(dir, { withFileTypes: true });
 
         const jsonFiles = entries.filter(
@@ -254,8 +254,8 @@ export class PlayniteService {
             .toLowerCase()
             .replace(/[\\/:*?"<>|]/g, "_");
 
-        await ensureDir(INSTALLED_ROOT);
-        const outPath = join(INSTALLED_ROOT, `${safeEmail}.installed.json`);
+        await ensureDir(PLAYNITE_INSTALLED_ROOT);
+        const outPath = join(PLAYNITE_INSTALLED_ROOT, `${safeEmail}${INSTALLED_SUFFIX}`);
 
         log.debug(`Writing Installed list to ${outPath}`);
         await fs.writeFile(outPath, JSON.stringify(out, null, 2), "utf8");
@@ -284,7 +284,7 @@ export class PlayniteService {
             const collection = sanitizeCollection(key);
             const idsFromClient = new Set((incoming[collection] ?? []).map(sanitizeId));
 
-            const dir = join(DB_ROOT, collection);
+            const dir = join(PLAYNITE_DB_ROOT, collection);
             let serverIds: string[] = [];
             try {
                 const entries = await fs.readdir(dir, { withFileTypes: true });
@@ -359,7 +359,7 @@ export class PlayniteService {
             }
 
             // folder is top-level under MEDIA_ROOT
-            const abs = safeJoinMedia(MEDIA_ROOT, folder);
+            const abs = safeJoinMedia(PLAYNITE_MEDIA_ROOT, folder);
             const st = await fileStatOrNull(abs);
             if (!st || !st.isDirectory()) {
                 uploadFolders.push(folder);
@@ -388,7 +388,7 @@ export class PlayniteService {
         buffer: Buffer,
         wantHash?: string
     ): Promise<{ status: number; bytes?: number }> {
-        const abs = safeJoinMedia(MEDIA_ROOT, tail);
+        const abs = safeJoinMedia(PLAYNITE_MEDIA_ROOT, tail);
         const st = await fileStatOrNull(abs);
 
         if (st && st.size === buffer.length) {
@@ -414,7 +414,7 @@ export class PlayniteService {
      * @param tail Media path tail
      */
     async getMediaPath(tail: string): Promise<string> {
-        const abs = safeJoinMedia(MEDIA_ROOT, tail);
+        const abs = safeJoinMedia(PLAYNITE_MEDIA_ROOT, tail);
         const st = await fileStatOrNull(abs);
         if (!st || !st.isFile()) {
             throw new PlayniteError(404, "not_found", "not_found");

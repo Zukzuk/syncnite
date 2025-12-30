@@ -11,7 +11,8 @@ services:
     env_file:
       - .env
     volumes:
-      - ./data:/data
+      - ./mountprv:/mountprv
+      - ./mountpub:/mountpub
       - ./extension:/extension:ro
     ports:
       - "3004:3004"
@@ -28,7 +29,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ./data:/usr/share/nginx/html/data:ro
+      - ./mountpub:/usr/share/nginx/html/mountpub:ro
       - ./extension:/usr/share/nginx/html/extension:ro
     ports:
       - "3003:3003"

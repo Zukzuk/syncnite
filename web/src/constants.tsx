@@ -34,11 +34,18 @@ export const API_ENDPOINTS = {
   STEAM_WISHLIST_SYNC: "/api/v1/steam/wishlist/sync",
   STEAM_AUTH_START: "/api/v1/steam/auth/start",
 }
-export const FILE_BASE = "/data";
+
+export const PUBLIC_DIR = "/mountpub";
 
 export const FILES = {
-  snapshot: { dir: `${FILE_BASE}/snapshot`, file: "snapshot.json" },
-  installed: { dir: `${FILE_BASE}/installed`, file: "installed.json" },
-  libraryfiles: { dir: `${FILE_BASE}/libraryfiles` },
-  accounts: { dir: `${FILE_BASE}/accounts` },
+  snapshot: { dir: `${PUBLIC_DIR}/snapshot`, file: "snapshot.json" },
+  playnite: { 
+    installed: { dir: `${PUBLIC_DIR}/playnite/installed`, file: "installed.json" },
+    libraryfiles: { dir: `${PUBLIC_DIR}/playnite/libraryfiles` }
+  },
+  steam: { 
+    installed: { dir: `${PUBLIC_DIR}/steam/installed`, file: "installed.json" },
+    libraryfiles: { dir: `${PUBLIC_DIR}/steam/libraryfiles` },
+    wishlist: { dir: `${PUBLIC_DIR}/steam/wishlist`, suffix: ".wishlist.json" },
+  },
 };

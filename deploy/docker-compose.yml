@@ -10,7 +10,8 @@ services:
     ports:
       - "3004:3004"
     volumes:
-      - /volume1/docker/interlinked/data:/data
+      - /volume1/docker/interlinked/mountprv:/mountprv
+      - /volume1/docker/interlinked/mountpub:/mountpub
 
   web:
     image: zukzuk/syncnite-web:latest
@@ -23,4 +24,4 @@ services:
     ports:
       - "3003:3003"
     volumes:
-      - /volume1/docker/interlinked/data:/usr/share/nginx/html/data:ro
+      - /volume1/docker/interlinked/mountpub:/usr/share/nginx/html/mountpub:ro

@@ -243,7 +243,7 @@ async function fetchInstalledList(email: string | null): Promise<Set<string> | u
     let localInstalledSet: Set<string> | undefined = undefined;
     if (email) {
         const localInstalled = await fetchJson(
-            `${FILES.installed.dir}/${email.toLowerCase()}.${FILES.installed.file}`,
+            `${FILES.playnite.installed.dir}/${email.toLowerCase()}.${FILES.playnite.installed.file}`,
         );
         if (Array.isArray(localInstalled?.installed)) {
             localInstalledSet = new Set(
@@ -285,11 +285,12 @@ function buildAssetUrl(uri: string | null | undefined): string | undefined {
     const normUri = uri
         ?.replace(/\\/g, "/")
         .replace(/^\.?\//, '')
+        .replace('playnite/', '')
         .replace('libraryfiles/', '');
     if (!normUri) return undefined;
     else {
         if (/^https?:\/\//i.test(normUri)) return normUri;
-        else return `${FILES.libraryfiles.dir}/${normUri}`;
+        else return `${FILES.playnite.libraryfiles.dir}/${normUri}`;
     }
 }
 

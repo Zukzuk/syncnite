@@ -29,7 +29,8 @@ lib-cov
 # Coverage directory used by tools like istanbul
 uploads/
 extension/
-data/
+mountprv/
+mountpub/
 coverage/
 diagram/.structurizr
 *.lcov

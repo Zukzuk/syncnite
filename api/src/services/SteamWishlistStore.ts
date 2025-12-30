@@ -1,12 +1,10 @@
 import { promises as fs } from "node:fs";
 import { join } from "node:path";
-import { STEAM_ROOT } from "../constants";
+import { STEAM_WISHLIST_ROOT, STEAM_WISHLIST_SUFFIX } from "../constants";
 import { SteamWishlistSnapshot, SteamWishlistEntry, SteamAppDetails } from "../types/types";
 import { rootLog } from "../logger";
 import { extractYearFromReleaseDate } from "./SteamService";
 import { PlayniteGameLink } from "../types/playnite";
-
-const SNAPSHOT_SUFFIX = ".steam.wishlist.json";
 
 const log = rootLog.child("steamWishlistStore");
 
@@ -17,7 +15,7 @@ async function ensureDir(dir: string) {
 
 // Get the full path for an account's snapshot file
 function snapshotPath(email: string): string {
-    return join(STEAM_ROOT, `${email}${SNAPSHOT_SUFFIX}`);
+    return join(STEAM_WISHLIST_ROOT, `${email}${STEAM_WISHLIST_SUFFIX}`);
 }
 
 /**
@@ -147,7 +145,7 @@ export async function saveSteamWishlistSnapshot(
     email: string,
     snapshot: SteamWishlistSnapshot,
 ): Promise<void> {
-    await ensureDir(STEAM_ROOT);
+    await ensureDir(STEAM_WISHLIST_ROOT);
     await fs.writeFile(
         snapshotPath(email),
         JSON.stringify(snapshot, null, 2),
@@ -184,13 +182,13 @@ export async function appendSteamWishlistItemToFile(
  */
 export async function resetAllSteamWishlistSyncFlags(): Promise<void> {
     try {
-        await ensureDir(STEAM_ROOT);
-        const files = await fs.readdir(STEAM_ROOT);
+        await ensureDir(STEAM_WISHLIST_ROOT);
+        const files = await fs.readdir(STEAM_WISHLIST_ROOT);
 
         for (const file of files) {
-            if (!file.endsWith(SNAPSHOT_SUFFIX)) continue;
+            if (!file.endsWith(STEAM_WISHLIST_SUFFIX)) continue;
 
-            const fullPath = join(STEAM_ROOT, file);
+            const fullPath = join(STEAM_WISHLIST_ROOT, file);
 
             try {
                 const raw = await fs.readFile(fullPath, "utf8");
@@ -213,7 +211,7 @@ export async function resetAllSteamWishlistSyncFlags(): Promise<void> {
         }
     } catch (e: any) {
         console.warn(
-            "Failed to scan STEAM_ROOT for wishlist files:",
+            "Failed to scan STEAM_WISHLIST_ROOT for wishlist files:",
             String(e?.message ?? e),
         );
     }

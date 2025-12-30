@@ -23,7 +23,7 @@ export function useLocalInstalled({ pollMs }: UseParams): UseReturn {
                 const email = fetchUser();
                 if (!email) { setState({ set: undefined, updatedAt: undefined }); return; }
 
-                const url = `${FILES.installed.dir}/${email.toLowerCase()}.${FILES.installed.file}?v=${Date.now()}`;
+                const url = `${FILES.playnite.installed.dir}/${email.toLowerCase()}.${FILES.playnite.installed.file}?v=${Date.now()}`;
                 const r = await fetch(url, { cache: "no-cache" });
                 if (!r.ok) return;
 

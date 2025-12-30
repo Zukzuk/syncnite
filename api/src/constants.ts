@@ -3,19 +3,30 @@ import { join } from "node:path";
 export const LOG_LEVEL = "info"; // "info" | "debug" | "trace"
 export const PING_CONNECTED_MS = 30_000;
 
-export const DATA_DIR = "/data";
+export const PRIVATE_DIR = "/mountprv";
+export const PUBLIC_DIR = "/mountpub";
 export const EXT_DIR = "/extension";
-export const ACCOUNTS_ROOT = join(DATA_DIR, "accounts");
-export const DB_ROOT = join(DATA_DIR, "db");
-export const MEDIA_ROOT = join(DATA_DIR, "libraryfiles");
-export const INSTALLED_ROOT = join(DATA_DIR, "installed");
-export const SNAPSHOT_ROOT = join(DATA_DIR, "snapshot");
-export const STEAM_ROOT = join(DATA_DIR, "steam");
+
+export const ACCOUNTS_ROOT = join(PRIVATE_DIR, "accounts");
+
+export const SNAPSHOT_ROOT = join(PUBLIC_DIR, "snapshot");
+
+export const PLAYNITE_ROOT = join(PUBLIC_DIR, "playnite");
+export const PLAYNITE_DB_ROOT = join(PLAYNITE_ROOT, "db");
+export const PLAYNITE_MEDIA_ROOT = join(PLAYNITE_ROOT, "libraryfiles");
+export const PLAYNITE_INSTALLED_ROOT = join(PLAYNITE_ROOT, "installed");
+
+export const STEAM_ROOT = join(PUBLIC_DIR, "steam");
+export const STEAM_MEDIA_ROOT = join(STEAM_ROOT, "libraryfiles");
+export const STEAM_INSTALLED_ROOT = join(STEAM_ROOT, "installed");
+export const STEAM_WISHLIST_ROOT = join(STEAM_ROOT, "wishlist");
 
 export const ADMIN_SUFFIX = ".admin.json";
 export const USER_SUFFIX = ".user.json";
+export const INSTALLED_SUFFIX = ".installed.json";
+export const STEAM_WISHLIST_SUFFIX = ".wishlist.json";
 
-export const COLLECTIONS = new Set([
+export const PLAYNITE_COLLECTIONS = new Set([
     "games",
     "companies",
     "tags",
