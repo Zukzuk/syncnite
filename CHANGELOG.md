@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.41.3](https://github.com/Zukzuk/syncnite/compare/v1.41.2...v1.41.3) (2025-12-30)
+
+
+### Bug Fixes
+
+* more iphone fixes ([d707e97](https://github.com/Zukzuk/syncnite/commit/d707e971038e789e7cae36851855571e9d43255c))
+
 ### [1.41.2](https://github.com/Zukzuk/syncnite/compare/v1.41.1...v1.41.2) (2025-12-30)
 
 
