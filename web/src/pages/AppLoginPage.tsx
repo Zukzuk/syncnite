@@ -96,7 +96,14 @@ export default function AppLoginPage(): JSX.Element {
   });
 
   return (
-    <Box style={{ position: "relative", minHeight: "100vh", overflow: "hidden" }}>
+    <Box
+      style={{
+        position: "relative",
+        minWidth: grid.minSiteWidth,
+        minHeight: "100vh",
+        overflow: "hidden"
+      }}
+    >
       {/* Logo intro drives the gate */}
       <LogoIntro
         variant="loginHero"

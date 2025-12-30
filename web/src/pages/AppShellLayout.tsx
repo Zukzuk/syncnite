@@ -25,7 +25,7 @@ export default function AppShellLayout({ children, hideSite = false }: Props) {
   } = useInterLinkedTheme();
 
   const desktopClosed = desktopMode === "closed";
-  const desktopMini = desktopMode === "mini";
+  const desktopMini = desktopMode === "mini" && hasNavbar;
 
   const flow = useIntroFlow({
     gateEnabled: !hideSite,
@@ -62,7 +62,7 @@ export default function AppShellLayout({ children, hideSite = false }: Props) {
       }}
     >
       {/* MOBILE burger */}
-      {!hasNavbar && (
+      {!hideSite && !hasNavbar && !desktopClosed && (
         <Box
           style={{
             position: "absolute",
@@ -87,7 +87,13 @@ export default function AppShellLayout({ children, hideSite = false }: Props) {
 
       {/* DESKTOP navbar mini/normal */}
       {!hideSite && !desktopClosed && (
-        <AppShell.Navbar p={0} withBorder={false} style={{ zIndex: grid.z.top }}>
+        <AppShell.Navbar
+          p={0}
+          withBorder={false}
+          style={{
+            zIndex: grid.z.high
+          }}
+        >
           <AppNavbar
             desktopMini={desktopMini}
             toggleNavbar={() => {
@@ -108,11 +114,17 @@ export default function AppShellLayout({ children, hideSite = false }: Props) {
           visibleFrom={breakpointLabel}
           role="button"
           aria-label="Toggle navbar mini/normal"
-          onClick={() => setDesktopMode((m: DesktopMode) => (m === "normal" ? "mini" : "normal"))}
+          onClick={
+            () => setDesktopMode(
+              (m: DesktopMode) => (
+                m === "normal" ? "mini" : "normal"
+              )
+            )
+          }
           style={{
             position: "fixed",
-            left: desktopMini 
-              ? grid.navBarMiniWidth - grid.gap 
+            left: desktopMini
+              ? grid.navBarMiniWidth - grid.gap
               : grid.navBarWidth - grid.gap,
             top: 0,
             height: "100dvh",

@@ -33,7 +33,7 @@ export const LogoIntro = memo(function LogoIntro({
   const isHero = variant === "loginHero";
 
 // Position/scale knobs (fed into CSS via variables)
-  const top = hasNavbar ? "16px" : "32px";
+  const top = isHero || !hasNavbar ? "32px" : "16px";
   const left = isHero ? "50%" : "14px";
   const translateX = isHero ? "-50%" : "0px";
   const scale = isHero ? 1.8 : 1.0;
