@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.41.6](https://github.com/Zukzuk/syncnite/compare/v1.41.5...v1.41.6) (2025-12-30)
+
+
+### Bug Fixes
+
+* fixed directories ([2103dad](https://github.com/Zukzuk/syncnite/commit/2103dad2534dfe43855afab5b2ceccf90246e92e))
+
 ### [1.41.5](https://github.com/Zukzuk/syncnite/compare/v1.41.4...v1.41.5) (2025-12-30)
 
 
