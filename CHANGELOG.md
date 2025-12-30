@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.41.5](https://github.com/Zukzuk/syncnite/compare/v1.41.4...v1.41.5) (2025-12-30)
+
+
+### Bug Fixes
+
+* fixed accounts prv mount ([7106c58](https://github.com/Zukzuk/syncnite/commit/7106c58c265cc304881f5ceb78e3222d4cc8f818))
+
 ### [1.41.4](https://github.com/Zukzuk/syncnite/compare/v1.41.3...v1.41.4) (2025-12-30)
 
 
