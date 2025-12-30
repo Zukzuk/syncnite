@@ -11,12 +11,12 @@ export const ACCOUNTS_ROOT = join(PRIVATE_DIR, "accounts");
 
 export const SNAPSHOT_ROOT = join(PUBLIC_DIR, "snapshot");
 
-export const PLAYNITE_ROOT = join(PUBLIC_DIR, "playnite");
+const PLAYNITE_ROOT = join(PUBLIC_DIR, "playnite");
 export const PLAYNITE_DB_ROOT = join(PLAYNITE_ROOT, "db");
 export const PLAYNITE_MEDIA_ROOT = join(PLAYNITE_ROOT, "libraryfiles");
 export const PLAYNITE_INSTALLED_ROOT = join(PLAYNITE_ROOT, "installed");
 
-export const STEAM_ROOT = join(PUBLIC_DIR, "steam");
+const STEAM_ROOT = join(PUBLIC_DIR, "steam");
 export const STEAM_MEDIA_ROOT = join(STEAM_ROOT, "libraryfiles");
 export const STEAM_INSTALLED_ROOT = join(STEAM_ROOT, "installed");
 export const STEAM_WISHLIST_ROOT = join(STEAM_ROOT, "wishlist");
@@ -24,7 +24,7 @@ export const STEAM_WISHLIST_ROOT = join(STEAM_ROOT, "wishlist");
 export const ADMIN_SUFFIX = ".admin.json";
 export const USER_SUFFIX = ".user.json";
 export const INSTALLED_SUFFIX = ".installed.json";
-export const STEAM_WISHLIST_SUFFIX = ".wishlist.json";
+export const WISHLIST_SUFFIX = ".wishlist.json";
 
 export const PLAYNITE_COLLECTIONS = new Set([
     "games",

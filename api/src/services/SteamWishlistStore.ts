@@ -1,6 +1,6 @@
 import { promises as fs } from "node:fs";
 import { join } from "node:path";
-import { STEAM_WISHLIST_ROOT, STEAM_WISHLIST_SUFFIX } from "../constants";
+import { STEAM_WISHLIST_ROOT, WISHLIST_SUFFIX } from "../constants";
 import { SteamWishlistSnapshot, SteamWishlistEntry, SteamAppDetails } from "../types/types";
 import { rootLog } from "../logger";
 import { extractYearFromReleaseDate } from "./SteamService";
@@ -15,7 +15,7 @@ async function ensureDir(dir: string) {
 
 // Get the full path for an account's snapshot file
 function snapshotPath(email: string): string {
-    return join(STEAM_WISHLIST_ROOT, `${email}${STEAM_WISHLIST_SUFFIX}`);
+    return join(STEAM_WISHLIST_ROOT, `${email}${WISHLIST_SUFFIX}`);
 }
 
 /**
@@ -186,7 +186,7 @@ export async function resetAllSteamWishlistSyncFlags(): Promise<void> {
         const files = await fs.readdir(STEAM_WISHLIST_ROOT);
 
         for (const file of files) {
-            if (!file.endsWith(STEAM_WISHLIST_SUFFIX)) continue;
+            if (!file.endsWith(WISHLIST_SUFFIX)) continue;
 
             const fullPath = join(STEAM_WISHLIST_ROOT, file);
 
