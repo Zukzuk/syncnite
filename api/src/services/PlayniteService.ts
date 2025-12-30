@@ -12,13 +12,36 @@ async function ensureDir(p: string) {
     await fs.mkdir(p, { recursive: true });
 }
 
+function validateToken(
+  raw: string,
+  errCodeMissing: string,
+  errCodeInvalid: string,
+  errMsg: string
+): string {
+  const trimmed = String(raw ?? "").trim();
+  if (!trimmed) throw new PlayniteError(400, errCodeMissing, errMsg);
+
+  // Top-level token only (no separators / traversal)
+  if (trimmed.includes("/") || trimmed.includes("\\") || trimmed.includes("..")) {
+    throw new PlayniteError(400, errCodeInvalid, errMsg);
+  }
+
+  // Allowed charset (same as before, but VALIDATE not mutate)
+  if (!/^[A-Za-z0-9_.-]+$/.test(trimmed)) {
+    throw new PlayniteError(400, errCodeInvalid, errMsg);
+  }
+
+  return trimmed;
+}
+
 // Sanitize ID
 function sanitizeId(id: string): string {
-    const trimmed = String(id ?? "").trim();
-    if (!trimmed) throw new PlayniteError(400, "missing_id", "missing id");
-    const safe = trimmed.replace(/[^A-Za-z0-9_\-.]/g, "");
-    if (!safe) throw new PlayniteError(400, "invalid_id", "invalid id");
-    return safe;
+  return validateToken(id, "missing_id", "invalid_id", "invalid id");
+}
+
+// Sanitize media folder name
+function sanitizeMediaFolderName(name: string): string {
+  return validateToken(name, "invalid_media_folder", "invalid_media_folder", "invalid media folder");
 }
 
 // Sanitize collection
@@ -249,10 +272,9 @@ export class PlayniteService {
     async computeDelta(body: PlayniteClientManifest): Promise<PlayniteDeltaManifest> {
         const incoming = body.json ?? {};
         const versions = body.versions ?? {};
+        const mediaFolders = body.mediaFolders ?? {}; // NEW
 
-        log.info(
-            `incoming delta request for ${Object.keys(incoming).length} collections`
-        );
+        log.info(`incoming delta request for ${Object.keys(incoming).length} collections`);
         log.debug("delta request", { collections: Object.keys(incoming) });
 
         const toUpsert: PlayniteDeltaManifest["toUpsert"] = {};
@@ -260,20 +282,14 @@ export class PlayniteService {
 
         for (const key of Object.keys(incoming)) {
             const collection = sanitizeCollection(key);
-            const idsFromClient = new Set(
-                (incoming[collection] ?? []).map(sanitizeId)
-            );
+            const idsFromClient = new Set((incoming[collection] ?? []).map(sanitizeId));
 
             const dir = join(DB_ROOT, collection);
             let serverIds: string[] = [];
             try {
                 const entries = await fs.readdir(dir, { withFileTypes: true });
                 serverIds = entries
-                    .filter(
-                        (e) =>
-                            e.isFile() &&
-                            e.name.toLowerCase().endsWith(".json")
-                    )
+                    .filter((e) => e.isFile() && e.name.toLowerCase().endsWith(".json"))
                     .map((e) => e.name.replace(/\.json$/i, ""));
             } catch {
                 // dir may not exist yet
@@ -281,7 +297,6 @@ export class PlayniteService {
 
             const serverSet = new Set(serverIds);
             const versionsForCollection = versions[collection] ?? {};
-
             const upserts: string[] = [];
 
             for (const id of idsFromClient) {
@@ -293,14 +308,12 @@ export class PlayniteService {
                     needsUpsert = true;
                 } else {
                     const clientVer = versionsForCollection[id];
-
                     if (typeof clientVer === "string" && clientVer.length > 0) {
                         try {
                             const p = resolveDocPath(collection, id);
                             const existing = await readJsonIfExists(p);
                             const serverVer =
-                                existing &&
-                                    typeof existing.MetadataVersion === "string"
+                                existing && typeof existing.MetadataVersion === "string"
                                     ? existing.MetadataVersion
                                     : undefined;
 
@@ -313,7 +326,6 @@ export class PlayniteService {
                                 id,
                                 err: String(e?.message ?? e),
                             });
-                            // stay conservative: don't upsert on error
                         }
                     }
                 }
@@ -335,7 +347,34 @@ export class PlayniteService {
             if (deletes.length) toDelete[collection] = deletes;
         }
 
-        return { toUpsert, toDelete };
+        // media folder repair detection
+        const uploadFolders: string[] = [];
+        for (const rawFolder of Object.keys(mediaFolders)) {
+            let folder: string;
+            try {
+                folder = sanitizeMediaFolderName(rawFolder);
+            } catch {
+                // skip invalid folder names instead of failing the whole delta
+                continue;
+            }
+
+            // folder is top-level under MEDIA_ROOT
+            const abs = safeJoinMedia(MEDIA_ROOT, folder);
+            const st = await fileStatOrNull(abs);
+            if (!st || !st.isDirectory()) {
+                uploadFolders.push(folder);
+            }
+        }
+
+        if (uploadFolders.length) {
+            log.info(`delta media repair: uploadFolders=${uploadFolders.length}`);
+        }
+
+        return {
+            toUpsert,
+            toDelete,
+            media: { uploadFolders },
+        };
     }
 
     /**

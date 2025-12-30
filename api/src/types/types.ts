@@ -102,11 +102,15 @@ export type PlayniteClientManifest = {
   json?: Record<string, string[]>;
   versions?: Record<string, Record<string, string>>;
   installed?: { count: number; hash?: string };
+  mediaFolders?: Record<string, number>;
 };
 
 export type PlayniteDeltaManifest = {
   toUpsert: Record<string, string[]>;
   toDelete: Record<string, string[]>;
+  media?: {
+    uploadFolders: string[];
+  };
 };
 
 export type InstalledStateRow = {

@@ -34,7 +34,7 @@ namespace SyncniteBridge.Services
         }
 
         /// <summary>
-        /// Gets the current snapshot file path based on the configured endpoint.
+        /// Gets the current file path for the local state snapshot based on the endpoint.
         /// </summary>
         private string CurrentPath
         {
@@ -46,7 +46,9 @@ namespace SyncniteBridge.Services
                 try
                 {
                     var uri = new Uri(endpoint, UriKind.Absolute);
-                    host = uri.Host;
+
+                    // Include port to avoid collisions between e.g. localhost:3003 and localhost:3004
+                    host = uri.IsDefaultPort ? uri.Host : $"{uri.Host}_{uri.Port}";
                 }
                 catch
                 {

@@ -71,12 +71,23 @@ namespace SyncniteBridge.Services
         }
 
         /// <summary>
-        /// Update sync base (…/api/playnite)
+        /// Update the sync endpoints (called when settings change).
         /// </summary>
         public void UpdateEndpoints(string endpoint)
         {
-            syncUrl = (endpoint ?? "").TrimEnd('/');
-            blog?.Debug("sync", "CRUD endpoints updated", new { syncUrl });
+            var next = (endpoint ?? "").TrimEnd('/');
+            if (string.Equals(syncUrl, next, StringComparison.OrdinalIgnoreCase))
+                return;
+
+            syncUrl = next;
+            blog?.Debug(
+                "sync",
+                "Endpoint changed → preparing initial snapshot diff",
+                new { syncUrl }
+            );
+
+            // Recompute initial diff for this endpoint so we only upload what’s needed
+            PrepareInitialSnapshotDiff();
         }
 
         /// <summary>
@@ -85,10 +96,20 @@ namespace SyncniteBridge.Services
         public void SetHealthProvider(Func<bool> provider) => isHealthy = provider ?? (() => true);
 
         /// <summary>
-        /// Start logic: compare existing snapshot with current state to decide if we need an initial sync.
-        /// No file watchers are used anymore; ongoing changes come from ChangeDetection.
+        /// Start the CRUD sync service.
         /// </summary>
         public void Start()
+        {
+            PrepareInitialSnapshotDiff();
+
+            blog?.Info("sync", "CRUD sync started (DB-event driven, no file watchers)");
+            blog?.Debug("sync", "Engine ready", new { debounceMs = AppConstants.Debounce_Ms });
+        }
+
+        /// <summary>
+        /// Prepare initial snapshot diff to mark dirty states on first run.
+        /// </summary>
+        private void PrepareInitialSnapshotDiff()
         {
             try
             {
@@ -96,22 +117,24 @@ namespace SyncniteBridge.Services
                 var current =
                     localState.BuildSnapshot(fullRescan: true) ?? new LocalStateSnapshot();
 
-                previous.MediaVersions ??= new Dictionary<string, long>(
+                // Capture into locals so nullable analysis is satisfied
+                var prevMedia = previous.MediaVersions ??= new Dictionary<string, long>(
                     StringComparer.OrdinalIgnoreCase
                 );
-                current.MediaVersions ??= new Dictionary<string, long>(
+                var curMedia = current.MediaVersions ??= new Dictionary<string, long>(
                     StringComparer.OrdinalIgnoreCase
                 );
 
-                var firstRun =
-                    previous.DbTicks == 0
-                    && (previous.MediaVersions == null || previous.MediaVersions.Count == 0);
+                // Reset dbDirty for "clean" detection on endpoint change
+                dbDirty = false;
+
+                var firstRun = previous.DbTicks == 0 && prevMedia.Count == 0;
 
                 if (firstRun)
                 {
                     dbDirty = true;
 
-                    foreach (var folder in current.MediaVersions.Keys)
+                    foreach (var folder in curMedia.Keys)
                     {
                         localState.MarkMediaFolderDirty(folder);
                     }
@@ -120,7 +143,7 @@ namespace SyncniteBridge.Services
                     blog?.Debug(
                         "sync",
                         "Initial snapshot",
-                        new { current.DbTicks, mediaFolders = current.MediaVersions.Count }
+                        new { current.DbTicks, mediaFolders = curMedia.Count }
                     );
                 }
                 else
@@ -131,20 +154,11 @@ namespace SyncniteBridge.Services
                     }
 
                     var changedFolders = 0;
-                    foreach (
-                        var kv in current.MediaVersions
-                            ?? Enumerable.Empty<KeyValuePair<string, long>>()
-                    )
+                    foreach (var kv in curMedia)
                     {
                         var folder = kv.Key;
                         var ticksNow = kv.Value;
-                        var ticksPrev =
-                            (
-                                previous.MediaVersions != null
-                                && previous.MediaVersions.TryGetValue(folder, out var t)
-                            )
-                                ? t
-                                : 0;
+                        var ticksPrev = prevMedia.TryGetValue(folder, out var t) ? t : 0;
 
                         if (ticksNow != ticksPrev)
                         {
@@ -160,8 +174,8 @@ namespace SyncniteBridge.Services
                         {
                             prevTicks = previous.DbTicks,
                             curTicks = current.DbTicks,
-                            prevMedia = previous.MediaVersions?.Count ?? 0,
-                            curMedia = current.MediaVersions?.Count ?? 0,
+                            prevMedia = prevMedia.Count,
+                            curMedia = curMedia.Count,
                             dbDirty,
                             mediaFoldersChanged = changedFolders,
                         }
@@ -176,9 +190,6 @@ namespace SyncniteBridge.Services
                     new { err = ex.Message }
                 );
             }
-
-            blog?.Info("sync", "CRUD sync started (DB-event driven, no file watchers)");
-            blog?.Debug("sync", "Engine ready", new { debounceMs = AppConstants.Debounce_Ms });
         }
 
         /// <summary>
@@ -331,25 +342,34 @@ namespace SyncniteBridge.Services
         }
 
         /// <summary>
-        /// Build client inventory and post to /delta, then apply returned delta.
-        /// Also upload dirty media folders.
+        /// Client inventory snapshot sent to server for delta computation.
         /// </summary>
         private sealed class ClientInventory
         {
+            /// <summary>
+            /// Collection name -> array of IDs
+            /// </summary>
             public Dictionary<string, string[]> json { get; set; } =
                 new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
 
             /// <summary>
-            /// Per-collection metadata versions:
-            ///   e.g. "games" -> { gameId -> versionToken }
-            /// Version token is an opaque string (SHA1 of key fields).
+            /// Collection name -> (ID -> version)
             /// </summary>
             public Dictionary<string, Dictionary<string, string>> versions { get; set; } =
                 new Dictionary<string, Dictionary<string, string>>(
                     StringComparer.OrdinalIgnoreCase
                 );
 
+            /// <summary>
+            /// Installed summary (unchanged from before).
+            /// </summary>
             public InstalledSummary installed { get; set; } = new InstalledSummary();
+
+            /// <summary>
+            /// Media folders and their last modified ticks.
+            /// </summary>
+            public Dictionary<string, long> mediaFolders { get; set; } =
+                new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
 
             internal sealed class InstalledSummary
             {
@@ -365,13 +385,25 @@ namespace SyncniteBridge.Services
         {
             public bool ok { get; set; }
             public Delta delta { get; set; } = new Delta();
+            public MediaDelta? media { get; set; }
 
+            /// <summary>
+            /// CRUD delta instructions.
+            /// </summary>
             internal sealed class Delta
             {
                 public Dictionary<string, string[]> toUpsert { get; set; } =
                     new(StringComparer.OrdinalIgnoreCase);
                 public Dictionary<string, string[]> toDelete { get; set; } =
                     new(StringComparer.OrdinalIgnoreCase);
+            }
+
+            /// <summary>
+            /// Media delta instructions.
+            /// </summary>
+            internal sealed class MediaDelta
+            {
+                public string[] uploadFolders { get; set; } = Array.Empty<string>();
             }
         }
 
@@ -444,14 +476,24 @@ namespace SyncniteBridge.Services
         }
 
         /// <summary>
-        /// Build client inventory from Playnite DB.
+        /// Build client inventory from Playnite DB + local media snapshot.
         /// </summary>
-        private ClientInventory BuildClientInventory()
+        private ClientInventory BuildClientInventory(LocalStateSnapshot snapshotBefore)
         {
             var m = new ClientInventory();
 
+            var db = api.Database;
+            if (db == null)
+            {
+                blog?.Warn(
+                    "sync",
+                    "BuildClientInventory: api.Database is null; skipping inventory build"
+                );
+                return m;
+            }
+
             // ---- games ----
-            var allGames = api.Database.Games.ToList();
+            var allGames = db.Games.ToList();
             m.json["games"] = allGames.Select(g => g.Id.ToString()).ToArray();
 
             var gameVersions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -463,51 +505,41 @@ namespace SyncniteBridge.Services
             m.versions["games"] = gameVersions;
 
             // ---- simple named collections ----
-            AddNamedCollection(m, "tags", api.Database.Tags, t => t.Id, t => t.Name);
-
-            AddNamedCollection(m, "companies", api.Database.Companies, c => c.Id, c => c.Name);
-
-            AddNamedCollection(m, "sources", api.Database.Sources, s => s.Id, s => s.Name);
-
-            AddNamedCollection(m, "platforms", api.Database.Platforms, p => p.Id, p => p.Name);
-
-            AddNamedCollection(m, "genres", api.Database.Genres, g => g.Id, g => g.Name);
-
-            AddNamedCollection(m, "categories", api.Database.Categories, c => c.Id, c => c.Name);
-
-            AddNamedCollection(m, "features", api.Database.Features, f => f.Id, f => f.Name);
-
-            AddNamedCollection(m, "series", api.Database.Series, s => s.Id, s => s.Name);
-
-            AddNamedCollection(m, "regions", api.Database.Regions, r => r.Id, r => r.Name);
-
-            AddNamedCollection(m, "ageratings", api.Database.AgeRatings, a => a.Id, a => a.Name);
-
+            AddNamedCollection(m, "tags", db.Tags, t => t.Id, t => t.Name);
+            AddNamedCollection(m, "companies", db.Companies, c => c.Id, c => c.Name);
+            AddNamedCollection(m, "sources", db.Sources, s => s.Id, s => s.Name);
+            AddNamedCollection(m, "platforms", db.Platforms, p => p.Id, p => p.Name);
+            AddNamedCollection(m, "genres", db.Genres, g => g.Id, g => g.Name);
+            AddNamedCollection(m, "categories", db.Categories, c => c.Id, c => c.Name);
+            AddNamedCollection(m, "features", db.Features, f => f.Id, f => f.Name);
+            AddNamedCollection(m, "series", db.Series, s => s.Id, s => s.Name);
+            AddNamedCollection(m, "regions", db.Regions, r => r.Id, r => r.Name);
+            AddNamedCollection(m, "ageratings", db.AgeRatings, a => a.Id, a => a.Name);
             AddNamedCollection(
                 m,
                 "completionstatuses",
-                api.Database.CompletionStatuses,
+                db.CompletionStatuses,
                 cs => cs.Id,
                 cs => cs.Name
             );
+            AddNamedCollection(m, "filterpresets", db.FilterPresets, fp => fp.Id, fp => fp.Name);
 
-            AddNamedCollection(
-                m,
-                "filterpresets",
-                api.Database.FilterPresets,
-                fp => fp.Id,
-                fp => fp.Name
-            );
-
-            // ---- installed summary (unchanged) ----
-            var installedIds = api
-                .Database.Games.Where(g => g.IsInstalled)
+            // ---- installed summary ----
+            var installedIds = db
+                .Games.Where(g => g.IsInstalled)
                 .Select(g => g.Id.ToString())
                 .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
 
             m.installed.count = installedIds.Length;
             m.installed.hash = string.Join("|", installedIds);
+
+            // ---- media folders ----
+            m.mediaFolders = new Dictionary<string, long>(
+                snapshotBefore?.MediaVersions
+                    ?? new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase),
+                StringComparer.OrdinalIgnoreCase
+            );
 
             return m;
         }
@@ -534,7 +566,7 @@ namespace SyncniteBridge.Services
             var snapshotBefore = localState.BuildSnapshot(fullRescan: false);
 
             // 2) Build client inventory and post to /delta
-            var inventory = BuildClientInventory();
+            var inventory = BuildClientInventory(snapshotBefore);
             var response = await PostDeltaAsync(inventory).ConfigureAwait(false);
 
             if (response?.ok == true && response.delta != null)
@@ -552,16 +584,27 @@ namespace SyncniteBridge.Services
                 {
                     beforeDb = snapshotBefore.DbTicks,
                     afterDb = snapshotAfter.DbTicks,
-                    beforeMedia = snapshotBefore.MediaVersions.Count,
-                    afterMedia = snapshotAfter.MediaVersions.Count,
+                    beforeMedia = snapshotBefore.MediaVersions?.Count ?? 0,
+                    afterMedia = snapshotAfter.MediaVersions?.Count ?? 0,
                     dirtyFolders = mediaFolders.Count,
                 }
             );
 
             // 4) Upload media folders that were dirty when we started
-            if (mediaFolders.Any())
+            var requested = response?.media?.uploadFolders ?? Array.Empty<string>();
+
+            // Combine requested folders from server with locally dirty folders
+            var allFolders = new HashSet<string>(mediaFolders, StringComparer.OrdinalIgnoreCase);
+            foreach (var f in requested)
             {
-                await UploadMediaFoldersAsync(mediaFolders).ConfigureAwait(false);
+                if (!string.IsNullOrWhiteSpace(f))
+                    allFolders.Add(f);
+            }
+
+            // Upload them
+            if (allFolders.Count > 0)
+            {
+                await UploadMediaFoldersAsync(allFolders.ToList()).ConfigureAwait(false);
             }
 
             // 5) Save snapshotAfter locally and upload it to the server snapshot endpoint
