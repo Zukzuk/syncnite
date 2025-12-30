@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.41.4](https://github.com/Zukzuk/syncnite/compare/v1.41.3...v1.41.4) (2025-12-30)
+
+
+### Bug Fixes
+
+* fixed bug where media wasnt sunced ([e0b226b](https://github.com/Zukzuk/syncnite/commit/e0b226b0e650f27f8aa65ffe9e9a7a7dd23c4aca))
+
 ### [1.41.3](https://github.com/Zukzuk/syncnite/compare/v1.41.2...v1.41.3) (2025-12-30)
 
 
