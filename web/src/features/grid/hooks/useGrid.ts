@@ -5,6 +5,7 @@ import { useGridOpenItemToggle } from "./useGridOpenItemToggle";
 import { useGridScrollRestore } from "./useGridScrollRestore";
 import { HistoryNavMode, ItemPositions, UIControls, UIDerivedData } from "../../../types/app";
 import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../types/interlinked";
+import { useStableViewportSize } from "./useStableViewportSize";
 
 type UseParams = {
     gridRef: RefObject<HTMLDivElement>;
@@ -36,27 +37,12 @@ export function useGrid({
     const navigate = useNavigate();
 
     // Base grid sizing (cols + viewport height)
-    const [gridViewportW, setW] = useState(0);
-    const [gridViewportH, setH] = useState(0);
+    const { w: gridViewportW, h: gridViewportH } = useStableViewportSize(
+        gridRef as any,
+        grid.minSiteWidth
+    );
 
-    useLayoutEffect(() => {
-        const el = gridRef.current;
-        if (!el) return;
-
-        const onSize = () => {
-            const rect = el.getBoundingClientRect();
-            setW(Math.max(grid.minSiteWidth, Math.floor(rect.width)));
-            setH(Math.max(0, Math.floor(rect.height)));
-        };
-
-        const ro = new ResizeObserver(onSize);
-        ro.observe(el);
-        onSize();
-
-        return () => ro.disconnect();
-    }, []);
-
-    const { 
+    const {
         gridCardHeight,
         gridCardWidth,
         deckAndStacksHeight,
