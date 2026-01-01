@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.42.1](https://github.com/Zukzuk/syncnite/compare/v1.42.0...v1.42.1) (2026-01-01)
+
+
+### Bug Fixes
+
+* starting to fix plex linking card / controlpanel ([ff2eadd](https://github.com/Zukzuk/syncnite/commit/ff2eadd3692a797e3f19183dd0770a9b5e5ce9ec))
+
 ## [1.42.0](https://github.com/Zukzuk/syncnite/compare/v1.41.9...v1.42.0) (2026-01-01)
 
 
