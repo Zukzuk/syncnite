@@ -33,8 +33,7 @@ export function AssociatedStacks({
             className="subtle-scrollbar"
             pl={4}
             style={{
-                flex: 1,
-                minWidth: 0,
+                minWidth: dynamicGrid.stackCardWidth,
                 marginTop: 22,
                 height: "calc(100% - 22px)",
                 overflowY: "auto",
@@ -44,7 +43,7 @@ export function AssociatedStacks({
         >
             <Box
                 style={{
-                    width: stacksWidth,
+                    width: "100%",
                     display: "grid",
                     gridTemplateColumns: `repeat(${stackColumns}, minmax(0, ${Math.min(
                         dynamicGrid.stackCardWidth,

@@ -39,6 +39,9 @@ export function AssociatedContent({
         associatedData,
     });
 
+    const openDeckData = openDeck ? { key: openDeck.key, items: openDeck.items } : null;
+    const stackCount = associatedData.length;
+
     const {
         deckColumns,
         stackColumns,
@@ -49,7 +52,8 @@ export function AssociatedContent({
     } = useAssociatedLayout({
         grid,
         dynamicGrid,
-        openDeck: openDeck ? { key: openDeck.key, items: openDeck.items } : null,
+        openDeckData,
+        stackCount,
     });
 
     return (
@@ -86,46 +90,49 @@ export function AssociatedContent({
                     onWallpaperBg={onWallpaperBg}
                 />
 
-                <Box
-                    style={{
-                        flex: 1,
-                        minWidth: 0,
-                        height: "100%",
-                        display: "flex",
-                        flexDirection: needsColumnLayout ? "column" : "row",
-                        gap: grid.gapMd,
-                        overflow: "hidden",
-                    }}
-                >
-                    {stackColumns > 0 && (
-                        <AssociatedStacks
-                            associatedData={associatedData}
-                            openDeckKey={openDeckKey}
-                            stackColumns={stackColumns}
-                            isDark={isDark}
-                            grid={grid}
-                            dynamicGrid={dynamicGrid}
-                            onStackClick={setOpenDeckKey}
-                            stacksWidth={stacksWidth}
-                            stackCardWidthUsed={stackCardWidthUsed}
-                        />
-                    )}
+                {openDeckData?.key && stackCount > 0 && (
+                    <Box
+                        style={{
+                            flex: 1,
+                            minWidth: 0,
+                            height: "100%",
+                            display: "flex",
+                            flexDirection: needsColumnLayout ? "column" : "row",
+                            justifyContent: needsColumnLayout ? "flex-start" : "space-between",
+                            gap: grid.gapMd,
+                            overflow: "hidden",
+                        }}
+                    >
+                        {deckColumns > 0 && stackColumns > 0 && (
+                            <AssociatedStacks
+                                associatedData={associatedData}
+                                openDeckKey={openDeckKey}
+                                stackColumns={stackColumns}
+                                isDark={isDark}
+                                grid={grid}
+                                dynamicGrid={dynamicGrid}
+                                onStackClick={setOpenDeckKey}
+                                stacksWidth={stacksWidth}
+                                stackCardWidthUsed={stackCardWidthUsed}
+                            />
+                        )}
 
-                    {openDeck && deckColumns > 0 && (
-                        <AssociatedDeck
-                            deckKey={openDeck.key}
-                            label={openDeck.label}
-                            items={openDeck.items}
-                            currentItemId={item.id}
-                            deckColumns={deckColumns}
-                            maxCardsPerColumn={maxCardsPerDeckColumn}
-                            isDark={isDark}
-                            grid={grid}
-                            dynamicGrid={dynamicGrid}
-                            onToggleClickBounded={onToggleClickBounded}
-                        />
-                    )}
-                </Box>
+                        {openDeck && deckColumns > 0 && stackColumns > 0 && (
+                            <AssociatedDeck
+                                deckKey={openDeck.key}
+                                label={openDeck.label}
+                                items={openDeck.items}
+                                currentItemId={item.id}
+                                deckColumns={deckColumns}
+                                maxCardsPerColumn={maxCardsPerDeckColumn}
+                                isDark={isDark}
+                                grid={grid}
+                                dynamicGrid={dynamicGrid}
+                                onToggleClickBounded={onToggleClickBounded}
+                            />
+                        )}
+                    </Box>
+                )}
             </Box>
         </Collapse>
     );

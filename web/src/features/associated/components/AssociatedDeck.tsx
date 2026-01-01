@@ -65,6 +65,7 @@ export function AssociatedDeck({
                 alignItems: "stretch",
                 overflow: "hidden",
                 maxWidth: deckWidth,
+                marginLeft: "auto",
             }}
         >
             <Text
