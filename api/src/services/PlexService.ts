@@ -3,13 +3,13 @@ import { promises as fs } from "node:fs";
 import { join, dirname } from "node:path";
 import { rootLog } from "../logger";
 import { AccountsService } from "./AccountsService";
-import { PLEX_DB_ROOT, PLEX_MEDIA_ROOT, PLEX_SNAPSHOT_ROOT } from "../constants";
+import { PLEX_DB_ROOT, PLEX_MEDIA_ROOT, PLEX_SNAPSHOT_ROOT, SNAPSHOT_FILENAME } from "../constants";
 import type { PlexConnection } from "../types/plex";
 
 const log = rootLog.child("plexService");
 
-const PLEX_TV = "https://plex.tv";
-const PLEX_PRODUCT = "InterLinked";
+const PLEX_TV = process.env.PLEX_TV_PATH || "https://plex.tv";
+const PLEX_PRODUCT = process.env.PLEX_PRODUCT || "InterLinked";
 const PIN_TTL_MS = 10 * 60 * 1000;
 
 async function ensureDir(p: string) {
@@ -336,7 +336,7 @@ export const PlexService = {
       totalDownloads,
     };
 
-    await writeJson(join(PLEX_SNAPSHOT_ROOT, "snapshot.json"), snapshot);
+    await writeJson(join(PLEX_SNAPSHOT_ROOT, SNAPSHOT_FILENAME), snapshot);
 
     // update account audit
     const updated: PlexConnection = {

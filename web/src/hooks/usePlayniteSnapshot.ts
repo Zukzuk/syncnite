@@ -20,7 +20,7 @@ export function usePlayniteSnapshot({ pollMs }: UseParams): UseReturn {
         let stop = false;
         async function tick() {
             try {
-                const r = await fetch(`${FILES.snapshot.dir}/${FILES.snapshot.file}?v=${Date.now()}`, { cache: "no-store" });
+                const r = await fetch(`${FILES.playnite.snapshot.dir}/${FILES.playnite.snapshot.file}?v=${Date.now()}`, { cache: "no-store" });
                 if (r.ok) {
                     const txt = await r.text();
                     if (txt.trim().startsWith("{") && txt !== lastRef.current) {

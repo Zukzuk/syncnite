@@ -2,7 +2,7 @@ import { promises as fs } from "node:fs";
 import { join, dirname, resolve, sep } from "node:path";
 import { createHash } from "node:crypto";
 import { rootLog } from "../logger";
-import { PLAYNITE_DB_ROOT, PLAYNITE_INSTALLED_ROOT, PLAYNITE_MEDIA_ROOT, SNAPSHOT_ROOT, PLAYNITE_COLLECTIONS, INSTALLED_SUFFIX } from "../constants";
+import { PLAYNITE_DB_ROOT, PLAYNITE_INSTALLED_ROOT, PLAYNITE_MEDIA_ROOT, PLAYNITE_SNAPSHOT_ROOT, PLAYNITE_COLLECTIONS, INSTALLED_SUFFIX, SNAPSHOT_FILENAME } from "../constants";
 import { InstalledStateRow, PlayniteClientManifest, PlayniteDeltaManifest, PlayniteError } from "../types/playnite";
 
 const log = rootLog.child("playniteService");
@@ -114,9 +114,9 @@ const collectionCache = new Map<
     { rows: any[]; snapshotMtimeMs: number | null }
 >();
 
-// Get global snapshot.json mtimeMs
+// Get snapshot.json mtimeMs
 async function getSnapshotMtimeMs(): Promise<number | null> {
-    const snapshotPath = join(SNAPSHOT_ROOT, "snapshot.json");
+    const snapshotPath = join(PLAYNITE_SNAPSHOT_ROOT, SNAPSHOT_FILENAME);
 
     try {
         const stat = await fs.stat(snapshotPath);
@@ -195,8 +195,8 @@ export class PlayniteService {
         const now = new Date().toISOString();
         const s: any = snapshot;
 
-        await ensureDir(SNAPSHOT_ROOT);
-        const outPath = join(SNAPSHOT_ROOT, "snapshot.json");
+        await ensureDir(PLAYNITE_SNAPSHOT_ROOT);
+        const outPath = join(PLAYNITE_SNAPSHOT_ROOT, SNAPSHOT_FILENAME);
 
         const out = {
             ...s,

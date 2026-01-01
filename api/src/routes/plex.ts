@@ -28,7 +28,7 @@ router.post("/auth/start", requireBareAdminSession, async (req, res) => {
   if (!serverUrl) return res.status(400).json({ ok: false, error: "missing_server_url" });
 
   // where Plex sends the user back after auth (your web UI URL)
-  const forwardUrl = String(process.env.SERVER_REALM ?? "").trim();
+  const forwardUrl = String(process.env.SERVER_REALM) + String(process.env.PLEX_LINK_REDIRECT);
   if (!forwardUrl) return res.status(500).json({ ok: false, error: "missing_forward_url" });
 
   try {

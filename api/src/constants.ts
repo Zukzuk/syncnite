@@ -9,17 +9,18 @@ export const EXT_DIR = "/extension";
 
 export const ACCOUNTS_ROOT = join(PRIVATE_DIR, "accounts");
 
-export const SNAPSHOT_ROOT = join(PUBLIC_DIR, "snapshot");
-
 const PLAYNITE_ROOT = join(PUBLIC_DIR, "playnite");
 export const PLAYNITE_DB_ROOT = join(PLAYNITE_ROOT, "db");
 export const PLAYNITE_MEDIA_ROOT = join(PLAYNITE_ROOT, "libraryfiles");
 export const PLAYNITE_INSTALLED_ROOT = join(PLAYNITE_ROOT, "installed");
+export const PLAYNITE_SNAPSHOT_ROOT = join(PLAYNITE_ROOT, "snapshot");
 
 const STEAM_ROOT = join(PUBLIC_DIR, "steam");
+export const STEAM_DB_ROOT = join(STEAM_ROOT, "db");
 export const STEAM_MEDIA_ROOT = join(STEAM_ROOT, "libraryfiles");
 export const STEAM_INSTALLED_ROOT = join(STEAM_ROOT, "installed");
 export const STEAM_WISHLIST_ROOT = join(STEAM_ROOT, "wishlist");
+export const STEAM_SNAPSHOT_ROOT = join(STEAM_ROOT, "snapshot");
 
 const PLEX_ROOT = join(PUBLIC_DIR, "plex");
 export const PLEX_DB_ROOT = join(PLEX_ROOT, "db");
@@ -30,6 +31,7 @@ export const ADMIN_SUFFIX = ".admin.json";
 export const USER_SUFFIX = ".user.json";
 export const INSTALLED_SUFFIX = ".installed.json";
 export const WISHLIST_SUFFIX = ".wishlist.json";
+export const SNAPSHOT_FILENAME = "snapshot.json";
 
 export const PLAYNITE_COLLECTIONS = new Set([
     "games",

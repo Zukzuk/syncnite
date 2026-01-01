@@ -44,10 +44,10 @@ export const API_ENDPOINTS = {
 export const PUBLIC_DIR = "/mountpub";
 
 export const FILES = {
-  snapshot: { dir: `${PUBLIC_DIR}/snapshot`, file: "snapshot.json" },
   playnite: {
     installed: { dir: `${PUBLIC_DIR}/playnite/installed`, file: "installed.json" },
-    libraryfiles: { dir: `${PUBLIC_DIR}/playnite/libraryfiles` }
+    libraryfiles: { dir: `${PUBLIC_DIR}/playnite/libraryfiles` },
+    snapshot: { dir: `${PUBLIC_DIR}/playnite/snapshot`, file: "snapshot.json" },
   },
   steam: {
     installed: { dir: `${PUBLIC_DIR}/steam/installed`, file: "installed.json" },

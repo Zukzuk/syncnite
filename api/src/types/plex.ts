@@ -1,5 +1,5 @@
 export interface PlexConnection {
-    /** Base URL of PMS, e.g. http://192.168.1.10:32400 */
+    /** Base URL of PMS, e.g. http://192.168.1.124:32400 */
     serverUrl: string;
 
     /** Plex account token (X-Plex-Token) obtained via PIN flow */
