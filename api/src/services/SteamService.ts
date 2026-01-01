@@ -3,8 +3,8 @@ import crypto from "node:crypto";
 import { rootLog } from "../logger";
 import { AccountsService } from "./AccountsService";
 import { WorkerService } from "./WorkerService";
-import { type SteamAppDetails, type SteamWishlistSnapshot, type SteamWishlistEntry, SteamError } from "../types/types";
 import { getSteamWishlistSnapshot, parseWishlistResult, saveSteamWishlistSnapshot } from "./SteamWishlistStore";
+import { SteamAppDetails, SteamError, SteamWishlistEntry, SteamWishlistSnapshot } from "../types/steam";
 
 // https://steamapi.xpaw.me/
 // https://api.steampowered.com/IWishlistService/GetWishlist/v1/

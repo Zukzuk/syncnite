@@ -37,7 +37,7 @@ export async function requireSession(
  * - Later calls must use the same clientId.
  * - Different clientId → 403 admin_locked_elsewhere.
  */
-export async function requireAdminSession(
+export async function requirePlayniteAdminSession(
     req: express.Request,
     res: express.Response,
     next: express.NextFunction,

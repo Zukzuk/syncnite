@@ -154,6 +154,13 @@ export type AssociatedItemCard = {
   indexInColumn: number;
 };
 
+export type AssociatedIDeckMeta = {
+  id: string;
+  metaIndex: number;
+  colIndex: number;
+  indexInColumn: number;
+};
+
 export type LogListener = (lines: string[]) => void;
 
 export interface ILogBus {
@@ -162,28 +169,4 @@ export interface ILogBus {
   get(): string[];
   subscribe(fn: LogListener): () => void;
 }
-
-export type SteamStatusResponse = {
-  ok: boolean;
-  connected: boolean;
-  steam?: {
-    webApiKey: string;
-    steamId?: string;
-    linkedAt?: string;
-  };
-};
-
-export type SteamWishlistResponse = {
-  ok: boolean;
-  lastSynced: string | null;
-  items: SteamWishlistEntry[];
-  syncInProgress: boolean;
-};
-
-export type DeckCardMeta = {
-  id: string;
-  metaIndex: number;
-  colIndex: number;
-  indexInColumn: number;
-};
 

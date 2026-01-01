@@ -3,7 +3,7 @@ import { join, dirname, resolve, sep } from "node:path";
 import { createHash } from "node:crypto";
 import { rootLog } from "../logger";
 import { PLAYNITE_DB_ROOT, PLAYNITE_INSTALLED_ROOT, PLAYNITE_MEDIA_ROOT, SNAPSHOT_ROOT, PLAYNITE_COLLECTIONS, INSTALLED_SUFFIX } from "../constants";
-import { InstalledStateRow, PlayniteClientManifest, PlayniteDeltaManifest, PlayniteError } from "../types/types";
+import { InstalledStateRow, PlayniteClientManifest, PlayniteDeltaManifest, PlayniteError } from "../types/playnite";
 
 const log = rootLog.child("playniteService");
 

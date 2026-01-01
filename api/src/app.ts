@@ -9,6 +9,7 @@ import accountsRouter from "./routes/accounts";
 import generalRouter from "./routes/general";
 import extensionRouter from "./routes/extension";
 import steamRouter from "./routes/steam";
+import plexRouter from "./routes/plex";
 import { errorHandler, notFoundHandler } from "./middleware/errors";
 import { requestLogger } from "./middleware/requestLogger";
 import { createOpenApiMockRouter } from "./openapi/mocks";
@@ -31,7 +32,11 @@ export function createApp() {
     // increase JSON body size limit for large backups
     app.use(express.json({ limit: "50mb" }));
 
-    // Swagger/OpenAPI setup (see endpoints in ./openapi/openapi.yaml)
+    // Serve the entire OpenAPI folder so relative $refs like "./paths/app.yaml#/ping" work.
+    const openapiRoot = path.join(__dirname, "openapi");
+    app.use("/api/v1/openapi", express.static(openapiRoot));
+
+    // Minimal in-memory spec (used only for your OpenAPI mock router + /docs.json)
     const swaggerSpec = swaggerJsdoc({
         definition: {
             openapi: "3.1.0",
@@ -52,21 +57,35 @@ export function createApp() {
         apis: [path.join(__dirname, "/openapi/**/*.{yaml,yml}")],
     });
 
-    // Swagger UI setup with pre-filled auth headers for convenience
+    // Swagger UI: LOAD SPEC BY URL (not the in-memory object) so external YAML $refs resolve properly.
     app.use(
         "/api/v1/docs",
         swaggerUi.serve,
-        swaggerUi.setup(swaggerSpec, {
+        swaggerUi.setup(undefined, {
             swaggerOptions: {
+                url: "/api/v1/openapi/openapi.yaml",
                 persistAuthorization: true,
                 authAction: {
-                    XAuthEmail: { name: "x-auth-email", schema: { type: "apiKey", in: "header", name: "x-auth-email" }, value: "dave" },
-                    XAuthPassword: { name: "x-auth-password", schema: { type: "apiKey", in: "header", name: "x-auth-password" }, value: "xxxx" },
-                    XClientId: { name: "x-client-id", schema: { type: "apiKey", in: "header", name: "x-client-id" }, value: "my-client-id" },
+                    XAuthEmail: {
+                        name: "x-auth-email",
+                        schema: { type: "apiKey", in: "header", name: "x-auth-email" },
+                        value: "dave",
+                    },
+                    XAuthPassword: {
+                        name: "x-auth-password",
+                        schema: { type: "apiKey", in: "header", name: "x-auth-password" },
+                        value: "xxxx",
+                    },
+                    XClientId: {
+                        name: "x-client-id",
+                        schema: { type: "apiKey", in: "header", name: "x-client-id" },
+                        value: "my-client-id",
+                    },
                 },
             },
         })
     );
+
     // Mock API routes
     if (process.env.MOCKS === "spec") {
         // SSE is special: stream a deterministic sequence for the web UI
@@ -102,7 +121,8 @@ export function createApp() {
             app.use("/api/v1", mockRouter);
         });
     }
-    // Serve raw OpenAPI spec JSON
+
+    // Keep this if you like it (handy for tooling)
     app.get("/api/v1/docs.json", (_req, res) => res.json(swaggerSpec));
 
     // routes
@@ -111,6 +131,7 @@ export function createApp() {
     app.use("/api/v1/extension", extensionRouter);
     app.use("/api/v1/playnite", playniteRouter);
     app.use("/api/v1/steam", steamRouter);
+    app.use("/api/v1/plex", plexRouter);
 
     // 404 + error handler
     app.use(notFoundHandler());

@@ -2,7 +2,7 @@ import express from "express";
 import { rootLog } from "../logger";
 import { requireSession } from "../middleware/requireAuth";
 import { SteamService } from "../services/SteamService";
-import { SteamError } from "../types/types";
+import { SteamError } from "../types/steam";
 
 const router = express.Router();
 const log = rootLog.child("route:steam");

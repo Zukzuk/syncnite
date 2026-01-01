@@ -1,7 +1,8 @@
 import { promises as fs } from "node:fs";
 import { join } from "node:path";
 import { ACCOUNTS_ROOT, ADMIN_SUFFIX, USER_SUFFIX } from "../constants";
-import { Account, Role, SteamConnection } from "../types/types";
+import { Account, Role, SteamConnection } from "../types/app";
+import { PlexConnection } from "../types/plex";
 
 // Ensure the accounts directory exists
 async function ensureDir(dir: string) {
@@ -48,6 +49,7 @@ async function readAccount(email: string): Promise<Account | null> {
             password: String(parsed.password),
             clientId: parsed.clientId ? String(parsed.clientId) : undefined,
             steam: parsed.steam,
+            plex: parsed.plex,
         };
     } catch {
         return null;
@@ -253,4 +255,18 @@ export const AccountsService = {
         acc.steam = steam;
         return await updateAccount(acc);
     },
+
+    /**
+     * Sets or updates the Plex connection for an account.
+     * (Plex link metadata lives on the account.)
+     */
+    async setPlexConnection(
+        email: string,
+        plex: PlexConnection | undefined
+    ): Promise<{ ok: true } | { ok: false; error: string }> {
+        const acc = await this.getAccount(email);
+        if (!acc) return { ok: false, error: "not_found" };
+        acc.plex = plex;
+        return await updateAccount(acc);
+    }
 };

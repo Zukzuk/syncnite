@@ -1,0 +1,180 @@
+steam_root:
+  get:
+    tags: [Steam]
+    summary: Get Steam link status for current account
+    security:
+      - XAuthEmail: []
+        XAuthPassword: []
+    responses:
+      "200":
+        description: Steam link status
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ok: { type: boolean }
+                connected: { type: boolean }
+                steam:
+                  allOf:
+                    - $ref: "../components/schemas.yaml#/SteamConnection"
+                  nullable: true
+      "401":
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+      "404":
+        description: Account not found
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+
+steam_auth_start:
+  post:
+    tags: [Steam]
+    summary: Get Steam OpenID login URL
+    description: >
+      Returns the Steam OpenID login URL to which the client should redirect
+      the user to start the login flow.
+    security:
+      - XAuthEmail: []
+        XAuthPassword: []
+        XClientId: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              apiKey: { type: string }
+            required: [apiKey]
+    responses:
+      "200":
+        description: Steam OpenID login URL
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ok: { type: boolean }
+                url:
+                  type: string
+                  format: uri
+      "500":
+        description: Failed to construct URL
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+
+steam_auth_callback:
+  get:
+    tags: [Steam]
+    summary: Steam OpenID callback
+    description: >
+      Callback endpoint for Steam OpenID. Steam redirects the user here after
+      login. Returns the SteamID64 and basic profile information.
+    responses:
+      "200":
+        description: Authenticated Steam user info
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ok: { type: boolean }
+                steamId: { type: string }
+                profile:
+                  $ref: "../components/schemas.yaml#/SteamProfile"
+      "401":
+        description: OpenID validation failed
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+
+steam_wishlist:
+  get:
+    tags: [Steam]
+    summary: Get last synced Steam wishlist snapshot
+    description: >
+      Returns the last synced Steam wishlist snapshot for the current account.
+    security:
+      - XAuthEmail: []
+        XAuthPassword: []
+    responses:
+      "200":
+        description: Wishlist snapshot
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ok: { type: boolean }
+                lastSynced:
+                  type: string
+                  format: date-time
+                  nullable: true
+                items:
+                  type: array
+                  items:
+                    $ref: "../components/schemas.yaml#/SteamWishlistItem"
+      "401":
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+      "404":
+        description: Account not found
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+
+steam_wishlist_sync:
+  post:
+    tags: [Steam]
+    summary: Sync Steam wishlist from Steam into InterLinked storage
+    description: >
+      Fetches the wishlist for the linked Steam account and stores a snapshot.
+    security:
+      - XAuthEmail: []
+        XAuthPassword: []
+    responses:
+      "200":
+        description: Wishlist synced and snapshot stored
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ok: { type: boolean }
+                count: { type: integer }
+                lastSynced:
+                  type: string
+                  format: date-time
+                syncInProgress:
+                  type: boolean
+      "400":
+        description: Steam not linked or Steam API error
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+      "401":
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+      "500":
+        description: Failed to persist snapshot
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"

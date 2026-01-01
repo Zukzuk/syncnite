@@ -1,0 +1,211 @@
+accounts_register_admin:
+  post:
+    tags: [Accounts]
+    summary: Register first admin
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              email: { type: string }
+              password: { type: string }
+            required: [email, password]
+    responses:
+      "200":
+        description: OK
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ok: { type: boolean }
+      "400":
+        description: Missing fields
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+      "409":
+        description: Admin exists
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+
+accounts_admin_release:
+  post:
+    tags: [Accounts]
+    summary: Release admin client lock
+    security:
+      - XAuthEmail: []
+        XAuthPassword: []
+        XClientId: []
+    responses:
+      "200":
+        description: OK
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ok: { type: boolean }
+      "401":
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+      "403":
+        description: Forbidden (not admin)
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+
+accounts_register_user:
+  post:
+    tags: [Accounts]
+    summary: Register user (requires an existing admin)
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              email: { type: string }
+              password: { type: string }
+            required: [email, password]
+    responses:
+      "200":
+        description: OK
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ok: { type: boolean }
+      "400":
+        description: Missing fields
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+      "403":
+        description: No admin yet
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+      "409":
+        description: User exists
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+
+accounts_login:
+  post:
+    tags: [Accounts]
+    summary: Login
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              email: { type: string }
+              password: { type: string }
+            required: [email, password]
+    responses:
+      "200":
+        description: OK
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ok: { type: boolean }
+                email: { type: string }
+                role:
+                  type: string
+                  enum: [admin, user, unknown]
+      "400":
+        description: Missing fields
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+      "401":
+        description: Invalid credentials
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+
+accounts_status:
+  get:
+    tags: [Accounts]
+    summary: Whether any admin exists
+    responses:
+      "200":
+        description: OK
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                hasAdmin: { type: boolean }
+
+accounts_verify:
+  get:
+    tags: [Accounts]
+    summary: Verify user session
+    security:
+      - XAuthEmail: []
+        XAuthPassword: []
+        XClientId: []
+    responses:
+      "200":
+        description: OK
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/AuthInfo"
+      "401":
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+
+accounts_verify_admin:
+  get:
+    tags: [Accounts]
+    summary: Verify admin session
+    security:
+      - XAuthEmail: []
+        XAuthPassword: []
+        XClientId: []
+    responses:
+      "200":
+        description: OK
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/AuthInfo"
+      "401":
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+      "403":
+        description: Forbidden (admin required)
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"

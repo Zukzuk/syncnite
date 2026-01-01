@@ -1,9 +1,17 @@
 import { MantineTheme, useMantineTheme } from "@mantine/core";
 import { PlayniteGameLink } from "./playnite";
 
-export type InterLinkedMedia = "game" | "movie" | "series" | "audiobook" |
-    "book" | "music-album" | "animated-series" | "animated-movie";
+export type InterLinkedMedia =
+    "game" | "movie" | "series" | "audiobook" | "book" | 
+    "music-album" | "animated-series" | "animated-movie";
 
+export type InterLinkedOrigin =
+    "playnite" | "steam" | "epic" | "gog" |
+    "ea app" | "ubisoft connect" | "battle.net" |
+    "humble" | "microsoft store" | "xbox" |
+    "nintendo" | "abandonware" | "emulator" |
+    "plex" | "komga";
+    
 interface InterLinkedItem {
     type: InterLinkedMedia;
     origin: InterLinkedOrigin;
@@ -45,13 +53,6 @@ export interface OriginLoadedData {
     allTags: string[];
     allSeries: string[];
 }
-
-export type InterLinkedOrigin =
-    "playnite" | "steam" | "epic" | "gog" |
-    "ea app" | "ubisoft connect" | "battle.net" |
-    "humble" | "microsoft store" | "xbox" |
-    "nintendo" | "abandonware" | "emulator" |
-    "plex" | "komga";
 
 export type InterLinkedData = {
     [K in InterLinkedOrigin]?: OriginLoadedData;

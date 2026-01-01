@@ -1,6 +1,6 @@
 import express from "express";
 import { AccountsService } from "../services/AccountsService";
-import { requireAdminSession, requireBareAdminSession, requireSession } from "../middleware/requireAuth";
+import { requirePlayniteAdminSession, requireBareAdminSession, requireSession } from "../middleware/requireAuth";
 
 const router = express.Router();
 
@@ -24,7 +24,7 @@ router.post("/register/admin", async (req, res) => {
  * Releases the admin role from the currently authenticated admin account.
  * After this, there will be no admin account until a new one is registered.
  */
-router.post("/admin/release", requireAdminSession, async (req, res) => {
+router.post("/admin/release", requirePlayniteAdminSession, async (req, res) => {
     const email = req.auth?.email;
     if (!email) {
         return res.status(400).json({ ok: false, error: "missing_auth" });
@@ -95,7 +95,7 @@ router.get("/verify", requireSession, async (req, res) => {
  * GET /api/v1/accounts/verify/admin
  * Verifies the current session is for an admin account.
  */
-router.get("/verify/admin", requireAdminSession, async (req, res) => {
+router.get("/verify/admin", requirePlayniteAdminSession, async (req, res) => {
     res.json(req.auth);
 });
 

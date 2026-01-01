@@ -1,9 +1,9 @@
 import { promises as fs } from "node:fs";
 import { join } from "node:path";
 import { STEAM_WISHLIST_ROOT, WISHLIST_SUFFIX } from "../constants";
-import { SteamWishlistSnapshot, SteamWishlistEntry, SteamAppDetails } from "../types/types";
 import { rootLog } from "../logger";
 import { extractYearFromReleaseDate } from "./SteamService";
+import { SteamWishlistSnapshot, SteamWishlistEntry, SteamAppDetails } from "../types/steam";
 import { PlayniteGameLink } from "../types/playnite";
 
 const log = rootLog.child("steamWishlistStore");

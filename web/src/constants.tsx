@@ -33,6 +33,12 @@ export const API_ENDPOINTS = {
   STEAM_WISHLIST: "/api/v1/steam/wishlist",
   STEAM_WISHLIST_SYNC: "/api/v1/steam/wishlist/sync",
   STEAM_AUTH_START: "/api/v1/steam/auth/start",
+  // Plex API
+  PLEX_STATUS: "/api/v1/plex",
+  PLEX_AUTH_START: "/api/v1/plex/auth/start",
+  PLEX_AUTH_POLL: "/api/v1/plex/auth/poll",
+  PLEX_UNLINK: "/api/v1/plex/unlink",
+  PLEX_SYNC: "/api/v1/plex/sync",
 }
 
 export const PUBLIC_DIR = "/mountpub";

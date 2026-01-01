@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../types/interlinked";
-import { DeckCardMeta } from "../../../types/app";
+import { AssociatedIDeckMeta } from "../../../types/app";
 
 type UseParams = {
     cards: InterLinkedGameItem[];
@@ -14,7 +14,7 @@ type UseReturn = {
     colCount: number;
     deckWidth: number;
     columnHeight: number;
-    cardMeta: DeckCardMeta[];
+    cardMeta: AssociatedIDeckMeta[];
     colLengths: number[];
 };
 
@@ -38,7 +38,7 @@ export function useAssociatedDeckLayout({ cards, deckColumns, maxCardsPerColumn,
         const columnHeight =
             cardsPerColumn > 0 ? dynamicGrid.deckCardHeight + dynamicGrid.cardStepY * (cardsPerColumn - 1) : 0;
 
-        const cardMeta: DeckCardMeta[] = cards.map((c, index) => {
+        const cardMeta: AssociatedIDeckMeta[] = cards.map((c, index) => {
             const colIndex = Math.floor(index / cardsPerColumn);
             const indexInColumn = index % cardsPerColumn;
             return { id: c.id, metaIndex: index, colIndex, indexInColumn };

@@ -1,5 +1,5 @@
 import { EventEmitter } from "node:events";
-import { BusEvent } from "../types/types";
+import { BusEvent } from "../types/app";
 
 export const SyncBus = createEventBus(200);
 

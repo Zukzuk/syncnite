@@ -1,0 +1,13 @@
+extension_download:
+  get:
+    tags: [Extension]
+    summary: Download the Syncnite Bridge extension package
+    responses:
+      "200":
+        description: Package stream
+      "500":
+        description: Server error
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"

@@ -1,5 +1,5 @@
+import { SteamWishlistEntry, SteamWishlistSnapshot } from "../types/steam";
 import { rootLog } from "../logger";
-import { type SteamWishlistSnapshot, type SteamWishlistEntry } from "../types/types";
 import { getWishlistDetailsFromSteam, getWishlistFromSteam } from "./SteamService";
 import {
     getSteamWishlistSnapshot,

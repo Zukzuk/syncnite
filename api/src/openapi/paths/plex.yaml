@@ -1,0 +1,175 @@
+plex_root:
+  get:
+    tags: [Plex]
+    summary: Get Plex link status for admin account
+    security:
+      - XAuthEmail: []
+        XAuthPassword: []
+    responses:
+      "200":
+        description: Plex link status
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/PlexStatusResponse"
+      "401":
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+      "403":
+        description: Forbidden (admin required)
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+
+plex_auth_start:
+  post:
+    tags: [Plex]
+    summary: Start Plex auth (PIN flow)
+    description: >
+      Starts a Plex PIN auth flow and returns the URL the admin should open
+      to authorize the app plus a pinId to poll.
+    security:
+      - XAuthEmail: []
+        XAuthPassword: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas.yaml#/PlexAuthStartRequest"
+    responses:
+      "200":
+        description: PIN created
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/PlexAuthStartResponse"
+      "400":
+        description: Bad request (missing serverUrl or invalid)
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+      "401":
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+      "403":
+        description: Forbidden (admin required)
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+
+plex_auth_poll:
+  post:
+    tags: [Plex]
+    summary: Poll Plex auth (PIN)
+    description: >
+      Polls Plex PIN status; once authorized, stores token on admin account.
+    security:
+      - XAuthEmail: []
+        XAuthPassword: []
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas.yaml#/PlexAuthPollRequest"
+    responses:
+      "200":
+        description: Poll result
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/PlexAuthPollResponse"
+      "400":
+        description: Bad request (missing pin state / token invalid)
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+      "401":
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+      "403":
+        description: Forbidden (admin required)
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+
+plex_unlink:
+  post:
+    tags: [Plex]
+    summary: Unlink Plex from admin account
+    security:
+      - XAuthEmail: []
+        XAuthPassword: []
+    responses:
+      "200":
+        description: Unlinked
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ok: { type: boolean }
+      "401":
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+      "403":
+        description: Forbidden (admin required)
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+
+plex_sync:
+  post:
+    tags: [Plex]
+    summary: Sync Plex libraries to server storage
+    description: >
+      Syncs Plex library sections and items to JSON in /mountpub/plex/db,
+      downloads referenced artwork into /mountpub/plex/libraryfiles, and writes
+      a snapshot into /mountpub/plex/snapshot.
+    security:
+      - XAuthEmail: []
+        XAuthPassword: []
+    responses:
+      "200":
+        description: Sync completed
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/PlexSyncResponse"
+      "400":
+        description: Plex not linked / sync error
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+      "401":
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"
+      "403":
+        description: Forbidden (admin required)
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas.yaml#/ErrorResponse"

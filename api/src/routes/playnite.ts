@@ -1,9 +1,9 @@
 import express from "express";
 import multer from "multer";
-import { requireAdminSession, requireSession } from "../middleware/requireAuth";
+import { requirePlayniteAdminSession, requireSession } from "../middleware/requireAuth";
 import { rootLog } from "../logger";
 import { PlayniteService } from "../services/PlayniteService";
-import { PlayniteClientManifest, PlayniteError } from "../types/types";
+import { PlayniteClientManifest, PlayniteError } from "../types/playnite";
 
 const log = rootLog.child("route:playnite");
 const router = express.Router();
@@ -42,7 +42,7 @@ router.post("/installed", requireSession, async (req, res) => {
 /**
  * POST /api/v1/playnite/snapshot
  */
-router.post("/snapshot", requireAdminSession, async (req, res) => {
+router.post("/snapshot", requirePlayniteAdminSession, async (req, res) => {
     try {
         const email =
             (req as any).auth?.email ??
@@ -58,7 +58,7 @@ router.post("/snapshot", requireAdminSession, async (req, res) => {
 /**
  * POST /api/v1/playnite/delta
  */
-router.post("/delta", requireAdminSession, async (req, res) => {
+router.post("/delta", requirePlayniteAdminSession, async (req, res) => {
     try {
         const body = (req.body ?? {}) as PlayniteClientManifest;
         const delta = await playniteService.computeDelta(body);
@@ -73,7 +73,7 @@ router.post("/delta", requireAdminSession, async (req, res) => {
  */
 router.put(
     "/media/*",
-    requireAdminSession,
+    requirePlayniteAdminSession,
     express.raw({ type: "application/octet-stream", limit: "50mb" }),
     mediaUpload.any(),
     async (req, res) => {
@@ -174,7 +174,7 @@ router.get("/collection/:collection", requireSession, async (req, res) => {
 /**
  * PUT /api/v1/playnite/:collection/:id
  */
-router.put("/:collection/:id", requireAdminSession, async (req, res) => {
+router.put("/:collection/:id", requirePlayniteAdminSession, async (req, res) => {
     try {
         const { status, body } = await playniteService.upsertEntity(
             req.params.collection,
@@ -194,7 +194,7 @@ router.put("/:collection/:id", requireAdminSession, async (req, res) => {
 /**
  * DELETE /api/v1/playnite/:collection/:id
  */
-router.delete("/:collection/:id", requireAdminSession, async (req, res) => {
+router.delete("/:collection/:id", requirePlayniteAdminSession, async (req, res) => {
     try {
         const { status } = await playniteService.deleteEntity(
             req.params.collection,

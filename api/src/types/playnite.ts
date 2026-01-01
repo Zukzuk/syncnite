@@ -7,7 +7,7 @@ export interface PlayniteSeries {
   Id: string;
   Name: string;
 }
-  
+
 export interface PlayniteSource {
   Id: string;
   Name: string;
@@ -68,13 +68,46 @@ export interface PlayniteGame {
   CompletionStatusId?: string | null;
 
   Added?: string | null;
-  Modified?: string | null; 
+  Modified?: string | null;
   LastActivity?: string | null;
-  Playtime?: number | null; 
+  Playtime?: number | null;
   PlayCount?: number | null;
   UserScore?: number | null;
   CommunityScore?: number | null;
   CriticScore?: number | null;
-  GameActions?: unknown[]; 
-  Roms?: unknown[];   
+  GameActions?: unknown[];
+  Roms?: unknown[];
 }
+
+export class PlayniteError extends Error {
+  status: number;
+  code: string;
+
+  constructor(status: number, code: string, message?: string) {
+    super(message ?? code);
+    this.status = status;
+    this.code = code;
+  }
+}
+
+export type PlayniteClientManifest = {
+  json?: Record<string, string[]>;
+  versions?: Record<string, Record<string, string>>;
+  installed?: { count: number; hash?: string };
+  mediaFolders?: Record<string, number>;
+};
+
+export type PlayniteDeltaManifest = {
+  toUpsert: Record<string, string[]>;
+  toDelete: Record<string, string[]>;
+  media?: {
+    uploadFolders: string[];
+  };
+};
+
+export type InstalledStateRow = {
+  id: string;
+  isInstalled: boolean;
+  installDirectory?: string;
+  installSize?: number | null;
+};

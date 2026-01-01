@@ -3,14 +3,15 @@ import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
 import AccountCard from "../features/account/AccountCard";
 import PlayniteCard from "../features/account/PlayniteCard";
 import SteamCard from "../features/account/SteamCard";
+import PlexCard from "../features/account/PlexCard";
 
 export default function AccountPage(): JSX.Element {
     const { hasNavbar, grid } = useInterLinkedTheme();
 
     return (
-        <Container 
-            size="sm" 
-            pt={hasNavbar ? "lg" : grid.rowHeight} 
+        <Container
+            size="sm"
+            pt={hasNavbar ? "lg" : grid.rowHeight}
             pb="lg"
             style={{
                 minWidth: grid.minSiteWidth,
@@ -30,6 +31,7 @@ export default function AccountPage(): JSX.Element {
                 <AccountCard grid={grid} />
                 <PlayniteCard grid={grid} />
                 <SteamCard grid={grid} />
+                <PlexCard grid={grid} />
             </Stack>
         </Container>
     );

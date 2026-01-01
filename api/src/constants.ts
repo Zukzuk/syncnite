@@ -21,6 +21,11 @@ export const STEAM_MEDIA_ROOT = join(STEAM_ROOT, "libraryfiles");
 export const STEAM_INSTALLED_ROOT = join(STEAM_ROOT, "installed");
 export const STEAM_WISHLIST_ROOT = join(STEAM_ROOT, "wishlist");
 
+const PLEX_ROOT = join(PUBLIC_DIR, "plex");
+export const PLEX_DB_ROOT = join(PLEX_ROOT, "db");
+export const PLEX_MEDIA_ROOT = join(PLEX_ROOT, "libraryfiles");
+export const PLEX_SNAPSHOT_ROOT = join(PLEX_ROOT, "snapshot");
+
 export const ADMIN_SUFFIX = ".admin.json";
 export const USER_SUFFIX = ".user.json";
 export const INSTALLED_SUFFIX = ".installed.json";

@@ -1,0 +1,17 @@
+XAuthEmail:
+  type: apiKey
+  in: header
+  name: x-auth-email
+  description: Admin/user email for header auth
+
+XAuthPassword:
+  type: apiKey
+  in: header
+  name: x-auth-password
+  description: Admin/user password for header auth
+
+XClientId:
+  type: apiKey
+  in: header
+  name: x-client-id
+  description: Unique client ID for admin locking
