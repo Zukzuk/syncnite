@@ -138,7 +138,6 @@ export type AssociatedLayout = {
   stackColumns: number;
   maxCardsPerDeckColumn: number;
   needsColumnLayout: boolean;
-  stacksWidth: number;
   stackCardWidthUsed: number;
 };
 

@@ -13,12 +13,13 @@ type Props = {
     grid: InterLinkedGrid;
     isDark: boolean;
     openDeckKey: string | null;
+    needsColumnLayout: boolean;
     onBadgeClick: (key: string) => void;
     onWallpaperBg: (hovered: boolean) => void;
 };
 
 // Component to display associated details of a library item.
-export function AssociatedDetails({ item, grid, isDark, openDeckKey, onBadgeClick, onWallpaperBg }: Props): JSX.Element {
+export function AssociatedDetails({ item, grid, isDark, openDeckKey, needsColumnLayout, onBadgeClick, onWallpaperBg }: Props): JSX.Element {
 
     const { id, originLink, sortingName, tags = [], series = [], isInstalled, isHidden, developers,
         links, coverUrl, bgUrl, origin, htmlLink, originRunLink, title, source, sourceLink } = item;
@@ -29,15 +30,15 @@ export function AssociatedDetails({ item, grid, isDark, openDeckKey, onBadgeClic
         <Stack
             gap={6}
             align="flex-start"
-            className="subtle-scrollbar"
+            className={needsColumnLayout ? undefined : "subtle-scrollbar"}
             pr={grid.gap}
             pb={grid.gap}
             style={{
                 width: grid.coverWidth + grid.gap * 2,
                 height: "100%",
-                overflowY: "auto",
                 overflowX: "hidden",
-                overscrollBehaviorY: "contain",
+                overflowY: needsColumnLayout ? "hidden" : "auto",
+                overscrollBehaviorY: needsColumnLayout ? undefined : "contain",
             }}
         >
             <Box
@@ -154,7 +155,7 @@ export function AssociatedDetails({ item, grid, isDark, openDeckKey, onBadgeClic
                                 {d}
                             </Text>
                         </Group>
-                    ))} 
+                    ))}
                     <Group gap={6} mt={6} wrap="wrap">
                         <IconLinkOrigin origin={origin} originRunLink={originRunLink} id={id} />
                         {origin !== source && <IconLinkSource source={source} sourceLink={sourceLink} />}

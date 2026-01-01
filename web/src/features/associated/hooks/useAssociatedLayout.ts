@@ -17,7 +17,6 @@ export function useAssociatedLayout({ grid, dynamicGrid, openDeckData, stackCoun
         stackColumns: 1,
         maxCardsPerDeckColumn: 0,
         needsColumnLayout: false,
-        stacksWidth: 0,
         stackCardWidthUsed: 0,
     });
 
@@ -88,7 +87,6 @@ export function useAssociatedLayout({ grid, dynamicGrid, openDeckData, stackCoun
                     stackColumns: 0,
                     maxCardsPerDeckColumn,
                     needsColumnLayout,
-                    stacksWidth,
                     stackCardWidthUsed: 0,
                 };
             }
@@ -137,7 +135,6 @@ export function useAssociatedLayout({ grid, dynamicGrid, openDeckData, stackCoun
                 stackColumns,
                 maxCardsPerDeckColumn,
                 needsColumnLayout,
-                stacksWidth,
                 stackCardWidthUsed,
             };
         });

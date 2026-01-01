@@ -18,6 +18,7 @@ type Props = {
     isDark: boolean;
     grid: InterLinkedGrid;
     dynamicGrid: InterLinkedDynamicGrid;
+    needsColumnLayout: boolean;
     onToggleClickBounded: (id?: string, navMode?: HistoryNavMode) => void;
 };
 
@@ -31,6 +32,7 @@ export function AssociatedDeck({
     isDark,
     grid,
     dynamicGrid,
+    needsColumnLayout,
     onToggleClickBounded,
 }: Props): JSX.Element | null {
     const lib = useLibraryContext();
@@ -82,23 +84,20 @@ export function AssociatedDeck({
                 }}
             >
                 {label}
-                <Badge ml={4} size="xs" variant="filled" color="var(--interlinked-color-primary)">
-                    {cards.length}
-                </Badge>
             </Text>
 
             <Box
                 ref={scrollRef}
                 onScroll={onScroll}
-                className="subtle-scrollbar"
+                className={needsColumnLayout ? undefined : "subtle-scrollbar"}
                 p={grid.gap * 2}
                 pr={grid.gap}
                 style={{
                     flex: "1 1 auto",
                     height: "100%",
-                    overflowY: "auto",
                     overflowX: "hidden",
-                    overscrollBehaviorY: "contain",
+                    overflowY: needsColumnLayout ? "hidden" : "auto",
+                    overscrollBehaviorY: needsColumnLayout ? undefined : "contain",
                     boxShadow: isDark
                         ? "inset 0 0 20px rgba(0, 0, 0, 0.5)"
                         : "inset 0 0 20px rgba(0, 0, 0, 0.3)",

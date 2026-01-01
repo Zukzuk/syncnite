@@ -10,7 +10,7 @@ type Props = {
     grid: InterLinkedGrid;
     dynamicGrid: InterLinkedDynamicGrid;
     isDark: boolean;
-    stacksWidth: number;
+    needsColumnLayout: boolean;
     stackCardWidthUsed: number;
     onStackClick: (key: string) => void;
 };
@@ -22,7 +22,7 @@ export function AssociatedStacks({
     grid,
     dynamicGrid,
     isDark,
-    stacksWidth,
+    needsColumnLayout,
     stackCardWidthUsed,
     onStackClick,
 }: Props): JSX.Element | null {
@@ -30,15 +30,15 @@ export function AssociatedStacks({
 
     return (
         <Box
-            className="subtle-scrollbar"
+            className={needsColumnLayout ? undefined : "subtle-scrollbar"}
             pl={4}
             style={{
                 minWidth: dynamicGrid.stackCardWidth,
                 marginTop: 22,
                 height: "calc(100% - 22px)",
-                overflowY: "auto",
                 overflowX: "hidden",
-                overscrollBehaviorY: "contain",
+                overflowY: needsColumnLayout ? "hidden" : "auto",
+                overscrollBehaviorY: needsColumnLayout ? undefined : "contain",
             }}
         >
             <Box
