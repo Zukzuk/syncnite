@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.42.0](https://github.com/Zukzuk/syncnite/compare/v1.41.9...v1.42.0) (2026-01-01)
+
+
+### Features
+
+* added plex ([60c3dbf](https://github.com/Zukzuk/syncnite/commit/60c3dbfc72d1b4e33ec9bc5729cb6b62c52617b9))
+
 ### [1.41.9](https://github.com/Zukzuk/syncnite/compare/v1.41.8...v1.41.9) (2026-01-01)
 
 ### [1.41.8](https://github.com/Zukzuk/syncnite/compare/v1.41.7...v1.41.8) (2026-01-01)
