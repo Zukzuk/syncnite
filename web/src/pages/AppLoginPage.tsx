@@ -211,7 +211,7 @@ export default function AppLoginPage(): JSX.Element {
                         text="Create Admin"
                         icon={<IconUserScreen color="var(--interlinked-color-secondary)" size={14} />}
                         type="submit"
-                        style={{ maxWidth: "130px" }}
+                        style={{ maxWidth: "150px" }}
                       />
                     </Stack>
                   </form>

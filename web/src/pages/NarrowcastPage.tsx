@@ -3,9 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useFullscreen } from "@mantine/hooks";
 import { ActionIcon, Box, Center, Group, Loader, Paper, Text, Tooltip } from "@mantine/core";
 import { IconArrowsMaximize, IconArrowsMinimize, IconChevronLeft, IconChevronRight, IconMoon, IconSun, IconX } from "@tabler/icons-react";
-import { INTERVAL_MS } from "../constants";
+import { INTERVAL_MS, SOURCE_MAP } from "../constants";
 import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
-import { PLAYNITE_SOURCE_MAP } from "../services/PlayniteService";
 import { usePlayniteData } from "../hooks/usePlayniteData";
 import { InterLinkedGameItem, InterLinkedOrigin } from "../types/interlinked";
 
@@ -100,7 +99,7 @@ export default function NarrowcastPage(): JSX.Element {
 
     // derive current (the actually-visible item index)
     const current = n ? order[clampIndex(idx, n)] : null;
-    const label = current?.source as InterLinkedOrigin ? `${PLAYNITE_SOURCE_MAP[current?.source as keyof typeof PLAYNITE_SOURCE_MAP]?.label}` : " ";
+    const label = current ? SOURCE_MAP[current.source ?? current.origin].label : "";
 
     // choose start index from route once we have order
     useEffect(() => {

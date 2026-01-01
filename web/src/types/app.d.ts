@@ -137,6 +137,9 @@ export type AssociatedLayout = {
   deckColumns: number;
   stackColumns: number;
   maxCardsPerDeckColumn: number;
+  needsColumnLayout: boolean;
+  stacksWidth: number;
+  stackCardWidthUsed: number;
 };
 
 export interface AssociatedItems {

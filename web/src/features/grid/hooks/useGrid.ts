@@ -75,8 +75,9 @@ export function useGrid({
         const deckCardHeight = deckCardWidth * (1 / grid.ratio);
         const deckAndStacksWidth = gridViewportW - grid.gap - grid.detailsPanelWidth - grid.gapMd * 2 - grid.gapLg - grid.scrollbarWidth;
         const deckAndStacksHeight = gridViewportH - grid.rowHeight;
-        const stackCardWidth = gridCardWidth * 0.7;
-        const stackCardHeight = gridCardHeight * 0.7;
+        const stacksSizeFactor = 0.6;
+        const stackCardWidth = gridCardWidth * stacksSizeFactor;
+        const stackCardHeight = gridCardHeight * stacksSizeFactor;
         const strideX = gridCardWidth + grid.gap;
         const cardStepY = gridCardHeight / 3;
         const numOfCols = isListView ? 1 : Math.max(1, Math.floor((gridViewportW - grid.scrollbarWidth) / strideX));

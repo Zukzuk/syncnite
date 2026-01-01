@@ -7,7 +7,7 @@ import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
 import { usePlayniteData } from "../hooks/usePlayniteData";
 
 export default function LibraryPage(): JSX.Element {
-    const { libraryData, installedUpdatedAt } = usePlayniteData({ pollMs: INTERVAL_MS });
+    const { libraryData } = usePlayniteData({ pollMs: INTERVAL_MS });
     const theme = useInterLinkedTheme();
     const { grid, hasNavbar, desktopMode } = theme;
     const desktopMini = desktopMode === "mini";

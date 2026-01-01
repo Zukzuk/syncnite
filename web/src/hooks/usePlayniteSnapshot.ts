@@ -10,8 +10,8 @@ type UseReturn = {
     updatedAt: string | null
 };
 
-// A hook to manage refreshing the library data with periodic checks.
-export function useLibraryRefresh({ pollMs }: UseParams): UseReturn {
+// A hook to poll for Playnite library snapshot changes.
+export function usePlayniteSnapshot({ pollMs }: UseParams): UseReturn {
     const [version, setVersion] = useState(0);
     const [updatedAt, setUpdatedAt] = useState<string | null>(null);
     const lastRef = useRef<string>("");

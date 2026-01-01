@@ -3,10 +3,10 @@ import { ActionIcon, Tooltip } from "@mantine/core";
 import { IconCircleArrowUpRightFilled } from "@tabler/icons-react";
 import { InterLinkedGameItem } from "../types/interlinked";
 
-type Props = Pick<InterLinkedGameItem, "htmlLink" | "title" | "source">;
+type Props = Pick<InterLinkedGameItem, "htmlLink" | "title">;
 
 export const IconLinkExternal = memo(function IconLinkExternal({
-    htmlLink, title, source,
+    htmlLink, title,
 }: Props) {
     if (!htmlLink) return null;
 

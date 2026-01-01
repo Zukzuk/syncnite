@@ -13,6 +13,10 @@ interface InterLinkedItem {
     tags: string[];
     series: string[];
 
+    description?: string;
+    searchableDescription?: string;
+    originLink?: string;
+    originRunLink?: string;
     sortingName?: string;
     year?: number;
     iconUrl?: string;
@@ -24,7 +28,6 @@ export interface InterLinkedGameItem extends InterLinkedItem {
     gameId: string;
     isInstalled: boolean;
     source: string;
-    playniteLink: string;
     titleWithoutVersion: string;
     developers: string[];
     publishers: string[];
@@ -32,7 +35,6 @@ export interface InterLinkedGameItem extends InterLinkedItem {
     index?: number;
     version?: string;
     sourceLink?: string;
-    playniteOpenLink?: string;
     htmlLink?: string;
     links?: PlayniteGameLink[];
 }
@@ -112,7 +114,7 @@ export type InterLinkedDynamicGrid = {
 
 export interface InterLinkedTheme {
     mantine: MantineTheme;
-    breakpointLabel: "xs" | "sm" | "md" | "lg" | "xl";
+    breakpointLabel: MantineSize;
     grid: InterLinkedGrid;
     isDark: boolean;
     isMobile: boolean;

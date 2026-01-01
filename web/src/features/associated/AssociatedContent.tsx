@@ -39,11 +39,14 @@ export function AssociatedContent({
         associatedData,
     });
 
-    const { 
+    const {
         deckColumns,
         stackColumns,
         maxCardsPerDeckColumn,
-     } = useAssociatedLayout({
+        needsColumnLayout,
+        stacksWidth,
+        stackCardWidthUsed,
+    } = useAssociatedLayout({
         grid,
         dynamicGrid,
         openDeck: openDeck ? { key: openDeck.key, items: openDeck.items } : null,
@@ -64,11 +67,19 @@ export function AssociatedContent({
                 overflowY: "hidden",
             }}
         >
-            <Group align="flex-start" gap={grid.gapMd} wrap="nowrap" h="100%">
+            <Box
+                style={{
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: needsColumnLayout ? "column" : "row",
+                    alignItems: needsColumnLayout ? "stretch" : "flex-start",
+                    gap: grid.gapMd,
+                    overflow: "hidden",
+                }}
+            >
                 <AssociatedDetails
                     item={item}
                     grid={grid}
-                    dynamicGrid={dynamicGrid}
                     isDark={isDark}
                     openDeckKey={openDeckKey}
                     onBadgeClick={setOpenDeckKey}
@@ -81,10 +92,25 @@ export function AssociatedContent({
                         minWidth: 0,
                         height: "100%",
                         display: "flex",
+                        flexDirection: needsColumnLayout ? "column" : "row",
                         gap: grid.gapMd,
                         overflow: "hidden",
                     }}
                 >
+                    {stackColumns > 0 && (
+                        <AssociatedStacks
+                            associatedData={associatedData}
+                            openDeckKey={openDeckKey}
+                            stackColumns={stackColumns}
+                            isDark={isDark}
+                            grid={grid}
+                            dynamicGrid={dynamicGrid}
+                            onStackClick={setOpenDeckKey}
+                            stacksWidth={stacksWidth}
+                            stackCardWidthUsed={stackCardWidthUsed}
+                        />
+                    )}
+
                     {openDeck && deckColumns > 0 && (
                         <AssociatedDeck
                             deckKey={openDeck.key}
@@ -99,20 +125,8 @@ export function AssociatedContent({
                             onToggleClickBounded={onToggleClickBounded}
                         />
                     )}
-
-                    {stackColumns > 0 && (
-                        <AssociatedStacks
-                            associatedData={associatedData}
-                            openDeckKey={openDeckKey}
-                            stackColumns={stackColumns}
-                            isDark={isDark}
-                            grid={grid}
-                            dynamicGrid={dynamicGrid}
-                            onStackClick={setOpenDeckKey}
-                        />
-                    )}
                 </Box>
-            </Group>
+            </Box>
         </Collapse>
     );
 }

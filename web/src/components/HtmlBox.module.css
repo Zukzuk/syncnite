@@ -1,0 +1,108 @@
+.root {
+    color: var(--mantine-color-text);
+    font-size: var(--mantine-font-size-xs);
+    line-height: var(--mantine-line-height-sm);
+    user-select: text;
+    cursor: text;
+}
+
+/* Ensure everything is selectable */
+.root,
+.root * {
+    user-select: text !important;
+}
+
+/* ---- Normal text elements ---- */
+.root p,
+.root span,
+.root li,
+.root ul,
+.root ol,
+.root blockquote,
+.root code,
+.root pre {
+    font-size: var(--mantine-font-size-xs);
+    line-height: var(--mantine-line-height-sm);
+    margin: 0.35em 0;
+}
+
+/* Lists */
+.root ul,
+.root ol,
+.root ul.bb_ul {
+    margin: 0.75em 0;
+    padding-left: 1.4em;
+}
+
+.root ul,
+.root ul.bb_ul {
+    list-style: disc;
+}
+
+.root ol {
+    list-style: decimal;
+}
+
+.root li {
+    margin: 0.35em 0;
+}
+
+/* Strong text */
+.root strong {
+    font-weight: 700;
+}
+
+/* Links */
+.root a {
+    color: var(--mantine-color-anchor);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.root a:hover {
+    text-decoration-thickness: 2px;
+}
+
+/* Images */
+.root img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0.9em 0;
+    border-radius: var(--mantine-radius-sm);
+}
+
+/* ---- Headings ---- */
+
+/* H1 → md / 700 */
+.root h1,
+.root h2,
+.root h3 {
+    font-size: var(--mantine-font-size-md);
+    font-weight: 700;
+    line-height: var(--mantine-line-height-md);
+    margin: 1em 0 0.5em;
+}
+
+/* H2–H6 → sm / 500 */
+.root h4,
+.root h5,
+.root h6 {
+    font-size: var(--mantine-font-size-sm);
+    font-weight: 500;
+    line-height: var(--mantine-line-height-sm);
+    margin: 0.9em 0 0.4em;
+}
+
+/* Special BB tag heading (kept explicit) */
+.root h2.bb_tag {
+    font-size: var(--mantine-font-size-sm);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin: 1.25em 0 0.5em;
+    padding: 0.4em 0.6em;
+    border-radius: var(--mantine-radius-xs);
+    border: 1px solid var(--mantine-color-default-border);
+    background: var(--mantine-color-default);
+}

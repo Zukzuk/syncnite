@@ -10,7 +10,6 @@ type UseParams = {
     isListView: boolean;
     grid: InterLinkedGrid;
     dynamicGrid: InterLinkedDynamicGrid;
-    installedUpdatedAt?: string;
     onToggleItem: (id: string, navMode?: HistoryNavMode) => void;
 };
 

@@ -80,11 +80,12 @@ export function useLibraryState(items: UseParams): UseReturn {
     const qv = q.toLowerCase().trim();
 
     const pass = items.filter((r) =>
-      // text search across title, source, tags
+      // text search 
       (!qv || (
-        r.title?.toLowerCase().includes(qv) ||
+        r.title.toLowerCase().includes(qv) ||
         r.sortingName?.toLowerCase().includes(qv) ||
         r.version?.toLowerCase().includes(qv) ||
+        r.searchableDescription?.toLowerCase().includes(qv) ||
         r.tags?.some((ta) => ta.toLowerCase().includes(qv)) ||
         r.series?.some((se) => se.toLowerCase().includes(qv))
       )) &&

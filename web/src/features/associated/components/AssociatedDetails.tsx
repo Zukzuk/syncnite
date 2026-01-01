@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Anchor, Badge, Box, Group, Image, Stack, Text } from "@mantine/core";
-import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../types/interlinked";
+import { InterLinkedGameItem, InterLinkedGrid } from "../../../types/interlinked";
 import { IconIsInstalled } from "../../../components/IconIsInstalled";
 import { IconExecuteOverlay } from "../../../components/IconExecuteOverlay";
 import { IconLinkOrigin } from "../../../components/IconOriginLink";
@@ -11,7 +11,6 @@ import { IconShowMaximized } from "../../../components/IconShowMaximized";
 type Props = {
     item: InterLinkedGameItem;
     grid: InterLinkedGrid;
-    dynamicGrid: InterLinkedDynamicGrid;
     isDark: boolean;
     openDeckKey: string | null;
     onBadgeClick: (key: string) => void;
@@ -21,8 +20,8 @@ type Props = {
 // Component to display associated details of a library item.
 export function AssociatedDetails({ item, grid, isDark, openDeckKey, onBadgeClick, onWallpaperBg }: Props): JSX.Element {
 
-    const { id, playniteLink, sortingName, tags = [], series = [], isInstalled, isHidden, developers,
-        links, coverUrl, bgUrl, origin, htmlLink, playniteOpenLink, title, source, sourceLink } = item;
+    const { id, originLink, sortingName, tags = [], series = [], isInstalled, isHidden, developers,
+        links, coverUrl, bgUrl, origin, htmlLink, originRunLink, title, source, sourceLink } = item;
 
     const [isBgHovered, setIsBgHovered] = useState(false);
 
@@ -86,7 +85,7 @@ export function AssociatedDetails({ item, grid, isDark, openDeckKey, onBadgeClic
                         h={grid.coverHeight}
                         isInstalled={isInstalled}
                         showOverlay={isBgHovered}
-                        link={playniteLink}
+                        link={originLink}
                     />
                 </Box>
             </Box>
@@ -157,9 +156,9 @@ export function AssociatedDetails({ item, grid, isDark, openDeckKey, onBadgeClic
                         </Group>
                     ))} 
                     <Group gap={6} mt={6} wrap="wrap">
-                        <IconLinkOrigin origin={origin} playniteOpenLink={playniteOpenLink} id={id} />
+                        <IconLinkOrigin origin={origin} originRunLink={originRunLink} id={id} />
                         {origin !== source && <IconLinkSource source={source} sourceLink={sourceLink} />}
-                        <IconLinkExternal source={source} htmlLink={htmlLink} title={title} />
+                        <IconLinkExternal htmlLink={htmlLink} title={title} />
                     </Group>
                 </Box>
 

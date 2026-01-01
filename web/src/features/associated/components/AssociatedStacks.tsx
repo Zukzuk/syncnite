@@ -10,6 +10,8 @@ type Props = {
     grid: InterLinkedGrid;
     dynamicGrid: InterLinkedDynamicGrid;
     isDark: boolean;
+    stacksWidth: number;
+    stackCardWidthUsed: number;
     onStackClick: (key: string) => void;
 };
 
@@ -20,6 +22,8 @@ export function AssociatedStacks({
     grid,
     dynamicGrid,
     isDark,
+    stacksWidth,
+    stackCardWidthUsed,
     onStackClick,
 }: Props): JSX.Element | null {
     if (!associatedData.length || stackColumns <= 0) return null;
@@ -40,8 +44,12 @@ export function AssociatedStacks({
         >
             <Box
                 style={{
+                    width: stacksWidth,
                     display: "grid",
-                    gridTemplateColumns: `repeat(${stackColumns}, ${dynamicGrid.stackCardWidth}px)`,
+                    gridTemplateColumns: `repeat(${stackColumns}, minmax(0, ${Math.min(
+                        dynamicGrid.stackCardWidth,
+                        stackCardWidthUsed
+                    )}px))`,
                     gap: grid.gap,
                     justifyContent: "flex-start",
                     alignContent: "flex-start",

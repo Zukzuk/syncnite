@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLibraryRefresh } from "./useLibraryRefresh";
+import { usePlayniteSnapshot } from "./usePlayniteSnapshot";
 import { InterLinkedData } from "../types/interlinked";
 import { useLocalInstalled } from "../features/library/hooks/useLocalInstalled";
 import { loadPlayniteOrigin } from "../services/PlayniteService";
@@ -8,7 +8,6 @@ type UseParams = { pollMs: number };
 
 type UseReturn = {
     libraryData: InterLinkedData | undefined;
-    installedUpdatedAt: string | undefined;
 };
 
 // A hook to manage the library data with automatic refresh and installed status updates.
@@ -16,8 +15,10 @@ export function usePlayniteData({ pollMs }: UseParams): UseReturn {
     const [libraryData, setData] = useState<InterLinkedData | undefined>(undefined);
 
     // external pollers
-    const { version: libraryVersion } = useLibraryRefresh({ pollMs });
+    const { version: libraryVersion } = usePlayniteSnapshot({ pollMs });
     const { set: installedSet, updatedAt: installedUpdatedAt } = useLocalInstalled({ pollMs });
+
+    // Mixin new data
 
     // reload on manifest change
     useEffect(() => {
@@ -35,7 +36,7 @@ export function usePlayniteData({ pollMs }: UseParams): UseReturn {
         };
     }, [libraryVersion]);
 
-    // fast "installed" patch when local installed changes
+    // update installed status
     useEffect(() => {
         if (!installedSet || !installedUpdatedAt) return;
 
@@ -55,6 +56,6 @@ export function usePlayniteData({ pollMs }: UseParams): UseReturn {
         });
     }, [installedUpdatedAt, installedSet]);
 
-    return { libraryData, installedUpdatedAt };
+    return { libraryData };
 }
 

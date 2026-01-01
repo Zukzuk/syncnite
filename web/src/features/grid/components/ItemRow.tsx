@@ -24,8 +24,8 @@ type Props = {
 export function ItemRow({ item, isOpen, grid, hasNavbar, isListView, isWidescreen, isDesktop }: Props): JSX.Element | null {
     if (!isOpen && !isListView) return null;
 
-    const { playniteLink, isInstalled, isHidden, iconUrl, year, source, titleWithoutVersion,
-        title, series, htmlLink, sourceLink, version, origin, playniteOpenLink, id } = item;
+    const { originLink, isInstalled, isHidden, iconUrl, year, source, titleWithoutVersion,
+        title, series, htmlLink, sourceLink, version, origin, originRunLink, id } = item;
     const [isHovered, setIsHovered] = useState(false);
     const cols = isOpen
         ? "40px minmax(0, 1fr) 56px"
@@ -64,7 +64,7 @@ export function ItemRow({ item, isOpen, grid, hasNavbar, isListView, isWidescree
                         h={grid.iconSize}
                         isInstalled={isInstalled}
                         showOverlay={isHovered}
-                        link={playniteLink}
+                        link={originLink}
                     />
                 </Box>
             </Flex>
@@ -123,9 +123,9 @@ export function ItemRow({ item, isOpen, grid, hasNavbar, isListView, isWidescree
 
                     <Box>
                         <Group gap={2} wrap="nowrap" style={{ justifyContent: "center" }}>
-                            <IconLinkOrigin origin={origin} playniteOpenLink={playniteOpenLink} id={id} />
+                            <IconLinkOrigin origin={origin} originRunLink={originRunLink} id={id} />
                             {origin !== source && <IconLinkSource source={source} sourceLink={sourceLink} />}
-                            <IconLinkExternal source={source} htmlLink={htmlLink} title={title} />
+                            <IconLinkExternal htmlLink={htmlLink} title={title} />
                         </Group>
                     </Box>
 

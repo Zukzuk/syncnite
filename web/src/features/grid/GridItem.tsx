@@ -12,7 +12,6 @@ import { AssociatedContent } from "../associated/AssociatedContent";
 type Props = {
     item: InterLinkedGameItem;
     index: number;
-    installedUpdatedAt?: string;
     isOpen: boolean;
     isDark: boolean;
     isListView: boolean;

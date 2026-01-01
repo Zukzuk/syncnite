@@ -2,68 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../types/interlinked";
 import { AssociatedLayout } from "../../../types/app";
 
-function calcAssociatedLayout({ totalCards, grid, dynamicGrid }: {
-    totalCards: number;
-    grid: InterLinkedGrid;
-    dynamicGrid: InterLinkedDynamicGrid;
-}): AssociatedLayout {
-    const deckColWidth = dynamicGrid.gridCardWidth + grid.gap * 2;
-    const stackColWidth = dynamicGrid.stackCardWidth + grid.gap;
-    const stepY = dynamicGrid.cardStepY;
-    const maxCardsPerColumnByHeight = Math.max(1, Math.floor((dynamicGrid.deckAndStacksHeight - dynamicGrid.deckCardHeight) / stepY) + 1);
-    const neededColsByHeight = Math.max(1, Math.ceil(totalCards / maxCardsPerColumnByHeight));
-
-    let maxDeckColsByWidth = 0;
-
-    for (let cols = 1; cols <= neededColsByHeight; cols++) {
-        const minStackColsForCols = cols >= 6 ? 2 : 1;
-        const usedWidthForDeck = cols * deckColWidth;
-        const remainingWidth = dynamicGrid.deckAndStacksWidth - usedWidthForDeck;
-
-        if (remainingWidth < stackColWidth * minStackColsForCols) break;
-        maxDeckColsByWidth = cols;
-    }
-
-    if (maxDeckColsByWidth === 0) {
-        const deckColumns = 1;
-        const minStackColumns = deckColumns >= 6 ? 2 : 1;
-        const remainingWidth = dynamicGrid.deckAndStacksWidth - deckColumns * deckColWidth;
-        const stackColumns =
-            remainingWidth >= stackColWidth
-                ? Math.max(minStackColumns, Math.floor(remainingWidth / stackColWidth))
-                : 0;
-
-        return {
-            deckColumns,
-            stackColumns,
-            maxCardsPerDeckColumn: 0,
-        };
-    }
-
-    const deckColumns = Math.min(neededColsByHeight, maxDeckColsByWidth);
-    const minStackColumns = deckColumns >= 6 ? 2 : 1;
-    const hitWidthLimit = deckColumns < neededColsByHeight;
-    const usedWidthForDeck = deckColumns * deckColWidth;
-    const remainingWidth = dynamicGrid.deckAndStacksWidth - usedWidthForDeck;
-    const maxStackColsByWidth = remainingWidth > 0 ? Math.floor(remainingWidth / stackColWidth) : 0;
-
-    let stackColumns: number;
-
-    if (maxStackColsByWidth <= 0) {
-        stackColumns = 0;
-    } else if (hitWidthLimit) {
-        stackColumns = Math.max(minStackColumns, Math.min(deckColumns, maxStackColsByWidth));
-    } else {
-        stackColumns = Math.max(minStackColumns, maxStackColsByWidth);
-    }
-
-    return {
-        deckColumns,
-        stackColumns,
-        maxCardsPerDeckColumn: hitWidthLimit ? 0 : maxCardsPerColumnByHeight,
-    };
-}
-
 type UseParams = {
     grid: InterLinkedGrid;
     dynamicGrid: InterLinkedDynamicGrid;
@@ -77,6 +15,9 @@ export function useAssociatedLayout({ grid, dynamicGrid, openDeck }: UseParams):
         deckColumns: 1,
         stackColumns: 1,
         maxCardsPerDeckColumn: 0,
+        needsColumnLayout: false,
+        stacksWidth: 0,
+        stackCardWidthUsed: 0,
     });
 
     const totalCards = useMemo(() => {
@@ -85,7 +26,87 @@ export function useAssociatedLayout({ grid, dynamicGrid, openDeck }: UseParams):
     }, [openDeck?.key, openDeck?.items]);
 
     useEffect(() => {
-        setLayout(calcAssociatedLayout({ totalCards, grid, dynamicGrid }));
+        setLayout((): AssociatedLayout => {
+            const deckColWidth = dynamicGrid.gridCardWidth + grid.gap * 2;
+
+            const stackMaxCardWidth = dynamicGrid.stackCardWidth;
+            const stackGap = grid.gap;
+            const stackMinColWidth = stackMaxCardWidth + stackGap; // useful for “can fit at least 1 col”
+
+            const deckStacksWidth = dynamicGrid.deckAndStacksWidth;
+            const deckStacksHeight = dynamicGrid.deckAndStacksHeight;
+
+            // Rules for deck vertical capacity
+            const stepY = dynamicGrid.cardStepY;
+            const maxCardsPerDeckColumnByHeight = Math.max(
+                1,
+                Math.floor((deckStacksHeight - dynamicGrid.deckCardHeight) / stepY) + 1
+            );
+
+            const neededDeckColumns = Math.max(
+                1,
+                Math.ceil(totalCards / maxCardsPerDeckColumnByHeight)
+            );
+
+            // Rules for layout decisions
+            const detailsWidth = grid.coverWidth + grid.gap * 2;
+
+            // Minimal right side is: 1 deck col + 1 stacks col, plus gaps between groups
+            const minRightSideWidth = deckColWidth + stackMinColWidth;
+            const minRowWidth = detailsWidth + minRightSideWidth + grid.gapMd * 2;
+
+            const needsColumnLayout = dynamicGrid.gridViewportW < minRowWidth;
+
+            // Rules for deck and stacks sizing differ based on row vs column layout
+            const gapBetweenDeckAndStacks = openDeck ? grid.gapMd : 0;
+
+            const widthAvailableForDeckInRow =
+                deckStacksWidth - stackMinColWidth - gapBetweenDeckAndStacks;
+
+            const maxDeckColumnsByWidth = Math.max(
+                1,
+                Math.floor(widthAvailableForDeckInRow / deckColWidth)
+            );
+
+            const deckColumns = Math.max(
+                1,
+                Math.min(neededDeckColumns, maxDeckColumnsByWidth)
+            );
+
+            const deckIsWidthLimited = deckColumns < neededDeckColumns;
+            const maxCardsPerDeckColumn = deckIsWidthLimited ? 0 : maxCardsPerDeckColumnByHeight;
+
+            // Rule: if column layout, deck takes all available width
+            const stacksWidth = needsColumnLayout
+                ? deckStacksWidth
+                : Math.max(
+                    0,
+                    deckStacksWidth - deckColumns * deckColWidth - gapBetweenDeckAndStacks
+                );
+
+            // Rule: if no open deck, no stacks shown
+            const stackColumns =
+                stacksWidth <= 0
+                    ? 0
+                    : Math.max(1, Math.ceil((stacksWidth + stackGap) / (stackMaxCardWidth + stackGap)));
+
+            const stackCardWidthUsed =
+                stackColumns <= 0
+                    ? 0
+                    : Math.min(
+                        stackMaxCardWidth,
+                        Math.floor((stacksWidth - stackGap * (stackColumns - 1)) / stackColumns)
+                    );
+
+            return {
+                deckColumns,
+                stackColumns,
+                maxCardsPerDeckColumn,
+                needsColumnLayout,
+                stacksWidth,
+                stackCardWidthUsed,
+            };
+        });
     }, [openDeck?.key, totalCards, dynamicGrid]);
 
     return layout;

@@ -20,13 +20,14 @@ import {
 import {
   InterLinkedData,
   InterLinkedGameItem,
+  InterLinkedOrigin,
   InterLinkedTheme,
 } from "../../../types/interlinked";
-import { PLAYNITE_SOURCE_MAP } from "../../../services/PlayniteService";
 import { WrappedSegmentedControl } from "../../../components/WrappedSegmentedControl";
 import { SearchInput } from "../../../components/SearchInput";
 import { MultiSelectInput } from "../../../components/MultiSelectInput";
 import { WrappedSwitch } from "../../../components/WrappedSwitch";
+import { SOURCE_MAP } from "../../../constants";
 
 type Props = {
   theme: InterLinkedTheme;
@@ -48,26 +49,15 @@ export const HeaderControls = memo(function HeaderControls({
   const { grid, hasNavbar } = theme;
 
   const {
-    view,
-    setView,
-    isListView,
-    switches,
-    setSwitches,
-    resetAllFilters,
-    sliderValue,
-    setSliderValue,
-    q,
-    setQ,
-    sources,
-    setSources,
-    tags,
-    setTags,
-    series,
-    setSeries,
-    showHidden,
-    setShowHidden,
-    installedOnly,
-    setShowInstalledOnly,
+    view, setView,
+    isListView, switches, setSwitches,
+    resetAllFilters, sliderValue, setSliderValue,
+    q, setQ,
+    sources, setSources,
+    tags, setTags,
+    series, setSeries,
+    showHidden, setShowHidden,
+    installedOnly, setShowInstalledOnly,
   } = ui;
 
   const { filteredCount } = derived;
@@ -103,8 +93,7 @@ export const HeaderControls = memo(function HeaderControls({
         .map((s) => ({
           value: s,
           label:
-            PLAYNITE_SOURCE_MAP[s as keyof typeof PLAYNITE_SOURCE_MAP]?.label ??
-            s,
+            SOURCE_MAP[s as InterLinkedOrigin].label ?? s,
         })),
     [allSources]
   );
@@ -113,12 +102,7 @@ export const HeaderControls = memo(function HeaderControls({
     () =>
       Array.from(new Set(allTags))
         .sort()
-        .map((t) => ({
-          value: t,
-          label:
-            PLAYNITE_SOURCE_MAP[t as keyof typeof PLAYNITE_SOURCE_MAP]?.label ??
-            t,
-        })),
+        .map((t) => ({ value: t, label: t })),
     [allTags]
   );
 

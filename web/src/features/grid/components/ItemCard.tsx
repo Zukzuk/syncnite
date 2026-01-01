@@ -19,7 +19,7 @@ export function ItemCard({ item, isOpen, isListView, grid }: Props): JSX.Element
     if (isOpen || isListView) return null;
 
     const { title, coverUrl, year, source, htmlLink, sourceLink, isHidden,
-        isInstalled, origin, playniteOpenLink, id, titleWithoutVersion, version
+        isInstalled, origin, originRunLink, id, titleWithoutVersion, version
     } = item;
 
     return (
@@ -106,9 +106,9 @@ export function ItemCard({ item, isOpen, isListView, grid }: Props): JSX.Element
                         style={{ justifyContent: "center" }}
                     >
                         <IconCopyTitle title={title} year={year} />
-                        <IconLinkOrigin origin={origin} playniteOpenLink={playniteOpenLink} id={id} />
+                        <IconLinkOrigin origin={origin} originRunLink={originRunLink} id={id} />
                         {origin !== source && <IconLinkSource source={source} sourceLink={sourceLink} />}
-                        <IconLinkExternal source={source} htmlLink={htmlLink} title={title} />
+                        <IconLinkExternal htmlLink={htmlLink} title={title} />
                     </Group>
                 </Box>
             </Box>

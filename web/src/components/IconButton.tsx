@@ -34,12 +34,12 @@ export const IconButton = memo(function IconButton({
             onClick={type === "button" ? onClick : undefined}
             href={type === "link" ? href : undefined}
             disabled={disabled}
-            loading={loading === null || loading === undefined ? false : loading}
+            loading={!!loading}
             loaderProps={{ type: 'dots' }}
             size="xs"
             radius={0}
             variant="light"
-            justify="space-between"
+            justify={!text && icon ? "center" : "space-between"}
             rightSection={text && icon ? <span /> : undefined}
             leftSection={text && icon ? icon : undefined}
             style={{ ...style }}
