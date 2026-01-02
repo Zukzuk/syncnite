@@ -41,6 +41,8 @@ export const API_ENDPOINTS = {
   PLEX_SYNC: "/api/v1/plex/sync",
 }
 
+export const MIN_WORDS_PER_COLUMN = 80;
+
 export const PUBLIC_DIR = "/mountpub";
 
 export const FILES = {

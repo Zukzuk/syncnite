@@ -48,6 +48,7 @@ export function AssociatedContent({
         maxCardsPerDeckColumn,
         needsColumnLayout,
         stackCardWidthUsed,
+        colsFitAtMaxWidth,
     } = useAssociatedLayout({
         grid,
         dynamicGrid,
@@ -116,6 +117,8 @@ export function AssociatedContent({
                                 dynamicGrid={dynamicGrid}
                                 needsColumnLayout={needsColumnLayout}
                                 stackCardWidthUsed={stackCardWidthUsed}
+                                description={item.description}
+                                colsFitAtMaxWidth={colsFitAtMaxWidth}
                                 onStackClick={setOpenDeckKey}
                             />
                         )}

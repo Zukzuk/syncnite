@@ -12,6 +12,26 @@
     user-select: text !important;
 }
 
+/* ---- Multi-column layout (driven by CSS variables) ---- */
+.root {
+    column-count: var(--column-count, 1);
+    column-gap: var(--column-gap, 1rem);
+    column-fill: balance;
+}
+
+/* Avoid splitting blocks across columns */
+.root > * {
+    break-inside: avoid;
+    page-break-inside: avoid;
+}
+
+/* Optional: make long code/pre not overflow weirdly */
+.root pre,
+.root code {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
 /* ---- Normal text elements ---- */
 .root p,
 .root span,
