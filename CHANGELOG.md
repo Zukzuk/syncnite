@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.42.4](https://github.com/Zukzuk/syncnite/compare/v1.42.3...v1.42.4) (2026-01-02)
+
+
+### Bug Fixes
+
+* remove backup ([35f355d](https://github.com/Zukzuk/syncnite/commit/35f355dac7240c4f9cdfcf085a3b1a1bfb577210))
+
 ### [1.42.3](https://github.com/Zukzuk/syncnite/compare/v1.42.2...v1.42.3) (2026-01-02)
 
 
