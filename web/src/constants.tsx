@@ -3,6 +3,7 @@ export const WEB_APP_VERSION = `v${window.__APP_VERSION__}`;
 export const INTERVAL_MS = 5000;
 export const LETTERS_LIST = ["#", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
 export const LETTERS = [...LETTERS_LIST] as const;
+export const MIN_WORDS_PER_COLUMN = 80;
 
 const API_BASE = "/api/v1";
 
@@ -23,9 +24,6 @@ export const API_ENDPOINTS = {
   ADMIN_REGISTER: `${API_BASE}/accounts/register/admin`,
   ADMIN_VERIFY: `${API_BASE}/accounts/verify/admin`,
   USERS: `${API_BASE}/accounts/users`,
-  // Backup management
-  BACKUP_UPLOAD: `${API_BASE}/backup/upload`,
-  ZIP_PROCESS: `${API_BASE}/backup/process`,
   // Playnite API
   PLAYNITE_COLLECTION: `${API_BASE}/playnite/collection/`,
   // Steam API
@@ -41,7 +39,6 @@ export const API_ENDPOINTS = {
   PLEX_SYNC: "/api/v1/plex/sync",
 }
 
-export const MIN_WORDS_PER_COLUMN = 80;
 
 export const PUBLIC_DIR = "/mountpub";
 
