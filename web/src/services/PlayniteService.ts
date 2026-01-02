@@ -95,9 +95,9 @@ function getHtmlDescription(html: string | null | undefined): string | undefined
 
 // Get the SearchableDescription (default undefined)
 function getSearchableDescription(html: string | null | undefined): string | undefined {
-  if (!html) return "";
-  const doc = new DOMParser().parseFromString(html, "text/html");
-  return (doc.body.textContent || "").toLowerCase();
+    if (!html) return "";
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    return (doc.body.textContent || "").toLowerCase();
 }
 
 // Clean the title by removing version info
@@ -130,35 +130,40 @@ function getTtitleWithoutVersion(title: string, version: string | null | undefin
 }
 
 // Prefer Links matching source, then any Links, then sourcish fallback
-function getEffectiveLink(links: PlayniteGameLink[] | undefined, title: string, source: string): string | undefined {
-    if (!source || !title) return undefined;
-    
+function getExternalSourceLink(links: PlayniteGameLink[] | undefined, title: string, source: string, version: string | undefined): string | undefined {
+    if ((!version && !source) || (!source && !title)) return undefined;
+
     const s = source.toLowerCase();
 
-    if (links?.length) {
-        const hitStrings = [s, "store", "official"];
-
-        // Try to find a link whose Name matches preferred strings
-        const preferredLink = hitStrings.reduce<string | undefined>((result, needle) => {
-            if (result) return result;
-
-            const hit = links.find(link => {
-                const name = (link.Name ?? "").toLowerCase();
-                return name === needle || name.includes(needle);
-            });
-
-            return hit?.Url ?? undefined;
-        }, undefined);
-        if (preferredLink) return preferredLink;
-
-        // Try to find a link whose URL matches known domains for the source
-        const matchedLink = links.find(link => {
-            const url = (link.Url ?? "").toLowerCase();
-            return Object.entries(SOURCE_MAP).some(([key, payload]) =>
-                s.includes(key) && payload.domains.some(domain => url.includes(domain))
-            );
+    // Try to find a link whose Name matches preferred strings
+    const hitStrings = [s, "store", "official"];
+    const preferredLink = hitStrings.reduce<string | undefined>((result, needle) => {
+        if (result) return result;
+        const hit = links?.find(link => {
+            const name = (link.Name ?? "").toLowerCase();
+            return name === needle || name.includes(needle);
         });
-        if (matchedLink?.Url) return matchedLink.Url;
+        return hit?.Url ?? undefined;
+    }, undefined);
+    if (preferredLink) return preferredLink;
+
+    // Try to find a link whose URL matches known domains for the source
+    const matchedLink = links?.find(link => {
+        const url = (link.Url ?? "").toLowerCase();
+        return Object.entries(SOURCE_MAP).some(([key, payload]) =>
+            s.includes(key) && payload.domains.some(domain => url.includes(domain))
+        );
+    });
+    if (matchedLink?.Url) return matchedLink.Url;
+
+    // Try find a mod link
+    if (version?.toLowerCase() === "mod") {
+        const modLink = links?.find(link => {
+            const url = (link.Url ?? "").toLowerCase();
+            return SOURCE_MAP.mod.domains.some(domain => url.includes(domain));
+        });
+        if (modLink?.Url) return modLink.Url;
+        if (!links || links.length === 0) return `${SOURCE_MAP.mod.online}${encodeURIComponent(title)}`;
     }
 
     // Fallbacks per source
@@ -343,7 +348,7 @@ export async function loadPlayniteOrigin(): Promise<OriginLoadedData> {
         const searchableDescription = getSearchableDescription(g.Description);
         const titleWithoutVersion = getTtitleWithoutVersion(title, version);
         const source = getSource(g, sourceById);
-        const htmlLink = getEffectiveLink(g.Links, title, source);
+        const htmlLink = getExternalSourceLink(g.Links, title, source, version);
         const sourceLink = getSourceProtocolLink(source, gameId, htmlLink);
         const links = getLinks(g.Links);
         const isHidden = getIsHidden(g.Hidden);

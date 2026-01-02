@@ -46,7 +46,7 @@ export const HtmlBox = memo(function HtmlBox({
     colsFitAtMaxWidth,
     stackCardWidthUsed,
 }: Props) {
-    const safe = useMemo(() => toTrustedHTML(html), [html]);
+    const safeHTML = useMemo(() => toTrustedHTML(html), [html]);
     const words = useMemo(() => countWordsFromHtml(html), [html]);
 
     // Your “normal” number of CSS columns (based on 3 grid cols per stack column)
@@ -61,12 +61,12 @@ export const HtmlBox = memo(function HtmlBox({
         <Box
             pr={grid.gap}
             className={classes.root}
-            maw={maxWidth}
+            maw={columnCount !== baseColumnCount ? maxWidth : undefined}
             style={{
                 columnCount,
-                columnGap: grid.gap,
+                columnGap: grid.gapMd,
             }}
-            dangerouslySetInnerHTML={{ __html: safe }}
+            dangerouslySetInnerHTML={{ __html: safeHTML }}
         />
     );
 });

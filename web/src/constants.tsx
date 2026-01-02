@@ -97,7 +97,7 @@ export const SOURCE_MAP: Record<string, {
   },
   "battle.net": {
     platform: "battlenet://",
-    online: "www.battle.net",
+    online: "https://www.battle.net",
     domains: ["battle.net", "blizzard.com"],
     label: "Battle.net",
   },
@@ -109,27 +109,27 @@ export const SOURCE_MAP: Record<string, {
   },
   "microsoft store": {
     platform: "ms-windows-store://pdp/?productid=",
-    domains: ["https://microsoft.com/search?query="],
-    online: "apps.microsoft.com",
+    domains: ["microsoft.com"],
+    online: "https://apps.microsoft.com/search?query=",
     label: "Microsoft Store"
   },
   "humble": {
     platform: "humble://",
-    domains: ["https://humblebundle.com/store/search?search="],
-    online: "www.humblebundle.com",
+    domains: ["humblebundle.com"],
+    online: "https://humblebundle.com/store/search?search=",
     label: "Humble Bundle"
   },
   "nintendo": {
     platform: "nintendo://",
-    domains: ["https://nintendo.com/us/search/?q="],
-    online: "www.nintendo.com",
+    domains: ["nintendo.com"],
+    online: "https://nintendo.com/us/search/?q=",
     label: "Nintendo"
   },
   "playnite": {
     platform: "playnite://playnite/showgame/",
     runOnPlatform: "playnite://playnite/start/",
     domains: ["playnite.com"],
-    online: "www.playnite.com",
+    online: "https://www.playnite.com",
     label: "Playnite",
   },
   "abandonware": {
@@ -139,7 +139,12 @@ export const SOURCE_MAP: Record<string, {
   },
   "emulator": {
     online: "https://www.romsgames.net/search/?q=",
-    domains: ["www.romsgames.net"],
+    domains: ["romsgames.net"],
     label: "Emulator"
+  },
+  "mod": {
+    online: "https://www.moddb.com/search?q=",
+    domains: ["moddb.com", "nexusmods.com"],
+    label: "Mod"
   },
 };

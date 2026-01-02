@@ -151,9 +151,9 @@ export function useAssociatedData(
 
     const associatedData = [
         ...seriesDecks,
+        ...developerDecks,
         ...(modsDeck ? [modsDeck] : []),
         ...(specialEditionsDeck ? [specialEditionsDeck] : []),
-        ...developerDecks,
         ...tagDecks,
         ...(installedDeck ? [installedDeck] : []),
         ...(hiddenDeck ? [hiddenDeck] : []),
