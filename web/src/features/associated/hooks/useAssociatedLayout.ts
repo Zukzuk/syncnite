@@ -13,8 +13,8 @@ type UseReturn = AssociatedLayout;
 
 export function useAssociatedLayout({ grid, dynamicGrid, openDeckData, stackCount }: UseParams): UseReturn {
     const [layout, setLayout] = useState<AssociatedLayout>({
-        deckColumns: 1,
-        stackColumns: 1,
+        deckColumns: 0,
+        stackColumns: 0,
         maxCardsPerDeckColumn: 0,
         needsColumnLayout: false,
         stackCardWidthUsed: 0,
