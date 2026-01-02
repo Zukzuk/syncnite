@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.42.5](https://github.com/Zukzuk/syncnite/compare/v1.42.4...v1.42.5) (2026-01-02)
+
+
+### Bug Fixes
+
+* better rendwe ([af02223](https://github.com/Zukzuk/syncnite/commit/af02223350317b721108b79c434c2dae0b46a67e))
+
 ### [1.42.4](https://github.com/Zukzuk/syncnite/compare/v1.42.3...v1.42.4) (2026-01-02)
 
 
