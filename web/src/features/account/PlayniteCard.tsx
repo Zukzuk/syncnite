@@ -97,7 +97,7 @@ export default function PlayniteCard({ grid }: Props): JSX.Element {
                 <Group mt="xs" gap="sm">
                     <IconButton 
                         type="link"
-                        href={API_ENDPOINTS.EXTENSION_DOWNLOAD}
+                        href={API_ENDPOINTS.PLAYNITE_EXTENSION_DOWNLOAD}
                         icon={<IconDownload color="var(--interlinked-color-secondary)" size={14} />}
                         text="Download extension"
                         label={`Download SyncniteBridge ${WEB_APP_VERSION} (.pext)`}

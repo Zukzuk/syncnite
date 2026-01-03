@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Badge, Box, Stack, Text } from "@mantine/core";
-import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../types/interlinked";
+import { InterLinkedDynamicGrid, InterLinkedItem, InterLinkedGrid } from "../../../types/interlinked";
 import { HistoryNavMode } from "../../../types/app";
 import { useAssociatedDeckLayout } from "../hooks/useAssociatedDeckLayout";
 import { usePersistedScrollTop } from "../hooks/usePersistedScrollTop";
@@ -12,7 +12,7 @@ type Props = {
     animateIn?: boolean;
     label: string;
     currentItemId: string;
-    items: InterLinkedGameItem[];
+    items: InterLinkedItem[];
     deckColumns: number;
     maxCardsPerColumn: number;
     isDark: boolean;

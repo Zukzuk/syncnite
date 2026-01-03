@@ -1,9 +1,9 @@
 import { MantineTheme, useMantineTheme } from "@mantine/core";
 import { PlayniteGameLink } from "./playnite";
 
-export type InterLinkedMedia =
-    "game" | "movie" | "series" | "audiobook" | "book" | 
-    "music-album" | "animated-series" | "animated-movie";
+export type InterLinkedType =
+    "game" | "movie" | "show" | "audiobook" | "book" |
+    "music-album" | "episode" | "track" | "chapter" | "file";
 
 export type InterLinkedOrigin =
     "playnite" | "steam" | "epic" | "gog" |
@@ -11,19 +11,21 @@ export type InterLinkedOrigin =
     "humble" | "microsoft store" | "xbox" |
     "nintendo" | "abandonware" | "emulator" |
     "plex" | "komga";
-    
-interface InterLinkedItem {
-    type: InterLinkedMedia;
+
+interface InterLinkedBaseItem {
+    type: InterLinkedType;
     origin: InterLinkedOrigin;
     id: string;
     title: string;
+    titleWithoutVersion: string;
     isHidden: boolean;
     tags: string[];
     series: string[];
+    originLink: string;
 
+    version?: string;
     description?: string;
     searchableDescription?: string;
-    originLink?: string;
     originRunLink?: string;
     sortingName?: string;
     year?: number;
@@ -32,23 +34,55 @@ interface InterLinkedItem {
     bgUrl?: string;
 };
 
-export interface InterLinkedGameItem extends InterLinkedItem {
+export interface InterLinkedGameItem extends InterLinkedBaseItem {
     gameId: string;
     isInstalled: boolean;
     source: string;
-    titleWithoutVersion: string;
     developers: string[];
     publishers: string[];
 
     index?: number;
-    version?: string;
-    sourceLink?: string;
     htmlLink?: string;
+    sourceLink?: string;
     links?: PlayniteGameLink[];
 }
 
+export interface InterLinkedItemPart extends InterLinkedBaseItem {
+    partType: InterLinkedType;
+
+    season?: number;
+    index?: number;
+    htmlLink?: string;
+    durationMs?: number;
+    filePath?: string;
+};
+
+export interface InterLinkedMovieItem extends InterLinkedBaseItem {
+    totalDurationMs?: number;
+    htmlLink?: string;
+};
+
+export interface InterLinkedShowItem extends InterLinkedBaseItem {
+    parts?: InterLinkedItemPart[];
+    totalDurationMs?: number;
+    htmlLink?: string;
+};
+
+export interface InterLinkedAudiobookItem extends InterLinkedBaseItem {
+    parts?: InterLinkedItemPart[];
+    totalDurationMs?: number;
+    htmlLink?: string;
+};
+
+export type InterLinkedItem =
+    | InterLinkedGameItem
+    | InterLinkedMovieItem
+    | InterLinkedShowItem
+    | InterLinkedAudiobookItem
+    | InterLinkedItemPart;
+
 export interface OriginLoadedData {
-    items: InterLinkedGameItem[];
+    items: InterLinkedItem[];
     allSources: string[];
     allTags: string[];
     allSeries: string[];

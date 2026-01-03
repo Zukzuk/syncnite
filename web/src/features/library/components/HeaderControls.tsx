@@ -19,7 +19,7 @@ import {
 } from "../../../types/app";
 import {
   InterLinkedData,
-  InterLinkedGameItem,
+  InterLinkedItem,
   InterLinkedOrigin,
   InterLinkedTheme,
 } from "../../../types/interlinked";
@@ -27,7 +27,7 @@ import { WrappedSegmentedControl } from "../../../components/WrappedSegmentedCon
 import { SearchInput } from "../../../components/SearchInput";
 import { MultiSelectInput } from "../../../components/MultiSelectInput";
 import { WrappedSwitch } from "../../../components/WrappedSwitch";
-import { SOURCE_MAP } from "../../../constants";
+import { SOURCE_COLLECTION } from "../../../constants";
 
 type Props = {
   theme: InterLinkedTheme;
@@ -66,7 +66,7 @@ export const HeaderControls = memo(function HeaderControls({
 
   const hiddenCount = useMemo(() => {
     return items.reduce(
-      (acc: number, it: InterLinkedGameItem) => acc + (it.isHidden ? 1 : 0),
+      (acc: number, it: InterLinkedItem) => acc + (it.isHidden ? 1 : 0),
       0
     );
   }, [items]);
@@ -93,7 +93,7 @@ export const HeaderControls = memo(function HeaderControls({
         .map((s) => ({
           value: s,
           label:
-            SOURCE_MAP[s as InterLinkedOrigin].label ?? s,
+            SOURCE_COLLECTION[s as InterLinkedOrigin].label ?? s,
         })),
     [allSources]
   );

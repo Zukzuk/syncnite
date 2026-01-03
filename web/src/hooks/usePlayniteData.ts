@@ -18,8 +18,6 @@ export function usePlayniteData({ pollMs }: UseParams): UseReturn {
     const { version: libraryVersion } = usePlayniteSnapshot({ pollMs });
     const { set: installedSet, updatedAt: installedUpdatedAt } = useLocalInstalled({ pollMs });
 
-    // Mixin new data
-
     // reload on manifest change
     useEffect(() => {
         let cancelled = false;

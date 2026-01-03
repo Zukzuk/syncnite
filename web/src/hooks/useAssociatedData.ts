@@ -1,23 +1,23 @@
 import { fuzzyWordOverlap } from "../services/SearchService";
 import { AssociatedItems } from "../types/app";
-import { InterLinkedGameItem } from "../types/interlinked";
+import { InterLinkedItem } from "../types/interlinked";
 
 // Hook to gather associated data for a given item based on various attributes.
 export function useAssociatedData(
     isOpen: boolean,
-    item: InterLinkedGameItem,
-    all: InterLinkedGameItem[]
+    item: InterLinkedItem,
+    all: InterLinkedItem[]
 ): { associatedData: AssociatedItems[] } {
     if (!isOpen) return { associatedData: [] };
 
-    const associatedSeries: InterLinkedGameItem[] = [];
-    const associatedTags: InterLinkedGameItem[] = [];
-    const associatedDevelopers: InterLinkedGameItem[] = [];
-    const associatedYear: InterLinkedGameItem[] = [];
-    const associatedInstalled: InterLinkedGameItem[] = [];
-    const associatedHidden: InterLinkedGameItem[] = [];
-    const associatedSpecialEditions: InterLinkedGameItem[] = [];
-    const associatedMods: InterLinkedGameItem[] = [];
+    const associatedSeries: InterLinkedItem[] = [];
+    const associatedTags: InterLinkedItem[] = [];
+    const associatedDevelopers: InterLinkedItem[] = [];
+    const associatedYear: InterLinkedItem[] = [];
+    const associatedInstalled: InterLinkedItem[] = [];
+    const associatedHidden: InterLinkedItem[] = [];
+    const associatedSpecialEditions: InterLinkedItem[] = [];
+    const associatedMods: InterLinkedItem[] = [];
 
     const seriesSet = item.series ? new Set(item.series) : null;
     const tagsSet = item.tags ? new Set(item.tags) : null;

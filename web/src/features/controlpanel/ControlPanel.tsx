@@ -11,6 +11,7 @@ import { ControlPanelTile } from "./components/ControlPanelTile";
 import { CustomIconSVG } from "../../components/CustomIcon";
 import { IconThemeSwitch } from "../../components/IconThemeSwitch";
 import { SteamStatusResponse } from "../../types/steam";
+import { PlexStatusResponse } from "../../types/plex";
 
 type Props = {
     desktopMini?: boolean;

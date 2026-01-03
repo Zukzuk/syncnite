@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Box, Flex, Text, Group, Badge } from "@mantine/core";
-import { InterLinkedGameItem, InterLinkedGrid } from "../../../types/interlinked";
+import { InterLinkedItem, InterLinkedGrid } from "../../../types/interlinked";
 import { IconExecuteOverlay } from "../../../components/IconExecuteOverlay";
 import { IconGame } from "../../../components/IconGame";
 import { IconIsInstalled } from "../../../components/IconIsInstalled";
@@ -9,9 +9,10 @@ import { IconCopyTitle } from "../../../components/IconCopyTitle";
 import { IconLinkOrigin } from "../../../components/IconOriginLink";
 import { IconLinkSource } from "../../../components/IconSourceLink";
 import { IconLinkExternal } from "../../../components/IconExternalLink";
+import { isGame } from "../../../utils";
 
 type Props = {
-    item: InterLinkedGameItem;
+    item: InterLinkedItem;
     isOpen: boolean;
     grid: InterLinkedGrid;
     hasNavbar: boolean;
@@ -24,8 +25,10 @@ type Props = {
 export function ItemRow({ item, isOpen, grid, hasNavbar, isListView, isWidescreen, isDesktop }: Props): JSX.Element | null {
     if (!isOpen && !isListView) return null;
 
-    const { originLink, isInstalled, isHidden, iconUrl, year, source, titleWithoutVersion,
-        title, series, htmlLink, sourceLink, version, origin, originRunLink, id } = item;
+    const { originLink, isHidden, iconUrl, year, titleWithoutVersion,
+        title, series, htmlLink, version, origin, originRunLink, id } = item;
+    const { source, sourceLink, isInstalled } = isGame(item) ? item : { source: null, sourceLink: null, isInstalled: false };
+    
     const [isHovered, setIsHovered] = useState(false);
     const cols = isOpen
         ? "40px minmax(0, 1fr) 56px"

@@ -20,3 +20,17 @@ export interface PlexConnection {
     lastPinId?: number | null;
     lastPinCode?: string | null;
 }
+
+export type PlexSnapshot = {
+  UpdatedAt: string;
+  Source: "plex-sync";
+  ServerUrl: string;
+
+  DbTicks: number; // max of all DbVersions
+  Sections: Record<string, { Title: string; Type: string | null; DbTicks: number; ItemCount: number }>;
+
+  DbVersions: Record<string, number>;       // key: `${sectionKey}:${ratingKey}` -> updatedAt
+  MediaVersions: Record<string, number>;    // key: `${sectionKey}:${ratingKey}:${kind}` -> version
+};
+
+export type PlexMediaKind = "thumb" | "art" | "clearLogo";

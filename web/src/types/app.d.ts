@@ -1,12 +1,8 @@
 import { Dispatch, SetStateAction } from "react";
-import { LETTERS } from "../constants";
-import { InterLinkedGameItem } from "./interlinked";
 
 declare global {
   interface Window { __APP_VERSION__?: string }
 }
-
-export type Letter = typeof LETTERS[number];
 
 export type SortKey = "title" | "series" | "year" | "source" | "tags";
 
@@ -90,18 +86,18 @@ export interface UIControls {
 export interface UIDerivedData {
   filteredCount: number;
   totalCount: number;
-  itemsAssociated: InterLinkedGameItem[];
-  itemsSorted: InterLinkedGameItem[];
+  itemsAssociated: InterLinkedItem[];
+  itemsSorted: InterLinkedItem[];
   itemsGroupedByLetter: ItemGroupedByLetter[];
 };
 
 export interface ItemGroupedByLetter {
-  item: InterLinkedGameItem;
+  item: InterLinkedItem;
   itemLetter: Letter
 };
 
 export interface AlphabeticalGroup {
-  items: InterLinkedGameItem[];
+  items: InterLinkedItem[];
   groupLetter: string;
 };
 
@@ -145,7 +141,7 @@ export type AssociatedLayout = {
 export interface AssociatedItems {
   key: string;
   label: string;
-  items: InterLinkedGameItem[];
+  items: InterLinkedItem[];
 };
 
 export type AssociatedItemCard = {

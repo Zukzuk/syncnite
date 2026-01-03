@@ -1,12 +1,13 @@
 import { Box, Image } from "@mantine/core";
-import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../types/interlinked";
+import { InterLinkedDynamicGrid, InterLinkedItem, InterLinkedGrid } from "../../../types/interlinked";
 import { AssociatedItemCard, HistoryNavMode } from "../../../types/app";
 import { IconIsInstalled } from "../../../components/IconIsInstalled";
 import { IconIsHidden } from "../../../components/IconIsHidden";
+import { isGame } from "../../../utils";
 
 type Props = {
     meta: AssociatedItemCard;
-    item: InterLinkedGameItem;
+    item: InterLinkedItem;
     colLengths: number[];
     hoveredMeta: AssociatedItemCard | null;
     hasHoveredCard: boolean;
@@ -33,8 +34,8 @@ export function AssociatedDeckCard({
     setHoveredId,
 }: Props): JSX.Element | null {
     const { colIndex, indexInColumn, id, metaIndex } = meta;
-    const { title, year, coverUrl, isInstalled, isHidden } = item;
-
+    const { title, year, coverUrl, isHidden } = item;
+    const { isInstalled } = isGame(item) ? item : { isInstalled: false };
     const left = colIndex * (dynamicGrid.gridCardWidth + grid.gap * 2);
     const top = indexInColumn * dynamicGrid.cardStepY;
 

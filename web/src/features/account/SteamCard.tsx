@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card, Group, Stack, Text, ThemeIcon, Divider, Badge, Loader, PasswordInput } from "@mantine/core";
 import { IconClock, IconLink, IconListDetails } from "@tabler/icons-react";
 import { API_ENDPOINTS } from "../../constants";
-import { SteamStatusResponse } from "../../types/app";
 import { useSteamWishlist } from "../../hooks/useSteamWishlist";
 import { fetchSteamStatus, syncSteamWishlist } from "../../services/SteamService";
 import { InterLinkedGrid } from "../../types/interlinked";
@@ -10,6 +9,7 @@ import { getCreds } from "../../services/AccountService";
 import { CustomIconSVG } from "../../components/CustomIcon";
 import { TextDataRow } from "../../components/TextDataRow";
 import { IconButton } from "../../components/IconButton";
+import { SteamStatusResponse } from "../../types/steam";
 
 type Props = {
     grid: InterLinkedGrid;

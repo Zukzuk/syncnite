@@ -47,7 +47,7 @@ function sanitizeMediaFolderName(name: string): string {
 // Sanitize collection
 function sanitizeCollection(col: string): string {
     const c = String(col ?? "").trim().toLowerCase();
-    if (!PLAYNITE_COLLECTIONS.has(c)) {
+    if (!PLAYNITE_COLLECTIONS.hasOwnProperty(c)) {
         throw new PlayniteError(
             400,
             "unknown_collection",
@@ -272,7 +272,7 @@ export class PlayniteService {
     async computeDelta(body: PlayniteClientManifest): Promise<PlayniteDeltaManifest> {
         const incoming = body.json ?? {};
         const versions = body.versions ?? {};
-        const mediaFolders = body.mediaFolders ?? {}; // NEW
+        const mediaFolders = body.mediaFolders ?? {};
 
         log.info(`incoming delta request for ${Object.keys(incoming).length} collections`);
         log.debug("delta request", { collections: Object.keys(incoming) });

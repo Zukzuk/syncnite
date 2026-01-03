@@ -1,5 +1,5 @@
 import express from "express";
-import { requireBareAdminSession } from "../middleware/requireAuth";
+import { requireBareAdminSession, requireSession } from "../middleware/requireAuth";
 import { PlexService } from "../services/PlexService";
 import { rootLog } from "../logger";
 
@@ -81,5 +81,16 @@ router.post("/sync", requireBareAdminSession, async (req, res) => {
     return res.status(400).json({ ok: false, error: String(e?.message ?? e) });
   }
 });
+
+// GET /api/v1/plex/collection/:collection
+router.get("/collection/:collection", requireSession, async (req, res) => {
+  try {
+    const rows = await PlexService.listCollection(req.params.collection);
+    return res.json(rows);
+  } catch (e: any) {
+    return res.status(400).json({ ok: false, error: String(e?.message ?? e) });
+  }
+});
+
 
 export default router;

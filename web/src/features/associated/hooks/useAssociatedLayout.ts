@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../types/interlinked";
+import { InterLinkedDynamicGrid, InterLinkedItem, InterLinkedGrid } from "../../../types/interlinked";
 import { AssociatedLayout } from "../../../types/app";
 
 type UseParams = {
     grid: InterLinkedGrid;
     dynamicGrid: InterLinkedDynamicGrid;
     stackCount: number;
-    openDeckData: { key: string; items: InterLinkedGameItem[] } | null;
+    openDeckData: { key: string; items: InterLinkedItem[] } | null;
 };
 
 type UseReturn = AssociatedLayout;

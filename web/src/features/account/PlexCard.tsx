@@ -7,19 +7,10 @@ import { InterLinkedGrid } from "../../types/interlinked";
 import { CustomIconSVG } from "../../components/CustomIcon";
 import { TextDataRow } from "../../components/TextDataRow";
 import { IconButton } from "../../components/IconButton";
+import { PlexStatusResponse } from "../../types/plex";
 
 type Props = {
     grid: InterLinkedGrid;
-};
-
-type PlexStatusResponse = {
-    ok: true;
-    connected: boolean;
-    serverUrl?: string;
-    linkedAt?: string | null;
-    lastSyncedAt?: string | null;
-    lastSyncOk?: boolean | null;
-    lastSyncError?: string | null;
 };
 
 export default function PlexCard({ grid }: Props): JSX.Element {
@@ -269,7 +260,7 @@ export default function PlexCard({ grid }: Props): JSX.Element {
                                 Example: <code>http://192.168.1.10:32400</code> or <code>https://plex.yourdomain.tld:32400</code>
                             </Text>
                         }
-                        placeholder="http(s)://host:32400"
+                        placeholder="https://host:32400"
                         value={serverUrl}
                         onChange={(e) => setServerUrl(e.currentTarget.value)}
                         disabled={linking || polling || syncing}

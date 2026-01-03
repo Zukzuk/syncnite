@@ -4,7 +4,7 @@ import { useGrid } from "./hooks/useGrid";
 import { useAlphabetRail } from "./hooks/useAlphabetRail";
 import { AlphabeticalRail } from "./components/AlphabeticalRail";
 import { UIControls, UIDerivedData } from "../../types/app";
-import { InterLinkedGameItem, InterLinkedTheme } from "../../types/interlinked";
+import { InterLinkedItem, InterLinkedTheme } from "../../types/interlinked";
 import { GridItem } from "./GridItem";
 
 type Props = {
@@ -87,7 +87,7 @@ export function Grid({
 
                 {itemsSorted
                     .slice(dynamicGrid.visibleRange.startIndex, dynamicGrid.visibleRange.endIndex)
-                    .map((item: InterLinkedGameItem, i: number) => {
+                    .map((item: InterLinkedItem, i: number) => {
                         const index = dynamicGrid.visibleRange.startIndex + i;
                         const isOpen = openIds.has(item.id);
 

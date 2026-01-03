@@ -1,5 +1,5 @@
 import { Group, Collapse, Box } from "@mantine/core";
-import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../types/interlinked";
+import { InterLinkedDynamicGrid, InterLinkedItem, InterLinkedGrid } from "../../types/interlinked";
 import { HistoryNavMode } from "../../types/app";
 import { AssociatedDeck } from "./components/AssociatedDeck";
 import { AssociatedStacks } from "./components/AssociatedStacks";
@@ -9,12 +9,12 @@ import { useAssociatedLayout } from "./hooks/useAssociatedLayout";
 import { useAssociatedData } from "../../hooks/useAssociatedData";
 
 type Props = {
-    item: InterLinkedGameItem;
+    item: InterLinkedItem;
     isOpen: boolean;
     isDark: boolean;
     grid: InterLinkedGrid;
     dynamicGrid: InterLinkedDynamicGrid;
-    itemsAssociated: InterLinkedGameItem[];
+    itemsAssociated: InterLinkedItem[];
     onWallpaperBg: (on: boolean) => void;
     onToggleClickBounded: (id?: string, navMode?: HistoryNavMode) => void;
 };

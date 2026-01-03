@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Paper, Stack, Button, rem } from "@mantine/core";
 import { InterLinkedGrid } from "../../../types/interlinked";
-import { Letter } from "../../../types/app";
-import { LETTERS_LIST } from "../../../constants";
+import { Letter, LETTERS_LIST } from "../../../constants";
 
 type Props = {
     grid: InterLinkedGrid;

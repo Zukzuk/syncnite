@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AlphabeticalGroup, ItemGroupedByLetter, Letter, SortKey, UIControls, UIDerivedData, VisibleRange } from "../../../types/app";
-import { InterLinkedGameItem } from "../../../types/interlinked";
+import { AlphabeticalGroup, ItemGroupedByLetter, SortKey, UIControls, UIDerivedData, VisibleRange } from "../../../types/app";
+import { InterLinkedItem } from "../../../types/interlinked";
 import { orderedLetters } from "../../../utils";
-import { LETTERS } from "../../../constants";
+import { Letter, LETTERS_LIST } from "../../../constants";
 
 // Compute alphabetical groups from grouped items
 function calcAlphabetGroups({ sortKey, itemsGroupedByLetter, itemsSorted }: {
     sortKey: SortKey;
     itemsGroupedByLetter: ItemGroupedByLetter[] | null;
-    itemsSorted: InterLinkedGameItem[] | null;
+    itemsSorted: InterLinkedItem[] | null;
 }): {
-    alphabeticalGroups: AlphabeticalGroup[] | null; isGrouped: boolean; flatItems: InterLinkedGameItem[];
+    alphabeticalGroups: AlphabeticalGroup[] | null; isGrouped: boolean; flatItems: InterLinkedItem[];
 } {
     const alphabeticalGroups = useMemo<AlphabeticalGroup[] | null>(() => {
         if (sortKey !== "title" || !itemsGroupedByLetter || itemsGroupedByLetter.length === 0) {
@@ -79,11 +79,11 @@ export function useAlphabetRail({
     // flat
     const { flatFirstIndex, flatCounts } = useMemo(() => {
         const firstIndex = Object.fromEntries(
-            LETTERS.map((L) => [L, -1])
+            LETTERS_LIST.map((L) => [L, -1])
         );
 
         const counts = Object.fromEntries(
-            LETTERS.map((L) => [L, 0])
+            LETTERS_LIST.map((L) => [L, 0])
         );
 
         flatItems.forEach((r, idx) => {
@@ -101,17 +101,17 @@ export function useAlphabetRail({
             return {
                 groupFirstItemIndex: {},
                 groupCounts: Object.fromEntries(
-                    LETTERS.map((L) => [L, 0])
+                    LETTERS_LIST.map((L) => [L, 0])
                 ),
             };
         }
 
         const firstIndex = Object.fromEntries(
-            LETTERS.map((L) => [L, -1])
+            LETTERS_LIST.map((L) => [L, -1])
         );
 
         const counts = Object.fromEntries(
-            LETTERS.map((L) => [L, 0])
+            LETTERS_LIST.map((L) => [L, 0])
         );
 
         let running = 0;

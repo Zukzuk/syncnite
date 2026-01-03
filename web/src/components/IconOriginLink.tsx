@@ -1,11 +1,11 @@
 import { memo } from "react";
 import { ActionIcon, Tooltip } from "@mantine/core";
-import { InterLinkedGameItem } from "../types/interlinked";
+import { InterLinkedItem } from "../types/interlinked";
 import { CustomIconSVG } from "./CustomIcon";
 import { CustomIconType } from "../types/app";
-import { SOURCE_MAP } from "../constants";
+import { SOURCE_COLLECTION } from "../constants";
 
-type Props = Pick<InterLinkedGameItem, "origin" | "originRunLink" | "id">;
+type Props = Pick<InterLinkedItem, "origin" | "originRunLink" | "id">;
 
 export const IconLinkOrigin = memo(function IconLinkOrigin({
     origin,
@@ -17,7 +17,7 @@ export const IconLinkOrigin = memo(function IconLinkOrigin({
     return (
         <Tooltip
             style={{ fontSize: 10 }}
-            label={`${SOURCE_MAP[origin].platform?.split("://")[0]}://`}
+            label={`${SOURCE_COLLECTION[origin].platform?.split("://")[0]}://`}
             withArrow
             position="top"
         >

@@ -1,12 +1,12 @@
 import { memo } from "react";
 import { ActionIcon, Tooltip } from "@mantine/core";
 import { IconCalculatorFilled, IconDeviceGamepadFilled, IconDeviceUnknownFilled } from "@tabler/icons-react";
-import { InterLinkedGameItem } from "../types/interlinked";
+import { InterLinkedItem } from "../types/interlinked";
 import { CustomIconSVG } from "./CustomIcon";
 import { CustomIconType } from "../types/app";
-import { SOURCE_MAP } from "../constants";
+import { SOURCE_COLLECTION } from "../constants";
 
-type Props = Pick<InterLinkedGameItem, "source" | "sourceLink">;
+type Props = Pick<InterLinkedItem, "source" | "sourceLink">;
 
 export const IconLinkSource = memo(function IconLinkSource({
     source,
@@ -17,7 +17,7 @@ export const IconLinkSource = memo(function IconLinkSource({
     return (
         <Tooltip
             style={{ fontSize: 10 }}
-            label={`${SOURCE_MAP[source].platform?.split("://")[0]}://`}
+            label={`${SOURCE_COLLECTION[source].platform?.split("://")[0]}://`}
             withArrow
             position="top"
         >

@@ -3,10 +3,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useFullscreen } from "@mantine/hooks";
 import { ActionIcon, Box, Center, Group, Loader, Paper, Text, Tooltip } from "@mantine/core";
 import { IconArrowsMaximize, IconArrowsMinimize, IconChevronLeft, IconChevronRight, IconMoon, IconSun, IconX } from "@tabler/icons-react";
-import { INTERVAL_MS, SOURCE_MAP } from "../constants";
+import { INTERVAL_MS, SOURCE_COLLECTION } from "../constants";
 import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
 import { usePlayniteData } from "../hooks/usePlayniteData";
-import { InterLinkedGameItem, InterLinkedOrigin } from "../types/interlinked";
+import { InterLinkedItem } from "../types/interlinked";
 
 const DISPLAY_MS = 10_000;
 const FADE_MS = 900;
@@ -51,10 +51,10 @@ export default function NarrowcastPage(): JSX.Element {
     const items = useMemo(() => {
         // Hardcode to Playnite for now
         const src = libraryData?.playnite?.items ?? [];
-        return src.filter((g: InterLinkedGameItem) => !!g.coverUrl && !g.isHidden) as InterLinkedGameItem[];
+        return src.filter((g: InterLinkedItem) => !!g.coverUrl && !g.isHidden) as InterLinkedItem[];
     }, [libraryData]);
 
-    const [order, setOrder] = useState<InterLinkedGameItem[]>([]);
+    const [order, setOrder] = useState<InterLinkedItem[]>([]);
     useEffect(() => {
         if (!items.length) return;
         setOrder(shuffle(items));
@@ -99,7 +99,7 @@ export default function NarrowcastPage(): JSX.Element {
 
     // derive current (the actually-visible item index)
     const current = n ? order[clampIndex(idx, n)] : null;
-    const label = current ? SOURCE_MAP[current.source ?? current.origin].label : "";
+    const label = current ? SOURCE_COLLECTION[current.source ?? current.origin].label : "";
 
     // choose start index from route once we have order
     useEffect(() => {

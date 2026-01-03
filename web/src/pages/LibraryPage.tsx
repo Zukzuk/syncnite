@@ -1,20 +1,27 @@
-import { useLayoutEffect } from "react";
+import { useLayoutEffect, useMemo } from "react";
 import { Stack, Loader, Box, Center } from "@mantine/core";
 import { INTERVAL_MS } from "../constants";
 import Library from "../features/library/Library";
 import { LibraryProvider } from "./LibraryContext";
 import { useInterLinkedTheme } from "../hooks/useInterLinkedTheme";
 import { usePlayniteData } from "../hooks/usePlayniteData";
+import { usePlexData } from "../hooks/usePlexData";
+import type { InterLinkedData } from "../types/interlinked";
 
 export default function LibraryPage(): JSX.Element {
-    const { libraryData } = usePlayniteData({ pollMs: INTERVAL_MS });
+    const { libraryData: playniteData } = usePlayniteData({ pollMs: INTERVAL_MS });
+    const { libraryData: plexData } = usePlexData({ pollMs: INTERVAL_MS });
+
+    const libraryData: InterLinkedData | undefined = useMemo(() => {
+        if (!playniteData || !plexData) return undefined;
+        return { ...playniteData, ...plexData };
+    }, [playniteData, plexData]);
+
     const theme = useInterLinkedTheme();
     const { grid, hasNavbar, desktopMode } = theme;
     const desktopMini = desktopMode === "mini";
+    const subtract = !hasNavbar ? 0 : desktopMini ? grid.navBarMiniWidth : grid.navBarWidth;
 
-    const subtract = !hasNavbar ? 0 : desktopMini ? grid.navBarMiniWidth : grid.navBarWidth
-
-    // Prevent body scrolling when on the library page
     useLayoutEffect(() => {
         const prevOverflow = document.body.style.overflow;
         document.body.style.overflow = "hidden";
@@ -37,10 +44,7 @@ export default function LibraryPage(): JSX.Element {
         <Stack style={{ minWidth: grid.minSiteWidth, height: "100%", minHeight: 0 }}>
             <Box w={`calc(100vw - ${subtract}px)`} h="100vh">
                 <LibraryProvider>
-                    <Library
-                        libraryData={libraryData}
-                        theme={theme}
-                    />
+                    <Library libraryData={libraryData} theme={theme} />
                 </LibraryProvider>
             </Box>
         </Stack>

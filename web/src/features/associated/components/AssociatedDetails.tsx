@@ -1,15 +1,16 @@
 import { useState } from "react";
 import { Anchor, Badge, Box, Group, Image, Stack, Text } from "@mantine/core";
-import { InterLinkedGameItem, InterLinkedGrid } from "../../../types/interlinked";
+import { InterLinkedItem, InterLinkedGrid } from "../../../types/interlinked";
 import { IconIsInstalled } from "../../../components/IconIsInstalled";
 import { IconExecuteOverlay } from "../../../components/IconExecuteOverlay";
 import { IconLinkOrigin } from "../../../components/IconOriginLink";
 import { IconLinkSource } from "../../../components/IconSourceLink";
 import { IconLinkExternal } from "../../../components/IconExternalLink";
 import { IconShowMaximized } from "../../../components/IconShowMaximized";
+import { isGame } from "../../../utils";
 
 type Props = {
-    item: InterLinkedGameItem;
+    item: InterLinkedItem;
     grid: InterLinkedGrid;
     isDark: boolean;
     openDeckKey: string | null;
@@ -21,9 +22,9 @@ type Props = {
 // Component to display associated details of a library item.
 export function AssociatedDetails({ item, grid, isDark, openDeckKey, needsColumnLayout, onBadgeClick, onWallpaperBg }: Props): JSX.Element {
 
-    const { id, originLink, sortingName, tags = [], series = [], isInstalled, isHidden, developers,
-        links, coverUrl, bgUrl, origin, htmlLink, originRunLink, title, source, sourceLink } = item;
-
+    const { id, originLink, sortingName, tags = [], series = [], isHidden,
+        coverUrl, bgUrl, origin, htmlLink, originRunLink, title } = item;
+    const { isInstalled, developers, links, source, sourceLink } = isGame(item) ? item : { isInstalled: false, developers: [], links: [] };
     const [isBgHovered, setIsBgHovered] = useState(false);
 
     return (

@@ -33,19 +33,27 @@ export const INSTALLED_SUFFIX = ".installed.json";
 export const WISHLIST_SUFFIX = ".wishlist.json";
 export const SNAPSHOT_FILENAME = "snapshot.json";
 
-export const PLAYNITE_COLLECTIONS = new Set([
-    "games",
-    "companies",
-    "tags",
-    "sources",
-    "platforms",
-    "genres",
-    "categories",
-    "features",
-    "series",
-    "regions",
-    "ageratings",
-    "completionstatuses",
-    "filterpresets",
-    "importexclusions",
-]);
+export const PLAYNITE_COLLECTIONS = {
+    games: "games",
+    companies: "companies",
+    tags: "tags",
+    sources: "sources",
+    platforms: "platforms",
+    genres: "genres",
+    categories: "categories",
+    features: "features",
+    series: "series",
+    regions: "regions",
+    ageratings: "ageratings",
+    completionstatuses: "completionstatuses",
+    filterpresets: "filterpresets",
+    importexclusions: "importexclusions",
+} as const;
+
+export const PLEX_COLLECTIONS = {
+    movies: "movies",
+    series: "series",
+    "animated-movies": "animated-movies",
+    "animated-series": "animated-series",
+    audiobooks: "audiobooks",
+} as const;

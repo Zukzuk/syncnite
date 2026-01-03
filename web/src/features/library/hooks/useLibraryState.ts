@@ -1,20 +1,24 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocalStorage } from "@mantine/hooks";
 import type { SortKey, SortDir, UIControls, UIDerivedData, ViewMode, SwitchesMode } from "../../../types/app";
-import { InterLinkedGameItem } from "../../../types/interlinked";
+import type { InterLinkedItem, InterLinkedData } from "../../../types/interlinked";
 import { orderedLetters } from "../../../utils";
-import { sortItems } from "../../../services/SearchService";
 import { loadStateFromCookie, saveStateToCookie } from "../../../services/AccountService";
+import { getSourceKey, isInstalled, matchesQuery, sortItems } from "../../../services/SearchService";
 
-type UseParams = InterLinkedGameItem[];
+type UseParams = InterLinkedData;
 
 type UseReturn = {
   uiControls: UIControls;
   derivedData: UIDerivedData;
 };
 
-// A hook to manage library state including filtering, sorting, and persistence.
-export function useLibraryState(items: UseParams): UseReturn {
+export function useLibraryState(libraryData: UseParams): UseReturn {
+  const items: InterLinkedItem[] = useMemo(
+    () => Object.values(libraryData).flatMap((o) => o?.items ?? []),
+    [libraryData]
+  );
+
   const cookieState = useMemo(loadStateFromCookie, []);
 
   const [q, setQ] = useState<string>(cookieState.q);
@@ -30,8 +34,8 @@ export function useLibraryState(items: UseParams): UseReturn {
 
   const [view, setView] = useLocalStorage<ViewMode>({
     key: "library.view",
-    defaultValue: "grid", // optional: your preferred default
-    getInitialValueInEffect: false, // no first-render mismatch
+    defaultValue: "grid",
+    getInitialValueInEffect: false,
   });
   const isListView = view === "list";
 
@@ -48,14 +52,7 @@ export function useLibraryState(items: UseParams): UseReturn {
     setSeries([]);
     setShowInstalledOnly(false);
     setShowHidden(false);
-  }, [
-    setQ,
-    setTags,
-    setSources,
-    setSeries,
-    setShowInstalledOnly,
-    setShowHidden,
-  ]);
+  }, []);
 
   useEffect(() => {
     const toSave = { q, sliderValue, sources, tags, series, showHidden, installedOnly, sortKey, sortDir };
@@ -67,47 +64,34 @@ export function useLibraryState(items: UseParams): UseReturn {
     else { setSortKey(key); setSortDir("asc"); }
   };
 
-  const itemsAssociated = useMemo(() => {
-    const pass = items.filter((r) =>
-      // hidden
-      (showHidden || !r.isHidden)
-    );
+  // ✅ single predicate reused everywhere
+  const matches = useMemo(() => {
+    return (r: InterLinkedItem) =>
+      matchesQuery(r, q) &&
+      (!sources.length || sources.includes(getSourceKey(r))) &&
+      (!tags.length || tags.some((ta) => r.tags?.includes(ta))) &&
+      (!series.length || series.some((se) => r.series?.includes(se))) &&
+      (!installedOnly || isInstalled(r)) &&
+      (showHidden || !r.isHidden);
+  }, [q, sources, tags, series, installedOnly, showHidden]);
 
+  const itemsAssociated = useMemo(() => {
+    // associated ignores everything except hidden (as you had)
+    const pass = items.filter((r) => showHidden || !r.isHidden);
     return sortItems(pass, sortKey, sortDir);
-  }, [q, sources, tags, series, showHidden, installedOnly, sortKey, sortDir, items]);
+  }, [items, showHidden, sortKey, sortDir]);
 
   const itemsSorted = useMemo(() => {
-    const qv = q.toLowerCase().trim();
-
-    const pass = items.filter((r) =>
-      // text search 
-      (!qv || (
-        r.title.toLowerCase().includes(qv) ||
-        r.sortingName?.toLowerCase().includes(qv) ||
-        r.version?.toLowerCase().includes(qv) ||
-        r.searchableDescription?.toLowerCase().includes(qv) ||
-        r.tags?.some((ta) => ta.toLowerCase().includes(qv)) ||
-        r.series?.some((se) => se.toLowerCase().includes(qv))
-      )) &&
-      // sources: match any of selected
-      (!sources.length || sources.some((so) => r.source === so)) &&
-      // tags: match any of selected
-      (!tags.length || tags.some((ta) => r.tags?.includes(ta))) &&
-      // series: match any of selected
-      (!series.length || series.some((se) => r.series?.includes(se))) &&
-      // installed flags
-      (!installedOnly || !!r.isInstalled) &&
-      // hidden flags
-      (showHidden || !r.isHidden)
-    );
-
+    const pass = items.filter(matches);
     return sortItems(pass, sortKey, sortDir);
-  }, [q, sources, tags, series, showHidden, installedOnly, sortKey, sortDir, items]);
+  }, [items, matches, sortKey, sortDir]);
 
   const filteredCount = itemsSorted.length;
   const totalCount = items.length;
-  const itemsGroupedByLetter = itemsSorted.map(
-    (item) => ({ item, itemLetter: orderedLetters(item.title, item.sortingName) })
+
+  const itemsGroupedByLetter = useMemo(
+    () => itemsSorted.map((item) => ({ item, itemLetter: orderedLetters(item.title, item.sortingName) })),
+    [itemsSorted]
   );
 
   return {

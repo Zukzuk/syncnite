@@ -1,10 +1,10 @@
 import { RefObject, useCallback, useEffect, useRef, useState } from "react";
-import { InterLinkedGameItem, InterLinkedGrid } from "../../../types/interlinked";
+import { InterLinkedItem, InterLinkedGrid } from "../../../types/interlinked";
 
 type UseParams = {
   gridRef: RefObject<HTMLDivElement | null>;
   openIds: Set<string>;
-  itemsSorted: InterLinkedGameItem[];
+  itemsSorted: InterLinkedItem[];
   grid: InterLinkedGrid;
   idToIndex: Map<string, number>;
   viewportH: number;

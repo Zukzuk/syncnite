@@ -4,7 +4,7 @@ import { useGridVirtualWindow } from "./useGridVirtualWindow";
 import { useGridOpenItemToggle } from "./useGridOpenItemToggle";
 import { useGridScrollRestore } from "./useGridScrollRestore";
 import { HistoryNavMode, ItemPositions, UIControls, UIDerivedData } from "../../../types/app";
-import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../types/interlinked";
+import { InterLinkedDynamicGrid, InterLinkedItem, InterLinkedGrid } from "../../../types/interlinked";
 
 type UseParams = {
     gridRef: RefObject<HTMLDivElement>;
@@ -102,7 +102,7 @@ export function useGrid({
     // Build id -> index map once per items change
     const idToIndex = useMemo(() => {
         const map = new Map<string, number>();
-        itemsSorted.forEach((item: InterLinkedGameItem, index: number) => {
+        itemsSorted.forEach((item: InterLinkedItem, index: number) => {
             map.set(item.id, index);
         });
         return map;

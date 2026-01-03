@@ -1,8 +1,6 @@
 
 export const WEB_APP_VERSION = `v${window.__APP_VERSION__}`;
 export const INTERVAL_MS = 5000;
-export const LETTERS_LIST = ["#", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
-export const LETTERS = [...LETTERS_LIST] as const;
 export const MIN_WORDS_PER_COLUMN = 80;
 
 const API_BASE = "/api/v1";
@@ -10,21 +8,17 @@ const API_BASE = "/api/v1";
 export const API_ENDPOINTS = {
   // Fetch list of library items
   SSE: `${API_BASE}/sse`,
-  ZIP_LIST: `${API_BASE}/zips`,
-  // Extension management
-  EXTENSION_DOWNLOAD: `${API_BASE}/extension/download`,
-  EXTENSION_STATUS: `${API_BASE}/ping/status`,
   // Account management
   LOGIN: `${API_BASE}/accounts/login`,
   STATUS: `${API_BASE}/accounts/status`,
   VERIFY: `${API_BASE}/accounts/verify`,
-  // User account management
-  USER_REGISTER: `${API_BASE}/accounts/register/user`,
-  // Admin account management
   ADMIN_REGISTER: `${API_BASE}/accounts/register/admin`,
   ADMIN_VERIFY: `${API_BASE}/accounts/verify/admin`,
   USERS: `${API_BASE}/accounts/users`,
+  USER_REGISTER: `${API_BASE}/accounts/register/user`,
   // Playnite API
+  PLAYNITE_EXTENSION_DOWNLOAD: `${API_BASE}/extension/download`,
+  PLAYNITE_EXTENSION_STATUS: `${API_BASE}/ping/status`,
   PLAYNITE_COLLECTION: `${API_BASE}/playnite/collection/`,
   // Steam API
   STEAM_STATUS: "/api/v1/steam",
@@ -37,25 +31,59 @@ export const API_ENDPOINTS = {
   PLEX_AUTH_POLL: "/api/v1/plex/auth/poll",
   PLEX_UNLINK: "/api/v1/plex/unlink",
   PLEX_SYNC: "/api/v1/plex/sync",
+  PLEX_COLLECTION: `${API_BASE}/plex/collection/`,
 }
-
 
 export const PUBLIC_DIR = "/mountpub";
 
 export const FILES = {
   playnite: {
+    snapshot: { dir: `${PUBLIC_DIR}/playnite/snapshot`, file: "snapshot.json" },
     installed: { dir: `${PUBLIC_DIR}/playnite/installed`, file: "installed.json" },
     libraryfiles: { dir: `${PUBLIC_DIR}/playnite/libraryfiles` },
-    snapshot: { dir: `${PUBLIC_DIR}/playnite/snapshot`, file: "snapshot.json" },
   },
   steam: {
     installed: { dir: `${PUBLIC_DIR}/steam/installed`, file: "installed.json" },
     libraryfiles: { dir: `${PUBLIC_DIR}/steam/libraryfiles` },
     wishlist: { dir: `${PUBLIC_DIR}/steam/wishlist`, suffix: ".wishlist.json" },
   },
+  plex: {
+    snapshot: { dir: `${PUBLIC_DIR}/plex/snapshot`, file: "snapshot.json" },
+    media: { dir: `${PUBLIC_DIR}/plex/libraryfiles` },
+  },
 };
 
-export const SOURCE_MAP: Record<string, {
+export const LETTERS_LIST = ["#", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"] as const;
+export type Letter = (typeof LETTERS_LIST)[number];
+
+export const PLEX_COLLECTIONS = {
+  movies: "movies",
+  series: "series",
+  "animated-movies": "animated-movies",
+  "animated-series": "animated-series",
+  audiobooks: "audiobooks",
+} as const;
+export type PlexCollection = (typeof PLEX_COLLECTIONS)[keyof typeof PLEX_COLLECTIONS];
+
+export const PLAYNITE_COLLECTIONS = {
+  games: "games",
+  companies: "companies",
+  tags: "tags",
+  sources: "sources",
+  platforms: "platforms",
+  genres: "genres",
+  categories: "categories",
+  features: "features",
+  series: "series",
+  regions: "regions",
+  ageratings: "ageratings",
+  completionstatuses: "completionstatuses",
+  filterpresets: "filterpresets",
+  importexclusions: "importexclusions",
+} as const;
+export type PlayniteCollection = (typeof PLAYNITE_COLLECTIONS)[keyof typeof PLAYNITE_COLLECTIONS];
+
+export const SOURCE_COLLECTION: Record<string, {
   platform?: string;
   runOnPlatform?: string;
   online: string;
@@ -144,4 +172,12 @@ export const SOURCE_MAP: Record<string, {
     domains: ["moddb.com", "nexusmods.com"],
     label: "Mod"
   },
+  "plex": {
+    platform: "plex://",
+    runOnPlatform: "plex://play",
+    domains: ["plex.tv"],
+    online: "https://www.plex.tv",
+    label: "Plex",
+  },
 };
+export type SourceCollection = (typeof SOURCE_COLLECTION)[keyof typeof SOURCE_COLLECTION];

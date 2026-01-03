@@ -1,7 +1,11 @@
 import { fetchJson, fetchUser, getCreds } from "./AccountService";
-import { API_ENDPOINTS, FILES, SOURCE_MAP } from "../constants";
+import { API_ENDPOINTS, FILES, PlayniteCollection, SOURCE_COLLECTION } from "../constants";
 import { PlayniteCompany, PlayniteGame, PlayniteGameLink, PlayniteGameReleaseDate, PlayniteSeries, PlayniteSource, PlayniteTag } from "../types/playnite";
-import { InterLinkedGameItem, InterLinkedOrigin, OriginLoadedData } from "../types/interlinked";
+import { InterLinkedItem, InterLinkedOrigin, OriginLoadedData } from "../types/interlinked";
+
+function isPlayniteGame(item: InterLinkedItem): item is any /* InterLinkedGameItem */ {
+    return item.origin === "playnite" && item.type === "game";
+}
 
 // Get the Playnite Game.Id
 function getPlayniteId(g: PlayniteGame): string {
@@ -14,7 +18,7 @@ function getGameId(id: string): string {
 }
 
 // Get the Game Title (default "Untitled")
-function getTitle(name: string | null | undefined, version: string | null | undefined): string {
+function getTitle(name: string | null | undefined): string {
     return name ?? "Untitled";
 }
 
@@ -150,7 +154,7 @@ function getExternalSourceLink(links: PlayniteGameLink[] | undefined, title: str
     // Try to find a link whose URL matches known domains for the source
     const matchedLink = links?.find(link => {
         const url = (link.Url ?? "").toLowerCase();
-        return Object.entries(SOURCE_MAP).some(([key, payload]) =>
+        return Object.entries(SOURCE_COLLECTION).some(([key, payload]) =>
             s.includes(key) && payload.domains.some(domain => url.includes(domain))
         );
     });
@@ -160,10 +164,10 @@ function getExternalSourceLink(links: PlayniteGameLink[] | undefined, title: str
     if (version?.toLowerCase() === "mod") {
         const modLink = links?.find(link => {
             const url = (link.Url ?? "").toLowerCase();
-            return SOURCE_MAP.mod.domains.some(domain => url.includes(domain));
+            return SOURCE_COLLECTION.mod.domains.some(domain => url.includes(domain));
         });
         if (modLink?.Url) return modLink.Url;
-        if (!links || links.length === 0) return `${SOURCE_MAP.mod.online}${encodeURIComponent(title)}`;
+        if (!links || links.length === 0) return `${SOURCE_COLLECTION.mod.online}${encodeURIComponent(title)}`;
     }
 
     // Fallbacks per source
@@ -180,7 +184,7 @@ function getExternalSourceLink(links: PlayniteGameLink[] | undefined, title: str
         case "nintendo":
         case "abandonware":
         case "emulator":
-            return `${SOURCE_MAP[s as InterLinkedOrigin].online}${encodeURIComponent(title)}`;
+            return `${SOURCE_COLLECTION[s as InterLinkedOrigin].online}${encodeURIComponent(title)}`;
         case "ea app":
         case "battle.net":
         default:
@@ -207,16 +211,16 @@ function getSourceProtocolLink(source: InterLinkedOrigin, gameId: string | null,
         case "xbox":
         case "microsoft store":
         case "playnite":
-            return `${SOURCE_MAP[s as InterLinkedOrigin].platform}${encodeURIComponent(gameId)}`;
+            return `${SOURCE_COLLECTION[s as InterLinkedOrigin].platform}${encodeURIComponent(gameId)}`;
         case "ubisoft connect":
         case "uplay":
         case "ubisoft":
-            return `${SOURCE_MAP["ubisoft connect"].platform}${encodeURIComponent(gameId)}/0`;
+            return `${SOURCE_COLLECTION["ubisoft connect"].platform}${encodeURIComponent(gameId)}/0`;
         case "epic": {
             // get epic slug after product/ or p/ from href if possible
             const slug = href?.match(/\/product\/([^/?]+)/)?.[1] || href?.match(/\/p\/([^/?]+)/)?.[1];
             return slug
-                ? `${SOURCE_MAP.epic.platform}${encodeURIComponent(slug)}?action=show`
+                ? `${SOURCE_COLLECTION.epic.platform}${encodeURIComponent(slug)}?action=show`
                 : undefined;
         }
         case "ea app":
@@ -264,8 +268,8 @@ function getInstalled(id: string, installedSet: Set<string> | undefined): boolea
 // Get Playnite protocol link
 function getProtocolLink(isInstalled: boolean, id: string): string {
     return isInstalled
-        ? `${SOURCE_MAP.playnite.runOnPlatform}${id}`
-        : `${SOURCE_MAP.playnite.platform}${id}`;
+        ? `${SOURCE_COLLECTION.playnite.runOnPlatform}${id}`
+        : `${SOURCE_COLLECTION.playnite.platform}${id}`;
 }
 
 // Get TagIds to Tag Names (ignore missing)
@@ -335,12 +339,12 @@ export async function loadPlayniteOrigin(): Promise<OriginLoadedData> {
     const isInstalledSet = await fetchInstalledList(email);
 
     // build items
-    const items: InterLinkedGameItem[] = games.map((g) => {
+    const items: InterLinkedItem[] = games.map((g) => {
         const type = "game";
         const origin = "playnite";
         const id = getPlayniteId(g);
         const gameId = getGameId(g.GameId);
-        const title = getTitle(g.Name, g.Version);
+        const title = getTitle(g.Name);
         const sortingName = getSortingName(g.SortingName, g.Name);
         const year = getYear(g.ReleaseYear, g.ReleaseDate);
         const version = getVersion(g.Version);
@@ -363,7 +367,7 @@ export async function loadPlayniteOrigin(): Promise<OriginLoadedData> {
         const coverUrl = getCoverUrl(g.CoverImage);
         const bgUrl = getBgUrl(g.BackgroundImage);
 
-        // return the InterLinkedGameItem
+        // return the InterLinkedItem
         return {
             type, origin,
             id, gameId,
@@ -381,7 +385,9 @@ export async function loadPlayniteOrigin(): Promise<OriginLoadedData> {
     });
 
     // all unique (new Set dedupes) and sorted lists
-    const allSources = Array.from(new Set(items.map((r) => r.source).filter(Boolean))).sort();
+    const allSources = Array.from(
+        new Set(items.filter(isPlayniteGame).map((r) => r.source).filter(Boolean))
+    ).sort();
     const allTags = Array.from(new Set(items.flatMap((r) => r.tags).filter(Boolean))).sort();
     const allSeries = Array.from(new Set(items.flatMap((r) => r.series).filter(Boolean)))// .sort();
 
@@ -389,25 +395,8 @@ export async function loadPlayniteOrigin(): Promise<OriginLoadedData> {
     return { items, allSources, allTags, allSeries };
 }
 
-export const PLAYNITE_COLLECTIONS = [
-    "games",
-    "companies",
-    "tags",
-    "sources",
-    "platforms",
-    "genres",
-    "categories",
-    "features",
-    "series",
-    "regions",
-    "ageratings",
-    "completionstatuses",
-    "filterpresets",
-    "importexclusions",
-] as const;
-
 // Load a DB collection via the API
-export async function loadDbCollection<T>(collection: string): Promise<T[]> {
+export async function loadDbCollection<T>(collection: PlayniteCollection): Promise<T[]> {
     const url = `${API_ENDPOINTS.PLAYNITE_COLLECTION}${encodeURIComponent(collection)}`;
 
     try {
@@ -440,7 +429,7 @@ export async function fetchExtensionStatus(): Promise<{
     const creds = getCreds();
     if (!creds) return { ok: false, connected: false, extVersion: null, versionMismatch: false, lastPingAt: null };
 
-    const resp = await fetch(API_ENDPOINTS.EXTENSION_STATUS, {
+    const resp = await fetch(API_ENDPOINTS.PLAYNITE_EXTENSION_STATUS, {
         headers: {
             "x-auth-email": creds.email,
             "x-auth-password": creds.password,

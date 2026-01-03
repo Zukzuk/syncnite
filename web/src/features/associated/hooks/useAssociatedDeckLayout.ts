@@ -1,9 +1,9 @@
 import { useMemo } from "react";
-import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../../types/interlinked";
+import { InterLinkedDynamicGrid, InterLinkedItem, InterLinkedGrid } from "../../../types/interlinked";
 import { AssociatedIDeckMeta } from "../../../types/app";
 
 type UseParams = {
-    cards: InterLinkedGameItem[];
+    cards: InterLinkedItem[];
     deckColumns: number;
     maxCardsPerColumn: number | null;
     grid: InterLinkedGrid;

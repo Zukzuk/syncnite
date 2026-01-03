@@ -1,14 +1,15 @@
 import { Badge, Box, Group, Image, Text } from "@mantine/core";
-import { InterLinkedGameItem, InterLinkedGrid } from "../../../types/interlinked";
+import { InterLinkedItem, InterLinkedGrid } from "../../../types/interlinked";
 import { IconIsInstalled } from "../../../components/IconIsInstalled";
 import { IconIsHidden } from "../../../components/IconIsHidden";
 import { IconCopyTitle } from "../../../components/IconCopyTitle";
 import { IconLinkOrigin } from "../../../components/IconOriginLink";
 import { IconLinkSource } from "../../../components/IconSourceLink";
 import { IconLinkExternal } from "../../../components/IconExternalLink";
+import { isGame } from "../../../utils";
 
 type Props = {
-    item: InterLinkedGameItem;
+    item: InterLinkedItem;
     isOpen: boolean;
     grid: InterLinkedGrid;
     isListView: boolean;
@@ -18,9 +19,10 @@ type Props = {
 export function ItemCard({ item, isOpen, isListView, grid }: Props): JSX.Element | null {
     if (isOpen || isListView) return null;
 
-    const { title, coverUrl, year, source, htmlLink, sourceLink, isHidden,
-        isInstalled, origin, originRunLink, id, titleWithoutVersion, version
+    const { title, coverUrl, year, htmlLink, isHidden,
+        origin, originRunLink, id, titleWithoutVersion, version
     } = item;
+    const { source, sourceLink, isInstalled } = isGame(item) ? item : { source: null, sourceLink: null, isInstalled: false };
 
     return (
         <Box

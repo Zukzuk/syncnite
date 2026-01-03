@@ -1,16 +1,17 @@
 import { memo, useState } from "react";
 import { ActionIcon, Box } from "@mantine/core";
 import { IconX } from "@tabler/icons-react";
-import { InterLinkedDynamicGrid, InterLinkedGameItem, InterLinkedGrid } from "../../types/interlinked";
+import { InterLinkedDynamicGrid, InterLinkedItem, InterLinkedGrid } from "../../types/interlinked";
 import { DesktopMode, HistoryNavMode } from "../../types/app";
 import { useGridItem } from "./hooks/useGridItem";
 import { ItemRow } from "./components/ItemRow";
 import { ItemCard } from "./components/ItemCard";
 import { ItemBackground } from "./components/ItemBackground";
 import { AssociatedContent } from "../associated/AssociatedContent";
+import { isGame } from "../../utils";
 
 type Props = {
-    item: InterLinkedGameItem;
+    item: InterLinkedItem;
     index: number;
     isOpen: boolean;
     isDark: boolean;
@@ -20,7 +21,7 @@ type Props = {
     hasNavbar: boolean;
     isWidescreen: boolean;
     isDesktop: boolean;
-    itemsAssociated: InterLinkedGameItem[],
+    itemsAssociated: InterLinkedItem[],
     grid: InterLinkedGrid;
     dynamicGrid: InterLinkedDynamicGrid;
     onWallpaperBg: (value: boolean) => void;
@@ -44,7 +45,8 @@ export const GridItem = memo(function GridItem({
     onWallpaperBg,
     onToggleItem,
 }: Props): JSX.Element {
-    const { title, isInstalled } = item;
+    const { title } = item;
+    const isInstalled = isGame(item) ? item.isInstalled : false;
     const [isHovered, setIsHovered] = useState(false);
 
     const {
